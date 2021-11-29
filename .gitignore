@@ -1,6 +1,8 @@
-# Max Spahn's dependency 
-gym_env_urdf/
-gym_env_urdf
+# ignore intellij files
+.idea
+idea/
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
