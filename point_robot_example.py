@@ -1,6 +1,8 @@
 import gym
 import gijsRobot
 from gym_envs_urdf.sensors.lidar import Lidar
+from robot_brain import RBrain
+
 import numpy as np
 
 
@@ -20,6 +22,9 @@ def main():
     # initial position robot
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([1.0, 0.0])
+
+    # todo: decide if the robot brain should have it's own loop or not
+    rb = RBrain()
 
     # reset loop
     for e in range(n_episodes):
