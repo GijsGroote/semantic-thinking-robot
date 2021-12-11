@@ -15,6 +15,7 @@ class Object:
     def state(self, stat):
         if True:  # TODO: input sanitization
             self._state = stat
+
     @property
     def width(self):
         return self._width
