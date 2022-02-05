@@ -1,19 +1,10 @@
-import sys
-sys.path.insert(0, "/home/gijs/Documents/semantic-thinking-robot/gym_envs_urdf/")
-sys.path.insert(0, "/home/gijs/Documents/semantic-thinking-robot/motion_planing_scenes/")
-
-# import pointRobotUrdf
-import gym_envs_urdf.pointRobotUrdf
-# above can be removed when gym_envs_urfd is a real environment
-
 import numpy as np
 import gym
 from multiprocessing import Process, Pipe
-from gym_envs_urdf.keyboardInput.keyboard_input_responder import Responder
+from urdfenvs.keyboardInput.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
-from gym_envs_urdf.urdfGymExamples.sceneObjects.obstacles import sphereObst1, sphereObst2, urdfObst1, dynamicSphereObst1
-
+from obstacles import sphereObst1, sphereObst2, urdfObst1, dynamicSphereObst1
 
 user_input_mode = True
 

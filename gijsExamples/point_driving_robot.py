@@ -1,14 +1,11 @@
-import sys
+import urdfenvs
+import urdfenvs.pointRobotUrdf
 
-sys.path.insert(0, "/home/gijs/Documents/semantic-thinking-robot/gym_envs_urdf/")
-# import pointRobotUrdf
-import gym_envs_urdf.pointRobotUrdf
-# above can be removed when gym_envs_urfd is a real environment
 
 import numpy as np
 import gym
 from multiprocessing import Process, Pipe
-from gym_envs_urdf.keyboardInput.keyboard_input_responder import Responder
+from urdfenvs.keyboardInput.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State

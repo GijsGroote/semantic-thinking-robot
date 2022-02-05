@@ -1,6 +1,0 @@
-[submodule "gym_envs_urdf"]
-	path = gym_envs_urdf
-	url = https://github.com/maxspahn/gym_envs_urdf
-[submodule "motion_planing_scenes"]
-	path = motion_planing_scenes
-	url = git@github.com:maxspahn/motion_planning_scenes.git
