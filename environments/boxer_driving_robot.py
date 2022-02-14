@@ -8,7 +8,7 @@ from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 
 
-user_input_mode = False
+user_input_mode = True
 pos0 = np.array([1.0, -2.0])
 vel0 = np.array([0.0, 0.0])
 
@@ -59,11 +59,11 @@ def main(conn=None):
             action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-
+        print(ob['xdot'])
     if user_input_mode:
         conn.send({"request_action": False, "kill_child": True})
 
-
+        brain.update(ob)
 if __name__ == '__main__':
 
     if not user_input_mode:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                            Key.page_down: np.array([1.0, 1.0]),
                            Key.page_up: np.array([-1.0, -1.0])}
 
-        responder.setup(defaultAction=np.array([1.0, 0.0]))
+        responder.setup(defaultAction=np.array([0.0, 0.0]))
         # responder.setup(custom_on_press=custom_on_press)
 
         # start child process which keeps responding/looping

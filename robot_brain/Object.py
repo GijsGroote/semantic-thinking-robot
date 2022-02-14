@@ -1,5 +1,5 @@
 class Object:
-    def __init__(self, state, width, height, dynamics=None):
+    def __init__(self, state, width=None, height=None, dynamics=None):
         self.state = state
         self.width = width
         self.height = height
