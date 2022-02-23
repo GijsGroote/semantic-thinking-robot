@@ -7,9 +7,7 @@ from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from obstacles import sphereObst1, sphereObst2, urdfObst1, dynamicSphereObst1
 
-user_input_mode = True
-
-
+user_input_mode = False
 
 def main(conn=None):
     """
@@ -33,7 +31,6 @@ def main(conn=None):
     env.addObstacle(sphereObst2)
     env.addObstacle(sphereObst2)
 
-    # env.addObstacle(urdfObst1)
 
     brain = RBrain()
     if not user_input_mode:
@@ -45,6 +42,7 @@ def main(conn=None):
             }
         })
 
+    ob, reward, done, info = env.step(defaultAction)
 
 
     action = defaultAction
@@ -58,7 +56,11 @@ def main(conn=None):
         else:
             action = brain.respond()
 
+
         ob, reward, done, info = env.step(action)
+
+        brain.update(ob)
+        # print(ob)
 
 
     conn.send({"request_action": False, "kill_child": True})

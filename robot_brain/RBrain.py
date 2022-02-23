@@ -37,14 +37,36 @@ class RBrain:
         r_info = stat_world_info["robot"]
         p = r_info["pos"]
         v = r_info["vel"]
+
+        # create robot
         s0 = State(pos_x=p[0], pos_y=p[1], vel_x=v[0], vel_y=p[1])
-        robot = Object(s0, 1, 1)
+        robot = Object(s0)
         self.robot = robot
         self.objects.append(robot)
+
         self.action = np.array([0.0, 0.0])
+
 
         # create dynamics
         d1 = Dynamics()
+
+    def update(self, ob):
+        """
+        Update all objects states
+        :param ob:
+        :return:
+        """
+
+
+        print("the robot")
+        print(self.robot.state.pos_x)
+
+        print("the object list")
+
+        for object in self.objects:
+            print(object.state.pos_x)
+            object.state.update_pos(ob["x"])
+            object.state.update_vel(ob["xdot"])
 
 
     def respond(self):

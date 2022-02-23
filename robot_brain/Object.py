@@ -1,9 +1,9 @@
 class Object:
-    def __init__(self, state, width, height, dynamics=None):
-        self.state = state
-        self.width = width
-        self.height = height
-        self.dynamics = dynamics
+    def __init__(self, state, width=0, height=0, dynamics=None):
+        self._state = state
+        self._width = width
+        self._height = height
+        self._dynamics = dynamics
 
     # state getter
     @property
