@@ -1,114 +1,82 @@
 import numpy as np
+import warnings
+
 
 class State:
 
-    def __init__(self, pos_x=0, pos_y=0, vel_x=0, vel_y=0, acc_x=0, acc_y=0, ang_p=0, ang_v=0, ang_a=0):
+    def __init__(self, pos=np.array([0, 0, 0]), vel=np.array([0, 0, 0]), acc=np.array([0, 0, 0]),
+                 ang_p=np.array([0, 0, 0]), ang_v=np.array([0, 0, 0]), ang_a=np.array([0, 0, 0])):
         # position, velocity and acceleration in x and y direction
-        self.pos_x = pos_x
-        self.pos_y = pos_y
+        self.pos = pos
+        self.vel = vel
+        self.acc = acc
         self.ang_p = ang_p
-        self.vel_x = vel_x
-        self.vel_y = vel_y
         self.ang_v = ang_v
-        self.acc_x = acc_x
-        self.acc_y = acc_y
         self.ang_a = ang_a
 
-    def update_pos(self, arr):
-        """
-        Updates the state position.
-        :param arr: 3 X 1 array
-        :return:
-        """
-        self._pos_x = arr[0]
-        self._pos_y = arr[1]
-        self._ang_p = arr[2]
 
-    def update_vel(self, arr):
+    def euclidean_position(self, state):
         """
-        Updates the state velocity.
-        :param arr: 3 X 1 array
-        :return:
+        Calculate the euclidean distance between the position of 2 states
         """
-        self.vel_x = arr[0]
-        self.vel_y = arr[1]
-        self.ang_v = arr[2]
+        return np.linalg.norm(self.pos - state.pos)
 
-
-    def update_acc(self, arr):
-        """
-        Updates the state acceleration.
-        :param arr: 3 X 1 array
-        :return:
-        """
-        self.acc_x = arr[0]
-        self.acc_y = arr[1]
-        self.ang_a = arr[2]
-
-    def euclidean(self, state):
-        """
-        Calculate the euclidean distance between 2 states
-
-        :param state:
-        :return:
-
-        """
-        # create array of state objects
-        arr1 = np.array([self.pos_x, self.pos_y])
-        arr2 = np.array([state.pos_x, state.pos_y])
-
-        return np.linalg.norm(arr1-arr2)
-
-    def obj2arr(self):
-        return
+    def toString(self, d=2):
+        return "pos:("+str(np.round(self.pos, d)) + "), vel:(" + str(np.round(self.vel, d)) + ")\n" \
+                + "acc:(" + str(np.round(self.acc, d)) + "), ang_p:("+str(np.round(self.ang_p, d)) \
+               + ")\nang_v:(" + str(np.round(self.ang_v, d)) + "), acc:(" + str(np.round(self.ang_a, d)) + ")\n"
 
     @property
-    def pos_x(self):
-        return self._pos_x
+    def pos(self):
+        return self._pos
 
-    @pos_x.setter
-    def pos_x(self, value):
-        self._pos_x = value
-
-    @property
-    def pos_y(self):
-        return self._pos_y
-
-    @pos_y.setter
-    def pos_y(self, value):
-        self._pos_y = value
-
-    @property
-    def vel_x(self):
-        return self._vel_x
-
-    @vel_x.setter
-    def vel_x(self, value):
-        self._vel_x = value
+    @pos.setter
+    def pos(self, value):
+        try:
+            if value.shape[0] == 3:
+                self._pos = value
+            elif value.shape[0] == 2:
+                warnings.warn("shape of position is: {}, and should be (3,). Converting shape".format(value.shape))
+                self._pos = np.array([value[0], value[1], 0])
+            else:
+                raise Exception("position has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
 
     @property
-    def vel_y(self):
-        return self._vel_y
+    def vel(self):
+        return self._vel
 
-    @vel_y.setter
-    def vel_y(self, value):
-        self._vel_y = value
+    @vel.setter
+    def vel(self, value):
+        try:
+            if value.shape[0] == 3:
+                self._vel = value
+            elif value.shape[0] == 2:
+                warnings.warn("shape of velocity is: {}, and should be (3,). Converting shape".format(value.shape))
+                self._vel = np.array([value[0], value[1], 0])
+            else:
+                raise Exception("velocity has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
 
     @property
-    def acc_x(self):
-        return self._acc_x
+    def acc(self):
+        return self._acc
 
-    @acc_x.setter
-    def acc_x(self, value):
-        self._acc_x = value
+    @acc.setter
+    def acc(self, value):
+        try:
+            if value.shape[0] == 3:
+                self._acc = value
+            elif value.shape[0] == 2:
+                warnings.warn("shape of acceleration is: {}, and should be (3,). Converting shape".format(value.shape))
+                self._acc = np.array([value[0], value[1], 0])
+            else:
+                raise Exception("acceleration has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
 
-    @property
-    def acc_y(self):
-        return self._acc_y
-
-    @acc_y.setter
-    def acc_y(self, value):
-        self._acc_y = value
 
     @property
     def ang_p(self):
@@ -116,7 +84,13 @@ class State:
 
     @ang_p.setter
     def ang_p(self, value):
-        self._ang_p = value
+        try:
+            if value.shape[0] == 3:
+                self._ang_p = value
+            else:
+                raise Exception("angular position has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
 
     @property
     def ang_v(self):
@@ -124,7 +98,13 @@ class State:
 
     @ang_v.setter
     def ang_v(self, value):
-        self._ang_v = value
+        try:
+            if value.shape[0] == 3:
+                self._ang_v = value
+            else:
+                raise Exception("angular velocity has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
 
     @property
     def ang_a(self):
@@ -132,4 +112,11 @@ class State:
 
     @ang_a.setter
     def ang_a(self, value):
-        self._ang_a = value
+        try:
+            if value.shape[0] == 3:
+                self._ang_a = value
+            else:
+                raise Exception("angular acceleration has incorrect dimensions")
+        except(AttributeError, TypeError, IndexError):
+            raise AssertionError("input should be an numpy array")
+

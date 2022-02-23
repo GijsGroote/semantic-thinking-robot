@@ -1,9 +1,20 @@
 class Object:
-    def __init__(self, state, width=0, height=0, dynamics=None):
+    def __init__(self, name, state, width=0, height=0, dynamics=None):
+        self._name = name
         self._state = state
         self._width = width
         self._height = height
         self._dynamics = dynamics
+
+    # name getter
+    @property
+    def name(self):
+        return self._name
+
+    # name setter
+    @name.setter
+    def name(self, name):
+        self._name = name
 
     # state getter
     @property

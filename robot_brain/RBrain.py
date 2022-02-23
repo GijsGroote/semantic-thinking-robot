@@ -19,7 +19,7 @@ class RBrain:
     """
 
     def __init__(self):
-        self.objects = []  # Object information list
+        self.objects = dict()  # Object information dictionary
         self.verbs = []   # verbs which can be used
         self.robot = None  # Player information
         self.map = None  # Map used for planning
@@ -31,24 +31,20 @@ class RBrain:
         self.of = None  # objective function
         self.action = None
 
-    def setup(self, stat_world_info):
-
-        # robot and objects
-        r_info = stat_world_info["robot"]
-        p = r_info["pos"]
-        v = r_info["vel"]
+    def setup(self, stat_world_info, ob):
 
         # create robot
-        s0 = State(pos_x=p[0], pos_y=p[1], vel_x=v[0], vel_y=p[1])
-        robot = Object(s0)
+        robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]))
         self.robot = robot
-        self.objects.append(robot)
+        self.objects["robot"] = robot
+
+        # Create objects
+        for key, val in ob["obstacleSensor"].items():
+            s_temp = State(pos=val["x"], vel=val["xdot"], ang_p=val["theta"], ang_v=val["thetadot"])
+            self.objects[key] = Object(key, s_temp)
 
         self.action = np.array([0.0, 0.0])
 
-
-        # create dynamics
-        d1 = Dynamics()
 
     def update(self, ob):
         """
@@ -57,17 +53,19 @@ class RBrain:
         :return:
         """
 
+        # update robot
+        self.robot.state.pos = ob["x"]
+        self.robot.state.vel = ob["xdot"]
+        # todo: angle and angular velocity of the robot
 
-        print("the robot")
-        print(self.robot.state.pos_x)
+        # update objects
+        for key, val in ob["obstacleSensor"].items():
+            self.objects[key].state.pos = val["x"]
+            self.objects[key].state.vel = val["xdot"]
+            self.objects[key].state.ang_p = val["theta"]
+            self.objects[key].state.ang_v = val["thetadot"]
 
-        print("the object list")
-
-        for object in self.objects:
-            print(object.state.pos_x)
-            object.state.update_pos(ob["x"])
-            object.state.update_vel(ob["xdot"])
-
+            # acceleration is not observed
 
     def respond(self):
         """ Respond to request with the latest action """
