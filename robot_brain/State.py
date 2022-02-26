@@ -9,6 +9,9 @@ class State:
         self.pos = pos
         self.vel = vel
         self.acc = acc
+        self.ang_p = ang_p
+        self.ang_v = ang_v
+        self.ang_a = ang_a
 
     def euclidean_position(self, state):
         """

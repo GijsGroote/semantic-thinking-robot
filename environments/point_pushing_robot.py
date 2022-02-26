@@ -46,8 +46,6 @@ def main(conn=None):
         }, ob)
 
 
-
-
     action = defaultAction
     for i in range(n_steps):
 

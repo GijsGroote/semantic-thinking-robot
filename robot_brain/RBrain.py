@@ -1,6 +1,8 @@
+import warnings
+
 from robot_brain.State import State
 from robot_brain.Dynamics import Dynamics
-from robot_brain.Controller import Controller
+from robot_brain.controllers.Mpc import Mpc
 from robot_brain.Object import Object
 import numpy as np
 import time
@@ -29,44 +31,32 @@ class RBrain:
 
         self.height_of_map = 0  # Map height
         self.width_of_map = 0  # Map width
-        self.robot_accepts_input = False  # boolean indicting if robot input is accepted
-        self.of = None  # objective function
-        self.action = None
+        self.defaultAction = None
         self.dt = None
+        self.targetState = None
 
     def setup(self, stat_world_info, ob):
-
-<<<<<<< HEAD
-        # robot and objects
-        r_info = stat_world_info["robot"]
-        p = r_info["pos"]
-        v = r_info["vel"]
-        s0 = State(pos_x=p[0], pos_y=p[1], ang_p=p[2], vel_x=v[0], vel_y=v[1], ang_v=v[2])
-        robot = Object(s0)
-=======
         # create robot
         robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]))
->>>>>>> main
         self.robot = robot
         self.objects["robot"] = robot
 
         # Create objects
-        for key, val in ob["obstacleSensor"].items():
-            s_temp = State(pos=val["x"], vel=val["xdot"], ang_p=val["theta"], ang_v=val["thetadot"])
-            self.objects[key] = Object(key, s_temp)
+        if "obstacleSensor" in ob.keys():
+            for key, val in ob["obstacleSensor"].items():
+                s_temp = State(pos=val["x"], vel=val["xdot"], ang_p=val["theta"], ang_v=val["thetadot"])
+                self.objects[key] = Object(key, s_temp)
 
-        self.action = np.array([0.0, 0.0])
-        self.dt = stat_world_info["dt"]
-        # todo: objects list
+            self.action = np.array([0.0, 0.0])
 
-<<<<<<< HEAD
-    def update(self, info):
-        # robot and objects
-        p = info["x"]
-        v = info["xdot"]
-        self.robot.state.update_p_and_v(p[0], p[1], p[2], v[0], v[1], v[2])
-        # todo: is the robot in the object list also updated?
-=======
+        if "dt" in stat_world_info.keys():
+            self.dt = stat_world_info["dt"]
+
+        if "targetState" in stat_world_info.keys():
+            self.targetState = stat_world_info["targetState"]
+
+        if "defaultAction" in stat_world_info.keys():
+            self.defaultAction = stat_world_info["defaultAction"]
 
     def update(self, ob):
         """
@@ -74,21 +64,19 @@ class RBrain:
         :param ob:
         :return:
         """
-
         # update robot
         self.robot.state.pos = ob["x"]
         self.robot.state.vel = ob["xdot"]
         # todo: angle and angular velocity of the robot
 
         # update objects
-        for key, val in ob["obstacleSensor"].items():
-            self.objects[key].state.pos = val["x"]
-            self.objects[key].state.vel = val["xdot"]
-            self.objects[key].state.ang_p = val["theta"]
-            self.objects[key].state.ang_v = val["thetadot"]
-
-            # acceleration is not observed
->>>>>>> main
+        if "obstacleSensor" in ob.keys():
+            for key, val in ob["obstacleSensor"].items():
+                self.objects[key].state.pos = val["x"]
+                self.objects[key].state.vel = val["xdot"]
+                self.objects[key].state.ang_p = val["theta"]
+                self.objects[key].state.ang_v = val["thetadot"]
+                # acceleration is not observed
 
     def respond(self):
         """ Respond to request with the latest action """
@@ -96,22 +84,22 @@ class RBrain:
         if self.is_doing is IS_EXECUTING:
             # send action
             if self.controller is not None:
-                return self.controller.respond(self.robot.state.pos2arr())
+                return self.controller.respond(self.robot.state.pos)
             else:
                 print('returning default action')
-                return np.array([0.0, 0.0])
+                warnings.warn("returning default action")
+                return self.defaultAction
 
-        if self.is_doing is IS_THINKING:
+        elif self.is_doing is IS_THINKING:
+            # todo: thinking should not really be a thing any more.
             # send action
-            return self.action
+            return self.defaultAction
 
-        if self.is_doing is IS_DOING_NOTHING:
+        elif self.is_doing is IS_DOING_NOTHING:
+            return self.calculate_plan()
 
-            self.calculate_plan()
-
-            return self.action
         else:
-            raise Exception("todo, this error mesasgeCannot handle action request")
+            raise Exception("Unable to respond")
 
         
     def calculate_plan(self):
@@ -121,43 +109,21 @@ class RBrain:
 
 
         print("yes I got it, MPC! executing plan")
-        contr = Controller(self.dt)
+        contr = Mpc(self.dt)
         dyn_model = Dynamics()
         dyn_model.set_boxer_model()
-        contr.create_mpc_controller(dyn_model, self.robot.state.pos2arr())
+        contr.create_mpc_controller(dyn_model, self.targetState, self.robot.state.pos)
         self.controller = contr
 
         self.is_doing = IS_EXECUTING
 
-    def calculate_input(self):
-        # todo: use controller/world states and other thingies to calculate the best input
-        print("calculating best input")
+        return self.controller.respond(self.robot.state.pos)
 
 
-    def set_OF(self, obj, state):
-        """
-        Sets the objective function
 
-        :param obj:
-        :param state:
 
-        """
-        # check if obj can reach target state
-        # if not, can it reach it using backtracking
 
-        self.of = state.euclidean
-
-    def calculate_OF(self):
-        """
-        Calculate the value of the objective function for the current state
-
-        :return:
-        """
-        if self.of is not None:
-            return self.of(self.robot.state)
-        else:
-            raise Exception("objective function was not set")
-
+    # todo: all setters and getters should be sanitized properly, and test!
 
 
 
