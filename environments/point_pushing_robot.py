@@ -1,15 +1,14 @@
 import numpy as np
 import gym
 import urdfenvs.boxerRobot
+from urdfenvs.sensors.obstacleSensor import ObstacleSensor
 from multiprocessing import Process, Pipe
 from urdfenvs.keyboardInput.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from obstacles import sphereObst1, sphereObst2, urdfObst1, dynamicSphereObst1
 
-user_input_mode = True
-
-
+user_input_mode = False
 
 def main(conn=None):
     """
@@ -20,20 +19,21 @@ def main(conn=None):
     """
     # env = gym.make('pointRobotUrdf-acc-v0', dt=0.05, render=True)
     env = gym.make('boxer-robot-vel-v0', dt=0.05, render=True)
+    sensor = ObstacleSensor()
+    env.addSensor(sensor)
     defaultAction = np.array([0.0, 0.0])
     n_steps = 10000
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
-    ob = env.reset(pos=pos0, vel=vel0)
+    env.reset(pos=pos0, vel=vel0)
     env.setWalls(limits=[[-5, -5], [3, 2]])
-    t = 0
 
 
     # add obstacles
     env.addObstacle(sphereObst2)
     env.addObstacle(sphereObst2)
 
-    # env.addObstacle(urdfObst1)
+    ob, reward, done, info = env.step(defaultAction)
 
     brain = RBrain()
     if not user_input_mode:
@@ -43,13 +43,13 @@ def main(conn=None):
                 "pos": pos0,
                 "vel": vel0,
             }
-        })
+        }, ob)
+
 
 
 
     action = defaultAction
     for i in range(n_steps):
-        t += env.dt()
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
@@ -58,7 +58,11 @@ def main(conn=None):
         else:
             action = brain.respond()
 
+
         ob, reward, done, info = env.step(action)
+
+        brain.update(ob)
+        # print(ob)
 
 
     conn.send({"request_action": False, "kill_child": True})

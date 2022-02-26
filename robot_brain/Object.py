@@ -1,9 +1,28 @@
 class Object:
+<<<<<<< HEAD
     def __init__(self, state, width=None, height=None, dynamics=None):
         self.state = state
         self.width = width
         self.height = height
         self.dynamics = dynamics
+=======
+    def __init__(self, name, state, width=0, height=0, dynamics=None):
+        self._name = name
+        self._state = state
+        self._width = width
+        self._height = height
+        self._dynamics = dynamics
+
+    # name getter
+    @property
+    def name(self):
+        return self._name
+
+    # name setter
+    @name.setter
+    def name(self, name):
+        self._name = name
+>>>>>>> main
 
     # state getter
     @property
