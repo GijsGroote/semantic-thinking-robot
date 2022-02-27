@@ -22,7 +22,7 @@ class Mpc:
 
     def create_mpc_controller(self, dt, dyn_model, currentState, targetState):
 
-        self.plot_results = True
+        self.plot_results = False
 
         self.model = template_model()
         self.mpc = template_mpc(self.model, targetState, dt, self.plot_results)
