@@ -53,7 +53,7 @@ class RBrain:
         if "defaultAction" in stat_world_info.keys():
             self.defaultAction = stat_world_info["defaultAction"]
 
-        # todo: this hardcoded mumbo jumbo should be coming from the hypothesis graph
+        # todo: this hardcoded mumbo jumbo should be coming from the hypothesis graphs
         if "controller" in stat_world_info.keys():
             if stat_world_info["controller"] == "mpc":
                 # set idea for a mpc controller
