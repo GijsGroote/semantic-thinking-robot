@@ -1,7 +1,7 @@
 import do_mpc
 
 
-def template_mpc(model, targetState, dt):
+def template_mpc(model, targetState, dt, plot_results):
     # Obtain an instance of the do-mpc MPC class
     mpc = do_mpc.controller.MPC(model)
 
@@ -14,15 +14,12 @@ def template_mpc(model, targetState, dt):
         'n_horizon': 20,
         't_step': dt,
         'n_robust': 1,
-        'store_full_solution': True,
+        'store_full_solution': plot_results,
     }
 
     rterm_u1 = 1e-2
     rterm_u2 = 1e-2
     mpc.set_param(**setup_mpc)
-
-    print("setting the target State")
-    print(targetState.toString())
 
     mterm = (model._x["pos_x"]-targetState.pos[0]) ** 2 + (model._x["pos_y"]-targetState.pos[1]) ** 2 + 0.1*(model._x["ang_p"]-targetState.ang_p[2]) ** 2
     lterm = (model._x["pos_x"]-targetState.pos[0]) ** 2 + (model._x["pos_y"]-targetState.pos[1]) ** 2 + 0.1*(model._x["ang_p"]-targetState.ang_p[2]) ** 2

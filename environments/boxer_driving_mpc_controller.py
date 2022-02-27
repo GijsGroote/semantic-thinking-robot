@@ -5,8 +5,8 @@ from urdfenvs.sensors.obstacleSensor import ObstacleSensor
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 
-target_pos = np.array([3, 3, 0])
-target_ang_p = np.array([0, 0, 2])
+target_pos = np.array([1, 1, 0])
+target_ang_p = np.array([0, 0, 0])
 controller = "mpc"
 
 
