@@ -6,12 +6,10 @@ from urdfenvs.keyboardInput.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
+from urdfenvs.sensors.obstacleSensor import ObstacleSensor
 
 
 user_input_mode = True
-pos0 = np.array([1.0, -2.0])
-vel0 = np.array([0.0, 0.0])
-
 
 def main(conn=None):
     """
@@ -20,36 +18,37 @@ def main(conn=None):
     Semantic brain goal: find out that the robot can drive toward specified goals.
 
     """
+    dt = 0.05
     # env = gym.make('pointRobotUrdf-acc-v0', dt=0.05, render=True)
-    env = gym.make('boxer-robot-vel-v0', dt=0.05, render=True)
+    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+
+    ob = env.reset()
+    env.setWalls(limits=[[-5, -5], [3, 2]])
+
+    sensor = ObstacleSensor()
+    env.addSensor(sensor)
 
     defaultAction = np.array([0.0, 0.0])
     n_steps = 1000
 
-    ob = env.reset(pos=pos0, vel=vel0)
-    env.setWalls(limits=[[-5, -5], [3, 2]])
-    t = 0
+
 
     # setup semantic brain
     brain = None
     if not user_input_mode:
         brain = RBrain()
         # do the regular stuff, like begin the simulation, something like that
-        brain.setup({"robot":
-            {
-                "pos": pos0,
-                "vel": vel0,
-            }
-        })
+        brain.setup({"dt": dt,
+                     "targetState": State(),
+        }, ob)
         targetState = State()  # drive to (0,0,0,0,0)
-        brain.set_OF(brain.robot, targetState)
+
 
     # ob, reward, done, info = env.step(defaultAction)
 
     action = defaultAction
 
     for i in range(n_steps):
-        t += env.dt()
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
@@ -59,7 +58,10 @@ def main(conn=None):
             action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-        print(ob['xdot'])
+        print(ob['obstacleSensor']["0"]["x"])
+        print(action)
+
+
     if user_input_mode:
         conn.send({"request_action": False, "kill_child": True})
 

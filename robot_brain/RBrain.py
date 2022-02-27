@@ -2,10 +2,11 @@ import warnings
 
 from robot_brain.State import State
 from robot_brain.Dynamics import Dynamics
-from robot_brain.controllers.Mpc import Mpc
+# from robot_brain.controllers.Mpc_old import Mpc
 from robot_brain.Object import Object
 import numpy as np
 import time
+from robot_brain.controllers.mpc.Mpc import Mpc
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
@@ -49,14 +50,16 @@ class RBrain:
 
             self.action = np.array([0.0, 0.0])
 
-        if "dt" in stat_world_info.keys():
-            self.dt = stat_world_info["dt"]
-
-        if "targetState" in stat_world_info.keys():
-            self.targetState = stat_world_info["targetState"]
-
         if "defaultAction" in stat_world_info.keys():
             self.defaultAction = stat_world_info["defaultAction"]
+
+        # todo: this hardcoded mumbo jumbo should be coming from the hypothesis graph
+        if "controller" in stat_world_info.keys():
+            if stat_world_info["controller"] == "mpc":
+                # set idea for a mpc controller
+                self.dt = stat_world_info["dt"]
+                self.targetState = stat_world_info["targetState"]
+
 
     def update(self, ob):
         """
@@ -65,9 +68,11 @@ class RBrain:
         :return:
         """
         # update robot
-        self.robot.state.pos = ob["x"]
-        self.robot.state.vel = ob["xdot"]
-        # todo: angle and angular velocity of the robot
+        self.robot.state.pos = ob["obstacleSensor"]["0"]["x"]
+        self.robot.state.vel = ob["obstacleSensor"]["0"]["xdot"]
+        self.robot.state.ang_p = ob["obstacleSensor"]["0"]["theta"]
+        self.robot.state.ang_v = ob["obstacleSensor"]["0"]["thetadot"]
+
 
         # update objects
         if "obstacleSensor" in ob.keys():
@@ -81,12 +86,14 @@ class RBrain:
     def respond(self):
         """ Respond to request with the latest action """
         # receive request
+        # print(self.robot.state.toString(d=3))
+
         if self.is_doing is IS_EXECUTING:
             # send action
             if self.controller is not None:
-                return self.controller.respond(self.robot.state.pos)
+
+                return self.controller.respond(self.robot.state)
             else:
-                print('returning default action')
                 warnings.warn("returning default action")
                 return self.defaultAction
 
@@ -109,15 +116,16 @@ class RBrain:
 
 
         print("yes I got it, MPC! executing plan")
-        contr = Mpc(self.dt)
+
         dyn_model = Dynamics()
         dyn_model.set_boxer_model()
-        contr.create_mpc_controller(dyn_model, self.targetState, self.robot.state.pos)
-        self.controller = contr
+
+        self.controller = Mpc()
+        self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
 
         self.is_doing = IS_EXECUTING
 
-        return self.controller.respond(self.robot.state.pos)
+        return self.controller.respond(self.robot.state)
 
 
 

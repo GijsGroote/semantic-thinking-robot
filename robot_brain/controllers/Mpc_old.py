@@ -1,29 +1,42 @@
 import numpy as np
 import do_mpc
 from casadi import *
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-from robot_brain.State import State
+# mpl.use("TkAgg")
+import matplotlib.pyplot as plt
 
 
 class Mpc:
-    def __init__(self, dt):
+    def __init__(self):
         self._controller = None
         self._dyn_model = None
         self.sim_graphics = None
         self.simulator = None
         self.mpc_graphics = None
         self.fig = None
-        self.dt = dt
+        self.dt = None
 
 
-    def create_mpc_controller(self, dyn_model, targetState, x0):
+    def create_mpc_controller(self, dt, dyn_model, targetState, x0):
         self._dyn_model = dyn_model # todo: you are actually doing nothing with this model dude
         # todo: this should not be hardcoded
-        print("creating mpc, target state:{}".format(targetState.toString()))
+        self.dt = dt
+
         pos_x_t = targetState.pos[0]
         pos_y_t = targetState.pos[1]
         ang_p_t = 0.0
+
+        # variables which can be tweaked
+        setup_mpc = {
+            'n_horizon': 10,
+            't_step': self.dt,
+            'n_robust': 1,
+            'store_full_solution': False,
+        }
+
+        rterm_u1 = 1e-2
+        rterm_u2 = 1e-2
+
 
 
         # setup model object
@@ -79,22 +92,17 @@ class Mpc:
         model.setup()
         mpc = do_mpc.controller.MPC(model)
 
-        setup_mpc = {
-            'n_horizon': 10,
-            't_step': self.dt,
-            'n_robust': 1,
-            'store_full_solution': False,
-        }
-        mpc.set_param(**setup_mpc)
-
         # do not punish using input to much
         mpc.set_rterm(
-            u1=1e-2,
-            u2=1e-2
+            u1=rterm_u1,
+            u2=rterm_u2
         )
 
-        mterm = (pos_x) ** 2 + (pos_y) ** 2 + (1+ang_p) ** 2
-        lterm = (pos_x) ** 2 + (pos_y) ** 2 + (1+ang_p) ** 2
+        mpc.set_param(**setup_mpc)
+
+
+        mterm = (pos_x) ** 2 + (pos_y) ** 2 + (ang_p) ** 2
+        lterm = (pos_x) ** 2 + (pos_y) ** 2 + (ang_p) ** 2
         mpc.set_objective(mterm=mterm, lterm=lterm)
 
         # Lower bounds on states:
@@ -157,8 +165,10 @@ class Mpc:
 
     def respond(self, x0):
         u0 = self.controller.make_step(x0)
-        # self.simulator.make_step(u0)
 
+        # todo: plot interative plot which does work
+        # self.simulator.make_step(u0)
+        #
         #
         # self.sim_graphics.plot_results()
         # # Reset the limits on all axes in graphic to show the data.

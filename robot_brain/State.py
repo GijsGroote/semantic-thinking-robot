@@ -23,7 +23,7 @@ class State:
     def toString(self, d=2):
         return "pos:("+str(np.round(self.pos, d)) + "), vel:(" + str(np.round(self.vel, d)) + ")\n" \
                 + "acc:(" + str(np.round(self.acc, d)) + "), ang_p:("+str(np.round(self.ang_p, d)) \
-               + ")\nang_v:(" + str(np.round(self.ang_v, d)) + "), acc:(" + str(np.round(self.ang_a, d)) + ")\n"
+               + ")\nang_v:(" + str(np.round(self.ang_v, d)) + "), ang_a:(" + str(np.round(self.ang_a, d)) + ")\n"
 
     @property
     def pos(self):
