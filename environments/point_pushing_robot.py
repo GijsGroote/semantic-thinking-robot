@@ -1,12 +1,11 @@
 import numpy as np
 import gym
-import urdfenvs.boxerRobot
-from urdfenvs.sensors.obstacleSensor import ObstacleSensor
+from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from multiprocessing import Process, Pipe
-from urdfenvs.keyboardInput.keyboard_input_responder import Responder
+from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
-from obstacles import sphereObst1, sphereObst2, urdfObst1, dynamicSphereObst1
+from environments.obstacles import sphereObst2
 
 user_input_mode = False
 

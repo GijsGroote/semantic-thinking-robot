@@ -3,6 +3,7 @@ import matplotlib as mpl
 import numpy as np
 # mpl.use("TkAgg")
 import matplotlib.pyplot as plt
+import mpld3
 
 
 
@@ -71,5 +72,13 @@ class Plotter():
 
         plt.draw()
         plt.pause(1e-9)
+
+
+        html_str = mpld3.fig_to_html(self.fig)
+        Html_file = open("../robot_brain/dashboard/mpc.html", "w")
+        Html_file.write(html_str)
+        Html_file.close()
+
+
 
 

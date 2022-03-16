@@ -16,6 +16,8 @@ multiprocess = {version = "^0.70.12"}
 urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
 urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git"}
 do-mpc = "^4.3.2"
+pyvis = "^0.1.9"
+mpld3 = "^0.5.7"
 
 [tool.poetry.extras]
 

@@ -4,11 +4,16 @@ from robot_brain.graphs.Graph import Graph
 class HGraph(Graph):
 
     def __init__(self):
-        Graph.__init__(self)
-        self.nodes = None
-        self.edges = None
+        super().__init__()
+        self.target_node = None
 
-    def getNodes(self):
-        print("must return all the nodes of the hypothesis graph")
+    def addNode(self, node):
+        # todo: check this node is a valid objectSetNode
+        self.nodes.append(node)
+
+    def addTargetNode(self, node):
+        # todo: check this node is a valid objectSetNode
+        self.addNode(node)
+        self.target_node = node
 
 

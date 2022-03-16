@@ -1,7 +1,7 @@
 import numpy as np
 import gym
-import urdfenvs.boxerRobot
-from urdfenvs.sensors.obstacleSensor import ObstacleSensor
+import urdfenvs.boxer_robot
+from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 
@@ -21,7 +21,7 @@ def main():
     n_steps = 1000
     ob = env.reset()
     sensor = ObstacleSensor()
-    env.addSensor(sensor)
+    env.add_sensor(sensor)
 
     # setup semantic brain
     brain = RBrain()
@@ -45,7 +45,7 @@ def main():
         action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-
+        print(ob)
         brain.update(ob)
 
 

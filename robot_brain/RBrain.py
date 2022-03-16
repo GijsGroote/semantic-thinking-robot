@@ -68,10 +68,11 @@ class RBrain:
         :return:
         """
         # update robot
-        self.robot.state.pos = ob["obstacleSensor"]["0"]["x"]
-        self.robot.state.vel = ob["obstacleSensor"]["0"]["xdot"]
-        self.robot.state.ang_p = ob["obstacleSensor"]["0"]["theta"]
-        self.robot.state.ang_v = ob["obstacleSensor"]["0"]["thetadot"]
+        self.robot.state.pos = ob["x"]
+        self.robot.state.vel = ob["xdot"]
+        # todo: update angular position and velocity
+        # self.robot.state.ang_p = ob["obstacleSensor"]["0"]["theta"]
+        # self.robot.state.ang_v = ob["obstacleSensor"]["0"]["thetadot"]
 
 
         # update objects

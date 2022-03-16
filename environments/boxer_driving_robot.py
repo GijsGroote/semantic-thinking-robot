@@ -1,12 +1,12 @@
 import numpy as np
 import gym
-import urdfenvs.boxerRobot
+import urdfenvs.boxer_robot
 from multiprocessing import Process, Pipe
-from urdfenvs.keyboardInput.keyboard_input_responder import Responder
+from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
-from urdfenvs.sensors.obstacleSensor import ObstacleSensor
+from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 
 
 user_input_mode = True
@@ -23,10 +23,10 @@ def main(conn=None):
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
 
     ob = env.reset()
-    env.setWalls(limits=[[-5, -5], [3, 2]])
+    env.set_walls(limits=[[-5, -5], [3, 2]])
 
     sensor = ObstacleSensor()
-    env.addSensor(sensor)
+    env.add_sensor(sensor)
 
     defaultAction = np.array([0.0, 0.0])
     n_steps = 1000
