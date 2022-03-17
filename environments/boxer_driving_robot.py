@@ -9,7 +9,7 @@ from robot_brain.RBrain import State
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 
 
-user_input_mode = True
+user_input_mode = False
 
 def main(conn=None):
     """

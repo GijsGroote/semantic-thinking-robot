@@ -38,7 +38,7 @@ class Graph:
         net.show("../../dashboard/graph.html")
 
 
-        print("which method of visualize do you want man??@??!")
+
 
 
 #     todo: all the things a graph can do

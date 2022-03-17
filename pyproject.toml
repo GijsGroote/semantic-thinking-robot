@@ -21,6 +21,7 @@ mpld3 = "^0.5.7"
 dash = "^2.3.0"
 plotly = "^5.6.0"
 pandas = "^1.4.1"
+pyorbital = "^1.7.1"
 
 [tool.poetry.extras]
 

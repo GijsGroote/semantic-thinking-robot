@@ -8,6 +8,10 @@ import numpy as np
 import time
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
+from robot_brain.graphs.HGraph import HGraph
+from robot_brain.graphs.ObjectSetNode import ObjectSetNode
+from robot_brain.graphs.Edge import Edge
+
 
 
 # is_doing states
@@ -37,6 +41,8 @@ class RBrain:
         self.defaultAction = None
         self.dt = None
         self.targetState = None
+        self.hgraph = None
+        self.kgraph = None
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
@@ -61,7 +67,6 @@ class RBrain:
 
         if "defaultAction" in stat_world_info.keys():
             self.defaultAction = stat_world_info["defaultAction"]
-
 
 
 
@@ -99,6 +104,8 @@ class RBrain:
                 self.objects[key].state.ang_p = val["theta"]
                 self.objects[key].state.ang_v = val["thetadot"]
                 # acceleration is not observed
+        if True:
+            self.hgraph.visualise(self.hgraph)
 
     def respond(self):
         """ Respond to request with the latest action """
@@ -125,20 +132,31 @@ class RBrain:
         else:
             raise Exception("Unable to respond")
 
+
+
         
     def calculate_plan(self):
         # set brain state to thinking
-        print("Can I think of something...")
-        self.is_doing = IS_THINKING
 
+        if self.hgraph is None:
+            # create hgraph
+            hgraph = HGraph
+            targetNode = ObjectSetNode(999, self.targetState)
+            hgraph.addTargetNode(hgraph, targetNode)
+            self.hgraph = hgraph
+        print(self.hgraph.nodes)
+        # self.is_doing = IS_THINKING
+        # currentNode = ObjectSetNode(1, self.robot.state)
+        # self.hgraph.addNode(self.hgraph, currentNode)
 
         print("yes I got it, MPC! executing plan")
-
+        self.controller = Mpc()
         dyn_model = Dynamics()
         dyn_model.set_boxer_model()
-
-        self.controller = Mpc()
+        # todo: this dyn model is unused
         self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
+        mpc_edge = Edge(1, 999, "mpc", self.controller)
+        self.hgraph.addEdge(self.hgraph, mpc_edge)
 
         self.is_doing = IS_EXECUTING
 
