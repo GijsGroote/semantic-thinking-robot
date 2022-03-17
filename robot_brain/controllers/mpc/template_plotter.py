@@ -29,7 +29,7 @@ class Plotter():
         self.mpc_graphics = do_mpc.graphics.Graphics(mpc.data)
         self.sim_graphics = do_mpc.graphics.Graphics(simulator.data)
 
-        self.fig, ax = plt.subplots(2, figsize=(10, 6))
+        self.fig, ax = plt.subplots(2, figsize=(6, 4))
 
         self.fig.align_ylabels()
 
@@ -74,10 +74,10 @@ class Plotter():
         plt.pause(1e-9)
 
 
-        html_str = mpld3.fig_to_html(self.fig)
-        Html_file = open("../robot_brain/dashboard/mpc.html", "w")
-        Html_file.write(html_str)
-        Html_file.close()
+        # html_str = mpld3.fig_to_html(self.fig)
+        # Html_file = open("../dashboard/mpc.html", "w")
+        # Html_file.write(html_str)
+        # Html_file.close()
 
 
 

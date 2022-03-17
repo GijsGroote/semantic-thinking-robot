@@ -5,6 +5,7 @@ from robot_brain.controllers.mpc.template_mpc import template_mpc
 from robot_brain.controllers.mpc.template_simulator import template_simulator
 from robot_brain.controllers.mpc.template_estimator import template_estimator
 from robot_brain.controllers.mpc.template_plotter import Plotter
+from robot_brain.global_variables import *
 
 class Mpc:
     def __init__(self):

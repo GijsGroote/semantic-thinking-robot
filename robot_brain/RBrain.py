@@ -7,6 +7,8 @@ from robot_brain.Object import Object
 import numpy as np
 import time
 from robot_brain.controllers.mpc.Mpc import Mpc
+from robot_brain.global_variables import *
+
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
@@ -36,6 +38,13 @@ class RBrain:
         self.dt = None
         self.targetState = None
 
+        # update all plots in webpage
+        if CREATE_SERVER_DASHBOARD:
+            from dashboard.dashboard import app
+            from dashboard.dashboard import startDashServer
+            startDashServer(app)
+
+
     def setup(self, stat_world_info, ob):
         # create robot
         robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]))
@@ -53,12 +62,19 @@ class RBrain:
         if "defaultAction" in stat_world_info.keys():
             self.defaultAction = stat_world_info["defaultAction"]
 
+
+
+
+
+
         # todo: this hardcoded mumbo jumbo should be coming from the hypothesis graphs
         if "controller" in stat_world_info.keys():
             if stat_world_info["controller"] == "mpc":
                 # set idea for a mpc controller
                 self.dt = stat_world_info["dt"]
                 self.targetState = stat_world_info["targetState"]
+
+
 
 
     def update(self, ob):

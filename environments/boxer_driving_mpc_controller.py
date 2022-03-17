@@ -23,12 +23,12 @@ def main():
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
 
-    # setup semantic brain
-    brain = RBrain()
+
 
     ob, reward, done, info = env.step(defaultAction)
 
-    targetState = State(pos=target_pos, ang_p=target_ang_p)  # drive to (0,0,0,0,0)
+    targetState = State(pos=target_pos, ang_p=target_ang_p)
+    brain = RBrain()
     # do the regular stuff, like begin the simulation, something like that
     brain.setup({
         "dt": dt,
@@ -45,8 +45,11 @@ def main():
         action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-        print(ob)
+
         brain.update(ob)
+        # print(ob)
+
+
 
 
 if __name__ == '__main__':
