@@ -1,10 +1,8 @@
 class Object:
-    def __init__(self, name, state, width=0, height=0, dynamics=None):
-        self._name = name
-        self._state = state
-        self._width = width
-        self._height = height
-        self._dynamics = dynamics
+    def __init__(self, name, state, urfd):
+        self.name = name
+        self.state = state
+        self.urdf = urfd
 
     # name getter
     @property
@@ -13,8 +11,8 @@ class Object:
 
     # name setter
     @name.setter
-    def name(self, name):
-        self._name = name
+    def name(self, val):
+        self._name = val
 
     # state getter
     @property
@@ -24,37 +22,16 @@ class Object:
     # state setter
     @state.setter
     def state(self, stat):
-        if True:  # TODO: input sanitization
-            self._state = stat
+        # TODO: input sanitization
+        self._state = stat
 
     @property
-    def width(self):
-        return self._width
+    def urdf(self):
+        return self._urdf
 
-    # width setter
-    @width.setter
-    def width(self, value):
-        if True:  # TODO: input sanitization
-            self._width = value
+    # urdf setter
+    @urdf.setter
+    def urdf(self, val):
+        # TODO: input sanitization
+        self._urdf = val
 
-    # height getter
-    @property
-    def height(self):
-        return self._height
-
-    # height setter
-    @height.setter
-    def height(self, value):
-        if True:  # TODO: input sanitization
-            self._height = value
-
-    # dynamics getter
-    @property
-    def dynamics(self):
-        return self._dynamics
-
-    # dynamics setter
-    @dynamics.setter
-    def dynamics(self, dyn):
-        if True:  # TODO: input sanitization
-            self._dynamics = dyn

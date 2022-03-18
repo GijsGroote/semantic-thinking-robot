@@ -1,26 +1,12 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from pyvis.network import Network
 
 
-class Graph:
+class Graph(ABC):
 
     def __init__(self):
-        self.nodes = []
-        self.edges = []
-
-    def getNodes(self):
-        return self.nodes
-
-    @abstractmethod
-    def addNode(self):
-        pass
-
-    def getEdges(self):
-        return self.edges
-
-    def addEdge(self, edge):
-        self.edges.append(edge)
-
+        self._nodes = []
+        self._edges = []
 
     def visualise(self):
         # make this function such that it updates if it is already present
@@ -37,8 +23,19 @@ class Graph:
 
         net.show("../../dashboard/graph.html")
 
+    @property
+    def nodes(self):
+        return self._nodes
 
+    @abstractmethod
+    def addNode(self, val):
+        pass
 
+    @property
+    def edges(self):
+        return self._edges
 
+    def addEdge(self, val):
+        # todo: input sanitizition
+        self.edges.append(val)
 
-#     todo: all the things a graph can do

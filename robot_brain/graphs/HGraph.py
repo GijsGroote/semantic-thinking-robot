@@ -1,44 +1,31 @@
-# from robot_brain.graphs.Graph import Graph
+from robot_brain.graphs.Graph import Graph
 from pyvis.network import Network
 import numpy as np
 
 
-class HGraph:
+class HGraph(Graph):
 
     def __init__(self):
-        self.nodes = []
-        self.edges = []
+        super().__init__()
         self.target_node = None
 
     def addNode(self, node):
         # todo: check this node is a valid objectSetNode
-        self.nodes = node
-
-    def addEdge(self, edge):
-        self.edges = edge
+        # is the node not already in the list??
+        self.nodes.append(node)
 
     def addTargetNode(self, node):
         # todo: check this node is a valid objectSetNode
 
-        self.addNode(self, node)
+        self.addNode(node)
         self.target_node = node
 
-    def getNodes(self):
-        return self.nodes
+    @property
+    def target_node(self):
+        return self._target_node
 
-    def visualise(self):
-        # make this function such that it updates if it is already present
-        net = Network()
-
-        # add nodes
-        for node in self.getNodes(self):
-            print(node.iden)
-            net.add_node(node.iden, label=str(np.random(0, 10))+node.iden)
-
-        # add edges
-        for edge in self.getEdges(self):
-            net.add_edge(edge.source, edge.to)
-
-        net.show("../../dashboard/graph.html")
-
+    @target_node.setter
+    def target_node(self, val):
+        # input sanitization
+        self._target_node = val
 

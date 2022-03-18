@@ -1,15 +1,15 @@
-from abc import abstractmethod
-
-class Node:
-
-    def __init__(self, iden):
-        self.iden = iden    # identifier
-        self.P = 0      # todo, condition set
-        # self.state = state
-
-    # @abstractmethod
-    # def getNodes(self):
-    #     pass
+from abc import ABC, abstractmethod
 
 
+class Node(ABC):
+    """
+    Abstract class for Node
+    """
 
+    def __init__(self, id, P):
+        self.id = id  # identifier
+        self.P = P  # todo, create condition set
+
+    @abstractmethod
+    def toString(self):
+        pass
