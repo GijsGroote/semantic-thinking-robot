@@ -8,5 +8,6 @@ class KGraph(Graph):
         print("ha a knowledge graphs yo")
 
 
-    def addNode(self):
-        print("must return Nodes, from which configuration set would you like to have those?")
+    def addNode(self, node):
+        # todo: input sanitization
+        self.nodes.append(node)

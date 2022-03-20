@@ -18,13 +18,42 @@ import unittest
 class MyTestCase(unittest.TestCase):
     def test_isInstance(self):
         node1 = ObjectSetNode(2, "P", [])
-        graph = Graph()
         hgraph = HGraph()
         kgraph = KGraph()
 
         self.assertIsInstance(node1, Node)
-        self.assertIsInstance(graph, Graph)
         self.assertIsInstance(hgraph, HGraph)
         self.assertIsInstance(hgraph, Graph)
         self.assertIsInstance(kgraph, KGraph)
-        # self.assertIsInstance(kgraph, Graph)
+        self.assertIsInstance(kgraph, Graph)
+
+    def test_adding_nodes(self):
+        node1 = ObjectSetNode(1, "P", [])
+        node2 = ObjectSetNode(2, "P", [])
+        node3 = ObjectSetNode(3, "P", [])
+
+        hgraph = HGraph()
+        kgraph = KGraph()
+
+        hgraph.addNode(node1)
+        hgraph.addNode(node2)
+        hgraph.addNode(node3)
+        kgraph.addNode(node1)
+        kgraph.addNode(node2)
+        kgraph.addNode(node3)
+
+        self.assertEqual(len(hgraph.nodes), 3)
+        self.assertEqual(len(kgraph.nodes), 3)
+
+    def test_allowed_node_types(self):
+        hgraph = HGraph()
+        kgraph = KGraph()
+
+        # ObjectsetNode and ConfSetNode are allowed as target node in hgraph
+        hgraph.addTargetNode(ObjectSetNode(2, "P", []))
+        hgraph.addTargetNode(ConfSetNode(2, "P", []))
+
+        with self.assertRaises(AssertionError):
+            hgraph.addTargetNode(ChangeOfConfSetNode(2, "P", []))
+
+        # todo there are additional nodes which are or are not allowed

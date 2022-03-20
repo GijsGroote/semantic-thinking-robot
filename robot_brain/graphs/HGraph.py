@@ -1,4 +1,6 @@
 from robot_brain.graphs.Graph import Graph
+from robot_brain.graphs.ConfSetNode import ConfSetNode
+from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from pyvis.network import Network
 import numpy as np
 
@@ -10,12 +12,13 @@ class HGraph(Graph):
         self.target_node = None
 
     def addNode(self, node):
-        # todo: check this node is a valid objectSetNode
-        # is the node not already in the list??
+        assert isinstance(node, ObjectSetNode) or isinstance(node, ConfSetNode)
         self.nodes.append(node)
 
     def addTargetNode(self, node):
         # todo: check this node is a valid objectSetNode
+        print(isinstance(node, ))
+        assert isinstance(node, ConfSetNode)
 
         self.addNode(node)
         self.target_node = node

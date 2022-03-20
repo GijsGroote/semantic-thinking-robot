@@ -10,6 +10,15 @@ class Node(ABC):
         self.id = id  # identifier
         self.P = P  # todo, create condition set
 
+
     @abstractmethod
     def toString(self):
-        pass
+        return "id: {}, object set: todo".format(self.id)
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, val):
+        self._id = val
