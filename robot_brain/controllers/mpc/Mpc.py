@@ -18,6 +18,8 @@ class Mpc:
         self.plotter = None
         self.y_next = np.array([0, 0, 0])
         self.plot_results = None
+        self.dt = None
+        self.dt_counter = None
 
 
 
@@ -28,18 +30,18 @@ class Mpc:
         self.model = template_model()
         self.mpc = template_mpc(self.model, targetState, dt, self.plot_results)
         self.simulator = template_simulator(self.model, dt)
-        # template estiamtor needs some more work yo
-        # mhe = template_estimator(model, dt)
 
-        #  for now this please
-        # estimator = do_mpc.estimator.StateFeedback(self.model)
+        self.dt = dt
+
         x0 = np.array([currentState.pos[0], currentState.pos[0], currentState.ang_p[2]])
         self.mpc.x0 = x0
         self.simulator.x0 = x0
 
         self.mpc.set_initial_guess()
 
+
         if self.plot_results:
+            self.dt_counter = 0
             self.plotter = Plotter()
             self.plotter.setup(self.mpc, self.simulator)
 
@@ -50,7 +52,12 @@ class Mpc:
         self.y_next = np.reshape(self.simulator.make_step(u0), (3,))
 
         if self.plot_results:
-            self.plotter.update()
+
+            self.dt_counter = self.dt_counter + 1
+
+            if self.dt_counter % (1/self.dt) == 0:
+                self.plotter.update(self.dt, self.dt_counter*self.dt)
+
 
 
         return u0

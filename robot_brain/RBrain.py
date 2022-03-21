@@ -13,7 +13,6 @@ from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.Edge import Edge
 import plotly.express as px
-from robot_brain.global_variables import figures
 import pandas as pd
 pd.options.plotting.backend = "plotly"
 
