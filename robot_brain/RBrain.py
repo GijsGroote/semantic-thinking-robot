@@ -9,9 +9,13 @@ import time
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
 from robot_brain.graphs.HGraph import HGraph
+from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.Edge import Edge
-
+import plotly.express as px
+from robot_brain.global_variables import figures
+import pandas as pd
+pd.options.plotting.backend = "plotly"
 
 
 # is_doing states
@@ -46,14 +50,14 @@ class RBrain:
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            from dashboard.dashboard import app
-            from dashboard.dashboard import startDashServer
-            startDashServer(app)
+            from dashboard.dashboard import Dashboard
 
+            db = Dashboard()
+            db.startDashServer()
 
     def setup(self, stat_world_info, ob):
         # create robot
-        robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]))
+        robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]), "urdf")
         self.robot = robot
         self.objects["robot"] = robot
 
@@ -69,17 +73,8 @@ class RBrain:
             self.defaultAction = stat_world_info["defaultAction"]
 
 
-
-
-
-        # todo: this hardcoded mumbo jumbo should be coming from the hypothesis graphs
-        if "controller" in stat_world_info.keys():
-            if stat_world_info["controller"] == "mpc":
-                # set idea for a mpc controller
-                self.dt = stat_world_info["dt"]
-                self.targetState = stat_world_info["targetState"]
-
-
+        self.dt = stat_world_info["dt"]
+        self.targetState = stat_world_info["targetState"]
 
 
     def update(self, ob):
@@ -104,8 +99,16 @@ class RBrain:
                 self.objects[key].state.ang_p = val["theta"]
                 self.objects[key].state.ang_v = val["thetadot"]
                 # acceleration is not observed
-        if True:
-            self.hgraph.visualise(self.hgraph)
+
+        # if CREATE_SERVER_DASHBOARD :
+            # self.hgraph.visualise()
+
+        b = [1+np.random.rand(), 2+np.random.rand(), 1+np.random.rand()]
+
+        dataframe = pd.DataFrame(dict(a=[1, 3, 2], b=b))
+        dataframe.to_csv('../dashboard/data.csv')
+
+
 
     def respond(self):
         """ Respond to request with the latest action """
@@ -139,24 +142,21 @@ class RBrain:
         # set brain state to thinking
 
         if self.hgraph is None:
-            # create hgraph
-            hgraph = HGraph
-            targetNode = ObjectSetNode(999, self.targetState)
-            hgraph.addTargetNode(hgraph, targetNode)
+            # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
+            hgraph = HGraph()
+            targetNode = ConfSetNode(999, "P", [])
+            hgraph.addNode(targetNode)
+            currentNode = ObjectSetNode(1, "P", [])
+            hgraph.addNode(currentNode)
             self.hgraph = hgraph
-        print(self.hgraph.nodes)
-        # self.is_doing = IS_THINKING
-        # currentNode = ObjectSetNode(1, self.robot.state)
-        # self.hgraph.addNode(self.hgraph, currentNode)
-
-        print("yes I got it, MPC! executing plan")
-        self.controller = Mpc()
-        dyn_model = Dynamics()
-        dyn_model.set_boxer_model()
-        # todo: this dyn model is unused
-        self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
-        mpc_edge = Edge(1, 999, "mpc", self.controller)
-        self.hgraph.addEdge(self.hgraph, mpc_edge)
+            print("yes I got it, MPC! executing plan")
+            self.controller = Mpc()
+            dyn_model = Dynamics()
+            dyn_model.set_boxer_model()
+            # todo: this dyn model is unused
+            self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
+            mpc_edge = Edge("15", 1, 999, "mpc", self.controller)
+            self.hgraph.addEdge(mpc_edge)
 
         self.is_doing = IS_EXECUTING
 

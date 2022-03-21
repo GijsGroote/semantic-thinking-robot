@@ -17,9 +17,8 @@ class HGraph(Graph):
 
     def addTargetNode(self, node):
         # todo: check this node is a valid objectSetNode
-        print(isinstance(node, ))
-        assert isinstance(node, ConfSetNode)
 
+        assert isinstance(node, ConfSetNode)
         self.addNode(node)
         self.target_node = node
 

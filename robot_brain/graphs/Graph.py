@@ -15,14 +15,13 @@ class Graph(ABC):
 
         # add nodes
         for node in self.nodes:
-            print(node.iden)
-            net.add_node(node.iden, label=node.iden)
+            net.add_node(node.id, label=node.id)
 
         # add edges
         for edge in self.edges:
             net.add_edge(edge.source, edge.to)
 
-        net.show("../../dashboard/graph.html")
+        net.show("../dashboard/graph.html")
 
     @property
     def nodes(self):
