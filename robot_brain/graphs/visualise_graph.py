@@ -8,7 +8,6 @@ from robot_brain.graphs.Edge import Edge
 def main():
 
     hgraph = HGraph()
-    print(type(hgraph))
     hgraph.addTargetNode(ConfSetNode(2, "P", []))
     hgraph.addNode(ConfSetNode(3, "P", []))
     hgraph.addNode(ConfSetNode(7, "P", []))

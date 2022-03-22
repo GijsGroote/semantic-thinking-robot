@@ -3,6 +3,7 @@ from dash.dependencies import Input, Output
 import multiprocessing
 import pandas as pd
 from os.path import exists
+import dash_dangerously_set_inner_html
 
 pd.options.plotting.backend = "plotly"
 from plotly.subplots import make_subplots
@@ -13,14 +14,42 @@ from pathlib import Path
 import pyarrow.feather as feather
 from numpy import dstack
 
+from robot_brain.graphs.Edge import Edge
+
+from robot_brain.graphs.ConfSetNode import ConfSetNode
+
+from robot_brain.graphs.ObjectSetNode import ObjectSetNode
+from robot_brain.graphs.HGraph import HGraph
+from pyvis.network import Network
+
+net = Network()
+hgraph = HGraph()
+hgraph.addTargetNode(ConfSetNode(2, "P", []))
+hgraph.addNode(ConfSetNode(3, "P", []))
+hgraph.addNode(ConfSetNode(7, "P", []))
+hgraph.addNode(ConfSetNode(1, "P", []))
+hgraph.addNode(ObjectSetNode(5, "P", []))
+hgraph.addEdge(Edge("id", 2, 3, "verb", "controller"))
+hgraph.addEdge(Edge("id", 7, 1, "verb", "controller"))
+hgraph.addEdge(Edge("id", 3, 3, "verb", "controller"))
+hgraph.addEdge(Edge("id", 7, 5, "verb", "controller"))
+# add nodes
+for node in hgraph.nodes:
+    net.add_node(node.id, label=node.id)
+
+# add edges
+for edge in hgraph.edges:
+    net.add_edge(edge.source, edge.to)
+
+net.show("name.html")
 
 class Dashboard:
 
     def __init__(self):
-        self.app = Dash(__name__, title="DashBoard", update_title="DashBoard")
+        self.app = Dash(__name__, title="DashBoard", update_title=None)
         self.no_data_found = {
             "layout": {
-                "paper_bgcolor": "#e5ecf6",
+                "paper_bgcolor": "rgb(26, 26, 26)",
                 "xaxis": {
                     "visible": False
                 },
@@ -45,17 +74,16 @@ class Dashboard:
             html.Div([
                 html.Div([
                     html.H4('HGraph'),
-                    dcc.Graph(id='live-update-hgraph', animate=False),
-                    dcc.Interval(
-                        id='hgraph-interval-component',
-                        interval=1 * 1000,  # in milliseconds
-                        n_intervals=0
-                    )
+                    html.Iframe(srcDoc=net.html, className="graph")
+                    # dcc.Graph(id='live-update-hgraph', animate=False),
+                    # dcc.Interval(
+                    #     id='hgraph-interval-component',
+                    #     interval=1 * 1000,  # in milliseconds
+                    #     n_intervals=0
+                    # )
                 ], className="item"),
-                html.Div(className="item-spacer"),
                 html.Div([
                     html.H4('Controller Live Feed'),
-                    html.Div(id='live-update-text'),
                     dcc.Graph(id='live-update-controller-graph', animate=True),
                     dcc.Interval(
                         id='controller-interval-component',
@@ -67,7 +95,6 @@ class Dashboard:
                     html.H4('KGraph, todo'),
                     dcc.Graph(figure=self.no_data_found)
                 ], className="item"),
-                html.Div(className="item-spacer"),
                 html.Div([
                     html.H4('extra plot space'),
                     dcc.Graph(figure=self.no_data_found)
@@ -89,13 +116,6 @@ class Dashboard:
             else:
                 return self.no_data_found
 
-        @self.app.callback(Output('live-update-text', 'children'),
-                           Input('interval-component', 'n_intervals'))
-        def update_metrics(n):
-            return [
-                html.Span('n: {0:.2f}'.format(n))
-            ]
-
         @self.app.callback(Output('live-update-controller-graph', 'figure'),
                            Input('controller-interval-component', 'n_intervals'))
         def update_controller_graph_live(n):
@@ -113,12 +133,12 @@ class Dashboard:
                 fig.append_trace(go.Scatter(
                     x=df["time"],
                     y=df["x"],
-                    name="x position"
+                    name="x",
                 ), row=1, col=1)
                 fig.append_trace(go.Scatter(
                     x=df["time"],
                     y=df["y"],
-                    name="y position"
+                    name="y"
                 ), row=1, col=1)
                 fig.append_trace(go.Scatter(
                     x=df["time"],
@@ -138,10 +158,26 @@ class Dashboard:
                 ), row=2, col=1)
                 fig.update_layout(paper_bgcolor="#e5ecf6")
 
-                max_bound = max(15, df["time"][df.index[-1]] + 1)
-                fig.update_xaxes(range=[df["time"][0], max_bound])
+                # scale the axis
+                fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
+                                 row=1, col=1)
+
+                fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
+                                 title_text="Time [sec]",
+                                 row=2, col=1)
+
                 fig.update_yaxes(range=[dstack((df["x"], df["y"], df["theta"])).max() + 0.2,
-                                        dstack((df["x"], df["y"], df["theta"])).min() - 0.2])
+                                        dstack((df["x"], df["y"], df["theta"])).min() - 0.2],
+                                 title_text="position [-]",
+                                 row=1, col=1)
+
+                fig.update_yaxes(range=[dstack((df["u1"], df["u2"])).max() + 0.2,
+                                        dstack((df["u1"], df["u2"])).min() - 0.2],
+                                 title_text="input [-]",
+                                 row=2, col=1)
+
+
+                fig.update_layout({"title": {"text": "MPC controller"}})
 
                 return fig
             else:

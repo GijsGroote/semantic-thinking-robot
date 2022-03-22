@@ -152,6 +152,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "dash-dangerously-set-inner-html"
+version = "0.0.2"
+description = "A dash component for specifying raw HTML"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "dash-html-components"
 version = "2.0.0"
 description = "Vanilla HTML components for Dash"
@@ -1140,7 +1148,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "c64ad03df44050273c894553dc37d32c8a55cde7e311fb28e2b79bbf1b128e56"
+content-hash = "ecb5b5dcb5caa718846086ac32a1be632ec219689478b17903b7c073e4f9b5d7"
 
 [metadata.files]
 appnope = [
@@ -1298,6 +1306,9 @@ dash = [
 dash-core-components = [
     {file = "dash_core_components-2.0.0-py3-none-any.whl", hash = "sha256:52b8e8cce13b18d0802ee3acbc5e888cb1248a04968f962d63d070400af2e346"},
     {file = "dash_core_components-2.0.0.tar.gz", hash = "sha256:c6733874af975e552f95a1398a16c2ee7df14ce43fa60bb3718a3c6e0b63ffee"},
+]
+dash-dangerously-set-inner-html = [
+    {file = "dash_dangerously_set_inner_html-0.0.2.tar.gz", hash = "sha256:d7fe990755851fc4d2e22c8f10b7aea055cabf380bbceefba589779b269fea64"},
 ]
 dash-html-components = [
     {file = "dash_html_components-2.0.0-py3-none-any.whl", hash = "sha256:b42cc903713c9706af03b3f2548bda4be7307a7cf89b7d6eae3da872717d1b63"},
