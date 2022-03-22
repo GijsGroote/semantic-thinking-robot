@@ -58,8 +58,6 @@ class Mpc:
             if self.dt_counter % (1/self.dt) == 0:
                 self.plotter.update(self.dt, self.dt_counter*self.dt)
 
-
-
         return u0
 
 

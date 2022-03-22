@@ -1,0 +1,38 @@
+.container{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+.item {
+    color: #aaaaaa;
+    background-color: transparent;
+    flex: 49.5%;
+    max-width: 49.5%;
+}
+
+.item-spacer {
+    flex: 1%;
+    max-width: 1%;
+    color: transparent;
+}
+
+body {
+    font-family: Sans-Serif, "Deja Vu Sans Mono";
+    background-color: rgb(25,25,25);
+}
+
+/*@media (max-width: 800px) {*/
+/*    .item {*/
+/*        flex: 50%;*/
+/*        max-width: 50%;*/
+/*    }*/
+/*}*/
+
+
+/*@media (max-width: 600px) {*/
+/*    .item {*/
+/*        flex: 100%;*/
+/*        max-width: 100%;*/
+/*    }*/
+/*}*/

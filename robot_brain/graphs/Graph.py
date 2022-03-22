@@ -21,7 +21,7 @@ class Graph(ABC):
         for edge in self.edges:
             net.add_edge(edge.source, edge.to)
 
-        net.show("../dashboard/graph.html")
+        net.show("name.html")
 
     @property
     def nodes(self):

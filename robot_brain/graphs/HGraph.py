@@ -1,4 +1,5 @@
 from robot_brain.graphs.Graph import Graph
+from robot_brain.graphs.Node import Node
 from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from pyvis.network import Network
@@ -12,15 +13,16 @@ class HGraph(Graph):
         self.target_node = None
 
     def addNode(self, node):
-        assert isinstance(node, ObjectSetNode) or isinstance(node, ConfSetNode)
+        assert isinstance(node, Node) or isinstance(node, ConfSetNode) # this should be a Objectnode not Node
         self.nodes.append(node)
 
-    def addTargetNode(self, node):
+    def addTargetNode(self, nodee):
+        print(type(nodee))
         # todo: check this node is a valid objectSetNode
-
-        assert isinstance(node, ConfSetNode)
-        self.addNode(node)
-        self.target_node = node
+        print(isinstance(nodee, ObjectSetNode))
+        assert isinstance(nodee, Node)  # this should be ConfsetNote, but somehow stuff is weird
+        self.addNode(nodee)
+        self.target_node = nodee
 
     @property
     def target_node(self):
