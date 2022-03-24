@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import pyarrow.feather as feather
 
 
+
 class Plotter():
 
     def __init__(self):
@@ -58,7 +59,4 @@ class Plotter():
             df["time"] = np.arange(df.index[0], current_time, dt)
 
 
-
-
-
-        feather.write_feather(df, '../dashboard/mpc_data.feather')
+        feather.write_feather(df, '../robot_brain/dashboard/data/mpc_data.feather')

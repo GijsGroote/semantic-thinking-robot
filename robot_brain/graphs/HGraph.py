@@ -16,13 +16,13 @@ class HGraph(Graph):
         assert isinstance(node, Node) or isinstance(node, ConfSetNode) # this should be a Objectnode not Node
         self.nodes.append(node)
 
-    def addTargetNode(self, nodee):
-        print(type(nodee))
-        # todo: check this node is a valid objectSetNode
-        print(isinstance(nodee, ObjectSetNode))
-        assert isinstance(nodee, Node)  # this should be ConfsetNote, but somehow stuff is weird
-        self.addNode(nodee)
-        self.target_node = nodee
+    def addTargetNode(self, node):
+        # print(type(nodee))
+        # # todo: check this node is a valid objectSetNode
+        # print(isinstance(nodee, ObjectSetNode))
+        assert isinstance(node, Node)  # this should be ConfsetNote, but somehow stuff is weird
+        self.addNode(node)
+        self.target_node = node
 
     @property
     def target_node(self):

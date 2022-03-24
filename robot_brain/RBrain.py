@@ -5,14 +5,12 @@ from robot_brain.Dynamics import Dynamics
 # from robot_brain.controllers.Mpc_old import Mpc
 from robot_brain.Object import Object
 import numpy as np
-import time
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
 from robot_brain.graphs.HGraph import HGraph
 from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.Edge import Edge
-import plotly.express as px
 import pandas as pd
 pd.options.plotting.backend = "plotly"
 
@@ -49,8 +47,10 @@ class RBrain:
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            from dashboard.dashboard import Dashboard
-
+            # from robot_brain.dashboard.dashboard import Dashboard
+            # db = Dashboard()
+            # db.startDashServer()
+            from robot_brain.dashboard.app import Dashboard
             db = Dashboard()
             db.startDashServer()
 
@@ -99,20 +99,11 @@ class RBrain:
                 self.objects[key].state.ang_v = val["thetadot"]
                 # acceleration is not observed
 
-        # if CREATE_SERVER_DASHBOARD :
-            # self.hgraph.visualise()
-
-        b = [1+np.random.rand(), 2+np.random.rand(), 1+np.random.rand()]
-
-        dataframe = pd.DataFrame(dict(a=[1, 3, 2], b=b))
-        dataframe.to_csv('../dashboard/data.csv')
-
 
 
     def respond(self):
         """ Respond to request with the latest action """
-        # receive request
-        # print(self.robot.state.toString(d=3))
+
 
         if self.is_doing is IS_EXECUTING:
             # send action
