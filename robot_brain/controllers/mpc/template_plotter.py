@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 import numpy as np
 import plotly.graph_objects as go
-
+import os
 import pyarrow.feather as feather
 
 
@@ -50,13 +50,11 @@ class Plotter():
             # df["x_axis"] = np.arange(current_time-15, current_time+15/dt)
             time = np.arange(current_time-15, current_time, dt)
 
-
             # pd.RangeIndex(start=current_time-15, stop=current_time, step=dt)
             df = df.tail(len(time))
             df["time"] = time
         else:
             # df["x_axis"] = df.index
             df["time"] = np.arange(df.index[0], current_time, dt)
-
 
         feather.write_feather(df, '../robot_brain/dashboard/data/mpc_data.feather')

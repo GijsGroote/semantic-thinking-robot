@@ -1,3 +1,8 @@
+/* page and places holders styling */
+body {
+    font-family: Sans-Serif, "Deja Vu Sans Mono";
+    background-color: rgb(25,25,25);
+}
 
 .container{
     display: flex;
@@ -8,18 +13,21 @@ H4 {
     padding-left: 15px;
 }
 
+/* for all data items on the page */
 .item {
-    background-color: darkred;
+    background-color: rgb(148, 148, 148);
     flex: 48%;
     max-width: 48%;
+    max-height: 100%;
     margin: 1%;
+    padding-bottom: -10px;
 }
-.graph {
-    width: 99.5%;
-    height: 87%;
 
+.graph {
+    /*margin: 0px;*/
+    border: none;
+    width: 99.7%;
+    height: 450px;
 }
-body {
-    font-family: Sans-Serif, "Deja Vu Sans Mono";
-    background-color: rgb(25,25,25);
-}
+
+

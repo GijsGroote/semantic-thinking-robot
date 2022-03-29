@@ -50,9 +50,9 @@ class RBrain:
             # from robot_brain.dashboard.dashboard import Dashboard
             # db = Dashboard()
             # db.startDashServer()
-            from robot_brain.dashboard.app import Dashboard
-            db = Dashboard()
-            db.startDashServer()
+            from robot_brain.dashboard.app import startDashServer
+
+            startDashServer()
 
     def setup(self, stat_world_info, ob):
         # create robot

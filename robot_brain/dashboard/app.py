@@ -21,32 +21,11 @@ from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.HGraph import HGraph
 from pyvis.network import Network
 
-net = Network()
-hgraph = HGraph()
-hgraph.addTargetNode(ConfSetNode(2, "P", []))
-hgraph.addNode(ConfSetNode(3, "P", []))
-hgraph.addNode(ConfSetNode(7, "P", []))
-hgraph.addNode(ConfSetNode(1, "P", []))
-hgraph.addNode(ObjectSetNode(5, "P", []))
-hgraph.addEdge(Edge("id", 2, 3, "verb", "controller"))
-hgraph.addEdge(Edge("id", 7, 1, "verb", "controller"))
-hgraph.addEdge(Edge("id", 3, 3, "verb", "controller"))
-hgraph.addEdge(Edge("id", 7, 5, "verb", "controller"))
-# add nodes
-for node in hgraph.nodes:
-    net.add_node(node.id, label=node.id)
-
-# add edges
-for edge in hgraph.edges:
-    net.add_edge(edge.source, edge.to)
-
-# net.show("name.html")
-
 class Dashboard:
 
-    def __init__(self):
-        self.app = Dash(__name__, title="DashBoard", update_title=None)
-        self.no_data_found = {
+    def __init__(self, app):
+        self.app = app
+        self.no_data_found_fig = {
         "layout": {
             "paper_bgcolor": "rgb(26, 26, 26)",
             "xaxis": {
@@ -68,19 +47,48 @@ class Dashboard:
             ]
         }
     }
+        self.no_data_found_html = '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>No Data found</title>
+        </head>
+        <body>
+        <div id="no_data_found_div">
+        No data found
+        </div>
+        
+        <style type="text/css">
+        
+        #no_data_found_div {
+            width: 500px;
+            height: 600px;
+            background-color: orange;
+            border: 1px solid lightgray;
+        }
+       
+        </style>
 
+        
+        </body>
+        </html>
+        '''
 
         self.app.layout = html.Div(children=[
             html.Div([
                 html.Div([
                     html.H4('HGraph'),
-                    html.Iframe(srcDoc=net.html, className="graph")
-                    # dcc.Graph(id='live-update-hgraph', animate=False),
-                    # dcc.Interval(
-                    #     id='hgraph-interval-component',
-                    #     interval=1 * 1000,  # in milliseconds
-                    #     n_intervals=0
-                    # )
+                    html.Iframe(
+                        id="my-output",
+                        srcDoc=self.no_data_found_html,
+                        className="graph"
+                    ),
+                    dcc.Interval(
+                        id='hgraph-interval-component',
+                        interval=1 * 1000,  # in milliseconds
+                        n_intervals=0
+                    )
                 ], className="item"),
                 html.Div([
                     html.H4('Controller Live Feed'),
@@ -93,11 +101,11 @@ class Dashboard:
                 ], className="item"),
                 html.Div([
                     html.H4('KGraph, todo'),
-                    dcc.Graph(figure=self.no_data_found)
+                    dcc.Graph(figure=self.no_data_found_fig)
                 ], className="item"),
                 html.Div([
                     html.H4('extra plot space'),
-                    dcc.Graph(figure=self.no_data_found)
+                    dcc.Graph(figure=self.no_data_found_fig)
                 ], className="item"),
 
             ], className="container")
@@ -105,16 +113,26 @@ class Dashboard:
 
         register_callbacks(self.app)
 
-    def startDashServer(self):
-        def run():
-            self.app.scripts.config.serve_locally = True
-            self.app.run_server(
-                port=8050,
-                debug=False,
-                processes=4,
-                threaded=False
-            )
+def startDashServer():
 
-        # Run on a separate process so that it doesn't block
-        self.app.server_process = multiprocessing.Process(target=run)
-        self.app.server_process.start()
+    # change working directory
+    os.chdir("/home/gijs/Documents/semantic-thinking-robot/environments/")
+
+    # create app
+    app = Dash(__name__, title="DashBoard", update_title=None)
+
+    # create dashboard
+    Dashboard(app)
+
+    def run():
+        app.scripts.config.serve_locally = True
+        app.run_server(
+            port=8050,
+            debug=False,
+            processes=4,
+            threaded=False
+        )
+
+    # Run on a separate process so that it doesn't block
+    app.server_process = multiprocessing.Process(target=run)
+    app.server_process.start()
