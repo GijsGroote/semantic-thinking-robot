@@ -76,7 +76,6 @@ class State:
         except(AttributeError, TypeError, IndexError):
             raise AssertionError("input should be an numpy array")
 
-
     @property
     def ang_p(self):
         return self._ang_p
@@ -84,7 +83,9 @@ class State:
     @ang_p.setter
     def ang_p(self, value):
         try:
-            if value.shape[0] == 3:
+            if isinstance(value, np.float64):
+                self._ang_p = np.array([0, 0, value])
+            elif value.shape[0] == 3:
                 self._ang_p = value
             else:
                 raise Exception("angular position has incorrect dimensions")
@@ -98,7 +99,9 @@ class State:
     @ang_v.setter
     def ang_v(self, value):
         try:
-            if value.shape[0] == 3:
+            if isinstance(value, np.float64):
+                self._ang_v = np.array([0, 0, value])
+            elif value.shape[0] == 3:
                 self._ang_v = value
             else:
                 raise Exception("angular velocity has incorrect dimensions")
@@ -112,7 +115,9 @@ class State:
     @ang_a.setter
     def ang_a(self, value):
         try:
-            if value.shape[0] == 3:
+            if isinstance(value, np.float64):
+                self._ang_a = np.array([0, 0, value])
+            elif value.shape[0] == 3:
                 self._ang_a = value
             else:
                 raise Exception("angular acceleration has incorrect dimensions")

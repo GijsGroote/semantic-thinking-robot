@@ -1,9 +1,9 @@
 import warnings
 
-from robot_brain.State import State
+from robot_brain.planning.State import State
 from robot_brain.Dynamics import Dynamics
 # from robot_brain.controllers.Mpc_old import Mpc
-from robot_brain.Object import Object
+from robot_brain.planning.Object import Object
 import numpy as np
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
@@ -63,7 +63,8 @@ class RBrain:
         # Create objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                s_temp = State(pos=val["x"], vel=val["xdot"], ang_p=val["theta"], ang_v=val["thetadot"])
+                s_temp = State(pos=val["x"][0:2], vel=val["xdot"][0:2], ang_p=val["x"][2], ang_v=val["xdot"][2])
+                print("updating a state of a object ")
                 self.objects[key] = Object(key, s_temp)
 
             self.action = np.array([0.0, 0.0])
@@ -83,27 +84,23 @@ class RBrain:
         :return:
         """
         # update robot
-        self.robot.state.pos = ob["x"]
-        self.robot.state.vel = ob["xdot"]
-        # todo: update angular position and velocity
-        # self.robot.state.ang_p = ob["obstacleSensor"]["0"]["theta"]
-        # self.robot.state.ang_v = ob["obstacleSensor"]["0"]["thetadot"]
-
+        self.robot.state.pos = ob["x"][0:2]
+        self.robot.state.vel = ob["xdot"][0:2]
+        self.robot.state.ang_p = ob["x"][2]
+        self.robot.state.ang_v = ob["xdot"][2]
 
         # update objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                self.objects[key].state.pos = val["x"]
-                self.objects[key].state.vel = val["xdot"]
-                self.objects[key].state.ang_p = val["theta"]
-                self.objects[key].state.ang_v = val["thetadot"]
-                # acceleration is not observed
+                self.objects[key].state.pos = val["x"][0:2]
+                self.objects[key].state.vel = val["xdot"][0:2]
+                self.objects[key].state.ang_p = val["x"][2]
+                self.objects[key].state.ang_v = val["xdot"][2]
 
 
 
     def respond(self):
         """ Respond to request with the latest action """
-
 
         if self.is_doing is IS_EXECUTING:
             # send action
@@ -124,8 +121,6 @@ class RBrain:
 
         else:
             raise Exception("Unable to respond")
-
-
 
         
     def calculate_plan(self):

@@ -1,10 +1,9 @@
-from robot_brain.graphs.Node import Node
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.Object import Object
-from robot_brain.State import State
-from robot_brain.Configuration import Configuration
+from robot_brain.planning.Object import Object
+from robot_brain.planning.State import State
+from robot_brain.planning.Configuration import Configuration
 
 import numpy as np
 

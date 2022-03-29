@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from robot_brain.State import State
+from robot_brain.planning.State import State
 
 
 class MyTestCase(unittest.TestCase):

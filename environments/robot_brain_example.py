@@ -1,6 +1,6 @@
 import numpy as np
 from robot_brain.RBrain import RBrain
-from robot_brain.State import State
+from robot_brain.planning.State import State
 
 user_input_mode = False
 

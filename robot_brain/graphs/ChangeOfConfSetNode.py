@@ -1,5 +1,5 @@
 from robot_brain.graphs.Node import Node
-from robot_brain.Configuration import Configuration
+from robot_brain.planning.Configuration import Configuration
 
 
 class ChangeOfConfSetNode(Node):

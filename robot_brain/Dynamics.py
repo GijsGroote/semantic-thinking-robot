@@ -1,4 +1,3 @@
-from robot_brain.State import State
 import numpy as np
 
 class Dynamics:

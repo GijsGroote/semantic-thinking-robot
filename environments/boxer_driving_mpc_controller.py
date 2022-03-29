@@ -6,7 +6,7 @@ from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 
 target_pos = np.array([1, 1, 0])
-target_ang_p = np.array([0, 0, 0])
+target_ang_p = np.array([0, 0, 1])
 controller = "mpc"
 
 

@@ -58,9 +58,8 @@ def main(conn=None):
             action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-        print(ob['obstacleSensor']["0"]["x"])
-        print(action)
-
+        print(ob['obstacleSensor']['2'])
+        print(ob)
 
     if user_input_mode:
         conn.send({"request_action": False, "kill_child": True})
