@@ -20,57 +20,84 @@ from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.HGraph import HGraph
 from pyvis.network import Network
+import time
+
 
 class Dashboard:
 
     def __init__(self, app):
         self.app = app
-        self.no_data_found_fig = {
-        "layout": {
-            "paper_bgcolor": "rgb(26, 26, 26)",
-            "xaxis": {
-                "visible": False
-            },
-            "yaxis": {
-                "visible": False
-            },
-            "annotations": [
-                {
-                    "text": "No matching data found",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "showarrow": False,
-                    "font": {
-                        "size": 28
+
+        no_data_found_dict = {
+            "layout": {
+                "paper_bgcolor": app.figure_background_color,
+                "plot_bgcolor": app.figure_background_color,
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                },
+                "annotations": [
+                    {
+                        "text": "No matching data found",
+                        "xref": "paper",
+                        "yref": "paper",
+                        "showarrow": False,
+                        "font": {
+                            "size": 25,
+                            "color": "black",
+                        }
                     }
-                }
-            ]
+                ]
+            }
         }
-    }
-        self.no_data_found_html = '''
+
+        self.loading_html = '''
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>No Data found</title>
+            <title> Loading </title>
         </head>
         <body>
         <div id="no_data_found_div">
-        No data found
+        
         </div>
         
         <style type="text/css">
+            body {
+                display: block;
+                margin: 0px;
+                background-color: ''' + app.figure_background_color + ''';
+                height: 450px;
+            }
         
-        #no_data_found_div {
-            width: 500px;
-            height: 600px;
-            background-color: orange;
-            border: 1px solid lightgray;
-        }
-       
+            #no_data_found_div {
+                position: absolute;
+                top: calc(50% - 33px);
+                left: calc(50% - 33px);
+                transform: translate(-50%, -50%);
+                border: 16px solid #f3f3f3; /* Light grey */
+                border-top: 16px solid #3498db; /* Blue */
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 2s linear infinite;
+                margin: auto;
+                background-color: ''' + app.figure_background_color + ''';
+        
+            }
+        
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
         </style>
-
-        
         </body>
         </html>
         '''
@@ -80,8 +107,8 @@ class Dashboard:
                 html.Div([
                     html.H4('HGraph'),
                     html.Iframe(
-                        id="my-output",
-                        srcDoc=self.no_data_found_html,
+                        id="hGraph",
+                        srcDoc=self.loading_html,
                         className="graph"
                     ),
                     dcc.Interval(
@@ -99,13 +126,23 @@ class Dashboard:
                         n_intervals=0
                     )
                 ], className="item"),
+
                 html.Div([
                     html.H4('KGraph, todo'),
-                    dcc.Graph(figure=self.no_data_found_fig)
+                    html.Iframe(
+                        id="kGraph",
+                        srcDoc=self.loading_html,
+                        className="graph"
+                    ),
+                    dcc.Interval(
+                        id='kgraph-interval-component',
+                        interval=1 * 1000,  # in milliseconds
+                        n_intervals=0
+                    )
                 ], className="item"),
                 html.Div([
                     html.H4('extra plot space'),
-                    dcc.Graph(figure=self.no_data_found_fig)
+                    dcc.Graph(figure=no_data_found_dict),
                 ], className="item"),
 
             ], className="container")
@@ -113,13 +150,16 @@ class Dashboard:
 
         register_callbacks(self.app)
 
-def startDashServer():
 
+def startDashServer():
     # change working directory
     os.chdir("/home/gijs/Documents/semantic-thinking-robot/environments/")
 
     # create app
     app = Dash(__name__, title="DashBoard", update_title=None)
+
+    # color styles
+    app.figure_background_color = "rgba(229,236,246,255)"
 
     # create dashboard
     Dashboard(app)
