@@ -16,7 +16,7 @@ h4 {
 
 /* for all data items on the page */
 .item {
-    background-color: rgb(69, 21, 13);
+    background-color: #3498db;
     flex: 48%;
     color: whitesmoke;
     max-width: 48%;
@@ -27,7 +27,7 @@ h4 {
 .graph {
     display: block;
     border: none;
-    height: 89%;
+    height: 450px;
     width: 100%;
 }
 

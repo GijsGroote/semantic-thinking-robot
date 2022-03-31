@@ -45,16 +45,12 @@ class Plotter():
         # todo: metadata so I can tell this data is mpc data
         df = pd.DataFrame(dictionary)
 
+        # only store data which will be plot
         if current_time >= 15:
-
-            # df["x_axis"] = np.arange(current_time-15, current_time+15/dt)
             time = np.arange(current_time-15, current_time, dt)
-
-            # pd.RangeIndex(start=current_time-15, stop=current_time, step=dt)
             df = df.tail(len(time))
             df["time"] = time
         else:
-            # df["x_axis"] = df.index
             df["time"] = np.arange(df.index[0], current_time, dt)
 
         feather.write_feather(df, '../robot_brain/dashboard/data/mpc_data.feather')

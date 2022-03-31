@@ -9,7 +9,7 @@ class Graph(ABC):
         self._nodes = []
         self._edges = []
 
-    def visualise(self):
+    def save_as_html(self):
         # make this function such that it updates if it is already present
         net = Network()
 

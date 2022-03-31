@@ -1,7 +1,16 @@
 import pandas as pd
 
-pd.options.plotting.backend = "plotly"
 
+from robot_brain.global_variables import *
+
+from robot_brain.graphs.ConfSetNode import ConfSetNode
+
+from robot_brain.graphs.ObjectSetNode import ObjectSetNode
+from robot_brain.graphs.HGraph import HGraph
+from pyvis.network import Network
+
+pd.options.plotting.backend = "plotly"
+import os
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from numpy import dstack
@@ -10,8 +19,8 @@ from numpy import dstack
 def create_no_data_found_dict(app):
     return {
         "layout": {
-            "paper_bgcolor": app.figure_background_color,
-            "plot_bgcolor": app.figure_background_color,
+            "paper_bgcolor": FIG_BG_COLOR,
+            "plot_bgcolor": FIG_BG_COLOR,
             "xaxis": {
                 "visible": False
             },
@@ -27,6 +36,7 @@ def create_no_data_found_dict(app):
                     "font": {
                         "size": 25,
                         "color": "black",
+                        "family": "Ubuntu Mono",
                     }
                 }
             ]
@@ -58,7 +68,8 @@ def create_no_data_found_html(app):
                 text-align: center;
                 padding: 200px 0 250px 0;
                 font-size: 25px;
-                background-color: ''' + app.figure_background_color + ''';
+                font-family: Ubuntu Mono;
+                background-color: ''' + FIG_BG_COLOR + ''';
             }
     
             </style>
@@ -66,8 +77,26 @@ def create_no_data_found_html(app):
             </html>
             '''
 
+def create_graph_plot(graph, path):
+    print("graph has been written to disk")
+    net = Network(bgcolor=FIG_BG_COLOR, height="450px")
 
-def create_mpc_plot(app, df):
+    # add nodes
+    for node in graph.nodes:
+        net.add_node(node.id, label="Here you can plot stuff")
+
+    # add edges
+    for edge in graph.edges:
+        net.add_edge(edge.source, edge.to)
+
+    # set a custom style sheet
+    net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
+
+    net.write_html(path)
+
+
+
+def create_mpc_plot(df):
     fig = make_subplots(rows=2, cols=1)
     fig.append_trace(go.Scatter(
         x=df["time"],
@@ -95,7 +124,7 @@ def create_mpc_plot(app, df):
         y=df["u2"],
         name="u2"
     ), row=2, col=1)
-    fig.update_layout(paper_bgcolor=app.figure_background_color, plot_bgcolor=app.figure_background_color)
+    fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
     # scale the axis
     fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],

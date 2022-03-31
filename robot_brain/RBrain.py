@@ -13,11 +13,10 @@ from robot_brain.graphs.ObjectSetNode import ObjectSetNode
 from robot_brain.graphs.Edge import Edge
 import pandas as pd
 pd.options.plotting.backend = "plotly"
-
+from robot_brain.dashboard.figures import create_graph_plot
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
-IS_THINKING = "thinking"
 IS_EXECUTING = "executing"
 
 
@@ -47,11 +46,7 @@ class RBrain:
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            # from robot_brain.dashboard.dashboard import Dashboard
-            # db = Dashboard()
-            # db.startDashServer()
             from robot_brain.dashboard.app import startDashServer
-
             startDashServer()
 
     def setup(self, stat_world_info, ob):
@@ -106,15 +101,33 @@ class RBrain:
             # send action
             if self.controller is not None:
 
+                self.timer = self.timer + 1
+                if self.timer == 75:
+                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+
+                if self.timer == 55:
+                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+
+                if self.timer == 25:
+                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+
+                if self.timer == 105:
+                    currentNode = ObjectSetNode(10, "PPPP", [])
+                    self.hgraph.addNode(currentNode)
+                    mpc_edge = Edge("15", 1, 10, "mpc", self.controller)
+                    self.hgraph.addEdge(mpc_edge)
+                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+
                 return self.controller.respond(self.robot.state)
+
             else:
                 warnings.warn("returning default action")
                 return self.defaultAction
 
-        elif self.is_doing is IS_THINKING:
-            # todo: thinking should not really be a thing any more.
-            # send action
-            return self.defaultAction
+        # elif self.is_doing is IS_THINKING:
+        #     # todo: thinking should not really be a thing any more.
+        #     # send action
+        #     return self.defaultAction
 
         elif self.is_doing is IS_DOING_NOTHING:
             return self.calculate_plan()
@@ -125,7 +138,7 @@ class RBrain:
         
     def calculate_plan(self):
         # set brain state to thinking
-
+        self.timer = 0
         if self.hgraph is None:
             # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
             hgraph = HGraph()
@@ -134,6 +147,11 @@ class RBrain:
             currentNode = ObjectSetNode(1, "P", [])
             hgraph.addNode(currentNode)
             self.hgraph = hgraph
+            # this hgraph is amazing, save it as html
+            create_graph_plot(hgraph, "../robot_brain/dashboard/data/hgraph.html")
+
+
+
             print("yes I got it, MPC! executing plan")
             self.controller = Mpc()
             dyn_model = Dynamics()
