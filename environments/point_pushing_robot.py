@@ -1,10 +1,13 @@
 import numpy as np
 import gym
+import urdfenvs.point_robot_urdf
+import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from multiprocessing import Process, Pipe
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
+from robot_brain.RBrain import State
 from environments.obstacles import sphereObst2
 
 user_input_mode = False
@@ -16,34 +19,34 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    # env = gym.make('pointRobotUrdf-acc-v0', dt=0.05, render=True)
-    env = gym.make('boxer-robot-vel-v0', dt=0.05, render=True)
+    dt = 0.05
+    # env = gym.make('point-robot-urdf-vel-v0', dt=dt, render=True)
+    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
     sensor = ObstacleSensor()
-    env.addSensor(sensor)
+    env.add_sensor(sensor)
     defaultAction = np.array([0.0, 0.0])
     n_steps = 10000
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-    env.setWalls(limits=[[-5, -5], [3, 2]])
-
+    env.set_walls(limits=[[-5, -5], [3, 2]])
 
     # add obstacles
-    env.addObstacle(sphereObst2)
-    env.addObstacle(sphereObst2)
+    env.add_obstacle(sphereObst2)
+    env.add_obstacle(sphereObst2)
 
     ob, reward, done, info = env.step(defaultAction)
+
+    print(ob)
 
     brain = RBrain()
     if not user_input_mode:
         # do the regular stuff, like begin the simulation, something like that
-        brain.setup({"robot":
-            {
-                "pos": pos0,
-                "vel": vel0,
-            }
+        brain.setup({
+            "dt": dt,
+            "defaultAction": defaultAction,
+            "targetState": State(),
         }, ob)
-
 
     action = defaultAction
     for i in range(n_steps):

@@ -78,19 +78,32 @@ def create_no_data_found_html(app):
             '''
 
 def create_graph_plot(graph, path):
-    print("graph has been written to disk")
-    net = Network(bgcolor=FIG_BG_COLOR, height="450px")
+
+    net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
 
     # add nodes
     for node in graph.nodes:
-        net.add_node(node.id, label="Here you can plot stuff")
+        net.add_node(node.id,
+                     title="This is<br>Node "+str(node.id)+"<br> controller: some <br> constains multiple objects<br>Display so much stuff here",
+                     label=node.id)
 
     # add edges
     for edge in graph.edges:
-        net.add_edge(edge.source, edge.to)
+        # todo check with the controller which group this belongs to
+        net.add_edge(edge.source,
+                     edge.to,
+                     group=1,
+                     label='lonely',
+                     title='lonely node',
+                     )
+
+
 
     # set a custom style sheet
     net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
+
+    # if you want to edit cusomize the graph
+    # net.show_buttons(filter_=['physics'])
 
     net.write_html(path)
 

@@ -18,8 +18,8 @@ from robot_brain.dashboard.figures import *
 
 
 def check_file_is_up_to_date(path):
-    # prevent updating if file is older than 5 seconds
-    if time.time() - os.path.getmtime(path) > 5:
+    # prevent updating if file is older than 3 seconds
+    if time.time() - os.path.getmtime(path) > 3:
         raise PreventUpdate
 
 
@@ -38,7 +38,6 @@ def register_callbacks(app):
 
         # read in controller data if it exists
         if not Path(path).is_file():
-            print("no path found, which is correct")
             return create_no_data_found_html(app)
         else:
             # only update up-to-date files, exception for n = 0

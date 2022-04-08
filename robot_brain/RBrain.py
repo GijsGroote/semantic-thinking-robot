@@ -52,15 +52,20 @@ class RBrain:
     def setup(self, stat_world_info, ob):
         # create robot
         robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]), "urdf")
+        # todo: this state above in incorrect for the x and xdot
         self.robot = robot
         self.objects["robot"] = robot
 
         # Create objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                s_temp = State(pos=val["x"][0:2], vel=val["xdot"][0:2], ang_p=val["x"][2], ang_v=val["xdot"][2])
-                print("updating a state of a object ")
-                self.objects[key] = Object(key, s_temp)
+                s_temp = State(pos=val["pose"]["position"],
+                      vel=val["twist"]["linear"],
+                      ang_p=val["pose"]["orientation"],
+                      ang_v=val["twist"]["angular"])
+
+                # s_temp = State(pos=val["x"][0:2], vel=val["xdot"][0:2], ang_p=val["x"][2], ang_v=val["xdot"][2])
+                self.objects[key] = Object(key, s_temp, "urdf")
 
             self.action = np.array([0.0, 0.0])
 
@@ -73,12 +78,13 @@ class RBrain:
 
 
     def update(self, ob):
-        """
+        """x
         Update all objects states
         :param ob:
         :return:
         """
         # update robot
+        # todo: make this to better thingy if that is there
         self.robot.state.pos = ob["x"][0:2]
         self.robot.state.vel = ob["xdot"][0:2]
         self.robot.state.ang_p = ob["x"][2]
@@ -87,10 +93,10 @@ class RBrain:
         # update objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                self.objects[key].state.pos = val["x"][0:2]
-                self.objects[key].state.vel = val["xdot"][0:2]
-                self.objects[key].state.ang_p = val["x"][2]
-                self.objects[key].state.ang_v = val["xdot"][2]
+                self.objects[key].state.pos = val["pose"]["position"]
+                self.objects[key].state.vel = val["twist"]["linear"]
+                self.objects[key].state.ang_p = val["pose"]["orientation"]
+                self.objects[key].state.ang_v = val["twist"]["angular"]
 
 
 

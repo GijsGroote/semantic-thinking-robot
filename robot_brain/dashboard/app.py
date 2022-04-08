@@ -102,7 +102,7 @@ class Dashboard:
             ),
             html.Div([
                 html.Div([
-                    html.H4('HGraph'),
+                    html.H4('Hypothesis Graph'),
                     html.Iframe(
                         id="hGraph",
                         srcDoc=self.loading_html,
@@ -124,7 +124,7 @@ class Dashboard:
                     )
                 ], className="item"),
                 html.Div([
-                    html.H4('KGraph, todo'),
+                    html.H4("Knowledge Graph"),
                     html.Iframe(
                         id="kGraph",
                         srcDoc=self.loading_html,

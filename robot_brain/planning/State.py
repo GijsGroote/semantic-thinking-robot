@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+from scipy.spatial.transform import Rotation as R
 
 
 class State:
@@ -87,6 +88,8 @@ class State:
                 self._ang_p = np.array([0, 0, value])
             elif value.shape[0] == 3:
                 self._ang_p = value
+            elif value.shape[0] == 4:
+                self._ang_p = R.from_quat(value)
             else:
                 raise Exception("angular position has incorrect dimensions")
         except(AttributeError, TypeError, IndexError):

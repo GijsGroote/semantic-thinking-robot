@@ -47,9 +47,6 @@ def main():
         ob, reward, done, info = env.step(action)
 
         brain.update(ob)
-        # print(ob)
-
-
 
 
 if __name__ == '__main__':

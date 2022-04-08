@@ -5,6 +5,8 @@ from robot_brain.planning.State import State
 
 class MyTestCase(unittest.TestCase):
 
+    # todo: a test for quaternaions to euler angles for the ang_pos
+
     def test_input_types(self):
         """ test if the input is not a numpy array should throw an exception """
         with self.assertRaises(AssertionError) as context:

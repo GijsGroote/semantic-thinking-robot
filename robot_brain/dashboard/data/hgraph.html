@@ -55,8 +55,8 @@
         
 
         // parsing and collecting nodes and edges from the python
-        nodes = new vis.DataSet([{"id": 999, "label": "Here you can plot stuff", "shape": "dot"}, {"id": 1, "label": "Here you can plot stuff", "shape": "dot"}, {"id": 10, "label": "Here you can plot stuff", "shape": "dot"}]);
-        edges = new vis.DataSet([{"from": 1, "to": 999}, {"from": 1, "to": 10}]);
+        nodes = new vis.DataSet([{"id": 999, "label": 999, "shape": "dot", "title": "This is\u003cbr\u003eNode 999\u003cbr\u003e controller: some \u003cbr\u003e constains multiple objects\u003cbr\u003eDisplay so much stuff here"}, {"id": 1, "label": 1, "shape": "dot", "title": "This is\u003cbr\u003eNode 1\u003cbr\u003e controller: some \u003cbr\u003e constains multiple objects\u003cbr\u003eDisplay so much stuff here"}, {"id": 10, "label": 10, "shape": "dot", "title": "This is\u003cbr\u003eNode 10\u003cbr\u003e controller: some \u003cbr\u003e constains multiple objects\u003cbr\u003eDisplay so much stuff here"}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": 1, "group": 1, "label": "lonely", "title": "lonely node", "to": 999}, {"arrows": "to", "from": 1, "group": 1, "label": "lonely", "title": "lonely node", "to": 10}]);
 
         // adding nodes and edges to the graph
         data = {nodes: nodes, edges: edges};
