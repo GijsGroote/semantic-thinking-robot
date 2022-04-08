@@ -34,7 +34,7 @@ class MyTestCase(unittest.TestCase):
         self.assertRaises(Exception, State, pos=np.array([31]))
         self.assertRaises(Exception, State, vel=np.array([31]))
         self.assertRaises(Exception, State, acc=np.array([31, -30, 50.0, 12]))
-        self.assertRaises(Exception, State, ang_p=np.array([3, 1, 13, 98]))
+        self.assertRaises(Exception, State, ang_p=np.array([3, 1, 13, 15, 98]))
         self.assertRaises(Exception, State, ang_v=np.array([3, 2, 5, 53]))
         self.assertRaises(Exception, State, ang_a=np.array([3, 52, True, 3]))
 

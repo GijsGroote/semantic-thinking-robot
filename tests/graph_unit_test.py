@@ -44,12 +44,19 @@ class MyTestCase(unittest.TestCase):
     def test_allowed_node_types(self):
         hgraph = HGraph()
         kgraph = KGraph()
+        # todo: which nodes are allowed as targetnode/ node in which graph??
 
-        # ObjectsetNode and ConfSetNode are allowed as target node in hgraph
-        hgraph.addTargetNode(ObjectSetNode(2, "P", []))
+        # should be allowed
+        hgraph.addNode(ConfSetNode(2, "P", []))
+        hgraph.addNode(ObjectSetNode(2, "P", []))
+        hgraph.addTargetNode(ConfSetNode(2, "P", []))
+
+
+
         hgraph.addTargetNode(ConfSetNode(2, "P", []))
 
         with self.assertRaises(AssertionError):
+            hgraph.addNode(ChangeOfConfSetNode(2, "ja", []))
             hgraph.addTargetNode(ChangeOfConfSetNode(2, "P", []))
 
         # todo there are additional nodes which are or are not allowed

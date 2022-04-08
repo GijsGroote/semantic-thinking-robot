@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 
 from robot_brain.graphs.Graph import Graph
@@ -12,19 +14,21 @@ import pyarrow.feather as feather
 class HGraph(Graph):
 
     def __init__(self):
-        super().__init__()
+        Graph.__init__(self)
+        self.is_class = "hgraph"
         self.target_node = None
 
     def addNode(self, node):
-        assert isinstance(node, Node) or isinstance(node, ConfSetNode) # this should be a Objectnode not Node
+        if node.is_class is "change_of_conf_set_node":
+            warnings.warn("ChangeOfConfSetNode is not allowed in HGraph")
+
         self.nodes.append(node)
 
     def addTargetNode(self, node):
-        # print(type(nodee))
-        # # todo: check this node is a valid objectSetNode
-        # print(isinstance(nodee, ObjectSetNode))
-        assert isinstance(node, Node)  # this should be ConfsetNote, but somehow stuff is weird
-        self.addNode(node)
+        if node.is_class is not "conf_set_node":
+            warnings.warn("only a ConfSetNode is allowed as target node in HGraph")
+
+        self.addNode(node)  # sure to add the target node to the node list?
         self.target_node = node
 
     @property

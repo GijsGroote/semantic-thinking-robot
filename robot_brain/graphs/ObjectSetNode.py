@@ -4,7 +4,8 @@ from robot_brain.planning.Object import Object
 class ObjectSetNode(Node):
 
     def __init__(self, id, P, objectSet):
-        super().__init__(id, P)
+        Node.__init__(self, id, P)
+        self.is_class = "object_set_node"
         self.objectSet = objectSet
 
     def toString(self):

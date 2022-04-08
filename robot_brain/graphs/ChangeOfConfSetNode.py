@@ -5,7 +5,8 @@ from robot_brain.planning.Configuration import Configuration
 class ChangeOfConfSetNode(Node):
 
     def __init__(self, id, P, changeOfConfSet):
-        super().__init__(id, P)
+        Node.__init__(self, id, P)
+        self.is_class = "change_of_conf_set_node"
         self.changeOfConfSet = changeOfConfSet
 
     def toString(self):

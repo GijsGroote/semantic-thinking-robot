@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 500px;
+            height: 500px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"group": "Configuration Set Node", "id": 2, "label": 2, "shape": "dot", "title": "Configuration Set Node: 2\u003cbr\u003eobjects: ConfSetNode: 2\n containing: 0 configurations\u003cbr\u003e"}, {"group": "Change of Conf Set Node", "id": 3, "label": 3, "shape": "dot", "title": "Change of Conf Set Node: 3\u003cbr\u003eobjects: changeOfConfSetNode: 3\n containing: 0 changeOfConf\u003cbr\u003e"}, {"group": "Change of Conf Set Node", "id": 7, "label": 7, "shape": "dot", "title": "Change of Conf Set Node: 7\u003cbr\u003eobjects: changeOfConfSetNode: 7\n containing: 0 changeOfConf\u003cbr\u003e"}, {"group": "Configuration Set Node", "id": 1, "label": 1, "shape": "dot", "title": "Configuration Set Node: 1\u003cbr\u003eobjects: ConfSetNode: 1\n containing: 0 configurations\u003cbr\u003e"}, {"group": "Object Set Node", "id": 5, "label": 5, "shape": "dot", "title": "Object Set Node: 5\u003cbr\u003eobjects: ObjectSetNode: 5\n containing: 0 objects\u003cbr\u003e"}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": 2, "group": "mpc", "label": "mpc", "title": "lonely node", "to": 3}, {"arrows": "to", "from": 7, "group": "pid", "label": "pid", "title": "lonely node", "to": 1}, {"arrows": "to", "from": 3, "group": "EMPPI", "label": "EMPPI", "title": "lonely node", "to": 3}, {"arrows": "to", "from": 7, "group": "mpc", "label": "mpc", "title": "lonely node", "to": 5}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": false,
+            "type": "continuous"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

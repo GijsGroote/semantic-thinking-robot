@@ -1,5 +1,12 @@
+import warnings
 from abc import ABC, abstractmethod
 from robot_brain.graphs.Edge import Edge
+
+from robot_brain.graphs.ChangeOfConfSetNode import ChangeOfConfSetNode
+from robot_brain.graphs.ObjectSetNode import ObjectSetNode
+from robot_brain.graphs.ConfSetNode import ConfSetNode
+from robot_brain.graphs.Node import Node
+
 from pyvis.network import Network
 
 
@@ -9,19 +16,46 @@ class Graph(ABC):
         self._nodes = []
         self._edges = []
 
-    def save_as_html(self):
-        # make this function such that it updates if it is already present
-        net = Network()
+    def visualise(self):
+        """"
+        Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
+        """
+        net = Network(directed=True)
 
         # add nodes
         for node in self.nodes:
-            net.add_node(node.id, label=node.id)
+
+            group = None
+            if node.is_class is "object_set_node":
+                group = "Object Set Node"
+            elif node.is_class is "conf_set_node":
+                group = "Configuration Set Node"
+            elif node.is_class is "change_of_conf_set_node":
+                group = "Change of Conf Set Node"
+            else:
+                warnings.warn("node could not be classified")
+
+
+            net.add_node(node.id,
+                         title=group + ": " + str(node.id)
+                               + "<br>objects: " + node.toString() + "<br>",
+                         label=node.id,
+                         group=group)
 
         # add edges
         for edge in self.edges:
-            net.add_edge(edge.source, edge.to)
 
-        net.show("name.html")
+            net.add_edge(edge.source,
+                         edge.to,
+                         group=edge.verb,
+                         label=edge.verb,
+                         title='lonely node',
+                         )
+
+        # if you want to edit cusomize the graph
+        # net.show_buttons(filter_=['physics'])
+
+        net.show("delete-this.html")
 
     @property
     def nodes(self):
@@ -39,4 +73,3 @@ class Graph(ABC):
         # todo: input sanitizition:
         assert isinstance(edge, Edge)
         self._edges.append(edge)
-

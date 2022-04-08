@@ -83,21 +83,30 @@ def create_graph_plot(graph, path):
 
     # add nodes
     for node in graph.nodes:
+
+        group = None
+        if node.is_class is "object_set_node":
+            group = "Object Set Node"
+        elif node.is_class is "conf_set_node":
+            group = "Configuration Set Node"
+        elif node.is_class is "change_of_conf_set_node":
+            group = "Change of Conf Set Node"
+
         net.add_node(node.id,
-                     title="This is<br>Node "+str(node.id)+"<br> controller: some <br> constains multiple objects<br>Display so much stuff here",
-                     label=node.id)
+                     title=group + ": " + str(node.id)
+                           + "<br>objects: " + node.toString() + "<br>",
+                     # label=node.id,
+                     group=group)
 
     # add edges
     for edge in graph.edges:
-        # todo check with the controller which group this belongs to
         net.add_edge(edge.source,
                      edge.to,
-                     group=1,
-                     label='lonely',
-                     title='lonely node',
+                     group=edge.verb,
+                     label=edge.verb,
+                     title=group + ": " + str(node.id)
+                           + "<br>objects: " + node.toString() + "<br>",
                      )
-
-
 
     # set a custom style sheet
     net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"

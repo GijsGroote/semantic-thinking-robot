@@ -10,6 +10,7 @@ from robot_brain.global_variables import *
 from robot_brain.graphs.HGraph import HGraph
 from robot_brain.graphs.ConfSetNode import ConfSetNode
 from robot_brain.graphs.ObjectSetNode import ObjectSetNode
+from robot_brain.graphs.ChangeOfConfSetNode import ChangeOfConfSetNode
 from robot_brain.graphs.Edge import Edge
 import pandas as pd
 pd.options.plotting.backend = "plotly"
@@ -130,10 +131,6 @@ class RBrain:
                 warnings.warn("returning default action")
                 return self.defaultAction
 
-        # elif self.is_doing is IS_THINKING:
-        #     # todo: thinking should not really be a thing any more.
-        #     # send action
-        #     return self.defaultAction
 
         elif self.is_doing is IS_DOING_NOTHING:
             return self.calculate_plan()
@@ -148,10 +145,21 @@ class RBrain:
         if self.hgraph is None:
             # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
             hgraph = HGraph()
-            targetNode = ConfSetNode(999, "P", [])
-            hgraph.addNode(targetNode)
-            currentNode = ObjectSetNode(1, "P", [])
-            hgraph.addNode(currentNode)
+
+            # adding nodes
+            hgraph.addNode(ConfSetNode(1, "P", []))
+            hgraph.addNode(ConfSetNode(2, "Pi", []))
+            hgraph.addNode(ConfSetNode(3, "Pis", []))
+            hgraph.addNode(ObjectSetNode(5, "P", []))
+            hgraph.addNode(ObjectSetNode(7, "P", []))
+            hgraph.addNode(ChangeOfConfSetNode(999, "kanker", []))
+
+
+            hgraph.addEdge(Edge("id", 2, 3, "mpc", "controller"))
+            hgraph.addEdge(Edge("id", 7, 1, "pid", "controller"))
+            hgraph.addEdge(Edge("id", 3, 3, "EMPPI", "controller"))
+            hgraph.addEdge(Edge("id", 7, 5, "mpc", "controller"))
+
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
             create_graph_plot(hgraph, "../robot_brain/dashboard/data/hgraph.html")
