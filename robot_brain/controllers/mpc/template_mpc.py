@@ -2,8 +2,11 @@ import do_mpc
 
 
 def template_mpc(model, targetState, dt, plot_results):
+
+
     # Obtain an instance of the do-mpc MPC class
     mpc = do_mpc.controller.MPC(model)
+    mpc.targetState = targetState
 
     # suppress output
     suppress_ipopt = {'ipopt.print_level': 0, 'ipopt.sb': 'yes', 'print_time': 0}

@@ -124,27 +124,59 @@ def create_mpc_plot(df):
         x=df["time"],
         y=df["x"],
         name="x",
+        line=dict(color='blue')
     ), row=1, col=1)
     fig.append_trace(go.Scatter(
-        x=df["time"],
-        y=df["y"],
-        name="y"
+        x=[df["time"][0], max(15, df["time"][df.index[-1]])],
+        y=df["x_ref"],
+        name="x_ref",
+        line=dict(color='blue', width=1, dash='dash')
     ), row=1, col=1)
-    fig.append_trace(go.Scatter(
-        x=df["time"],
-        y=df["theta"],
-        name="theta"
-    ), row=1, col=1)
+    #
+    # fig.append_trace(go.Scatter(
+    #     x=df["time"],
+    #     y=df["y"],
+    #     name="y",
+    #     # line=dict(color='red')
+    # ), row=1, col=1)
+    # fig.append_trace(go.Scatter(
+    #     x=[df["time"][0], max(15, df["time"][df.index[-1]])],
+    #     y=df["y_ref"],
+    #     name="y_ref",
+    #     line=dict(color='red', width=1, dash='dash')
+    # ), row=1, col=1)
+    #
+    # fig.append_trace(go.Scatter(
+    #     x=df["time"],
+    #     y=df["theta"],
+    #     name="theta",
+    #     # line=dict(color='blue'),
+    # ), row=1, col=1)
+    # fig.append_trace(go.Scatter(
+    #     x=[df["time"][0], max(15, df["time"][df.index[-1]])],
+    #     y=df["theta_ref"],
+    #     name="theta_ref",
+    #     line=dict(color='blue', width=1, dash='dash')
+    # ), row=1, col=1)
+
+    # reference signals
+
+    # "x_ref": self.mpc.targetState.pos[0],
+    # "y_ref": self.mpc.targetState.pos[1],
+    # "theta_ref": self.mpc.targetState.ang_p[2],
+    #
 
     fig.append_trace(go.Scatter(
         x=df["time"],
         y=df["u1"],
-        name="u1"
+        name="u1",
+        line=dict(shape='hv')
     ), row=2, col=1)
     fig.append_trace(go.Scatter(
         x=df["time"],
         y=df["u2"],
-        name="u2"
+        name="u2",
+        line=dict(shape='hv'),
     ), row=2, col=1)
     fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
@@ -156,8 +188,8 @@ def create_mpc_plot(df):
                      title_text="Time [sec]",
                      row=2, col=1)
 
-    fig.update_yaxes(range=[dstack((df["x"], df["y"], df["theta"])).max() + 0.2,
-                            dstack((df["x"], df["y"], df["theta"])).min() - 0.2],
+    fig.update_yaxes(range=[dstack((df["x"], df["y"], df["theta"])).min() - 0.2,
+                            dstack((df["x"], df["y"], df["theta"])).max() + 0.2],
                      title_text="position [-]",
                      row=1, col=1)
 

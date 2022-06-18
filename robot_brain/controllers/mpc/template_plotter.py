@@ -35,6 +35,9 @@ class Plotter():
 
         dictionary = {
             "type": "mpc",
+            "x_ref": self.mpc.targetState.pos[0],
+            "y_ref": self.mpc.targetState.pos[1],
+            "theta_ref": self.mpc.targetState.ang_p[2],
             "x": [i[0] for i in self.simulator.data["_x"]],
             "y": [i[1] for i in self.simulator.data["_x"]],
             "theta": [i[2] for i in self.simulator.data["_x"]],

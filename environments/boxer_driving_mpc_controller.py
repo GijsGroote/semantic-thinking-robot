@@ -5,8 +5,8 @@ from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 
-target_pos = np.array([1, 1, 0])
-target_ang_p = np.array([0, 0, 1])
+target_pos = np.array([3, 2, 0])
+target_ang_p = np.array([0, 0, 2])
 controller = "mpc"
 
 
@@ -14,7 +14,7 @@ def main():
     """
     Point robot which can drive around in its environment using a mpc controller.
     """
-    dt = 0.1
+    dt = 0.05
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
 
     defaultAction = np.array([0.0, 0.0])
@@ -22,6 +22,7 @@ def main():
     ob = env.reset()
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
+    # env.add_walls()
 
 
 
