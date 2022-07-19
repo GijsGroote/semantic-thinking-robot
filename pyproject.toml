@@ -14,7 +14,7 @@ motion-planning-scenes = {version = "^0.1.1"}
 pynput = {version = "^1.7.6"}
 multiprocess = {version = "^0.70.12"}
 urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
-urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git"}
+urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop"}
 do-mpc = "^4.3.2"
 pyvis = "^0.1.9"
 mpld3 = "^0.5.7"
