@@ -1,4 +1,4 @@
-from robot_brain.graphs.Node import Node
+from robot_brain.graph.Node import Node
 from robot_brain.planning.Object import Object
 
 class ObjectSetNode(Node):

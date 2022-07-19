@@ -4,7 +4,7 @@ from Node import Node
 from ConfSetNode import ConfSetNode
 from ObjectSetNode import ObjectSetNode
 from ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.graphs.Edge import Edge
+from robot_brain.graph.Edge import Edge
 
 
 def main():

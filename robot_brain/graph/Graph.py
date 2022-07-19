@@ -1,11 +1,11 @@
 import warnings
 from abc import ABC, abstractmethod
-from robot_brain.graphs.Edge import Edge
+from robot_brain.graph.Edge import Edge
 
-from robot_brain.graphs.ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.graphs.ObjectSetNode import ObjectSetNode
-from robot_brain.graphs.ConfSetNode import ConfSetNode
-from robot_brain.graphs.Node import Node
+from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
+from robot_brain.graph.ObjectSetNode import ObjectSetNode
+from robot_brain.graph.ConfSetNode import ConfSetNode
+from robot_brain.graph.Node import Node
 
 from pyvis.network import Network
 
