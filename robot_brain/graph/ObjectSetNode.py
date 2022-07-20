@@ -3,9 +3,10 @@ from robot_brain.planning.Object import Object
 
 class ObjectSetNode(Node):
 
-    def __init__(self, id, P, objectSet):
-        Node.__init__(self, id, P)
-        self.is_class = "object_set_node"
+    def __init__(self, id, name, objectSet):
+        Node.__init__(self, id)
+        # self.is_class = "object_set_node"
+        self.name = name
         self.objectSet = objectSet
 
     def toString(self):

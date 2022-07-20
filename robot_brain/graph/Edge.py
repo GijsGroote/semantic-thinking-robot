@@ -10,7 +10,8 @@ class Edge:
         self.to = to
         self.verb = verb
         self.controller = controller
-        self.d = "use a actual dynamical model please"
+        self.d = "use a al dynamical model please"
+        self.path = False
         self.alpha = None
 
     def toString(self):
@@ -60,3 +61,13 @@ class Edge:
     def controller(self, contr):
         # todo: check contr is a Controller object
         self._controller = contr
+
+    @property
+    def path(self):
+        return self._path
+
+
+    @path.setter
+    def path(self, path):
+        # todo: check plan is a plan
+        self._path = path

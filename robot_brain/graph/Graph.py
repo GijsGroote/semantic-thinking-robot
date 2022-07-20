@@ -25,32 +25,35 @@ class Graph(ABC):
         # add nodes
         for node in self.nodes:
 
-            group = None
-            if node.is_class is "object_set_node":
+            group = "" 
+            color = ""
+            if isinstance(node, ObjectSetNode):
                 group = "Object Set Node"
-            elif node.is_class is "conf_set_node":
+                color = "#8A307F"
+            elif isinstance(node, ConfSetNode):
                 group = "Configuration Set Node"
-            elif node.is_class is "change_of_conf_set_node":
+                color = "#79A7D3"
+            elif isinstance(node, ChangeOfConfSetNode):
                 group = "Change of Conf Set Node"
+                color = "#6883BC"
             else:
-                warnings.warn("node could not be classified")
-
+                raise TypeError("could not classify node")
 
             net.add_node(node.id,
-                         title=group + ": " + str(node.id)
-                               + "<br>objects: " + node.toString() + "<br>",
-                         label=node.id,
-                         group=group)
+                    title=group + ":<br>" + node.toString() + "<br>",
+                    label=node.id,
+                    group=group,
+                    color = color)
 
         # add edges
         for edge in self.edges:
 
             net.add_edge(edge.source,
-                         edge.to,
-                         group=edge.verb,
-                         label=edge.verb,
-                         title='lonely node',
-                         )
+                    edge.to,
+                    group=edge.verb,
+                    label=edge.verb,
+                    title="edge:<br>" + edge.toString() + "<br>"
+                    )
 
         # if you want to edit cusomize the graph
         # net.show_buttons(filter_=['physics'])
