@@ -5,31 +5,16 @@ from robot_brain.graph.ConfSetNode import ConfSetNode
 from robot_brain.graph.ObjectSetNode import ObjectSetNode
 from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode 
 from pyvis.network import Network
-import numpy as np
-import pyarrow.feather as feather
-from robot_brain.global_variables import *
+# import numpy as np
 
 class HGraph(Graph):
 
     def __init__(self):
         Graph.__init__(self)
         self.is_class = "hgraph"
-        self.target_node = None
-        self.start_node = None
+        self.target_nodes = []
+        self.start_nodes = []
         self.current_node = None
-
-    def addNode(self, node):
-        if isinstance(node, ChangeOfConfSetNode):
-            raise TypeError("ChangeOfConfSetNode's are not allowed in HGraph")
-
-        self.nodes.append(node)
-
-    def addTargetNode(self, node):
-        if not isinstance(node, ConfSetNode):
-            raise TypeError("Only ConfSetNode is allowed as targetNode")
-         
-        self.addNode(node)  
-        self.target_node = node
 
     def visualiseHGraph(self):
         """"
@@ -38,52 +23,91 @@ class HGraph(Graph):
         net = Network(directed=True)
 
         net.set_edge_smooth('dynamic')
-        # add nodes
-        for node in self.nodes:
-            group = node.__class__.__name__
-            label = " "
-            x = 5.0
-            y = 5.0
-            color= {
-                    'color':'#ffffa3',
-                    'highlight':'red',
-                    'hover': 'blue',
-             } 
 
-            if node.type is not None:
-                group = node.type
-                label = node.type
-                color = 'blue'
-                if node.type is TARGET_NODE:
-                    x = 10.0
-                    y = 5.0
-                elif node.type is STARTING_NODE:
-                    x = 1.0
-                    y = 5.0
 
-            # print("node: {}. class {}".format(node.type, group))
-
+        for node in self.start_nodes:
+            if node == self.current_node: 
+                continue
             net.add_node(node.id,
-                    title=group + ":<br>" + node.toString() + "<br>",
-                    color=color,
-                    x=x,
-                    y=y, 
-                    label=label,
-                    group=group)
+                    title = "Starting Node:<br>" + node.toString() + "<br>",
+                    x=1.0,
+                    y=1.0,
+                    label = node.name,
+                    borderWidth= 1,
+                    borderWidthSelected= 2,
+                    color= {
+                        'border': '#2B7CE9', # blue
+                        'background': '#97C2FC',
+                        'highlight': {
+                            'border': '#2B7CE9',
+                            'background': '#D2E5FF'
+                            }
+                        },
+                    group = "start_nodes")
+
+        for node in self.target_nodes:
+            if node == self.current_node: 
+                continue
+            net.add_node(node.id,
+                    title = "Target Node:<br>" + node.toString() + "<br>",
+                    x=90.0,
+                    y=90.0,
+                    label = node.name,
+                    color= {
+                        'border': '#009900', # green
+                        'background': '#00ff00',
+                        'highlight': {
+                            'border': '#009900',
+                            'background': '#99ff99'
+                            }
+                        },
+                    group = "target_nodes")
+
+        for node in self.nodes:
+            if node == self.current_node: 
+                continue 
+            net.add_node(node.id,
+                    title = "Node:<br>" + node.toString() + "<br>",
+                    x=1.0,
+                    y=1.0,
+                    color= {
+                        'border': '#ffa500', # yellow
+                        'background': '#ffff00',
+                        'highlight': {
+                            'border': '#ffa500',
+                            'background': '#ffff99'
+                            }
+                        },
+                    label = " ",
+                    group = node.__class__.__name__)
+
+        if self.current_node is not None:
+            net.add_node(self.current_node.id,
+                    title = "Current node:<br>" + self.current_node.toString() + "<br>",
+                    x=1.0,
+                    y=1.0,
+                    color= {
+                        'border': '#fb4b50', # red 
+                        'background': '#fb7e81',
+                        'highlight': {
+                            'border': '#fb4b50',
+                            'background': '#fcbcc4'
+                            }
+                        },label = self.current_node.name,
+                    group = "current_node")
+
 
         # add edges
         for edge in self.edges:
 
             dashes = False
             if edge.path == False:
-
                 dashes = True
 
             net.add_edge(edge.source,
                     edge.to,
                     weight=1.0,
                     dashes=dashes,
-                    group=edge.verb,
                     label=edge.verb,
                     title="edge:<br>" + edge.toString() + "<br>",
                     )
@@ -93,13 +117,23 @@ class HGraph(Graph):
 
         net.show("delete.html")
 
+    def addNode(self, node):
+        if isinstance(node, ChangeOfConfSetNode):
+            raise TypeError("ChangeOfConfSetNode's are not allowed in HGraph")
+
+        self.nodes.append(node)
+
+    def addStartNode(self, node):
+        if not isinstance(node, ObjectSetNode):
+            raise TypeError("ObjectSetNode's are only allowed as starting node in HGraph")
+
+        self.start_nodes.append(node)
 
 
-    @property
-    def target_node(self):
-        return self._target_node
+    def addTargetNode(self, node):
+        if not isinstance(node, ConfSetNode):
+            raise TypeError("ConfSetNode's are only allowed as target node in HGraph")
 
-    @target_node.setter
-    def target_node(self, val):
-        # input sanitization
-        self._target_node = val
+        self.target_nodes.append(node)
+
+
