@@ -7,11 +7,11 @@ from robot_brain.planning.Object import Object
 import numpy as np
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
-from robot_brain.graphs.HGraph import HGraph
-from robot_brain.graphs.ConfSetNode import ConfSetNode
-from robot_brain.graphs.ObjectSetNode import ObjectSetNode
-from robot_brain.graphs.ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.graphs.Edge import Edge
+from robot_brain.graph.HGraph import HGraph
+from robot_brain.graph.ConfSetNode import ConfSetNode
+from robot_brain.graph.ObjectSetNode import ObjectSetNode
+from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
+from robot_brain.graph.Edge import Edge
 import pandas as pd
 pd.options.plotting.backend = "plotly"
 from robot_brain.dashboard.figures import create_graph_plot
@@ -52,7 +52,7 @@ class RBrain:
 
     def setup(self, stat_world_info, ob):
         # create robot
-        robot = Object("robot", State(pos=ob["x"], vel=ob["xdot"]), "urdf")
+        robot = Object("robot", State(pos=ob["joint_state"]["position"], vel=ob["joint_state"]["velocity"]), "urdf")
         # todo: this state above in incorrect for the x and xdot
         self.robot = robot
         self.objects["robot"] = robot
@@ -149,21 +149,19 @@ class RBrain:
             # adding nodes
             hgraph.addNode(ConfSetNode(1, "P", []))
             hgraph.addNode(ConfSetNode(2, "Pi", []))
-            hgraph.addNode(ConfSetNode(3, "Pis", []))
+            hgraph.addTargetNode(ConfSetNode(3, "Pis", []))
+            hgraph.addStartNode(ObjectSetNode(4, "P", []))
             hgraph.addNode(ObjectSetNode(5, "P", []))
-            hgraph.addNode(ObjectSetNode(7, "P", []))
-            hgraph.addNode(ChangeOfConfSetNode(999, "kanker", []))
 
-
-            hgraph.addEdge(Edge("id", 2, 3, "mpc", "controller"))
-            hgraph.addEdge(Edge("id", 7, 1, "pid", "controller"))
+            hgraph.addEdge(Edge("id", 2, 3, "pid", "controller"))
+            hgraph.addEdge(Edge("id", 5, 1, "pid", "controller"))
+            hgraph.addEdge(Edge("id", 3, 1, "pid", "controller"))
             hgraph.addEdge(Edge("id", 3, 3, "EMPPI", "controller"))
-            hgraph.addEdge(Edge("id", 7, 5, "mpc", "controller"))
+            hgraph.addEdge(Edge("id", 4, 5, "mpc", "controller"))
 
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
             create_graph_plot(hgraph, "../robot_brain/dashboard/data/hgraph.html")
-
 
 
             print("yes I got it, MPC! executing plan")
@@ -172,8 +170,6 @@ class RBrain:
             dyn_model.set_boxer_model()
             # todo: this dyn model is unused
             self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
-            mpc_edge = Edge("15", 1, 999, "mpc", self.controller)
-            self.hgraph.addEdge(mpc_edge)
 
         self.is_doing = IS_EXECUTING
 

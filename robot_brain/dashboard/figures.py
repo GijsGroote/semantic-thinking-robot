@@ -3,10 +3,10 @@ import pandas as pd
 
 from robot_brain.global_variables import *
 
-from robot_brain.graphs.ConfSetNode import ConfSetNode
+from robot_brain.graph.ConfSetNode import ConfSetNode
 
-from robot_brain.graphs.ObjectSetNode import ObjectSetNode
-from robot_brain.graphs.HGraph import HGraph
+from robot_brain.graph.ObjectSetNode import ObjectSetNode
+from robot_brain.graph.HGraph import HGraph
 from pyvis.network import Network
 
 pd.options.plotting.backend = "plotly"
@@ -78,44 +78,105 @@ def create_no_data_found_html(app):
             '''
 
 def create_graph_plot(graph, path):
+    # assuming this shit as a Hgraph !
 
     net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
+    # set a custom style sheet
+    net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
 
-    # add nodes
-    for node in graph.nodes:
+    net.set_edge_smooth('dynamic')
 
-        group = None
-        if node.is_class is "object_set_node":
-            group = "Object Set Node"
-        elif node.is_class is "conf_set_node":
-            group = "Configuration Set Node"
-        elif node.is_class is "change_of_conf_set_node":
-            group = "Change of Conf Set Node"
-
+    for node in graph.start_nodes:
+        if node == graph.current_node: 
+            continue
         net.add_node(node.id,
-                     title=group + ": " + str(node.id)
-                           + "<br>objects: " + node.toString() + "<br>",
-                     # label=node.id,
-                     group=group)
+                title = "Starting Node:<br>" + node.toString() + "<br>",
+                x=1.0,
+                y=1.0,
+                label = node.name,
+                borderWidth= 1,
+                borderWidthSelected= 2,
+                color= {
+                    'border': '#2B7CE9', # blue
+                    'background': '#97C2FC',
+                    'highlight': {
+                        'border': '#2B7CE9',
+                        'background': '#D2E5FF'
+                        }
+                    },
+                group = "start_nodes")
+
+    for node in graph.target_nodes:
+        if node == graph.current_node: 
+            continue
+        net.add_node(node.id,
+                title = "Target Node:<br>" + node.toString() + "<br>",
+                x=90.0,
+                y=90.0,
+                label = node.name,
+                color= {
+                    'border': '#009900', # green
+                    'background': '#00ff00',
+                    'highlight': {
+                        'border': '#009900',
+                        'background': '#99ff99'
+                        }
+                    },
+                group = "target_nodes")
+
+    for node in graph.nodes:
+        if node == graph.current_node: 
+            continue 
+        net.add_node(node.id,
+                title = "Node:<br>" + node.toString() + "<br>",
+                x=1.0,
+                y=1.0,
+                color= {
+                    'border': '#ffa500', # yellow
+                    'background': '#ffff00',
+                    'highlight': {
+                        'border': '#ffa500',
+                        'background': '#ffff99'
+                        }
+                    },
+                label = " ",
+                group = node.__class__.__name__)
+
+    if graph.current_node is not None:
+        net.add_node(graph.current_node.id,
+                title = "Current node:<br>" + graph.current_node.toString() + "<br>",
+                x=1.0,
+                y=1.0,
+                color= {
+                    'border': '#fb4b50', # red 
+                    'background': '#fb7e81',
+                    'highlight': {
+                        'border': '#fb4b50',
+                        'background': '#fcbcc4'
+                        }
+                    },label = graph.current_node.name,
+                group = "current_node")
 
     # add edges
     for edge in graph.edges:
-        net.add_edge(edge.source,
-                     edge.to,
-                     group=edge.verb,
-                     label=edge.verb,
-                     title=group + ": " + str(node.id)
-                           + "<br>objects: " + node.toString() + "<br>",
-                     )
 
-    # set a custom style sheet
-    net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
+        dashes = False
+        if edge.path == False:
+            dashes = True
+
+        net.add_edge(edge.source,
+                edge.to,
+                weight=1.0,
+                dashes=dashes,
+                label=edge.verb,
+                title="edge:<br>" + edge.toString() + "<br>",
+                )
 
     # if you want to edit cusomize the graph
     # net.show_buttons(filter_=['physics'])
 
-    net.write_html(path)
 
+    net.write_html(path)
 
 
 def create_mpc_plot(df):
@@ -125,13 +186,13 @@ def create_mpc_plot(df):
         y=df["x"],
         name="x",
         line=dict(color='blue')
-    ), row=1, col=1)
+        ), row=1, col=1)
     fig.append_trace(go.Scatter(
         x=[df["time"][0], max(15, df["time"][df.index[-1]])],
         y=df["x_ref"],
         name="x_ref",
         line=dict(color='blue', width=1, dash='dash')
-    ), row=1, col=1)
+        ), row=1, col=1)
     #
     # fig.append_trace(go.Scatter(
     #     x=df["time"],
