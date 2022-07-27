@@ -4,8 +4,9 @@ from robot_brain.planning.Configuration import Configuration
 
 class ChangeOfConfSetNode(Node):
 
-    def __init__(self, id, changeOfConfSet):
+    def __init__(self, id, name, changeOfConfSet):
         Node.__init__(self, id)
+        self.name = name
         self.is_class = "change_of_conf_set_node"
         self.changeOfConfSet = changeOfConfSet
 
