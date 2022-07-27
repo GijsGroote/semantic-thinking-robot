@@ -7,9 +7,9 @@ from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 # from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
+from environments.obstacles import sphereObst2
 
-
-user_input_mode = False
+user_input_mode = True
 
 def main(conn=None):
     """
@@ -18,7 +18,7 @@ def main(conn=None):
     Semantic brain goal: find out that the robot can drive toward specified goals.
 
     """
-    dt = 0.05
+    dt = 0.02
     # env = gym.make('pointRobotUrdf-acc-v0', dt=0.05, render=True)
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
     ob = env.reset()
@@ -28,7 +28,8 @@ def main(conn=None):
     # sensor = ObstacleSensor()
     # env.add_sensor(sensor)
 
-    ob, reward, done, info = env.step(defaultAction)
+    env.add_obstacle(sphereObst2)
+    ob, reward, done, _ = env.step(defaultAction)
 
 
     defaultAction = np.array([0.0, 0.0])
@@ -42,14 +43,13 @@ def main(conn=None):
         brain.setup({"dt": dt,
             "targetState": State(pos=np.array([1.9, 2.0, 4.0])),
         }, ob)
-        targetState = State()  # drive to (0,0,0,0,0)
 
 
     # ob, reward, done, info = env.step(defaultAction)
 
     action = defaultAction
 
-    for i in range(n_steps):
+    for _ in range(n_steps):
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
@@ -82,13 +82,13 @@ if __name__ == '__main__':
         responder = Responder(child_conn)
 
         # unlogical key bindings
-        custom_on_press = {Key.left: np.array([-1.0, 0.0]),
-                           Key.space: np.array([1.0, 0.0]),
-                           Key.page_down: np.array([1.0, 1.0]),
-                           Key.page_up: np.array([-1.0, -1.0])}
+        custom_on_press = {Key.down: np.array([-1.0, 0.0]),
+                           Key.up: np.array([1.0, 0.0]),
+                           Key.left: np.array([1.0, 1.0]),
+                           Key.right: np.array([1.0, -1.0])}
 
-        responder.setup(defaultAction=np.array([0.0, 0.0]))
-        # responder.setup(custom_on_press=custom_on_press)
+        # responder.setup(defaultAction=np.array([0.0, 0.0]))
+        responder.setup(custom_on_press=custom_on_press)
 
         # start child process which keeps responding/looping
         responder.start(p)
