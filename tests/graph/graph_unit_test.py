@@ -38,6 +38,7 @@ class MyTestCase(unittest.TestCase):
         hgraph.addNode(node1)
         hgraph.addNode(node2)
         hgraph.addNode(node3)
+        
         kgraph.addNode(node1)
         kgraph.addNode(node2)
         kgraph.addNode(node3)
@@ -47,7 +48,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_allowed_node_types(self):
         hgraph = HGraph()
-        # kgraph = KGraph()
+        kgraph = KGraph()
         
         conf_set_node = ConfSetNode(3, "P", [])
         obj_set_node = ObjectSetNode(2, "P", [])
@@ -55,11 +56,28 @@ class MyTestCase(unittest.TestCase):
 
         # allowed 
         hgraph.addTargetNode(conf_set_node)
+        hgraph.addStartNode(obj_set_node)
+        hgraph.addNode(conf_set_node)
+        hgraph.addNode(obj_set_node)
+        kgraph.addNode(obj_set_node)
+        kgraph.addNode(change_of_conf_set_node)
 
         # not allowed
         with self.assertRaises(TypeError):
             hgraph.addTargetNode(obj_set_node)
+         
+        with self.assertRaises(TypeError):
+            hgraph.addTargetNode(change_of_conf_set_node)
         
         with self.assertRaises(TypeError):
             hgraph.addNode(change_of_conf_set_node)
+     
+        with self.assertRaises(TypeError):
+            hgraph.addStartNode(change_of_conf_set_node)
+
+        with self.assertRaises(TypeError):
+            hgraph.addStartNode(conf_set_node)
+
+        with self.assertRaises(TypeError):
+            kgraph.addNode(conf_set_node)
 

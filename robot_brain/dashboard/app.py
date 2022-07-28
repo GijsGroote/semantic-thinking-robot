@@ -159,7 +159,7 @@ def startDashServer():
     def run():
         app.scripts.config.serve_locally = True
         app.run_server(
-            port=8051,
+            port=8052,
             debug=False,
             processes=4,
             threaded=False

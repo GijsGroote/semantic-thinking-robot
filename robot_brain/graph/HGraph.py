@@ -5,22 +5,27 @@ from robot_brain.graph.ConfSetNode import ConfSetNode
 from robot_brain.graph.ObjectSetNode import ObjectSetNode
 from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode 
 from pyvis.network import Network
-# import numpy as np
+import os
+from robot_brain.global_variables import *
+
 
 class HGraph(Graph):
 
     def __init__(self):
         Graph.__init__(self)
-        self.is_class = "hgraph"
         self.target_nodes = []
         self.start_nodes = []
         self.current_node = None
 
-    def visualiseHGraph(self):
+    def visualise(self, path=None):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
-        net = Network(directed=True)
+        net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
+        
+        # set a custom style sheet
+        net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
+
 
         net.set_edge_smooth('dynamic')
 
@@ -72,7 +77,7 @@ class HGraph(Graph):
                     y=1.0,
                     color= {
                         'border': '#ffa500', # yellow
-                        'background': '#ffff00',
+                            'background': '#ffff00',
                         'highlight': {
                             'border': '#ffa500',
                             'background': '#ffff99'
@@ -113,10 +118,16 @@ class HGraph(Graph):
                     )
         
         # if you want to edit cusomize the graph
-        net.show_buttons(filter_=['physics'])
+        # net.show_buttons(filter_=['physics'])
 
-        net.show("delete.html")
+        if path is None:
+            net.show("delete.html")
+        else:
+            net.write_html(path)
 
+
+
+         
     def addNode(self, node):
         if isinstance(node, ChangeOfConfSetNode):
             raise TypeError("ChangeOfConfSetNode's are not allowed in HGraph")

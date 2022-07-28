@@ -33,7 +33,7 @@ def main(conn=None):
 
 
     defaultAction = np.array([0.0, 0.0])
-    n_steps = 1000
+    n_steps = 100000 
     
     # setup semantic brain
     brain = None

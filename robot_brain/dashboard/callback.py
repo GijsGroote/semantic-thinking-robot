@@ -54,6 +54,30 @@ def register_callbacks(app):
             html_file.close()
             return data
 
+    @app.callback(
+        Output("kGraph", "srcDoc"), Input('controller-interval-component', 'n_intervals'))
+    def update_kgraph_live(n):
+
+        path = "../robot_brain/dashboard/data/kgraph.html"
+
+        # read in controller data if it exists
+        if not Path(path).is_file():
+            return create_no_data_found_html(app)
+        else:
+            # only update up-to-date files, exception for n = 0
+            if n > 0:
+                check_file_is_up_to_date(path)
+
+            # open text file in read mode
+            html_file = open(path, "r")
+
+            # read whole file to a string
+            data = html_file.read()
+
+            # close file
+            html_file.close()
+            return data
+
 
     @app.callback(Output('live-update-controller-graph', 'figure'),
                        Input('controller-interval-component', 'n_intervals'))

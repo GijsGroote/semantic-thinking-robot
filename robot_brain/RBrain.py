@@ -8,13 +8,13 @@ import numpy as np
 from robot_brain.controllers.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
 from robot_brain.graph.HGraph import HGraph
+from robot_brain.graph.KGraph import KGraph
 from robot_brain.graph.ConfSetNode import ConfSetNode
 from robot_brain.graph.ObjectSetNode import ObjectSetNode
 from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
 from robot_brain.graph.Edge import Edge
 import pandas as pd
 pd.options.plotting.backend = "plotly"
-from robot_brain.dashboard.figures import create_graph_plot
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
@@ -86,10 +86,14 @@ class RBrain:
         """
         # update robot
         # todo: make this to better thingy if that is there
-        self.robot.state.pos = ob["x"][0:2]
-        self.robot.state.vel = ob["xdot"][0:2]
-        self.robot.state.ang_p = ob["x"][2]
-        self.robot.state.ang_v = ob["xdot"][2]
+        pos = ob["joint_state"]["position"][0:2]
+        vel = ob["joint_state"]["velocity"][0:2]
+        
+        self.robot.state.pos = np.array([pos[0], pos[1], 0])
+        self.robot.state.vel = np.array([vel[0], vel[1], 0])
+
+        self.robot.state.ang_p = ob["joint_state"]["position"][2]
+        self.robot.state.ang_v = ob["joint_state"]["velocity"][2]
 
         # update objects
         if "obstacleSensor" in ob.keys():
@@ -110,20 +114,20 @@ class RBrain:
 
                 self.timer = self.timer + 1
                 if self.timer == 75:
-                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
                 if self.timer == 55:
-                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
                 if self.timer == 25:
-                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
                 if self.timer == 105:
                     currentNode = ObjectSetNode(10, "PPPP", [])
                     self.hgraph.addNode(currentNode)
                     mpc_edge = Edge("15", 1, 10, "mpc", self.controller)
                     self.hgraph.addEdge(mpc_edge)
-                    create_graph_plot(self.hgraph, "../robot_brain/dashboard/data/hgraph.html")
+                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
                 return self.controller.respond(self.robot.state)
 
@@ -161,9 +165,31 @@ class RBrain:
 
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
-            create_graph_plot(hgraph, "../robot_brain/dashboard/data/hgraph.html")
 
+            self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
+            kgraph = KGraph()
+
+            # the robot
+            node1 = ObjectSetNode(1, "robot", [])
+            kgraph.addNode(node1)
+            node2 = ChangeOfConfSetNode(2, "position", [])
+            kgraph.addNode(node2)
+            kgraph.addEdge(Edge("id", 1, 2, "MPC", "PEM"))
+            # kgraph.addEdge(Edge("id", 1, 2, "MPC", "IPEM"))
+
+            # adding expanded start and target node
+            node3 = ObjectSetNode(3, "robot_and_red_sphere", [])
+            node4 = ChangeOfConfSetNode(4, "box position", [])
+            kgraph.addNode(node3)
+            kgraph.addNode(node4)
+            # kgraph.addNode(ObjectSetNode(5, "unknown_object", []))
+
+            kgraph.addEdge(Edge("id", 3, 4, "EMPPI", "LSTM")) 
+
+            self.kgraph = kgraph
+
+            self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
             print("yes I got it, MPC! executing plan")
             self.controller = Mpc()
             dyn_model = Dynamics()

@@ -46,7 +46,7 @@ def main():
         action = brain.respond()
 
         ob, reward, done, info = env.step(action)
-
+         
         brain.update(ob)
 
 

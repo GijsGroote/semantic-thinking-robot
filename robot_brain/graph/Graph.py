@@ -16,49 +16,9 @@ class Graph(ABC):
         self._nodes = []
         self._edges = []
 
+    @abstractmethod
     def visualise(self):
-        """"
-        Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
-        """
-        net = Network(directed=True)
-
-        # add nodes
-        for node in self.nodes:
-
-            group = "" 
-            color = ""
-            if isinstance(node, ObjectSetNode):
-                group = "Object Set Node"
-                color = "#8A307F"
-            elif isinstance(node, ConfSetNode):
-                group = "Configuration Set Node"
-                color = "#79A7D3"
-            elif isinstance(node, ChangeOfConfSetNode):
-                group = "Change of Conf Set Node"
-                color = "#6883BC"
-            else:
-                raise TypeError("could not classify node")
-
-            net.add_node(node.id,
-                    title=group + ":<br>" + node.toString() + "<br>",
-                    label=node.id,
-                    group=group,
-                    color = color)
-
-        # add edges
-        for edge in self.edges:
-
-            net.add_edge(edge.source,
-                    edge.to,
-                    group=edge.verb,
-                    label=edge.verb,
-                    title="edge:<br>" + edge.toString() + "<br>"
-                    )
-
-        # if you want to edit cusomize the graph
-        # net.show_buttons(filter_=['physics'])
-
-        net.show("delete-this.html")
+        pass
 
     @property
     def nodes(self):
@@ -74,5 +34,7 @@ class Graph(ABC):
 
     def addEdge(self, edge):
         # todo: input sanitizition:
-        assert isinstance(edge, Edge)
+        if not isinstance(edge, Edge):
+            raise TypeError("Only an Edge is allowed as edge")
+            
         self._edges.append(edge)

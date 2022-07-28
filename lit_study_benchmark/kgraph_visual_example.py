@@ -8,18 +8,24 @@ def main():
 
     kgraph = KGraph()
 
-    node1 = ObjectSetNode(1, "start robot and box", [])
+    # the robot
+    node1 = ObjectSetNode(1, "robot", [])
     kgraph.addNode(node1)
-    node2 = ChangeOfConfSetNode(2, "target box", [])
+    node2 = ChangeOfConfSetNode(2, "position", [])
     kgraph.addNode(node2)
+    kgraph.addEdge(Edge("id", 1, 2, "MPC", "PEM"))
+    # kgraph.addEdge(Edge("id", 1, 2, "MPC", "IPEM"))
 
-        # adding expanded start and target node
-    node1 = ObjectSetNode(1, "start robot", [])
-    node2 = ObjectSetNode(2, "start box", [])
-    node3 = ChangeOfConfSetNode(3, "target box", [])
+    # adding expanded start and target node
+    node3 = ObjectSetNode(3, "robot_and_red_sphere", [])
+    node4 = ChangeOfConfSetNode(4, "box position", [])
     kgraph.addNode(node3)
+    kgraph.addNode(node4)
+    # kgraph.addNode(ObjectSetNode(5, "unknown_object", []))
+    
+    kgraph.addEdge(Edge("id", 3, 4, "EMPPI", "LSTM")) 
 
-    kgraph.visualiseHGraph()
+    kgraph.visualise()
 
 if __name__ == "__main__":
     main()

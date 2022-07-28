@@ -68,7 +68,7 @@ def main(stage):
  
 
 
-    hgraph.visualiseHGraph()
+    hgraph.visualise()
 
 if __name__ == "__main__":
     # 8 stages of the hgraph, in
