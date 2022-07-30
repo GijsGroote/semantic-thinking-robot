@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 
 from robot_brain.global_variables import *
 
@@ -83,85 +83,93 @@ def create_graph_plot(graph, path):
 
     
 def create_mpc_plot(df):
-    fig = make_subplots(rows=2, cols=1)
-    fig.append_trace(go.Scatter(
-        x=df["time"],
-        y=df["x"],
-        name="x",
-        line=dict(color='blue')
-        ), row=1, col=1)
-    fig.append_trace(go.Scatter(
-        x=[df["time"][0], max(15, df["time"][df.index[-1]])],
-        y=df["x_ref"],
-        name="x_ref",
-        line=dict(color='blue', width=1, dash='dash')
-        ), row=1, col=1)
-    #
-    # fig.append_trace(go.Scatter(
-    #     x=df["time"],
-    #     y=df["y"],
-    #     name="y",
-    #     # line=dict(color='red')
-    # ), row=1, col=1)
-    # fig.append_trace(go.Scatter(
-    #     x=[df["time"][0], max(15, df["time"][df.index[-1]])],
-    #     y=df["y_ref"],
-    #     name="y_ref",
-    #     line=dict(color='red', width=1, dash='dash')
-    # ), row=1, col=1)
-    #
-    # fig.append_trace(go.Scatter(
-    #     x=df["time"],
-    #     y=df["theta"],
-    #     name="theta",
-    #     # line=dict(color='blue'),
-    # ), row=1, col=1)
-    # fig.append_trace(go.Scatter(
-    #     x=[df["time"][0], max(15, df["time"][df.index[-1]])],
-    #     y=df["theta_ref"],
-    #     name="theta_ref",
-    #     line=dict(color='blue', width=1, dash='dash')
-    # ), row=1, col=1)
 
-    # reference signals
+        fig = make_subplots(rows=2, cols=1)
+        
+        time = df["time"]
 
-    # "x_ref": self.mpc.targetState.pos[0],
-    # "y_ref": self.mpc.targetState.pos[1],
-    # "theta_ref": self.mpc.targetState.ang_p[2],
-    #
+        # x, y and theta positions
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["x"],
+            name="x-position",
+            line=dict(color='medium purple')
+            ), row=1, col=1)
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["y"],
+            name="y-position",
+            line=dict(color='forest  green')
+            ), row=1, col=1)
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["theta"],
+            name="orientation",
+            line=dict(color='dark green')
+            ), row=1, col=1)
 
-    fig.append_trace(go.Scatter(
-        x=df["time"],
-        y=df["u1"],
-        name="u1",
-        line=dict(shape='hv')
-    ), row=2, col=1)
-    fig.append_trace(go.Scatter(
-        x=df["time"],
-        y=df["u2"],
-        name="u2",
-        line=dict(shape='hv'),
-    ), row=2, col=1)
-    fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
+        # reference signals
+        fig.append_trace(go.Scatter(
+            x=[time[0], time.index[-1]],
+            y=df["x_ref"][0]*np.ones((2,)),
+            name="x-ref",
+            line=dict(color='medium purple', width=1, dash='dash')
+            ), row=1, col=1)
+        fig.append_trace(go.Scatter(
+            x=[time[0], time.index[-1]],
+            y=df["y_ref"][0]*np.ones((2,)),
+            name="y-ref",
+            line=dict(color='forest green', width=1, dash='dash')
+            ), row=1, col=1)
+        fig.append_trace(go.Scatter(
+            x=[time[0], time.index[-1]],
+            y=df["theta_ref"][0]*np.ones((2,)),
+            name="orientation-ref",
+            line=dict(color='dark green', width=1, dash='dash')
+            ), row=1, col=1)
 
-    # scale the axis
-    fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
-                     row=1, col=1)
+        # input
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["u1"],
+            name="u1",
+            line=dict(color='silver', shape='hv')
+        ), row=2, col=1)
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["u2"],
+            name="u2",
+            line=dict(color='gray', shape='hv'),
+        ), row=2, col=1)
 
-    fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
-                     title_text="Time [sec]",
-                     row=2, col=1)
+        # prediction error plot
+        fig.append_trace(go.Scatter(
+            x=time,
+            y=df["pred_error"],
+            name="prediction error",
+            line=dict(color='red'),
+        ), row=2, col=1)        
 
-    fig.update_yaxes(range=[dstack((df["x"], df["y"], df["theta"])).min() - 0.2,
-                            dstack((df["x"], df["y"], df["theta"])).max() + 0.2],
-                     title_text="position [-]",
-                     row=1, col=1)
+        # scale the axis
+        fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
+                         row=1, col=1)
 
-    fig.update_yaxes(range=[dstack((df["u1"], df["u2"])).max() + 0.2,
-                            dstack((df["u1"], df["u2"])).min() - 0.2],
-                     title_text="input [-]",
-                     row=2, col=1)
+        fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
+                         title_text="Time [sec]",
+                         row=2, col=1)
 
-    fig.update_layout({"title": {"text": "MPC controller"}})
+        fig.update_yaxes(range=[dstack((df["x"], df["y"], df["theta"])).min() - 0.2,
+                                dstack((df["x"], df["y"], df["theta"])).max() + 0.2],
+                         title_text="position [-]",
+                         row=1, col=1)
 
-    return fig
+        fig.update_yaxes(range=[dstack((df["u1"], df["u2"])).max() + 0.2,
+            dstack((df["u1"], df["u2"])).min() - 0.2],
+            title_text="input [-] & error [-]",
+            row=2, col=1)
+
+        fig.update_layout({"title": {"text": "MPC controller"}})
+
+        fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
+
+        return fig

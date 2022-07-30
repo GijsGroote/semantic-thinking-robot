@@ -26,6 +26,10 @@ class State:
                 + "acc:(" + str(np.round(self.acc, d)) + "), ang_p:("+str(np.round(self.ang_p, d)) \
                + ")\nang_v:(" + str(np.round(self.ang_v, d)) + "), ang_a:(" + str(np.round(self.ang_a, d)) + ")\n"
 
+    def get2DPose(self):
+        return np.array([self.pos[0], self.pos[1], self.ang_p[2]])
+
+
     @property
     def pos(self):
         return self._pos

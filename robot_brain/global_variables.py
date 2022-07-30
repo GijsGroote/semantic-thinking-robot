@@ -1,3 +1,5 @@
+DT = 0.05
+
 # dashboard global variables
 CREATE_SERVER_DASHBOARD = True 
 PLOT_CONTROLLER = True 

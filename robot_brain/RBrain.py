@@ -2,10 +2,10 @@ import warnings
 
 from robot_brain.planning.State import State
 from robot_brain.Dynamics import Dynamics
-# from robot_brain.controllers.Mpc_old import Mpc
+# from robot_brain.controller.Mpc_old import Mpc
 from robot_brain.planning.Object import Object
 import numpy as np
-from robot_brain.controllers.mpc.Mpc import Mpc
+from robot_brain.controller.mpc.Mpc import Mpc
 from robot_brain.global_variables import *
 from robot_brain.graph.HGraph import HGraph
 from robot_brain.graph.KGraph import KGraph
@@ -15,6 +15,7 @@ from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
 from robot_brain.graph.Edge import Edge
 import pandas as pd
 pd.options.plotting.backend = "plotly"
+from casadi import *
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
@@ -77,7 +78,6 @@ class RBrain:
         self.dt = stat_world_info["dt"]
         self.targetState = stat_world_info["targetState"]
 
-
     def update(self, ob):
         """x
         Update all objects states
@@ -102,7 +102,7 @@ class RBrain:
                 self.objects[key].state.vel = val["twist"]["linear"]
                 self.objects[key].state.ang_p = val["pose"]["orientation"]
                 self.objects[key].state.ang_v = val["twist"]["angular"]
-
+        
 
 
     def respond(self):
@@ -190,12 +190,18 @@ class RBrain:
             self.kgraph = kgraph
 
             self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
-            print("yes I got it, MPC! executing plan")
-            self.controller = Mpc()
-            dyn_model = Dynamics()
-            dyn_model.set_boxer_model()
-            # todo: this dyn model is unused
-            self.controller.create_mpc_controller(self.dt, dyn_model, self.robot.state, self.targetState)
+        print("yes I got it, MPC! executing plan")
+        self.controller = Mpc()
+        # dyn_model = Dynamics()
+        # dyn_model.set_boxer_model()
+        def dyn_model(x, u):
+            dx_next = vertcat(
+                    x[0] + 0.05*np.cos(x[2]) * u[0],
+                    x[1] + 0.05*np.sin(x[2]) * u[0],
+                    x[2] + 0.05 * u[1])
+            return dx_next
+
+        self.controller.setup(dyn_model, self.robot.state, self.targetState)
 
         self.is_doing = IS_EXECUTING
 

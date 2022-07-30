@@ -19,8 +19,9 @@ from robot_brain.dashboard.figures import *
 
 def check_file_is_up_to_date(path):
     # prevent updating if file is older than 3 seconds
+
     if time.time() - os.path.getmtime(path) > 3:
-        raise PreventUpdate
+        raise PreventUpdate # will show 304 status code, which is ok
 
 
 def register_callbacks(app):
@@ -97,7 +98,6 @@ def register_callbacks(app):
             # todo: this can be done better, send metadata with the dataframe
 
             if df.type[0] == "mpc":
-                print("data is updated")
                 return create_mpc_plot(df)
 
 
