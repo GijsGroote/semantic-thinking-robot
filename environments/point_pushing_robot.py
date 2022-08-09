@@ -8,7 +8,7 @@ from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
-from environments.obstacles import sphereObst2
+from environments.objects.spheres import sphere, sphere_small
 
 user_input_mode = False
 
@@ -22,18 +22,21 @@ def main(conn=None):
     dt = 0.05
     # env = gym.make('point-robot-urdf-vel-v0', dt=dt, render=True)
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+
+    pos0 = np.array([1.0, 0.1])
+    vel0 = np.array([0.0, 0.0])
+    env.reset(pos=pos0, vel=vel0)
+     
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
     defaultAction = np.array([0.0, 0.0])
     n_steps = 10000
-    pos0 = np.array([1.0, 0.1])
-    vel0 = np.array([0.0, 0.0])
-    env.reset(pos=pos0, vel=vel0)
-    env.set_walls(limits=[[-5, -5], [3, 2]])
-
+    # env.add_walls()
+    # env.add_shapes("GEOM_BOX", dim=[1,1,1], mass=15, poses_2d=[[-1,1,2]])
+    
     # add obstacles
-    env.add_obstacle(sphereObst2)
-    env.add_obstacle(sphereObst2)
+    env.add_obstacle(sphere)
+    env.add_obstacle(sphere_small)
 
     ob, reward, done, info = env.step(defaultAction)
 

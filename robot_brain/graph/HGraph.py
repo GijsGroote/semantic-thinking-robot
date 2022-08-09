@@ -21,14 +21,17 @@ class HGraph(Graph):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
-        net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
+        if path is None:
+            bgcolor = None
+        else: 
+            bgcolor = FIG_BG_COLOR
+
+        net = Network(bgcolor=bgcolor, height="450px", directed=True)
         
         # set a custom style sheet
-        net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
-
+        net.path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/graph_template.html"
 
         net.set_edge_smooth('dynamic')
-
 
         for node in self.start_nodes:
             if node == self.current_node: 
@@ -83,7 +86,7 @@ class HGraph(Graph):
                             'background': '#ffff99'
                             }
                         },
-                    label = " ",
+                    label = node.name,
                     group = node.__class__.__name__)
 
         if self.current_node is not None:

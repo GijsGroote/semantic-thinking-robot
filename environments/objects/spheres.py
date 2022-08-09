@@ -14,7 +14,7 @@ sphere_small_dict = {
         "dim": 3,
         "movable": True,
         "type": "sphere",
-        "geometry": {"position": [2.0, 1.0, 0.3], "radius": 0.2}
+        "geometry": {"position": [-2.0, 1.0, 0.3], "radius": 0.2}
 
 }
 

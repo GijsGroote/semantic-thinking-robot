@@ -24,7 +24,8 @@ class KGraph(Graph):
         net = Network(height="450px", directed=True)
 
         # set a custom style sheet
-        net.path = os.getcwd() + "/../robot_brain/dashboard/assets/graph_template.html"
+        # todo: relative path (which works)
+        net.path = os.getcwd() + "/robot_brain/dashboard/assets/graph_template.html"
 
 
         net.set_edge_smooth('dynamic')
@@ -32,31 +33,29 @@ class KGraph(Graph):
             if isinstance(node, ObjectSetNode):
                 
                 image = None
-                # use custom image if one exists
-                #temp path, somehow this image shows, but not if it runs on the server...
-                path_to_png = os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
-                if os.path.exists(path_to_png):
-                    image= path_to_png 
-                print(os.path.exists(path_to_png))
-                print(image)
 
-                net.add_node(node.id,
-                        title = "Node:<br>" + node.toString() + "<br>",
-                        x=1.0,
-                        y=1.0,
-                        color= {
-                            'border': '#000000', # grey and black 
-                            'background': '#808080',
-                            'highlight': {
-                                'border': '#000000',
-                                'background': '#a6a6a6'
-                                }
-                            },
-                        image= image, 
-                        shape= "circularImage",
-                        label = " ",
-                        group = node.__class__.__name__
-                        )
+                # todo: relative path, somehow this image shows, but not if it runs on the server...
+                # os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
+                path_to_png = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/images/" +  node.name + ".png"
+
+                if os.path.exists(path_to_png):
+                    net.add_node(node.id,
+                            title = "Node:<br>" + node.toString() + "<br>",
+                            x=1.0,
+                            y=1.0,
+                            color= {
+                                'border': '#000000', # grey and black 
+                                'background': '#808080',
+                                'highlight': {
+                                    'border': '#000000',
+                                    'background': '#a6a6a6'
+                                    }
+                                },
+                            image= path_to_png, 
+                            shape= "circularImage",
+                            label = " ",
+                            group = node.__class__.__name__
+                            )
 
 
             if isinstance(node, ChangeOfConfSetNode):

@@ -1,0 +1,113 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        body {
+            margin: 0px;
+        }
+        #mynetwork {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 450px;
+            background-color: None;
+            border: none;
+            /*margin-top: -22px;*/
+            /*float: left;*/
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network;
+    var container;
+    var options, data;
+
+
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#97C2FC", "border": "#2B7CE9", "highlight": {"background": "#D2E5FF", "border": "#2B7CE9"}}, "group": "start_nodes", "id": 1, "label": "start node", "shape": "dot", "title": "Starting Node:\u003cbr\u003eObjectSetNode: 1\n containing: 0 objects\u003cbr\u003e", "x": 1.0, "y": 1.0}, {"color": {"background": "#00ff00", "border": "#009900", "highlight": {"background": "#99ff99", "border": "#009900"}}, "group": "target_nodes", "id": 3, "label": "target node", "shape": "dot", "title": "Target Node:\u003cbr\u003eConfSetNode: 3\n containing: 0 configurations\u003cbr\u003e", "x": 90.0, "y": 90.0}, {"color": {"background": "#ffff00", "border": "#ffa500", "highlight": {"background": "#ffff99", "border": "#ffa500"}}, "group": "ObjectSetNode", "id": 4, "label": "generated node", "shape": "dot", "title": "Node:\u003cbr\u003eObjectSetNode: 4\n containing: 0 objects\u003cbr\u003e", "x": 1.0, "y": 1.0}, {"color": {"background": "#fb7e81", "border": "#fb4b50", "highlight": {"background": "#fcbcc4", "border": "#fb4b50"}}, "group": "current_node", "id": 2, "label": "curent node", "shape": "dot", "title": "Current node:\u003cbr\u003eObjectSetNode: 2\n containing: 0 objects\u003cbr\u003e", "x": 1.0, "y": 1.0}]);
+        edges = new vis.DataSet([{"arrows": "to", "dashes": true, "from": 4, "label": "transition, no planning completed", "title": "edge:\u003cbr\u003eid: id\nverb: transition, no planning completed\u003cbr\u003e", "to": 3, "weight": 1.0}, {"arrows": "to", "dashes": true, "from": 2, "label": "transition, no planning completed", "title": "edge:\u003cbr\u003eid: id\nverb: transition, no planning completed\u003cbr\u003e", "to": 4, "weight": 1.0}, {"arrows": "to", "dashes": false, "from": 1, "label": "transition, motion planning completed", "title": "edge:\u003cbr\u003eid: id\nverb: transition, motion planning completed\u003cbr\u003e", "to": 2, "weight": 1.0}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

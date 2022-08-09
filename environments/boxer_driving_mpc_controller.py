@@ -22,8 +22,7 @@ def main():
     ob = env.reset()
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
-    # env.add_walls()
-
+    env.add_walls()
 
 
     ob, reward, done, info = env.step(defaultAction)

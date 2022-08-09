@@ -4,14 +4,14 @@ class Edge:
     one Node to another Node.
     """
 
-    def __init__(self, id, source, to, verb, controller):
+    def __init__(self, id, source, to, verb, controller, path=False):
         self.id = id
         self.source = source
         self.to = to
         self.verb = verb
         self.controller = controller
         self.d = "use a al dynamical model please"
-        self.path = False
+        self.path = path 
         self.alpha = None
 
     def toString(self):

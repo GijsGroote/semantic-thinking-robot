@@ -98,10 +98,11 @@ class RBrain:
         # update objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                self.objects[key].state.pos = val["pose"]["position"]
-                self.objects[key].state.vel = val["twist"]["linear"]
-                self.objects[key].state.ang_p = val["pose"]["orientation"]
-                self.objects[key].state.ang_v = val["twist"]["angular"]
+                if key in self.objects.keys():
+                    self.objects[key].state.pos = val["pose"]["position"]
+                    self.objects[key].state.vel = val["twist"]["linear"]
+                    self.objects[key].state.ang_p = val["pose"]["orientation"]
+                    self.objects[key].state.ang_v = val["twist"]["angular"]
         
 
 
@@ -113,22 +114,22 @@ class RBrain:
             if self.controller is not None:
 
                 self.timer = self.timer + 1
-                if self.timer == 75:
-                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
-
-                if self.timer == 55:
-                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
-
-                if self.timer == 25:
-                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
-
-                if self.timer == 105:
-                    currentNode = ObjectSetNode(10, "PPPP", [])
-                    self.hgraph.addNode(currentNode)
-                    mpc_edge = Edge("15", 1, 10, "mpc", self.controller)
-                    self.hgraph.addEdge(mpc_edge)
-                    self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
-
+                # if self.timer == 75:
+                #     self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+                #
+                # if self.timer == 55:
+                #     self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+                #
+                # if self.timer == 25:
+                #     self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+                #
+                # if self.timer == 105:
+                #     currentNode = ObjectSetNode(10, "PPPP", [])
+                #     self.hgraph.addNode(currentNode)
+                #     mpc_edge = Edge("15", 1, 10, "mpc", self.controller)
+                #     self.hgraph.addEdge(mpc_edge)
+                #     self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+                #
                 return self.controller.respond(self.robot.state)
 
             else:
@@ -166,7 +167,7 @@ class RBrain:
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
 
-            self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+            # self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
 
             kgraph = KGraph()
 
@@ -189,7 +190,7 @@ class RBrain:
 
             self.kgraph = kgraph
 
-            self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
+            # self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
         print("yes I got it, MPC! executing plan")
         self.controller = Mpc()
         # dyn_model = Dynamics()

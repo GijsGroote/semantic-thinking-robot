@@ -20,4 +20,14 @@ urdf_duck2_dict= {
     'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
 }
 
+# urdf_duck2 = UrdfObstacle(name='duckUrdf', contentDict=urdf_duck2_dict)
+
+# huge duck 
+urdf_duck2_dict= {
+    'dim': 3,
+    'type': 'urdf',
+    'geometry': {'position': [4.0, 15.0, 7.2]},
+    'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
+}
+
 urdf_duck2 = UrdfObstacle(name='duckUrdf', contentDict=urdf_duck2_dict)
