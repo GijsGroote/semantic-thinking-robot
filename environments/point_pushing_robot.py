@@ -9,6 +9,7 @@ from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
 from environments.objects.spheres import sphere, sphere_small
+from environments.objects.boxes import box
 
 user_input_mode = False
 
@@ -31,12 +32,10 @@ def main(conn=None):
     env.add_sensor(sensor)
     defaultAction = np.array([0.0, 0.0])
     n_steps = 10000
-    # env.add_walls()
-    # env.add_shapes("GEOM_BOX", dim=[1,1,1], mass=15, poses_2d=[[-1,1,2]])
-    
+   
     # add obstacles
-    env.add_obstacle(sphere)
-    env.add_obstacle(sphere_small)
+    env.add_obstacle(box)
+    # env.add_obstacle(sphere_small)
 
     ob, reward, done, info = env.step(defaultAction)
 
