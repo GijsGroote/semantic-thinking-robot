@@ -99,7 +99,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.1.0"
+version = "2.1.1"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -219,7 +219,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "do-mpc"
-version = "4.3.5"
+version = "4.4.0"
 description = ""
 category = "main"
 optional = false
@@ -279,7 +279,7 @@ flask = "*"
 
 [[package]]
 name = "fonttools"
-version = "4.36.0"
+version = "4.37.1"
 description = "Tools to manipulate font files"
 category = "main"
 optional = false
@@ -547,11 +547,11 @@ traitlets = "*"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.22"
+version = "0.1.23"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
-python-versions = "^3.6,<3.10"
+python-versions = "^3.6,<3.11"
 develop = false
 
 [package.dependencies]
@@ -560,14 +560,14 @@ geomdl = "^5.3.1"
 numpy = "^1.19.0"
 omegaconf = "^2.2.2"
 pyquaternion = "^0.9.9"
-pytest = "^6.2.5"
 PyYAML = "^6.0"
 
+[package.extras]
+bullet = ["pybullet (>=3.2.3,<4.0.0)"]
+
 [package.source]
-type = "git"
-url = "https://github.com/GijsGroote/motion_planning_scenes.git"
-reference = "ft-add-cuboid"
-resolved_reference = "4af2c6da19bddafaad142d7e32fc79d0e43da101"
+type = "directory"
+url = "../motion_planning_scenes"
 
 [[package]]
 name = "mpld3"
@@ -594,7 +594,7 @@ dill = ">=0.3.5.1"
 
 [[package]]
 name = "networkx"
-version = "2.8.5"
+version = "2.8.6"
 description = "Python package for creating and manipulating graphs and networks"
 category = "main"
 optional = false
@@ -602,7 +602,7 @@ python-versions = ">=3.8"
 
 [package.extras]
 default = ["numpy (>=1.19)", "scipy (>=1.8)", "matplotlib (>=3.4)", "pandas (>=1.3)"]
-developer = ["pre-commit (>=2.19)", "mypy (>=0.960)"]
+developer = ["pre-commit (>=2.20)", "mypy (>=0.961)"]
 doc = ["sphinx (>=5)", "pydata-sphinx-theme (>=0.9)", "sphinx-gallery (>=0.10)", "numpydoc (>=1.4)", "pillow (>=9.1)", "nb2plots (>=0.6)", "texext (>=0.6.6)"]
 extra = ["lxml (>=4.6)", "pygraphviz (>=1.9)", "pydot (>=1.4.2)", "sympy (>=1.10)"]
 test = ["pytest (>=7.1)", "pytest-cov (>=3.0)", "codecov (>=2.1)"]
@@ -617,7 +617,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "omegaconf"
-version = "2.2.2"
+version = "2.2.3"
 description = "A flexible configuration library"
 category = "main"
 optional = false
@@ -1135,7 +1135,7 @@ test = ["pre-commit", "pytest"]
 
 [[package]]
 name = "trimesh"
-version = "3.13.5"
+version = "3.14.0"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
 optional = false
@@ -1145,9 +1145,9 @@ python-versions = "*"
 numpy = "*"
 
 [package.extras]
-all = ["setuptools", "lxml", "networkx", "scikit-image", "msgpack", "xxhash", "colorlog", "mapbox-earcut", "rtree", "requests", "sympy", "svg.path", "meshio", "glooey", "triangle", "pillow", "scipy", "jsonschema", "python-fcl", "psutil", "pyglet", "shapely", "pycollada", "xatlas", "chardet"]
-easy = ["svg.path", "setuptools", "lxml", "networkx", "scipy", "pillow", "jsonschema", "pyglet", "colorlog", "msgpack", "shapely", "xxhash", "pycollada", "rtree", "requests", "sympy", "chardet"]
-test = ["pytest-cov", "pytest", "ezdxf", "pyinstrument", "coveralls"]
+all = ["requests", "pillow", "setuptools", "colorlog", "mapbox-earcut", "msgpack", "meshio", "pyglet", "xatlas", "xxhash", "jsonschema", "scipy", "svg.path", "psutil", "python-fcl", "scikit-image", "sympy", "pycollada", "shapely", "lxml", "rtree", "glooey", "networkx", "chardet", "triangle"]
+easy = ["pillow", "setuptools", "requests", "colorlog", "msgpack", "pyglet", "chardet", "sympy", "pycollada", "shapely", "lxml", "rtree", "networkx", "xxhash", "scipy", "jsonschema", "svg.path"]
+test = ["ezdxf", "pytest-cov", "coveralls", "pytest", "pyinstrument"]
 
 [[package]]
 name = "urdfenvs"
@@ -1171,10 +1171,8 @@ keyboard = ["pynput (>=1.7.6,<2.0.0)", "multiprocess (>=0.70.12,<0.71.0)"]
 docs = ["Sphinx (==4.2.0)", "sphinx-rtd-theme (==1.0.0)", "sphinxcontrib-napoleon (==0.7)"]
 
 [package.source]
-type = "git"
-url = "https://github.com/maxspahn/gym_envs_urdf.git"
-reference = "develop"
-resolved_reference = "6819d82366392d926c65990c29c5cd1935c5fc40"
+type = "directory"
+url = "../gym_envs_urdf"
 
 [[package]]
 name = "urdfpy"
@@ -1208,7 +1206,7 @@ resolved_reference = "63b0b4d1f06136cbfd5367f556eb4d29f0d140b6"
 
 [[package]]
 name = "urllib3"
-version = "1.26.11"
+version = "1.26.12"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -1216,7 +1214,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, 
 
 [package.extras]
 brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
-secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "urllib3-secure-extra", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
@@ -1256,7 +1254,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "eefd31fd0f1e749da09b366dc33c272a3184174cfa96b130d963087e0c59872e"
+content-hash = "78e68123455e8fedeb54908ac429666d447ac1e03bbc13215c1db164361ad015"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -1394,8 +1392,8 @@ certifi = [
     {file = "certifi-2022.6.15.tar.gz", hash = "sha256:84c85a9078b11105f04f3036a9482ae10e4621616db313fe045dd24743a0820d"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.1.0.tar.gz", hash = "sha256:575e708016ff3a5e3681541cb9d79312c416835686d054a23accb873b254f413"},
-    {file = "charset_normalizer-2.1.0-py3-none-any.whl", hash = "sha256:5189b6f22b01957427f35b6a08d9a0bc45b46d3788ef5a92e978433c7a35f8a5"},
+    {file = "charset-normalizer-2.1.1.tar.gz", hash = "sha256:5a3d016c7c547f69d6f81fb0db9449ce888b418b5b9952cc5e6e66843e9dd845"},
+    {file = "charset_normalizer-2.1.1-py3-none-any.whl", hash = "sha256:83e9a75d1911279afd89352c68b45348559d1fc0506b054b346651b5e7fee29f"},
 ]
 click = [
     {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
@@ -1441,8 +1439,8 @@ dill = [
     {file = "dill-0.3.5.1.tar.gz", hash = "sha256:d75e41f3eff1eee599d738e76ba8f4ad98ea229db8b085318aa2b3333a208c86"},
 ]
 do-mpc = [
-    {file = "do_mpc-4.3.5-py3-none-any.whl", hash = "sha256:3344d02fea2710e7dc08719c2c8900fa22b474be8a3a0c0709888b03c5f3cd85"},
-    {file = "do_mpc-4.3.5.tar.gz", hash = "sha256:4e0741f74e25bee4721a96a56083ea31553e399fd63b069565679c26f24b3257"},
+    {file = "do_mpc-4.4.0-py3-none-any.whl", hash = "sha256:8294a82777086e7f31f39b561c71a584c0012f97cb265941319a360a850d0501"},
+    {file = "do_mpc-4.4.0.tar.gz", hash = "sha256:6602ef99a0aa19e8c3d64061c517e8116167316b902432483c9d3a6137b0d3be"},
 ]
 evdev = [
     {file = "evdev-1.6.0.tar.gz", hash = "sha256:ecfa01b5c84f7e8c6ced3367ac95288f43cd84efbfd7dd7d0cdbfc0d18c87a6a"},
@@ -1460,8 +1458,8 @@ flask-compress = [
     {file = "Flask_Compress-1.12-py3-none-any.whl", hash = "sha256:9f4e40211755e86f85e5eb7d414856ef1e8751912caa78d62853169400335f0c"},
 ]
 fonttools = [
-    {file = "fonttools-4.36.0-py3-none-any.whl", hash = "sha256:cb91ef8d5a435d90aeb3ab814b2548c6b515df5bc13b4c5adaa23778f2f79823"},
-    {file = "fonttools-4.36.0.zip", hash = "sha256:e637d2fe06bddabbfc488e02ef32d04d561e3c71e9ba11abc7782ea753ceb218"},
+    {file = "fonttools-4.37.1-py3-none-any.whl", hash = "sha256:fff6b752e326c15756c819fe2fe7ceab69f96a1dbcfe8911d0941cdb49905007"},
+    {file = "fonttools-4.37.1.zip", hash = "sha256:4606e1a88ee1f6699d182fea9511bd9a8a915d913eab4584e5226da1180fcce7"},
 ]
 freetype-py = [
     {file = "freetype-py-2.3.0.zip", hash = "sha256:f9b64ce3272a5c358dcee824800a32d70997fb872a0965a557adca20fce7a5d0"},
@@ -1744,8 +1742,8 @@ multiprocess = [
     {file = "multiprocess-0.70.13.tar.gz", hash = "sha256:2e096dd618a84d15aa369a9cf6695815e5539f853dc8fa4f4b9153b11b1d0b32"},
 ]
 networkx = [
-    {file = "networkx-2.8.5-py3-none-any.whl", hash = "sha256:a762f4b385692d9c3a6f2912d058d76d29a827deaedf9e63ed14d397b8030687"},
-    {file = "networkx-2.8.5.tar.gz", hash = "sha256:15a7b81a360791c458c55a417418ea136c13378cfdc06a2dcdc12bd2f9cf09c1"},
+    {file = "networkx-2.8.6-py3-none-any.whl", hash = "sha256:2a30822761f34d56b9a370d96a4bf4827a535f5591a4078a453425caeba0c5bb"},
+    {file = "networkx-2.8.6.tar.gz", hash = "sha256:bd2b7730300860cbd2dafe8e5af89ff5c9a65c3975b352799d87a6238b4301a6"},
 ]
 numpy = [
     {file = "numpy-1.23.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e603ca1fb47b913942f3e660a15e55a9ebca906857edfea476ae5f0fe9b457d5"},
@@ -1778,8 +1776,8 @@ numpy = [
     {file = "numpy-1.23.2.tar.gz", hash = "sha256:b78d00e48261fbbd04aa0d7427cf78d18401ee0abd89c7559bbf422e5b1c7d01"},
 ]
 omegaconf = [
-    {file = "omegaconf-2.2.2-py3-none-any.whl", hash = "sha256:556917181487fb66fe832d3c7b324f51b2f4c8adc373dd5091be921501b7d420"},
-    {file = "omegaconf-2.2.2.tar.gz", hash = "sha256:65c85b2a84669a570c70f2df00de3cebcd9b47a8587d3c53b1aa5766bb096f77"},
+    {file = "omegaconf-2.2.3-py3-none-any.whl", hash = "sha256:d6f2cbf79a992899eb76c6cb1aedfcf0fe7456a8654382edd5ee0c1b199c0657"},
+    {file = "omegaconf-2.2.3.tar.gz", hash = "sha256:59ff9fba864ffbb5fb710b64e8a9ba37c68fa339a2e2bb4f1b648d6901552523"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
@@ -2136,14 +2134,14 @@ traitlets = [
     {file = "traitlets-5.3.0.tar.gz", hash = "sha256:0bb9f1f9f017aa8ec187d8b1b2a7a6626a2a1d877116baba52a129bfa124f8e2"},
 ]
 trimesh = [
-    {file = "trimesh-3.13.5-py3-none-any.whl", hash = "sha256:3a7f7481146546e5a1d6d849153d32d5b7c8108539cba21b40bbc74a1b14a86b"},
-    {file = "trimesh-3.13.5.tar.gz", hash = "sha256:d7e072719d5f1447dbaa81ecfd30e71995dcf084735b3cb6a59d9891338f31a0"},
+    {file = "trimesh-3.14.0-py3-none-any.whl", hash = "sha256:22a4c59761e30ebbfbf278998520b36e35e775c45fd496e8961eb464f0871eab"},
+    {file = "trimesh-3.14.0.tar.gz", hash = "sha256:f6781d6bce697384eebddc38d22fe12a5d39933b036b449267fb54a1f5837962"},
 ]
 urdfenvs = []
 urdfpy = []
 urllib3 = [
-    {file = "urllib3-1.26.11-py2.py3-none-any.whl", hash = "sha256:c33ccba33c819596124764c23a97d25f32b28433ba0dedeb77d873a38722c9bc"},
-    {file = "urllib3-1.26.11.tar.gz", hash = "sha256:ea6e8fb210b19d950fab93b60c9009226c63a28808bc8386e05301e25883ac0a"},
+    {file = "urllib3-1.26.12-py2.py3-none-any.whl", hash = "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"},
+    {file = "urllib3-1.26.12.tar.gz", hash = "sha256:3fa96cf423e6987997fc326ae8df396db2a8b7c667747d47ddd8ecba91f4a74e"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},

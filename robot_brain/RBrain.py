@@ -191,7 +191,6 @@ class RBrain:
             self.kgraph = kgraph
 
             # self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
-        print("yes I got it, MPC! executing plan")
         self.controller = Mpc()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()

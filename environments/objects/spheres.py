@@ -1,23 +1,13 @@
 from MotionPlanningEnv.sphereObstacle import SphereObstacle
 
 sphere_dict = {
-    "dim": 3,
     "movable": True,
+    "mass": 1, 
     "type": "sphere",
-    "geometry": {"position": [1.0, 2.0, 1.0], "radius": 0.7},
+    "color": [227/255, 180/255, 72/255, 1],
+    "position": [1.0, 1.0, 1.0], 
+    "geometry": {"radius": 0.6},
 }
 
-sphere = SphereObstacle(name="simpleSphere", contentDict=sphere_dict)
-
-
-sphere_small_dict = {
-        "dim": 3,
-        "movable": True,
-        "type": "sphere",
-        "geometry": {"position": [-2.0, 1.0, 0.3], "radius": 0.2}
-
-}
-
-sphere_small = SphereObstacle(name="simpleSphere", contentDict=sphere_small_dict)
-
+sphere = SphereObstacle(name="simpeSphere", content_dict=sphere_dict)
 

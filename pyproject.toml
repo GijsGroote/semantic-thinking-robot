@@ -6,16 +6,14 @@ authors = ["Gijs Groote <gijsgroote@hotmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
+urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
+motion-planning-scenes = {path = "../motion_planning_scenes"}
+urdfenvs = {path = "../gym_envs_urdf"}
 pybullet = "^3.2.1"
 gym = "^0.21.0"
 numpy = "^1.10.0"
 casadi = "^3.5.5"
-# motion-planning-scenes = {version = "^0.1.1"}
-motion-planning-scenes = {git = "https://github.com/GijsGroote/motion_planning_scenes.git", rev = "ft-add-cuboid"}
-pynput = {version = "^1.7.6"}
 multiprocess = {version = "^0.70.12"}
-urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
-urdfenvs = {git = "https://github.com/maxspahn/gym_envs_urdf.git", rev = "develop"}
 do-mpc = "^4.3.2"
 pyvis = "^0.1.9"
 mpld3 = "^0.5.7"
@@ -24,6 +22,7 @@ plotly = "^5.6.0"
 pandas = "^1.4.1"
 pyorbital = "^1.7.1"
 pyarrow = "^7.0.0"
+pynput = {version = "^1.7.6"}
 dash-dangerously-set-inner-html = "^0.0.2"
 beautifulsoup4 = "^4.10.0"
 

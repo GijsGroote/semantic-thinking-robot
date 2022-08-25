@@ -8,10 +8,13 @@ from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
 from robot_brain.RBrain import State
-from environments.objects.spheres import sphere, sphere_small
-from environments.objects.boxes import box
 
-user_input_mode = False
+from environments.objects.boxes import box
+from environments.objects.spheres import sphere
+from environments.objects.cylinders import cylinder
+
+
+user_input_mode = False 
 
 def main(conn=None):
     """
@@ -35,20 +38,18 @@ def main(conn=None):
    
     # add obstacles
     env.add_obstacle(box)
-    # env.add_obstacle(sphere_small)
+    env.add_obstacle(sphere)
+    env.add_obstacle(cylinder)
 
-    ob, reward, done, info = env.step(defaultAction)
+    ob, reward, done, _ = env.step(defaultAction)
 
-    print(ob)
 
     brain = RBrain()
-    if not user_input_mode:
-        # do the regular stuff, like begin the simulation, something like that
-        brain.setup({
-            "dt": dt,
-            "defaultAction": defaultAction,
-            "targetState": State(),
-        }, ob)
+    brain.setup({
+        "dt": dt,
+        "defaultAction": defaultAction,
+        "targetState": State(pos=np.array([2, 2, 0])),
+    }, ob)
 
     action = defaultAction
     for i in range(n_steps):
@@ -92,7 +93,7 @@ if __name__ == '__main__':
                            Key.page_down: np.array([1.0, 1.0]),
                            Key.page_up: np.array([-1.0, -1.0])}
 
-        responder.setup(defaultAction=np.array([0.0, 0.0]))
+        responder.setup()
         # responder.setup(custom_on_press=custom_on_press)
 
         # start child process which keeps responding/looping
