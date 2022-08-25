@@ -1,8 +1,8 @@
 DT = 0.05
 
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = False #True 
-PLOT_CONTROLLER = False #True 
+CREATE_SERVER_DASHBOARD = False #True
+PLOT_CONTROLLER = False #True
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
 
@@ -13,5 +13,3 @@ FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)
 
 
 MPC_CONTROLLER = "mpc controller"
-
-

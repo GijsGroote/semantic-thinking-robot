@@ -2,8 +2,7 @@ import do_mpc
 from robot_brain.global_variables import PLOT_CONTROLLER, DT
 
 
-def template_mpc(model, n_horizon, targetState):
-
+def template_mpc(model, n_horizon, target_state):
 
     # Obtain an instance of the do-mpc MPC class
     mpc = do_mpc.controller.MPC(model)
@@ -28,8 +27,8 @@ def template_mpc(model, n_horizon, targetState):
     lterm = (model.x["pos_x"]-model.tvp["pos_x_target"]) ** 2 + \
     (model.x["pos_y"]-model.tvp["pos_y_target"]) ** 2 + \
     0.1*(model.x["ang_p"]-model.tvp["ang_p_target"]) ** 2
-    mterm = 0.5*lterm 
-     
+    mterm = 0.5*lterm
+
     mpc.set_objective(mterm=mterm, lterm=lterm)
     mpc.set_rterm(
         u1=rterm_u1,
@@ -37,11 +36,11 @@ def template_mpc(model, n_horizon, targetState):
     )
 
     tvp_template = mpc.get_tvp_template()
-    def tvp_fun(t_now):
+    def tvp_fun(t_now): # pylint: disable=unused-argument
         for k in range(n_horizon+1):
-                tvp_template['_tvp',k,'pos_x_target'] = targetState.pos[0] 
-                tvp_template['_tvp',k,'pos_y_target'] = targetState.pos[1] 
-                tvp_template['_tvp',k,'ang_p_target'] = targetState.ang_p[2]
+            tvp_template['_tvp',k,'pos_x_target'] = target_state.pos[0]
+            tvp_template['_tvp',k,'pos_y_target'] = target_state.pos[1]
+            tvp_template['_tvp',k,'ang_p_target'] = target_state.ang_p[2]
 
         return tvp_template
 

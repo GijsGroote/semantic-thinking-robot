@@ -5,7 +5,7 @@ from robot_brain.Dynamics import Dynamics
 # from robot_brain.controller.Mpc_old import Mpc
 from robot_brain.planning.Object import Object
 import numpy as np
-from robot_brain.controller.mpc.Mpc import Mpc
+from robot_brain.controller.mpc.mpc import Mpc
 from robot_brain.global_variables import *
 from robot_brain.graph.HGraph import HGraph
 from robot_brain.graph.KGraph import KGraph

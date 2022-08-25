@@ -1,9 +1,9 @@
+from multiprocessing import Process, Pipe
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf
 import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from multiprocessing import Process, Pipe
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.RBrain import RBrain
@@ -14,7 +14,7 @@ from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
 
-user_input_mode = False 
+user_input_mode = False
 
 def main(conn=None):
     """
