@@ -137,7 +137,7 @@ def create_mpc_plot(df):
         y=df["pred_error"],
         name="prediction error",
         line=dict(color='red'),
-    ), row=2, col=1)        
+    ), row=2, col=1)       
 
     # scale the axis
     fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
