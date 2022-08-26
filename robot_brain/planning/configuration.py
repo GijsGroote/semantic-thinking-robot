@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Configuration:
 
     # todo: this entire class

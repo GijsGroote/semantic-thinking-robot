@@ -4,21 +4,21 @@ class Node(ABC):
     """
     Abstract class for Node
     """
-    def __init__(self, id):
-        self.id = id  # identifier
+    def __init__(self, iden):
+        self.iden = iden  # identifier
         self.type = None
 
     @abstractmethod
-    def toString(self):
+    def to_string(self):
         pass
 
     @property
-    def id(self):
-        return self._id
+    def iden(self):
+        return self._iden
 
-    @id.setter
-    def id(self, val):
-        self._id = val
+    @iden.setter
+    def iden(self, val):
+        self._iden = val
 
     @property
     def type(self):
@@ -27,4 +27,3 @@ class Node(ABC):
     @type.setter
     def type(self, val):
         self._type = val
-

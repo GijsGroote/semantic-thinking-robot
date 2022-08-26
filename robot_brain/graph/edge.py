@@ -3,31 +3,30 @@ class Edge:
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-
-    def __init__(self, id, source, to, verb, controller, path=False):
-        self.id = id
+    def __init__(self, iden, source, to, verb, controller, path=False):
+        self.iden = iden
         self.source = source
         self.to = to
         self.verb = verb
         self.controller = controller
-        self.d = "use a al dynamical model please"
-        self.path = path 
+        self.dyn_model = "use a al dynamical model please"
+        self.path = path
         self.alpha = None
 
-    def toString(self):
+    def to_string(self):
         """
         Creates readable format of an Edge
         :return: String
         """
-        return "id: {}\nverb: {}".format(self.id, self.verb)
+        return f"id: {self.iden}\nverb: {self.verb}"
 
     @property
-    def id(self):
-        return self._id
+    def iden(self):
+        return self._iden
 
-    @id.setter
-    def id(self, val):
-        self._id = val
+    @iden.setter
+    def iden(self, val):
+        self._iden = val
 
     @property
     def source(self):
@@ -59,15 +58,14 @@ class Edge:
 
     @controller.setter
     def controller(self, contr):
-        # todo: check contr is a Controller object
+        # TODO: check contr is a Controller object
         self._controller = contr
 
     @property
     def path(self):
         return self._path
 
-
     @path.setter
     def path(self, path):
-        # todo: check plan is a plan
+        # TODO: check plan is a plan
         self._path = path

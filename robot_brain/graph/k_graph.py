@@ -1,57 +1,53 @@
-from robot_brain.graph.Graph import Graph 
-from robot_brain.graph.Node import Node
-from robot_brain.graph.ConfSetNode import ConfSetNode
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode 
-from robot_brain.graph.Graph import Graph
-from pyvis.network import Network
 import os
-from robot_brain.global_variables import *
+from pyvis.network import Network
+from robot_brain.graph.graph import Graph
+from robot_brain.graph.node import Node
+from robot_brain.graph.conf_set_node import ConfSetNode
+from robot_brain.graph.object_set_node import ObjectSetNode
+from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_variables import FIG_BG_COLOR
+
 
 class KGraph(Graph):
-
+    """
+    Knowledge graph.
+    """
     def __init__(self):
         Graph.__init__(self)
-        print("init")
-        
 
     def visualise(self, path=None):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
-        # net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
-        
-        net = Network(height="450px", directed=True)
+        net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
 
         # set a custom style sheet
-        # todo: relative path (which works)
+        # TODO: relative path (which works)
         net.path = os.getcwd() + "/robot_brain/dashboard/assets/graph_template.html"
 
 
         net.set_edge_smooth('dynamic')
         for node in self.nodes:
             if isinstance(node, ObjectSetNode):
-                
-                image = None
-
-                # todo: relative path, somehow this image shows, but not if it runs on the server...
+                # TODO: relative path, somehow this image shows, but not if it runs on the server...
                 # os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
-                path_to_png = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/images/" +  node.name + ".png"
+                path_to_png = "/home/gijs/Documents/semantic-thinking-robot"\
+                        "/robot_brain/dashboard/assets/images/" +  node.name + ".png"
 
                 if os.path.exists(path_to_png):
-                    net.add_node(node.id,
-                            title = "Node:<br>" + node.toString() + "<br>",
+                    net.add_node(node.iden,
+                            title = "Node:<br>" + node.to_string() + "<br>",
                             x=1.0,
                             y=1.0,
                             color= {
-                                'border': '#000000', # grey and black 
+                                'border': '#000000', # grey and black
                                 'background': '#808080',
                                 'highlight': {
                                     'border': '#000000',
                                     'background': '#a6a6a6'
                                     }
                                 },
-                            image= path_to_png, 
+                            image= path_to_png,
                             shape= "circularImage",
                             label = " ",
                             group = node.__class__.__name__
@@ -59,8 +55,8 @@ class KGraph(Graph):
 
 
             if isinstance(node, ChangeOfConfSetNode):
-                 net.add_node(node.id,
-                        title = "Node:<br>" + node.toString() + "<br>",
+                net.add_node(node.iden,
+                        title = "Node:<br>" + node.to_string() + "<br>",
                         x=1.0,
                         y=1.0,
                         color= {
@@ -83,7 +79,7 @@ class KGraph(Graph):
                     edge.to,
                     weight=1.0,
                     label=edge.verb,
-                    title="edge:<br>" + edge.toString() + "<br>",
+                    title="edge:<br>" + edge.to_string() + "<br>",
                     )
 
         # if you want to edit cusomize the graph
@@ -95,9 +91,7 @@ class KGraph(Graph):
             net.write_html(path)
 
 
-    def addNode(self, node): 
+    def add_node(self, node):
         if not(isinstance(node, Node) and not isinstance(node, ConfSetNode)):
             raise TypeError("ObjectSetNodes's and ChangeOfConfSetNodes are only allowed in KGraph")
-
         self.nodes.append(node)
-

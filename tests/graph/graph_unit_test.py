@@ -1,18 +1,19 @@
-from robot_brain.graph.Node import Node
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.ConfSetNode import ConfSetNode
-from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
-
-from robot_brain.graph.Graph import Graph
-from robot_brain.graph.KGraph import KGraph
-from robot_brain.graph.HGraph import HGraph
-
-
 import unittest
+
+from robot_brain.graph.node import Node
+from robot_brain.graph.object_set_node import ObjectSetNode
+from robot_brain.graph.conf_set_node import ConfSetNode
+from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.graph.graph import Graph
+from robot_brain.graph.k_graph import KGraph
+from robot_brain.graph.h_graph import HGraph
 
 
 class MyTestCase(unittest.TestCase):
-    def test_isInstance(self):
+    """
+    Test Graph class and associated classes.
+    """
+    def test_is_instance(self):
         obj_set_node = ObjectSetNode(2, "P", [])
         conf_set_node = ConfSetNode(2, "P", [])
         change_of_conf_set_node = ChangeOfConfSetNode(2, "P", [])
@@ -35,13 +36,13 @@ class MyTestCase(unittest.TestCase):
         hgraph = HGraph()
         kgraph = KGraph()
 
-        hgraph.addNode(node1)
-        hgraph.addNode(node2)
-        hgraph.addNode(node3)
-        
-        kgraph.addNode(node1)
-        kgraph.addNode(node2)
-        kgraph.addNode(node3)
+        hgraph.add_node(node1)
+        hgraph.add_node(node2)
+        hgraph.add_node(node3)
+
+        kgraph.add_node(node1)
+        kgraph.add_node(node2)
+        kgraph.add_node(node3)
 
         self.assertEqual(len(hgraph.nodes), 3)
         self.assertEqual(len(kgraph.nodes), 3)
@@ -49,35 +50,34 @@ class MyTestCase(unittest.TestCase):
     def test_allowed_node_types(self):
         hgraph = HGraph()
         kgraph = KGraph()
-        
+
         conf_set_node = ConfSetNode(3, "P", [])
         obj_set_node = ObjectSetNode(2, "P", [])
         change_of_conf_set_node = ChangeOfConfSetNode(6, "wutwat", [])
 
-        # allowed 
-        hgraph.addTargetNode(conf_set_node)
-        hgraph.addStartNode(obj_set_node)
-        hgraph.addNode(conf_set_node)
-        hgraph.addNode(obj_set_node)
-        kgraph.addNode(obj_set_node)
-        kgraph.addNode(change_of_conf_set_node)
+        # allowed
+        hgraph.add_target_node(conf_set_node)
+        hgraph.add_start_node(obj_set_node)
+        hgraph.add_node(conf_set_node)
+        hgraph.add_node(obj_set_node)
+        kgraph.add_node(obj_set_node)
+        kgraph.add_node(change_of_conf_set_node)
 
         # not allowed
         with self.assertRaises(TypeError):
-            hgraph.addTargetNode(obj_set_node)
-         
-        with self.assertRaises(TypeError):
-            hgraph.addTargetNode(change_of_conf_set_node)
-        
-        with self.assertRaises(TypeError):
-            hgraph.addNode(change_of_conf_set_node)
-     
-        with self.assertRaises(TypeError):
-            hgraph.addStartNode(change_of_conf_set_node)
+            hgraph.add_target_node(obj_set_node)
 
         with self.assertRaises(TypeError):
-            hgraph.addStartNode(conf_set_node)
+            hgraph.add_target_node(change_of_conf_set_node)
 
         with self.assertRaises(TypeError):
-            kgraph.addNode(conf_set_node)
+            hgraph.add_node(change_of_conf_set_node)
 
+        with self.assertRaises(TypeError):
+            hgraph.add_start_node(change_of_conf_set_node)
+
+        with self.assertRaises(TypeError):
+            hgraph.add_start_node(conf_set_node)
+
+        with self.assertRaises(TypeError):
+            kgraph.add_node(conf_set_node)

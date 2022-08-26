@@ -1,20 +1,15 @@
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
-
-from robot_brain.global_variables import *
-
-from robot_brain.graph.ConfSetNode import ConfSetNode
-
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.HGraph import HGraph
-from pyvis.network import Network
-
-pd.options.plotting.backend = "plotly"
-import os
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 from numpy import dstack
 
+pd.options.plotting.backend = "plotly"
+
+from robot_brain.global_variables import FIG_BG_COLOR, CREATE_SERVER_DASHBOARD
+from robot_brain.graph.conf_set_node import ConfSetNode
+from robot_brain.graph.object_set_node import ObjectSetNode
+from robot_brain.graph.h_graph import HGraph
 
 def create_no_data_found_dict(app):
     return {

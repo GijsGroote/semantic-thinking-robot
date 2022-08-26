@@ -6,8 +6,8 @@ import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.planning.state import State
 
 from environments.objects.boxes import box
 from environments.objects.spheres import sphere
@@ -30,29 +30,28 @@ def main(conn=None):
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-     
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
-    defaultAction = np.array([0.0, 0.0])
+    default_action = np.array([0.0, 0.0])
     n_steps = 10000
-   
+
     # add obstacles
     env.add_obstacle(box)
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
-    ob, reward, done, _ = env.step(defaultAction)
-
+    ob, reward, done, info = env.step(default_action)
 
     brain = RBrain()
     brain.setup({
         "dt": dt,
-        "defaultAction": defaultAction,
-        "targetState": State(pos=np.array([2, 2, 0])),
+        "default_action": default_action,
+        "target_state": State(pos=np.array([2, 2, 0])),
     }, ob)
 
-    action = defaultAction
-    for i in range(n_steps):
+    action =default_action
+
+    for _ in range(n_steps):
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})

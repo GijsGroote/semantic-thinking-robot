@@ -1,16 +1,17 @@
 # import pandas as pd
-from robot_brain.graph.Graph import Graph
-from robot_brain.graph.Node import Node
-from robot_brain.graph.ConfSetNode import ConfSetNode
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode 
 from pyvis.network import Network
-import os
-from robot_brain.global_variables import *
+from robot_brain.graph.graph import Graph
+from robot_brain.graph.conf_set_node import ConfSetNode
+from robot_brain.graph.object_set_node import ObjectSetNode
+from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_variables import FIG_BG_COLOR
+
 
 
 class HGraph(Graph):
-
+    """
+    Hypothesis graph.
+    """
     def __init__(self):
         Graph.__init__(self)
         self.target_nodes = []
@@ -23,21 +24,22 @@ class HGraph(Graph):
         """
         if path is None:
             bgcolor = None
-        else: 
+        else:
             bgcolor = FIG_BG_COLOR
 
         net = Network(bgcolor=bgcolor, height="450px", directed=True)
-        
+
         # set a custom style sheet
-        net.path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/graph_template.html"
+        net.path = "/home/gijs/Documents/semantic-thinking-robot"\
+                "/robot_brain/dashboard/assets/graph_template.html"
 
         net.set_edge_smooth('dynamic')
 
         for node in self.start_nodes:
-            if node == self.current_node: 
+            if node == self.current_node:
                 continue
-            net.add_node(node.id,
-                    title = "Starting Node:<br>" + node.toString() + "<br>",
+            net.add_node(node.iden,
+                    title = "Starting Node:<br>" + node.to_string() + "<br>",
                     x=1.0,
                     y=1.0,
                     label = node.name,
@@ -54,10 +56,10 @@ class HGraph(Graph):
                     group = "start_nodes")
 
         for node in self.target_nodes:
-            if node == self.current_node: 
+            if node == self.current_node:
                 continue
-            net.add_node(node.id,
-                    title = "Target Node:<br>" + node.toString() + "<br>",
+            net.add_node(node.iden,
+                    title = "Target Node:<br>" + node.to_string() + "<br>",
                     x=90.0,
                     y=90.0,
                     label = node.name,
@@ -72,8 +74,8 @@ class HGraph(Graph):
                     group = "target_nodes")
 
         for node in self.nodes:
-            if node == self.current_node: 
-                continue 
+            if node == self.current_node:
+                continue
             net.add_node(node.id,
                     title = "Node:<br>" + node.toString() + "<br>",
                     x=1.0,
@@ -90,12 +92,12 @@ class HGraph(Graph):
                     group = node.__class__.__name__)
 
         if self.current_node is not None:
-            net.add_node(self.current_node.id,
-                    title = "Current node:<br>" + self.current_node.toString() + "<br>",
+            net.add_node(self.current_node.iden,
+                    title = "Current node:<br>" + self.current_node.to_string() + "<br>",
                     x=1.0,
                     y=1.0,
                     color= {
-                        'border': '#fb4b50', # red 
+                        'border': '#fb4b50', # red
                         'background': '#fb7e81',
                         'highlight': {
                             'border': '#fb4b50',
@@ -109,7 +111,7 @@ class HGraph(Graph):
         for edge in self.edges:
 
             dashes = False
-            if edge.path == False:
+            if edge.path is False:
                 dashes = True
 
             net.add_edge(edge.source,
@@ -117,9 +119,9 @@ class HGraph(Graph):
                     weight=1.0,
                     dashes=dashes,
                     label=edge.verb,
-                    title="edge:<br>" + edge.toString() + "<br>",
+                    title="edge:<br>" + edge.to_string() + "<br>",
                     )
-        
+
         # if you want to edit cusomize the graph
         # net.show_buttons(filter_=['physics'])
 
@@ -128,26 +130,17 @@ class HGraph(Graph):
         else:
             net.write_html(path)
 
-
-
-         
-    def addNode(self, node):
+    def add_node(self, node):
         if isinstance(node, ChangeOfConfSetNode):
             raise TypeError("ChangeOfConfSetNode's are not allowed in HGraph")
-
         self.nodes.append(node)
 
-    def addStartNode(self, node):
+    def add_start_node(self, node):
         if not isinstance(node, ObjectSetNode):
             raise TypeError("ObjectSetNode's are only allowed as starting node in HGraph")
-
         self.start_nodes.append(node)
 
-
-    def addTargetNode(self, node):
+    def add_target_node(self, node):
         if not isinstance(node, ConfSetNode):
             raise TypeError("ConfSetNode's are only allowed as target node in HGraph")
-
         self.target_nodes.append(node)
-
-

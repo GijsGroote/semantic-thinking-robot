@@ -1,26 +1,26 @@
-from robot_brain.controller.mpc.Mpc import Mpc
-from robot_brain.planning.State import State
 import numpy as np
-import gym
+from casadi import vertcat
+
 import urdfenvs.boxer_robot
 import urdfenvs.point_robot_urdf
-from robot_brain.RBrain import State
+
+import gym
+from robot_brain.controller.mpc.mpc import Mpc
+from robot_brain.rbrain import State
 from robot_brain.global_variables import DT
-from casadi import *
 
 def main():
-    
     env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
     # env = gym.make('pointRobotUrdf-vel-v0', dt=DT, render=True)
 
-    defaultAction = np.array([0.0, 0.0, 0.0])
+    default_action = np.array([0.0, 0.0, 0.0])
     n_steps = 1000
     ob = env.reset()
- 
+
     pos = ob["joint_state"]["position"][0:2]
     vel = ob["joint_state"]["velocity"][0:2]
-    currentState = State(pos=np.array([pos[0], pos[1], 0]),  vel=np.array([vel[0], vel[1], 0]))
-    targetState = State(pos=np.array([1, 0, 0]), ang_p=np.array([0, 0, 0]))
+    current_state = State(pos=np.array([pos[0], pos[1], 0]),  vel=np.array([vel[0], vel[1], 0]))
+    target_state = State(pos=np.array([1, 0, 0]), ang_p=np.array([0, 0, 0]))
 
 
     def dyn_model(x, u):
@@ -32,36 +32,35 @@ def main():
 
 
     mpc_controller = Mpc()
-    mpc_controller.setup(dyn_model, currentState, targetState)
+    mpc_controller.setup(dyn_model, current_state, target_state)
 
 
-    ob, reward, done, info = env.step(defaultAction)
+    ob, reward, done, info = env.step(default_action)
 
 
     for i in range(n_steps):
 
         pos = ob["joint_state"]["position"]
         vel = ob["joint_state"]["velocity"]
-        current_state = State(pos=np.array([pos[0], pos[1], 0]), 
+        current_state = State(pos=np.array([pos[0], pos[1], 0]),
                 vel=np.array([vel[0], vel[1], 0]),
-                ang_p=np.array([0, 0, pos[2]]), 
+                ang_p=np.array([0, 0, pos[2]]),
                 ang_v=np.array([0, 0, vel[2]]))
 
-
-    
         action = mpc_controller.respond(current_state)
 
         ob, _, _, _ = env.step(action)
-         
-        if i==200:
-            mpc_controller.visualise() 
- 
-        if i == 50:
-            mpc_controller.setTargetState(State(pos=np.array([1, 0, 0]), ang_p=np.array([0, 0, 20]))) 
 
+        if i==200:
+            mpc_controller.visualise()
+
+        if i == 50:
+            mpc_controller.set_target_state(
+                    State(pos=np.array([1, 0, 0]), ang_p=np.array([0, 0, 20])))
 
         if i == 100:
-            mpc_controller.setTargetState(State(pos=np.array([0, 0, 0]), ang_p=np.array([0, 0, 0]))) 
+            mpc_controller.set_target_state(
+                    State(pos=np.array([0, 0, 0]), ang_p=np.array([0, 0, 0])))
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,11 @@
-import numpy as np
 import warnings
+import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-
 class State:
+    """
+    State describing the position in the environment.
+    """
     def __init__(self, pos=np.array([0, 0, 0]), vel=np.array([0, 0, 0]), acc=np.array([0, 0, 0]),
                  ang_p=np.array([0, 0, 0]), ang_v=np.array([0, 0, 0]), ang_a=np.array([0, 0, 0])):
         # position, velocity and acceleration in x and y direction
@@ -21,14 +23,16 @@ class State:
         return np.linalg.norm(self.pos - state.pos)
 
 
-    def toString(self, d=2):
-        return "pos:("+str(np.round(self.pos, d)) + "), vel:(" + str(np.round(self.vel, d)) + ")\n" \
-                + "acc:(" + str(np.round(self.acc, d)) + "), ang_p:("+str(np.round(self.ang_p, d)) \
-               + ")\nang_v:(" + str(np.round(self.ang_v, d)) + "), ang_a:(" + str(np.round(self.ang_a, d)) + ")\n"
+    def to_string(self, decimals=2):
+        return "pos:("+str(np.round(self.pos, decimals)) + "), vel:("\
+            + str(np.round(self.vel, decimals)) + ")\n" + "acc:(" \
+            + str(np.round(self.acc, decimals)) + "), ang_p:("\
+            + str(np.round(self.ang_p, decimals)) + ")\nang_v:("\
+            + str(np.round(self.ang_v, decimals)) + "), ang_a:("\
+            + str(np.round(self.ang_a, decimals)) + ")\n"
 
-    def get2DPose(self):
+    def get_2d_pose(self):
         return np.array([self.pos[0], self.pos[1], self.ang_p[2]])
-
 
     @property
     def pos(self):
@@ -40,12 +44,13 @@ class State:
             if value.shape[0] == 3:
                 self._pos = value
             elif value.shape[0] == 2:
-                warnings.warn("shape of position is: {}, and should be (3,). Converting shape".format(value.shape))
+                warnings.warn(f"shape of position is: {value.shape}, and should be (3,)")
                 self._pos = np.array([value[0], value[1], 0])
             else:
                 raise Exception("position has incorrect dimensions")
-        except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
+        except (AttributeError, TypeError, IndexError) as exc:
+            print(f"error: {exc}")
+            print("input should be an numpy array")
 
     @property
     def vel(self):
@@ -57,7 +62,7 @@ class State:
             if value.shape[0] == 3:
                 self._vel = value
             elif value.shape[0] == 2:
-                warnings.warn("shape of velocity is: {}, and should be (3,). Converting shape".format(value.shape))
+                warnings.warn(f"shape of velocity is: {value.shape}, and should be (3,).")
                 self._vel = np.array([value[0], value[1], 0])
             else:
                 raise Exception("velocity has incorrect dimensions")
