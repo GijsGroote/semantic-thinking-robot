@@ -1,19 +1,11 @@
-from dash.dependencies import Input, Output
-import pandas as pd
 import os
-pd.options.plotting.backend = "plotly"
-from plotly.subplots import make_subplots
-import plotly.express as px
-import plotly.graph_objects as go
-import numpy as np
-from dash.exceptions import PreventUpdate
-from pathlib import Path
 import time
-from bs4 import BeautifulSoup
-
-import pyarrow.feather as feather
-from numpy import dstack
-
+from pathlib import Path
+from pyarrow import feather
+from dash.dependencies import Input, Output
+from dash.exceptions import PreventUpdate
+import pandas as pd
+pd.options.plotting.backend = "plotly"
 from robot_brain.dashboard.figures import *
 
 
@@ -28,8 +20,6 @@ def register_callbacks(app):
 
     no_data_found_dict = create_no_data_found_dict(app)
     no_data_found_html = create_no_data_found_html(app)
-
-
 
     @app.callback(
         Output("hGraph", "srcDoc"), Input('controller-interval-component', 'n_intervals'))
@@ -46,13 +36,9 @@ def register_callbacks(app):
                 check_file_is_up_to_date(path)
 
             # open text file in read mode
-            html_file = open(path, "r")
+            with open(path, "r", encoding="urf-8") as file:
+                data = file.read()
 
-            # read whole file to a string
-            data = html_file.read()
-
-            # close file
-            html_file.close()
             return data
 
     @app.callback(
@@ -70,13 +56,9 @@ def register_callbacks(app):
                 check_file_is_up_to_date(path)
 
             # open text file in read mode
-            html_file = open(path, "r")
+            with open(path, "r", encoding="urf-8") as file:
+                data = file.read()
 
-            # read whole file to a string
-            data = html_file.read()
-
-            # close file
-            html_file.close()
             return data
 
 
@@ -99,5 +81,3 @@ def register_callbacks(app):
 
             if df.type[0] == "mpc":
                 return create_mpc_plot(df)
-
-

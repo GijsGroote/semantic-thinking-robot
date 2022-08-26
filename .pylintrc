@@ -1,7 +1,10 @@
 [MASTER]
 disable=
   missing-function-docstring,
-  missing-module-docstring
+  missing-module-docstring,
+  fixme,
+  import-error,
+  no-else-return,
 
 # set python path
 init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
@@ -10,4 +13,4 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 max-attributes=10
 
 [FORMAT]
-good-names=i,j,k,x,y,to,v,u1,u2,u,TODO,iden,dt,ob
+good-names=n,i,j,k,x,y,to,v,u1,u2,u,TODO,iden,dt,df,ob,_A,_B,_C,_D

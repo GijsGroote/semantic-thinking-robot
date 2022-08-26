@@ -49,8 +49,7 @@ class State:
             else:
                 raise Exception("position has incorrect dimensions")
         except (AttributeError, TypeError, IndexError) as exc:
-            print(f"error: {exc}")
-            print("input should be an numpy array")
+            raise exc
 
     @property
     def vel(self):
@@ -66,9 +65,9 @@ class State:
                 self._vel = np.array([value[0], value[1], 0])
             else:
                 raise Exception("velocity has incorrect dimensions")
-        except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
-
+        except(AttributeError, TypeError, IndexError) as exc:
+            raise exc
+            
     @property
     def acc(self):
         return self._acc
@@ -79,12 +78,12 @@ class State:
             if value.shape[0] == 3:
                 self._acc = value
             elif value.shape[0] == 2:
-                warnings.warn("shape of acceleration is: {}, and should be (3,). Converting shape".format(value.shape))
+                warnings.warn(f"shape of acceleration is: {value.shape}, and should be (3,).")
                 self._acc = np.array([value[0], value[1], 0])
             else:
                 raise Exception("acceleration has incorrect dimensions")
-        except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
+        except(AttributeError, TypeError, IndexError) as exc:
+            raise exc
 
     @property
     def ang_p(self):
@@ -101,8 +100,8 @@ class State:
                 self._ang_p = R.from_quat(value)
             else:
                 raise Exception("angular position has incorrect dimensions")
-        except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
+        except(AttributeError, TypeError, IndexError) as exc:
+            raise exc
 
     @property
     def ang_v(self):
@@ -118,7 +117,7 @@ class State:
             else:
                 raise Exception("angular velocity has incorrect dimensions")
         except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
+            raise exc
 
     @property
     def ang_a(self):
@@ -133,6 +132,5 @@ class State:
                 self._ang_a = value
             else:
                 raise Exception("angular acceleration has incorrect dimensions")
-        except(AttributeError, TypeError, IndexError):
-            raise AssertionError("input should be an numpy array")
-
+        except(AttributeError, TypeError, IndexError) as exc:
+            raise exc

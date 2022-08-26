@@ -1,7 +1,8 @@
+import warnings
 import numpy as np
 from casadi import vertcat
 import pandas as pd
-from robot_brain.dashboard.app import startDashServer
+from robot_brain.dashboard.app import start_dash_server
 from robot_brain.planning.state import State
 from robot_brain.planning.object import Object
 from robot_brain.controller.mpc.mpc import Mpc
@@ -29,20 +30,18 @@ class RBrain:
 
     def __init__(self):
         self.objects = {}  # Object information dictionary
-        self.verbs = []   # verbs which can be used
         self.robot = None  # Player information
-        self.map = None  # Map used for planning
-        self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.controller = None
+        self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
-        self.target_state = None
+        self.target_state = None # should become goal
         self.hgraph = None
         self.kgraph = None
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            startDashServer()
+            start_dash_server()
 
     def setup(self, stat_world_info, ob):
         # create robot
@@ -64,8 +63,6 @@ class RBrain:
                       ang_p=val["pose"]["orientation"],
                       ang_v=val["twist"]["angular"])
                 self.objects[key] = Object(key, s_temp, "urdf")
-
-            self.action = np.array([0.0, 0.0])
 
         if "defaultAction" in stat_world_info.keys():
             self.default_action = stat_world_info["defaultAction"]

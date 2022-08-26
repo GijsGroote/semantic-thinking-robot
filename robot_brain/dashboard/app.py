@@ -1,43 +1,19 @@
-from dash import Dash, html, dcc
-import multiprocessing
 import os
+import multiprocessing
+from dash import Dash, html, dcc
 from robot_brain.dashboard.callback import register_callbacks
-from IPython.display import display, HTML, Image
-from robot_brain.global_variables import *
-
+# from IPython.display import display, HTML, Image
+from robot_brain.global_variables import FIG_BG_COLOR
+from robot_brain.dashboard.figures import no_data_found_dict
 
 class Dashboard:
-
+    """
+    Dashboard class creates and updates a local site.
+    """
     def __init__(self, app):
         app.controller_graph_ready = False
         # todo: other graphs
         self.app = app
-
-        # todo: no data found should be in the callback, only loading screen please
-        no_data_found_dict = {
-            "layout": {
-                "paper_bgcolor": FIG_BG_COLOR,
-                "plot_bgcolor": FIG_BG_COLOR,
-                "xaxis": {
-                    "visible": False
-                },
-                "yaxis": {
-                    "visible": False
-                },
-                "annotations": [
-                    {
-                        "text": "No matching data found",
-                        "xref": "paper",
-                        "yref": "paper",
-                        "showarrow": False,
-                        "font": {
-                            "size": 25,
-                            "color": "black",
-                        }
-                    }
-                ]
-            }
-        }
 
         self.loading_html = '''
         <!DOCTYPE html>
@@ -146,7 +122,7 @@ class Dashboard:
         register_callbacks(self.app)
 
 
-def startDashServer():
+def start_dash_server():
     # change working directory
     os.chdir("/home/gijs/Documents/semantic-thinking-robot/environments/")
 

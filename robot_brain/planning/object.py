@@ -1,4 +1,7 @@
 class Object:
+    """
+    Object class.
+    """
     def __init__(self, name, state, urfd):
         self.name = name
         self.state = state
@@ -34,4 +37,3 @@ class Object:
     def urdf(self, val):
         # TODO: input sanitization
         self._urdf = val
-

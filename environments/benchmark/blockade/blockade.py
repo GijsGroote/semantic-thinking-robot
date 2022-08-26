@@ -4,8 +4,8 @@ import urdfenvs.boxer_robot
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from multiprocessing import Process, Pipe
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.planning import State
 from environments.objects.urdf_objects import urdf_duck  
 from environments.objects.walls import dead_end, pushable_cube
 

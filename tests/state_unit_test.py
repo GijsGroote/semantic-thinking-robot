@@ -13,15 +13,22 @@ class MyTestCase(unittest.TestCase):
 
     def test_input_types(self):
         """ test if the input is not a numpy array should throw an exception """
-        with self.assertRaises(AssertionError) as context:
+        # State(pos=np.array(31))
+        with self.assertRaises(IndexError):
             State(pos=np.array(31))
+
+        with self.assertRaises(AttributeError):
             State(vel=True)
+        with self.assertRaises(AttributeError):
             State(acc=13)
+        with self.assertRaises(AttributeError):
             State(ang_p=13 / 70)
+        with self.assertRaises(AttributeError):
             State(ang_p=False)
+        with self.assertRaises(AttributeError):
             State(ang_p="a string")
 
-        self.assertTrue("input should be an numpy array" in str(context.exception))
+        # self.assertTrue("input should be an numpy array" in str(context.exception))
 
     def test_warning(self):
         """ test if warning is thrown for position of shape (2, ) """

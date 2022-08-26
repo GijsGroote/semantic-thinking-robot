@@ -1,8 +1,14 @@
 import numpy as np
 
 class Dynamics:
+    """
+    Dynamical object.
+
+    TODO: this class requires quite some review, how to handle different dynamical object
+    single, multi object models and stuff.
+    """
     def __init__(self):
-        self.m = "test"
+        self.mass = "test"
         self._A = None
         self._B = None
         self._C = None
@@ -12,7 +18,6 @@ class Dynamics:
     def set_boxer_model(self):
         self._A = np.array(([0.1, 0, 0], [0, 0.1, 0], [0, 0, 1]))
         self._B = np.array([1]) # fuck this is a nonlinear function
-
 
     # def update(self, state, dt, force_x, force_y):
     #     # update dynamics for time step
@@ -26,18 +31,13 @@ class Dynamics:
     #     p_y = state.pos_y + 0.5*a_y*dt**2
 
 
-
-
-
     # mass getter
     @property
-    def m(self):
-        return self._m
+    def mass(self):
+        return self._mass
 
     # mass setter
-    @m.setter
-    def m(self, value):
-        if True: # TODO: input sanitization
-            self._m = value
-
-
+    @mass.setter
+    def mass(self, value):
+        # if True: # TODO: input sanitization
+        self._mass = value
