@@ -1,33 +1,29 @@
-from MotionPlanningEnv.urdfObstacle import UrdfObstacle
-
 import os
+from MotionPlanningEnv.urdfObstacle import UrdfObstacle
 
 # cute duck
 urdf_duck_dict= {
-    'dim': 3,
     'type': 'urdf',
-    'geometry': {'position': [2.0, 0.0, 0.25]},
+    'position': [2.0, 0.0, 0.25],
     'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
 }
 
-urdf_duck = UrdfObstacle(name='duckUrdf', contentDict=urdf_duck_dict)
+urdf_duck = UrdfObstacle(name='duckUrdf', content_dict=urdf_duck_dict)
 
-# cute duck2
+# cute duck1
+urdf_duck1_dict= {
+    'type': 'urdf',
+    'position': [2.0, -1.0, 0.25],
+    'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
+}
+
+urdf_duck1 = UrdfObstacle(name='duckUrdf', content_dict=urdf_duck1_dict)
+
+# huge duck
 urdf_duck2_dict= {
-    'dim': 3,
     'type': 'urdf',
-    'geometry': {'position': [2.0, -1.0, 0.25]},
+    'position': [4.0, 15.0, 7.2],
     'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
 }
 
-# urdf_duck2 = UrdfObstacle(name='duckUrdf', contentDict=urdf_duck2_dict)
-
-# huge duck 
-urdf_duck2_dict= {
-    'dim': 3,
-    'type': 'urdf',
-    'geometry': {'position': [4.0, 15.0, 7.2]},
-    'urdf': os.path.join(os.path.dirname(__file__), 'obstacle_data/duck/duck.urdf'),
-}
-
-urdf_duck2 = UrdfObstacle(name='duckUrdf', contentDict=urdf_duck2_dict)
+urdf_duck2 = UrdfObstacle(name='duckUrdf', content_dict=urdf_duck2_dict)

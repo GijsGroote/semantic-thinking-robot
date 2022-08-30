@@ -9,7 +9,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="duck.obj" scale="3.35 3.35 3.35"/>
+        <mesh filename="duck.obj" scale="0.35 0.35 0.35"/>
       </geometry>
        <material name="yellow">
         <color rgba="1 1 0.4 1"/>
@@ -18,7 +18,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="duck_vhacd.obj" scale="3.35 3.35 3.35"/>
+        <mesh filename="duck_vhacd.obj" scale="0.35 0.35 0.35"/>
       </geometry>
     </collision>
   </link>

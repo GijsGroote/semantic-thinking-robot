@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 
 pushable_cube = {
         "dim": np.array([1.4, 1.4, 1.4]),
