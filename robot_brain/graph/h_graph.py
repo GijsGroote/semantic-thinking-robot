@@ -60,8 +60,8 @@ class HGraph(Graph):
                 continue
             net.add_node(node.iden,
                     title = "Target Node:<br>" + node.to_string() + "<br>",
-                    x=90.0,
-                    y=90.0,
+                    x=10.0,
+                    y=10.0,
                     label = node.name,
                     color= {
                         'border': '#009900', # green
@@ -76,10 +76,10 @@ class HGraph(Graph):
         for node in self.nodes:
             if node == self.current_node:
                 continue
-            net.add_node(node.id,
-                    title = "Node:<br>" + node.toString() + "<br>",
-                    x=1.0,
-                    y=1.0,
+            net.add_node(node.iden,
+                    title = "Node:<br>" + node.to_string() + "<br>",
+                    x=10.0,
+                    y=10.0,
                     color= {
                         'border': '#ffa500', # yellow
                             'background': '#ffff00',
@@ -94,8 +94,8 @@ class HGraph(Graph):
         if self.current_node is not None:
             net.add_node(self.current_node.iden,
                     title = "Current node:<br>" + self.current_node.to_string() + "<br>",
-                    x=1.0,
-                    y=1.0,
+                    x=10.0,
+                    y=10.0,
                     color= {
                         'border': '#fb4b50', # red
                         'background': '#fb7e81',

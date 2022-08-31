@@ -4,9 +4,11 @@ import urdfenvs.boxer_robot
 from multiprocessing import Process, Pipe
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.rbrain import State
 # from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
+from MotionPlanningEnv.sphereObstacle import SphereObstacle
+from MotionPlanningEnv.boxObstacle import BoxObstacle 
 
 user_input_mode = True
 
@@ -22,30 +24,73 @@ def main(conn=None):
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
     ob = env.reset()
 
-    defaultAction = np.array([0.0, 0.0])
+    default_action = np.array([0.0, 0.0])
+
+    trans_sphere_dict = {
+        "movable": True,
+        "mass": 1,
+        "type": "sphere",
+        "color": [1, 0, 0, 0.4],
+        "position": [-1.0, 2.0, 1.8],
+        "geometry": {"radius": 0.9},
+    }
+    sphere_dict = {
+        "movable": True,
+        "mass": 1,
+        "type": "sphere",
+        "color": [1, 0, 0, 1.0],
+        "position": [2.0, 1.0, 1.8],
+        "geometry": {"radius": 0.9},
+    }
+    trans_sphere= SphereObstacle(name="simpeSphere", content_dict=trans_sphere_dict)
+    sphere = SphereObstacle(name="simpeSphere", content_dict=sphere_dict)
+
+    trans_box_dict = {
+        "movable": True,
+        "mass": 1,
+        "type": "box",
+        "color": [0, 1, 0, 0.4],
+        "position": [2.0, -1.0, 1.8],
+        "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
+    }
+    box_dict = {
+        "movable": True,
+        "mass": 1,
+        "type": "box",
+        "color": [0, 1, 0, 1.0],
+        "position": [-3.0, 0, 1.8],
+        "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
+    }
+
+    trans_box= BoxObstacle(name="simpeBox", content_dict=trans_box_dict)
+    box = BoxObstacle(name="simpleBox", content_dict=box_dict)
+
+    env.add_obstacle(trans_sphere)
+    env.add_obstacle(sphere)
+    env.add_obstacle(trans_box)
+    env.add_obstacle(box)
 
     # sensor = ObstacleSensor()
     # env.add_sensor(sensor)
 
-    ob, reward, done, _ = env.step(defaultAction)
+    ob, reward, done, info = env.step(default_action)
 
+    default_action = np.array([0.0, 0.0])
+    n_steps = 100000
 
-    defaultAction = np.array([0.0, 0.0])
-    n_steps = 100000 
-    
     # setup semantic brain
     brain = None
     if not user_input_mode:
         brain = RBrain()
         # do the regular stuff, like begin the simulation, something like that
         brain.setup({"dt": dt,
-            "targetState": State(pos=np.array([1.9, 2.0, 4.0])),
+            "target_state": State(pos=np.array([1.9, 2.0, 4.0])),
         }, ob)
 
 
     # ob, reward, done, info = env.step(defaultAction)
 
-    action = defaultAction
+    action = default_action
 
     for _ in range(n_steps):
 

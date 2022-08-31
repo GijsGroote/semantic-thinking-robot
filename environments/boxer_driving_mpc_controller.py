@@ -2,8 +2,8 @@ import numpy as np
 import gym
 import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.rbrain import State
 
 target_pos = np.array([3, 2, 0])
 target_ang_p = np.array([0, 0, 2])
@@ -17,28 +17,29 @@ def main():
     dt = 0.05
     env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
 
-    defaultAction = np.array([0.0, 0.0])
+    default_action = np.array([-1.0, 0.0])
     n_steps = 1000
     ob = env.reset()
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
-    env.add_walls()
+    # update these walls
+    # env.add_walls()
 
 
-    ob, reward, done, info = env.step(defaultAction)
+    ob, reward, done, info = env.step(default_action)
 
-    targetState = State(pos=target_pos, ang_p=target_ang_p)
+    target_state = State(pos=target_pos, ang_p=target_ang_p)
     brain = RBrain()
     # do the regular stuff, like begin the simulation, something like that
     brain.setup({
         "dt": dt,
-        "defaultAction": defaultAction,
-        "targetState": targetState,
+        "default_action": default_action,
+        "target_state": target_state,
         "controller": controller,
         "additionalParameters??": True
     }, ob)
 
-    action = defaultAction
+    action =default_action 
 
     for i in range(n_steps):
 
