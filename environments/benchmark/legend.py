@@ -1,24 +1,24 @@
-from robot_brain.graph.HGraph import HGraph
-from robot_brain.graph.ConfSetNode import ConfSetNode
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.graph.Edge import Edge
+from robot_brain.graph.h_graph import HGraph
+from robot_brain.graph.conf_set_node import ConfSetNode
+from robot_brain.graph.object_set_node import ObjectSetNode
+from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.graph.edge import Edge
 
 def main():
 
     hgraph = HGraph()
 
-    hgraph.addStartNode(ObjectSetNode(1, "start node", []))
-    hgraph.addNode(ObjectSetNode(4, "generated node", []))
-    hgraph.addTargetNode(ConfSetNode(3, "target node", []))
+    hgraph.add_start_node(ObjectSetNode(1, "start node", []))
+    hgraph.add_node(ObjectSetNode(4, "generated node", []))
+    hgraph.add_target_node(ConfSetNode(3, "target node", []))
 
 
-    node2 = ObjectSetNode(2, "curent node", [])
+    node2 = ObjectSetNode(2, "current node", [])
     hgraph.current_node = node2
-    hgraph.addStartNode(node2)
-    hgraph.addEdge(Edge("id", 4, 3, "transition, no planning completed", "controller"))
-    hgraph.addEdge(Edge("id", 2, 4, "transition, no planning completed", "controller"))
-    hgraph.addEdge(Edge("id", 1, 2, "transition, motion planning completed", "controller", True))
+    hgraph.add_start_node(node2)
+    hgraph.add_edge(Edge("id", 4, 3, "transition, no planning completed", "controller"))
+    hgraph.add_edge(Edge("id", 2, 4, "transition, no planning completed", "controller"))
+    hgraph.add_edge(Edge("id", 1, 2, "transition, motion planning completed", "controller", True))
 
     
     hgraph.visualise()

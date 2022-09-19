@@ -23,7 +23,8 @@ class KGraph(Graph):
 
         # set a custom style sheet
         # TODO: relative path (which works)
-        net.path = os.getcwd() + "/robot_brain/dashboard/assets/graph_template.html"
+        # net.path = os.getcwd() + 
+        net.path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/graph_template.html"
 
 
         net.set_edge_smooth('dynamic')

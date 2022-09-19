@@ -51,29 +51,29 @@ dead_end1_dict = {
     "orientation": [1,1,1,1],
     "type": "box",
     "color": [58/255, 107/255, 52/255, 1],
-    "position": [4.0, 0.0, 0.0],
-    "geometry": {"length": 0.2, "width": 2.2, "height": 0.5},
+    "position": [4.0, 0.0, 1.0],
+    "geometry": {"length": 0.2, "width": 2.2, "height": 0.4},
 }
 dead_end2_dict = {
     "movable": False,
     "orientation": [1,1,1,1],
     "type": "box",
     "color": [58/255, 107/255, 52/255, 1],
-    "position":[2.8, 1.0, np.pi/2],
-    "geometry": {"length": 0.2, "width": 2.2, "height": 0.5},
+    "position":[3.8, 1.5, 1],
+    "geometry": {"length": 0.2, "width": 2.2, "height": 0.4},
 }
 dead_end3_dict = {
     "movable": False,
     "orientation": [1,1,1,1],
     "type": "box",
     "color": [58/255, 107/255, 52/255, 1],
-    "position": [2.8, -1.0, np.pi/2],
-    "geometry": {"length": 0.2, "width": 2.2, "height": 0.5},
+    "position": [3.8, -1.5, np.pi/2],
+    "geometry": {"length": 0.2, "width": 2.2, "height": 0.4},
 }
 dead_end = {
-        "wall1", BoxObstacle(name="simpeBox", content_dict=dead_end1_dict),
-        "wall2", BoxObstacle(name="simpeBox", content_dict=dead_end2_dict),
-        "wall3", BoxObstacle(name="simpeBox", content_dict=dead_end3_dict),
+        "wall1": BoxObstacle(name="simpeBox", content_dict=dead_end1_dict),
+        "wall2": BoxObstacle(name="simpeBox", content_dict=dead_end2_dict),
+        "wall3": BoxObstacle(name="simpeBox", content_dict=dead_end3_dict),
         }
 # surround
 

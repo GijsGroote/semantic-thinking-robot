@@ -25,7 +25,7 @@ def register_callbacks(app):
         Output("hGraph", "srcDoc"), Input('controller-interval-component', 'n_intervals'))
     def update_hgraph_live(n):
 
-        path = "../robot_brain/dashboard/data/hgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -36,7 +36,7 @@ def register_callbacks(app):
                 check_file_is_up_to_date(path)
 
             # open text file in read mode
-            with open(path, "r", encoding="urf-8") as file:
+            with open(path, "r") as file:
                 data = file.read()
 
             return data
@@ -45,7 +45,7 @@ def register_callbacks(app):
         Output("kGraph", "srcDoc"), Input('controller-interval-component', 'n_intervals'))
     def update_kgraph_live(n):
 
-        path = "../robot_brain/dashboard/data/kgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -56,7 +56,7 @@ def register_callbacks(app):
                 check_file_is_up_to_date(path)
 
             # open text file in read mode
-            with open(path, "r", encoding="urf-8") as file:
+            with open(path, "r") as file:
                 data = file.read()
 
             return data

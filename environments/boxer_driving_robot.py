@@ -65,9 +65,9 @@ def main(conn=None):
     trans_box= BoxObstacle(name="simpeBox", content_dict=trans_box_dict)
     box = BoxObstacle(name="simpleBox", content_dict=box_dict)
 
-    env.add_obstacle(trans_sphere)
+    # env.add_obstacle(trans_sphere)
+    # env.add_obstacle(trans_box)
     env.add_obstacle(sphere)
-    env.add_obstacle(trans_box)
     env.add_obstacle(box)
 
     # sensor = ObstacleSensor()

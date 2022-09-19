@@ -8,6 +8,7 @@ from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.planning.state import State
+from robot_brain.controller.mpc.mpc import Mpc
 
 from environments.objects.boxes import box
 from environments.objects.spheres import sphere
@@ -46,12 +47,18 @@ def main(conn=None):
     brain.setup({
         "dt": dt,
         "default_action": default_action,
-        "target_state": State(pos=np.array([2, 2, 0])),
+        "target_state": State(pos=np.array([0, 0, 0])),
     }, ob)
 
     action =default_action
 
-    for _ in range(n_steps):
+    for i in range(n_steps):
+        if i == 500:
+            brain.controller.set_target_state(State(pos=np.array([2,3,0])))
+        if i == 700:
+            brain.controller.set_target_state(State(pos=np.array([-2,3,2])))
+        if i == 900:
+            brain.controller.set_target_state(State(pos=np.array([2,-3,1])))
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})

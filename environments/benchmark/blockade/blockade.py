@@ -15,7 +15,7 @@ from environments.benchmark.benchmark_obstacles.obstacles import pushable_cube, 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-USER_INPUT_MODE = False 
+USER_INPUT_MODE = False
 
 
 def main(conn=None):
@@ -30,7 +30,10 @@ def main(conn=None):
 
     # this should be done much easiers
     env.add_obstacle(pushable_cube)
-    # env.add_walls(dim=dead_end["wall1"]["dim"], poses_2d=dead_end["wall1"]["poses_2d"])
+    env.add_obstacle(dead_end["wall1"])
+    env.add_obstacle(dead_end["wall2"])
+    # env.add_obstacle(dead_end["wall3"])
+
     # env.add_walls(dim=dead_end["wall2"]["dim"], poses_2d=dead_end["wall2"]["poses_2d"])
     # env.add_walls(dim=dead_end["wall3"]["dim"], poses_2d=dead_end["wall3"]["poses_2d"])
 

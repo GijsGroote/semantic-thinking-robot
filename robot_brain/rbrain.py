@@ -38,7 +38,7 @@ class RBrain:
         self.target_state = None # should become goal
         self.hgraph = None
         self.kgraph = None
-
+        self.time_it = 0 # can be delted
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
             start_dash_server()
@@ -98,6 +98,13 @@ class RBrain:
                     self.objects[key].state.ang_p = val["pose"]["orientation"]
                     self.objects[key].state.ang_v = val["twist"]["angular"]
 
+        # this can be deleted
+        self.time_it = self.time_it + 1
+        if self.time_it == 150:
+            self.hgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
+            self.kgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
+
+
     def respond(self):
         """
         Respond to request with the latest action.
@@ -138,7 +145,7 @@ class RBrain:
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
 
-            # self.hgraph.visualise("../robot_brain/dashboard/data/hgraph.html")
+            self.hgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
 
             kgraph = KGraph()
 
@@ -161,7 +168,7 @@ class RBrain:
 
             self.kgraph = kgraph
 
-            # self.kgraph.visualise("../robot_brain/dashboard/data/kgraph.html")
+            self.kgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
         self.controller = Mpc()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
