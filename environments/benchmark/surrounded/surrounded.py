@@ -56,7 +56,6 @@ def main(conn=None):
         else:
             action = brain.respond()
             ob, _, _, _ = env.step(action)
-            print(ob)
             brain.update(ob)
 
 

@@ -1,18 +1,19 @@
 [tool.poetry]
 name = "robot_brain"
-version = "0.1.1"
+version = "0.1.2"
 description = "Robot learning the environment by interaction."
 authors = ["Gijs Groote <gijsgroote@hotmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-urdfpy = {git = "https://git@github.com/maxspahn/urdfpy.git", rev = "fix-networkx-dependency"}
-motion-planning-scenes = {path = "../motion_planning_scenes"}
-urdfenvs = {path = "../gym_envs_urdf"}
+python = ">=3.10, <3.12"
+# use urdfpy unpinned version, see https://github.com/mmatl/urdfpy/pull/26
+urdfpy = {git="https://github.com/GijsGroote/urdfpy.git", rev="master"}
+motion-planning-scenes = {git="https://github.com/GijsGroote/motion_planning_scenes.git", rev="develop"}
+urdfenvs = {git="https://github.com/GijsGroote/gym_envs_urdf.git", rev="develop"}
 pybullet = "^3.2.1"
 gym = "^0.21.0"
 numpy = "^1.10.0"
-multiprocess = {version = "^0.70.12"}
+multiprocess = "^0.70.12"
 do-mpc = "^4.3.2"
 pyvis = "^0.1.9"
 mpld3 = "^0.5.7"
@@ -21,7 +22,7 @@ plotly = "^5.6.0"
 pandas = "^1.4.1"
 pyorbital = "^1.7.1"
 pyarrow = "^7.0.0"
-pynput = {version = "^1.7.6"}
+pynput = "^1.7.6"
 dash-dangerously-set-inner-html = "^0.0.2"
 beautifulsoup4 = "^4.10.0"
 

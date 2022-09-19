@@ -21,10 +21,9 @@ def main():
     }
     brain.setup(stat_world_info)
 
-    targetState = State()   # drive to (0,0,0,0,0)
-    brain.set_OF(brain.robot, targetState)
+    target_state = State()   # drive to (0,0,0,0,0)
+    brain.set_OF(brain.robot, target_state)
 
-    print(brain.calculate_OF())
 
 if __name__ == '__main__':
     main()

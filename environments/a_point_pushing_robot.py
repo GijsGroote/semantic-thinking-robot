@@ -71,7 +71,6 @@ def main(conn=None):
         ob, reward, done, info = env.step(action)
 
         brain.update(ob)
-        # print(ob)
 
 
     conn.send({"request_action": False, "kill_child": True})
