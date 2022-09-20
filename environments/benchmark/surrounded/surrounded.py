@@ -1,54 +1,55 @@
+from multiprocessing import Process, Pipe
 import numpy as np
+
+import math
+
 import gym
 import urdfenvs.boxer_robot
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
-from multiprocessing import Process, Pipe
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.rbrain import State
+from robot_brain.global_variables import DT
 
-from environments.objects.urdf_objects import urdf_duck2
-from environments.objects.walls import surrounded 
+from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-user_input_mode = False
+USER_INPUT_MODE = False
 
 def main(conn=None):
-    dt = 0.05
-    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
 
-    n_steps = 1000
     ob = env.reset()
+    print(f"numpy {type(np.pi)}")
+    print(f"math {type(math.pi)}")
     
-    # this should be done much easiers
-    env.add_walls(dim=surrounded["wall2"]["dim"], poses_2d=surrounded["wall2"]["poses_2d"])
-    env.add_walls(dim=surrounded["wall1"]["dim"], poses_2d=surrounded["wall1"]["poses_2d"])
-    env.add_walls(dim=surrounded["wall3"]["dim"], poses_2d=surrounded["wall3"]["poses_2d"])
-    env.add_walls(dim=surrounded["wall4"]["dim"], poses_2d=surrounded["wall4"]["poses_2d"])
-    env.add_walls(dim=surrounded["wall5"]["dim"], poses_2d=surrounded["wall5"]["poses_2d"])
-    env.add_walls(dim=surrounded["wall6"]["dim"], poses_2d=surrounded["wall6"]["poses_2d"])
+    env.add_obstacle(surrounded["box1"])
+    env.add_obstacle(surrounded["box2"])
+    env.add_obstacle(surrounded["box3"])
+    env.add_obstacle(surrounded["box4"])
+    env.add_obstacle(surrounded["box5"])
+    env.add_obstacle(surrounded["box6"])
 
-    env.add_obstacle(urdf_duck2) 
     ob, _, _, _ = env.step(np.array([0, 0]))
 
     brain = None
-    if not user_input_mode:
+    if not USER_INPUT_MODE:
         sensor = ObstacleSensor()
         env.add_sensor(sensor)
-        targetState = State(pos=target_pos, ang_p=target_ang_p)
+        target_state = State(pos=target_pos, ang_p=target_ang_p)
         brain = RBrain()
         brain.setup({
-            "dt": dt,
-            "targetState": targetState,
+            "dt": DT,
+            "target_state": target_state,
             "obstacles": []
         }, ob)
 
     for _ in range(1000):
 
-        if user_input_mode:
+        if USER_INPUT_MODE:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
             keyboard_data = conn.recv()
             action = keyboard_data["action"]
@@ -60,14 +61,14 @@ def main(conn=None):
 
 
 
-    if user_input_mode:
+    if USER_INPUT_MODE:
         conn.send({"request_action": False, "kill_child": True})
 
 
 
 if __name__ == '__main__':
 
-    if not user_input_mode:
+    if not USER_INPUT_MODE:
          main()
 
     else:

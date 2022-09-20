@@ -28,41 +28,4 @@ dead_end = {
             },
         }
 
-surrounded = {
-        "wall1": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [2, 0, 0],
-                ]
-            },
-        "wall2": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [1, np.sqrt(3), 0],
-                ]
-            },
-        "wall3": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [-1, np.sqrt(3), 0],
-                ]
-            },
-        "wall4": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [-2, 0, 0],
-                ]
-            },
-        "wall5": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [1, -np.sqrt(3), 0],
-                ]
-            },
-        "wall6": {
-            "dim": np.array([1.2, 1.2, 1.2]),
-            "poses_2d": [
-                [-1, -np.sqrt(3), 0],
-                ]
-            },
-        }
+

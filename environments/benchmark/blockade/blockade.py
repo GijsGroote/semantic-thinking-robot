@@ -8,36 +8,28 @@ import urdfenvs.boxer_robot
 from robot_brain.rbrain import RBrain
 from robot_brain.planning.state import State
 
-from environments.objects.urdf_objects import urdf_duck
+from robot_brain.global_variables import DT
+
+from environments.benchmark.benchmark_obstacles.obstacles import urdf_duck
 from environments.benchmark.benchmark_obstacles.obstacles import pushable_cube, dead_end
-# from environments.objects.walls import dead_end, pushable_cube
 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
 USER_INPUT_MODE = False
 
-
 def main(conn=None):
     """
     Point robot which can drive around in its environment using a mpc controller.
     """
-    dt = 0.05
-    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
-
+    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
     ob = env.reset()
-    env.add_obstacle(urdf_duck)
 
-    # this should be done much easiers
+    env.add_obstacle(urdf_duck)
     env.add_obstacle(pushable_cube)
     env.add_obstacle(dead_end["wall1"])
     env.add_obstacle(dead_end["wall2"])
-    # env.add_obstacle(dead_end["wall3"])
-
-    # env.add_walls(dim=dead_end["wall2"]["dim"], poses_2d=dead_end["wall2"]["poses_2d"])
-    # env.add_walls(dim=dead_end["wall3"]["dim"], poses_2d=dead_end["wall3"]["poses_2d"])
-
-    # env.add_walls(dim=pushable_cube["dim"], poses_2d=pushable_cube["poses_2d"])
+    env.add_obstacle(dead_end["wall3"])
 
     brain = None
     if not USER_INPUT_MODE:
@@ -46,7 +38,7 @@ def main(conn=None):
         target_state = State(pos=target_pos, ang_p=target_ang_p)
         brain = RBrain()
         brain.setup({
-            "dt": dt,
+            "dt": DT,
             "target_state": target_state,
             "obstacles": []
         }, ob)
@@ -55,7 +47,7 @@ def main(conn=None):
     brain = RBrain()
     # do the regular stuff, like begin the simulation, something like that
     brain.setup({
-        "dt": dt,
+        "dt": DT,
         "target_state": target_state,
     }, ob)
 
