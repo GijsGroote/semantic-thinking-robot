@@ -549,7 +549,7 @@ traitlets = "*"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.1"
+version = "0.1.3"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -568,10 +568,8 @@ PyYAML = "^6.0"
 bullet = ["pybullet (>=3.2.3,<4.0.0)"]
 
 [package.source]
-type = "git"
-url = "https://github.com/GijsGroote/motion_planning_scenes.git"
-reference = "develop"
-resolved_reference = "2f34febd1f5ff66913ce54b4f2ecf3e92d9e2149"
+type = "directory"
+url = "../motion_planning_scenes"
 
 [[package]]
 name = "mpld3"
@@ -1255,7 +1253,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10, <3.12"
-content-hash = "05669744c95b73bfbe7be290072e28e8b7656db7301cc4ae1c164406a62e234b"
+content-hash = "760349823a5b2f72d02be45f9ff1e598deb65ee4677098df39401ed48e5e1b60"
 
 [metadata.files]
 antlr4-python3-runtime = [
