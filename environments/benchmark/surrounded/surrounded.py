@@ -1,8 +1,5 @@
 from multiprocessing import Process, Pipe
 import numpy as np
-
-import math
-
 import gym
 import urdfenvs.boxer_robot
 from pynput.keyboard import Key
@@ -17,15 +14,15 @@ from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-USER_INPUT_MODE = False
+USER_INPUT_MODE = True
 
 def main(conn=None):
-    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
+    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
+
+    action = np.zeros(env.n())
 
     ob = env.reset()
-    print(f"numpy {type(np.pi)}")
-    print(f"math {type(math.pi)}")
-    
+
     env.add_obstacle(surrounded["box1"])
     env.add_obstacle(surrounded["box2"])
     env.add_obstacle(surrounded["box3"])
@@ -33,7 +30,7 @@ def main(conn=None):
     env.add_obstacle(surrounded["box5"])
     env.add_obstacle(surrounded["box6"])
 
-    ob, _, _, _ = env.step(np.array([0, 0]))
+    ob, _, _, _ = env.step(action)
 
     brain = None
     if not USER_INPUT_MODE:
@@ -52,24 +49,22 @@ def main(conn=None):
         if USER_INPUT_MODE:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
             keyboard_data = conn.recv()
-            action = keyboard_data["action"]
+            action[0:2] = keyboard_data["action"]
             ob, _, _, _ = env.step(action)
+
         else:
             action = brain.respond()
             ob, _, _, _ = env.step(action)
             brain.update(ob)
 
 
-
     if USER_INPUT_MODE:
         conn.send({"request_action": False, "kill_child": True})
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if not USER_INPUT_MODE:
-         main()
+        main()
 
     else:
         # setup multi threading with a pipe connection
@@ -83,13 +78,13 @@ if __name__ == '__main__':
         # create Responder object
         responder = Responder(child_conn)
 
-        # unlogical key bindings
-        custom_on_press = {Key.down: np.array([-1.0, 0.0]),
-                           Key.up: np.array([1.0, 0.0]),
-                           Key.left: np.array([0.0, 1.0]),
-                           Key.right: np.array([0.0, -1.0])}
+        # logical key bindings
+        custom_on_press = {Key.down: np.array([-1, 0]),
+                           Key.up: np.array([1, 0]),
+                           Key.left: np.array([0, 1]),
+                           Key.right: np.array([0, -1])}
 
-        # responder.setup(defaultAction=np.array([0.0, 0.0]))
+        # responder.setup(defaultAction=np.array([0, 0]))
         responder.setup(custom_on_press=custom_on_press)
 
         # start child process which keeps responding/looping

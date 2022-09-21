@@ -1,14 +1,15 @@
+from multiprocessing import Process, Pipe
 import numpy as np
 import gym
 import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
-from multiprocessing import Process, Pipe
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
-from environments.objects.urdf_objects import urdf_duck2
-from environments.objects.spheres import sphere_small
+from pynput.keyboard import Key
+from robot_brain.rbrain import RBrain
+from robot_brain.rbrain import State
+
+from environments.benchmark.benchmark_obstacles.obstacles import duck_small, box_small
+
 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
@@ -17,12 +18,12 @@ user_input_mode = True
 
 def main(conn=None):
     dt = 0.05
-    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+    env = gym.make("boxer-robot-vel-v0", dt=dt, render=True)
 
     ob = env.reset()
     
-    env.add_obstacle(urdf_duck2)
-    env.add_walls(dim=np.array([0.6, 0.6, 0.6]), poses_2d=[[2, 1, 0]])
+    env.add_obstacle(duck_small)
+    env.add_obstacle(box_small)
 
     sensor = ObstacleSensor()
     env.add_sensor(sensor)
@@ -56,7 +57,7 @@ def main(conn=None):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if not user_input_mode:
          main()

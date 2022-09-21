@@ -22,7 +22,7 @@ def main(conn=None):
     """
     Point robot which can drive around in its environment using a mpc controller.
     """
-    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
+    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
     ob = env.reset()
 
     env.add_obstacle(urdf_duck)
@@ -69,7 +69,7 @@ def main(conn=None):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if not USER_INPUT_MODE:
         main()
