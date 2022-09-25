@@ -80,7 +80,7 @@ class Mpc(Controller):
             self.y_predicted = np.reshape(
                     self.simulator.make_step(system_input), initial_state.shape)
 
-        return system_input
+        return np.reshape(system_input, (len(system_input),))
 
     def set_target_state(self, state):
 

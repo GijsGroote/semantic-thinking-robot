@@ -16,7 +16,7 @@ from environments.benchmark.benchmark_obstacles.obstacles import pushable_cube, 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-USER_INPUT_MODE = False
+USER_INPUT_MODE = True
 
 def main(conn=None):
     """
@@ -86,11 +86,11 @@ if __name__ == "__main__":
         # create Responder object
         responder = Responder(child_conn)
 
-        # unlogical key bindings
-        custom_on_press = {Key.down: np.array([-1.0, 0.0]),
-                           Key.up: np.array([1.0, 0.0]),
-                           Key.left: np.array([0.0, 1.0]),
-                           Key.right: np.array([0.0, -1.0])}
+        # logical key bindings
+        custom_on_press = {Key.down: np.array([-3.0, 0.0]),
+                           Key.up: np.array([3.0, 0.0]),
+                           Key.left: np.array([0.0, 3.0]),
+                           Key.right: np.array([0.0, -3.0])}
 
         # responder.setup(defaultAction=np.array([0.0, 0.0]))
         responder.setup(custom_on_press=custom_on_press)

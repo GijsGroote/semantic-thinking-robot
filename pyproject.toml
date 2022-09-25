@@ -10,8 +10,8 @@ python = ">=3.10, <3.12"
 urdfpy = {git="https://github.com/GijsGroote/urdfpy.git", rev="master"}
 # motion-planning-scenes = {git="https://github.com/GijsGroote/motion_planning_scenes.git", rev="develop"}
 motion-planning-scenes = {path="../motion_planning_scenes"}
-
-urdfenvs = {git="https://github.com/GijsGroote/gym_envs_urdf.git", rev="develop"}
+# urdfenvs = {git="https://github.com/GijsGroote/gym_envs_urdf.git", rev="develop"}
+urdfenvs = {path="../gym_envs_urdf"}
 pybullet = "^3.2.1"
 gym = "^0.21.0"
 numpy = "^1.10.0"

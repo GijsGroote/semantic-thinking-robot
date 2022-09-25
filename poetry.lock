@@ -284,7 +284,7 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "flask-compress"
-version = "1.12"
+version = "1.13"
 description = "Compress responses in your Flask app with gzip, deflate or brotli."
 category = "main"
 optional = false
@@ -549,7 +549,7 @@ traitlets = "*"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.3"
+version = "0.1.0"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -812,7 +812,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyglet"
-version = "1.5.26"
+version = "1.5.27"
 description = "Cross-platform windowing and multimedia library"
 category = "main"
 optional = false
@@ -1112,7 +1112,7 @@ tests = ["cython", "littleutils", "pygments", "typeguard", "pytest"]
 
 [[package]]
 name = "tenacity"
-version = "8.0.1"
+version = "8.1.0"
 description = "Retry code until it succeeds"
 category = "main"
 optional = false
@@ -1191,15 +1191,13 @@ scipy = "^1.9.0"
 urdfpy = {git = "https://github.com/GijsGroote/urdfpy.git", rev = "master"}
 
 [package.extras]
-scenes = ["motion-planning-scenes @ git+https://github.com/GijsGroote/motion_planning_scenes.git@develop"]
+scenes = ["motion-planning-scenes @ ../motion_planning_scenes"]
 keyboard = ["pynput (>=1.7.6,<2.0.0)", "multiprocess (>=0.70.12,<0.71.0)"]
 docs = ["Sphinx (==4.2.0)", "sphinx-rtd-theme (==1.0.0)", "sphinxcontrib-napoleon (==0.7)"]
 
 [package.source]
-type = "git"
-url = "https://github.com/GijsGroote/gym_envs_urdf.git"
-reference = "develop"
-resolved_reference = "475632d8be0c7220702cdfd91f461464f422dc36"
+type = "directory"
+url = "../gym_envs_urdf"
 
 [[package]]
 name = "urdfpy"
@@ -1269,7 +1267,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10, <3.12"
-content-hash = "760349823a5b2f72d02be45f9ff1e598deb65ee4677098df39401ed48e5e1b60"
+content-hash = "b829395d75971e7a82dc4cd1bd9f67986403e32731b81742bfed26a442ac40fd"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -1515,8 +1513,8 @@ flask = [
     {file = "Flask-2.2.2.tar.gz", hash = "sha256:642c450d19c4ad482f96729bd2a8f6d32554aa1e231f4f6b4e7e5264b16cca2b"},
 ]
 flask-compress = [
-    {file = "Flask-Compress-1.12.tar.gz", hash = "sha256:e2159499f39d618a4d56ba0484e7b58b57956b9a2c6d3510f095f5bb14b7afc5"},
-    {file = "Flask_Compress-1.12-py3-none-any.whl", hash = "sha256:9f4e40211755e86f85e5eb7d414856ef1e8751912caa78d62853169400335f0c"},
+    {file = "Flask-Compress-1.13.tar.gz", hash = "sha256:ee96f18bf9b00f2deb4e3406ca4a05093aa80e2ef0578525a3b4d32ecdff129d"},
+    {file = "Flask_Compress-1.13-py3-none-any.whl", hash = "sha256:1128f71fbd788393ce26830c51f8b5a1a7a4d085e79a21a5cddf4c057dcd559b"},
 ]
 fonttools = [
     {file = "fonttools-4.37.3-py3-none-any.whl", hash = "sha256:a5bc5f5d48faa4085310b8ebd4c5d33bf27c6636c5f10a7de792510af2745a81"},
@@ -2051,8 +2049,8 @@ pydantic = [
     {file = "pydantic-1.10.2.tar.gz", hash = "sha256:91b8e218852ef6007c2b98cd861601c6a09f1aa32bbbb74fab5b1c33d4a1e410"},
 ]
 pyglet = [
-    {file = "pyglet-1.5.26-py3-none-any.whl", hash = "sha256:529b7b1198df3a8399b9621a99ca5e29cd32bb98428bd0e8ba699afa4ba96d2b"},
-    {file = "pyglet-1.5.26.zip", hash = "sha256:ee8c5e0b5b87df84188e20e552982eba8da00944b4c5560f1cfdd5c9714d19b0"},
+    {file = "pyglet-1.5.27-py3-none-any.whl", hash = "sha256:7ce2eb5a299cda92fcc099f533520cdaa2f157a175d6c1442a2ae4d769284d2d"},
+    {file = "pyglet-1.5.27.zip", hash = "sha256:4d00e067451f3b10fd51b69764fddab65444372a2da344ee2b35f0a8e6ebf005"},
 ]
 pygments = [
     {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
@@ -2225,8 +2223,8 @@ stack-data = [
     {file = "stack_data-0.5.0.tar.gz", hash = "sha256:715c8855fbf5c43587b141e46cc9d9339cc0d1f8d6e0f98ed0d01c6cb974e29f"},
 ]
 tenacity = [
-    {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
-    {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
+    {file = "tenacity-8.1.0-py3-none-any.whl", hash = "sha256:35525cd47f82830069f0d6b73f7eb83bc5b73ee2fff0437952cedf98b27653ac"},
+    {file = "tenacity-8.1.0.tar.gz", hash = "sha256:e48c437fdf9340f5666b92cd7990e96bc5fc955e1298baf4a907e3972067a445"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

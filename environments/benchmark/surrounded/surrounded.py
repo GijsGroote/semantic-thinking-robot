@@ -30,7 +30,6 @@ def main(conn=None):
     env.add_obstacle(surrounded["box5"])
     env.add_obstacle(surrounded["box6"])
 
-    ob, _, _, _ = env.step(action)
 
     brain = None
     if not USER_INPUT_MODE:
