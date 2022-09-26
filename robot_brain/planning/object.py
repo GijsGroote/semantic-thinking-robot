@@ -1,9 +1,14 @@
+from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
+
+
 class Object:
     """
     Object class.
     """
     def __init__(self, name, state, urfd):
         self.name = name
+        self.obstacle = None
+        self.type = "unknown"
         self.state = state
         self.urdf = urfd
 
@@ -16,6 +21,29 @@ class Object:
     @name.setter
     def name(self, val):
         self._name = val
+
+    # obstacle getter
+    @property
+    def obstacle(self) -> FreeCollisionObstacle:
+        return self._obstacle
+
+    # obstacle setter
+    @obstacle.setter
+    def obstacle(self, val: FreeCollisionObstacle):
+        self._obstacle = val
+
+    # type getter
+    @property
+    def type(self):
+        return self._type
+
+    # type setter
+    @type.setter
+    def type(self, val):
+        if val in {"unmovable", "movable", "unknown"}:
+            self._type = val
+        else:
+            raise ValueError(f"the type {val} is not allowed")
 
     # state getter
     @property

@@ -9,6 +9,8 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.planning.state import State
 from robot_brain.controller.mpc.mpc import Mpc
+from robot_brain.global_variables import DT
+
 
 from environments.objects.boxes import box
 from environments.objects.spheres import sphere
@@ -24,30 +26,37 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    dt = 0.05
     # env = gym.make('point-robot-urdf-vel-v0', dt=dt, render=True)
-    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
 
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-    sensor = ObstacleSensor()
-    env.add_sensor(sensor)
     default_action = np.array([0.0, 0.0])
     n_steps = 10000
+
+    obstacles = {box.name(): box,
+            sphere.name(): sphere,
+            cylinder.name(): cylinder}
 
     # add obstacles
     env.add_obstacle(box)
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
+    # add sensors
+    sensor = ObstacleSensor()
+    sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
+    env.add_sensor(sensor)
+
     ob, reward, done, info = env.step(default_action)
 
     brain = RBrain()
     brain.setup({
-        "dt": dt,
+        "dt": DT,
         "default_action": default_action,
         "target_state": State(pos=np.array([0, 0, 0])),
+        "obstacles": obstacles
     }, ob)
 
     action =default_action

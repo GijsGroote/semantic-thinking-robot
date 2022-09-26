@@ -29,6 +29,7 @@ class RBrain:
     """
 
     def __init__(self):
+        # TODO: these should be private, en make some getters
         self.objects = {}  # Object information dictionary
         self.robot = None  # Player information
         self.controller = None
@@ -48,9 +49,9 @@ class RBrain:
         robot = Object(
                 "robot",
                 State(pos=ob["joint_state"]["position"],
-                vel=ob["joint_state"]["velocity"]),
+                    vel=ob["joint_state"]["velocity"]),
                 "urdf")
-
+    
         # TODO: this state above in incorrect for the x and xdot
         self.robot = robot
         self.objects["robot"] = robot
@@ -64,12 +65,21 @@ class RBrain:
                       ang_v=val["twist"]["angular"])
                 self.objects[key] = Object(key, s_temp, "urdf")
 
+        # add static object info to the list of objects 
+        if "obstacles" in stat_world_info.keys():
+            for (key, obst) in stat_world_info["obstacles"].items():
+                try:
+                    self.objects[obst.name()].obstacle = obst
+                except KeyError:
+                    raise KeyError("first add obstacles, then sensors, did you set_bullet_id_to_obst?")
+
         if "defaultAction" in stat_world_info.keys():
             self.default_action = stat_world_info["defaultAction"]
 
-
         self.dt = stat_world_info["dt"]
         self.target_state = stat_world_info["target_state"]
+
+        
 
     def update(self, ob):
         """

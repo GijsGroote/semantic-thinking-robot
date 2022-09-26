@@ -9,5 +9,5 @@ sphere_dict = {
     "geometry": {"radius": 0.6},
 }
 
-sphere = SphereObstacle(name="simpe_sphere", content_dict=sphere_dict)
+sphere = SphereObstacle(name="simlpe_sphere", content_dict=sphere_dict)
 

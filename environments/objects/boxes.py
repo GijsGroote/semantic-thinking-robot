@@ -10,4 +10,4 @@ box_dict = {
     "geometry": {"length": 0.5, "width": 0.4, "height": 0.3},
 }
 
-box = BoxObstacle(name="simpe_box", content_dict=box_dict)
+box = BoxObstacle(name="simple_box", content_dict=box_dict)
