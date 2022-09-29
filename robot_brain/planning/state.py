@@ -34,6 +34,9 @@ class State:
     def get_2d_pose(self):
         return np.array([self.pos[0], self.pos[1], self.ang_p[2]])
 
+    def get_xy_position(self):
+        return np.array([self.pos[0], self.pos[1]])
+
     @property
     def pos(self):
         return self._pos

@@ -9,17 +9,23 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
     def __init__(self,
             cell_size: float,
-            grid_length: float,
-            grid_width: float,
+            grid_x_length: float,
+            grid_y_length: float,
             robot_radius: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_length, grid_width)
+        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
-            int(self.grid_width/self.cell_size),
-            int(self.grid_length/self.cell_size)))
+            int(self.grid_x_length/self.cell_size),
+            int(self.grid_y_length/self.cell_size)))
 
     def setup(self, obstacles):
+        raise NotImplementedError()
+
+    def cell_idx_to_position(self, x_idx: int, y_idx: int) -> (float, float):
+        raise NotImplementedError()
+
+    def position_to_cell_idx(self, x_position: float, y_position: float) -> (int, int):
         raise NotImplementedError()
 
     def occupancy(self, x_position, y_position, *args):

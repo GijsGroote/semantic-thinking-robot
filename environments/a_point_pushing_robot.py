@@ -78,6 +78,7 @@ def main(conn=None):
 
 
         ob, reward, done, info = env.step(action)
+        print(ob["joint_state"]["position"])
 
         brain.update(ob)
 

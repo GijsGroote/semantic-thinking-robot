@@ -51,7 +51,7 @@ class RBrain:
                 State(pos=ob["joint_state"]["position"],
                     vel=ob["joint_state"]["velocity"]),
                 "urdf")
-    
+
         # TODO: this state above in incorrect for the x and xdot
         self.robot = robot
         self.objects["robot"] = robot
@@ -65,7 +65,7 @@ class RBrain:
                       ang_v=val["twist"]["angular"])
                 self.objects[key] = Object(key, s_temp, "urdf")
 
-        # add static object info to the list of objects 
+        # add static object info to the list of objects
         if "obstacles" in stat_world_info.keys():
             for (key, obst) in stat_world_info["obstacles"].items():
                 try:

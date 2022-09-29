@@ -3,17 +3,60 @@ import numpy as np
 
 from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
 from robot_brain.planning.object import Object
+from robot_brain.planning.state import State
 
 from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
+from motion_planning_env.sphere_obstacle import SphereObstacle
+
+
+@pytest.fixture
+def objects_set1():
+
+    cylinder_dict = {
+        "type": "cylinder",
+        "position": [1.0, 1.0, 1.0],
+        "geometry": {"radius": 0.5, "height": 0.3},
+    }
+    cylinder_obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
+    cylinder_state = State(pos=np.array([5,5,0]))
+    cylinder_object = Object("simple_cylinder", cylinder_state, "urdf")
+    cylinder_object.obstacle = cylinder_obstacle
+
+    sphere_dict = {
+        "type": "sphere",
+        "position": [1.0, 1.0, 1.0],
+        "geometry": {"radius": 0.5},
+    }
+    sphere_obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
+    sphere_state = State(pos=np.array([8,1,0]))
+    sphere_object = Object("simple_sphere", sphere_state, "urdf")
+    sphere_object.obstacle = sphere_obstacle
+
+    box_dict = {
+        "type": "box",
+        "position": [2.0, 2.0, 1.0],
+        "geometry": {"length": 2, "width": 1, "height": 0.3},
+    }
+    box_obstacle = BoxObstacle(name="simple_box", content_dict=box_dict)
+    box_state = State(pos=np.array([1,1,0]), vel=np.array([1,0,2]))
+    box_object = Object("simple_box", box_state, "urdf")
+    box_object.obstacle = box_obstacle
+
+    objects = {"simple_box": box_object,
+                "simple_cylinder": cylinder_object,
+                "simple_sphere": sphere_object}
+
+    return objects
 
 def test_occupancy_map_arguements():
     occ_map = RectangularRobotOccupancyMap(1, 100, 200, 10, 6, 360)
 
     assert 1 == occ_map.cell_size
-    assert 100 == occ_map.grid_length
-    assert 200 == occ_map.grid_width
-    assert 10 == occ_map.robot_length
-    assert 6 == occ_map.robot_width
+    assert 100 == occ_map.grid_x_length
+    assert 200 == occ_map.grid_y_length
+    assert 10 == occ_map.robot_x_length
+    assert 6 == occ_map.robot_y_length
     assert 360 == occ_map.n_orientations
 
 def test_occupancy_exceptions():
@@ -41,7 +84,7 @@ def test_occupancy_exceptions():
 
     # n_orientations to small
     with pytest.raises(ValueError):
-        occ_map.occupancy(40, 80, -40)
+        occ_map.occupancy(40, 40, -40)
 
     # to many arguements
     with pytest.raises(TypeError):
@@ -51,26 +94,132 @@ def test_occupancy_exceptions():
     with pytest.raises(TypeError):
         occ_map.occupancy(40, 80, True)
 
-def test_setup():
+def test_setup(objects_set1):
+    # TODO: this test does not do anything, Gijs on this 26 birthday
+    occ_map = RectangularRobotOccupancyMap(1, 100, 200, 10, 6, 360)
+    occ_map.setup(objects_set1)
+
+    assert True
+
+def test_distance_point_to_line():
     occ_map = RectangularRobotOccupancyMap(1, 100, 200, 10, 6, 360)
 
-    box_dict = {
-        "movable": True,
-        "orientation": [1,1,1,1],
-        "mass": 3,
-        "type": "box",
-        "color": [0/255, 255/255, 0/255, 1],
-        "position": [2.0, 2.0, 1.0],
-        "geometry": {"length": 0.5, "width": 0.4, "height": 0.3},
-    }
+    data = [
+            (3.0, np.array([3,0]), np.array([0,-2]), np.array([0,2])),
+            (3.0, np.array([-3,0]), np.array([0,-2]), np.array([0,2])),
+            (3.0, np.array([0,3]), np.array([-2,0]), np.array([2,0])),
+            (3.0, np.array([0,-3]), np.array([-2,0]), np.array([2,0])),
+            (np.sqrt(2), np.array([1,1]), np.array([-2,0]), np.array([0,0])),
+            (np.sqrt(2), np.array([1,-1]), np.array([-2,0]), np.array([0,0])),
+            (np.sqrt(2), np.array([-1,1]), np.array([2,0]), np.array([0,0])),
+            (np.sqrt(2), np.array([-1,-1]), np.array([2,0]), np.array([0,0])),
+            ]
 
-    box_obstacle = BoxObstacle(name="simple_box", content_dict=box_dict)
+    for (answer, p, lp1, lp2) in data:
+        assert answer == pytest.approx(occ_map.distance_point_to_line(p, lp1, lp2))
+def test_cell_idx_to_position_even():
+    # test even grid_x_length and grid_y_length
+    occ_map = RectangularRobotOccupancyMap(0.5, 4, 4, 1, 2, 1)
+    assert (-1/4, 1/4) == occ_map.cell_idx_to_position(3, 4)
+    assert (-1.75, -1.75) == occ_map.cell_idx_to_position(0, 0)
+    assert (3/4, 1/4) == occ_map.cell_idx_to_position(5, 4)
 
-    box_object = Object("simple_box", "state", "urdf")
-    box_object.obstacle = box_obstacle
+def test_cell_idx_to_position_uneven():
+    # test uneven grid_x_length and grid_y_length
+    occ_map = RectangularRobotOccupancyMap(1, 3, 3, 1, 2, 1)
+    assert (-1, -1) == occ_map.cell_idx_to_position(0, 0)
+    assert (0, 0) == occ_map.cell_idx_to_position(1, 1)
+    assert (0, 1) == occ_map.cell_idx_to_position(1, 2)
 
-    objects = {"simple_box": box_object}
+def test_cell_idx_to_position_out_of_bounds():
+    occ_map = RectangularRobotOccupancyMap(1, 4, 7, 1, 2, 1)
+    with pytest.raises(IndexError):
+        occ_map.cell_idx_to_position(4, 3)
+    with pytest.raises(IndexError):
+        occ_map.cell_idx_to_position(3, 7)
+    with pytest.raises(IndexError):
+        occ_map.cell_idx_to_position(0, -1)
+    with pytest.raises(IndexError):
+        occ_map.cell_idx_to_position(-1, 0)
 
-    occ_map.setup(objects)
+def test_position_to_cell_idx_in_cell():
+    occ_map = RectangularRobotOccupancyMap(30, 90, 90, 1, 2, 1)
+    assert (2, 2) == occ_map.position_to_cell_idx(15.01, 15.01)
+    assert (2, 2) == occ_map.position_to_cell_idx(44.99, 15.01)
 
-    assert False
+    assert (1, 1) == occ_map.position_to_cell_idx(-14.99, 14.99)
+    assert (1, 1) == occ_map.position_to_cell_idx(-14.99, -14.99)
+    assert (1, 1) == occ_map.position_to_cell_idx(14.99, 14.99)
+    assert (1, 1) == occ_map.position_to_cell_idx(14.99, -14.99)
+
+    assert (0, 2) == occ_map.position_to_cell_idx(-15.01, 15.01)
+    assert (0, 2) == occ_map.position_to_cell_idx(-15.01, 44.99,)
+    assert (0, 2) == occ_map.position_to_cell_idx(-44.99, 15.01)
+    assert (0, 2) == occ_map.position_to_cell_idx(-44.99, 44.99,)
+
+def test_position_to_cell_idx_on_boundary():
+    occ_map = RectangularRobotOccupancyMap(5, 30, 40, 1, 2, 1)
+
+    assert (0,0) == occ_map.position_to_cell_idx(-15, -17.5)
+    assert (1,0) == occ_map.position_to_cell_idx(-10, -17.5)
+    assert (0,0) == occ_map.position_to_cell_idx(-12.5, -20)
+    assert (0,1) == occ_map.position_to_cell_idx(-12.5, -15)
+    assert (5,7) == occ_map.position_to_cell_idx(15, 17.5)
+    assert (5,7) == occ_map.position_to_cell_idx(10, 17.5)
+    assert (5,7) == occ_map.position_to_cell_idx(12.5, 20)
+    assert (5,7) == occ_map.position_to_cell_idx(12.5, 15)
+
+def test_position_to_cell_idx_out_of_bounds():
+    occ_map = RectangularRobotOccupancyMap(1, 100, 150, 1, 2, 1)
+    with pytest.raises(IndexError):
+        occ_map.position_to_cell_idx(50.1, 3)
+    with pytest.raises(IndexError):
+        occ_map.position_to_cell_idx(-50.3, 3)
+    with pytest.raises(IndexError):
+        occ_map.position_to_cell_idx(0, -75.32)
+    with pytest.raises(IndexError):
+        occ_map.position_to_cell_idx(-1, 75.01)
+
+
+################################################################################################
+############### MANUAL MANUAL MANUAL INSPECTION TESTS, SHOULD BE COMMENTED OUT##################
+################################################################################################
+
+# def test_rectange_cylinder_cube_obstacles():
+#     occ_map = RectangularRobotOccupancyMap(0.5, 11, 13, 2, 1, 1)
+#
+#     cylinder_dict = {
+#             "type": "cylinder",
+#             "position": [1.0, 1.0, 1.0],
+#             "geometry": {"radius": 1., "height": 0.3},
+#         }
+#     cylinder_object = Object("simple_cylinder", State(pos=np.array([0, 0, 0])), "urdf")
+#     cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
+#
+#     sphere_dict= {
+#             "type": "sphere",
+#             "position": [1.0, 1.0, 1.0],
+#             "geometry": {"radius": 1.},
+#         }
+#     sphere_object = Object("simple_sphere",  State(pos=np.array([2,-1,0])), "urdf")
+#     sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
+#     #
+#     # box_dict = {
+#     #         "type": "box",
+#     #         "position": [1.0, 1.0, 1.0],
+#     #         "geometry": {"width": 1., "length": 2, "height": 0.3},
+#     #     }
+#     # box_object = Object("simple_box", State(pos=np.array([0,0,np.pi/4])), "urdf")
+#     # box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
+#
+#
+#     objects = {"cylinder": cylinder_object,
+#                "sphere": sphere_object}
+#     #             "box": box_object}
+#
+#     occ_map.setup(objects)
+#     occ_map.visualise(0, objects)
+#
+#     assert False
+#
+

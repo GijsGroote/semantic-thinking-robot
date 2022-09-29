@@ -7,8 +7,8 @@ def test_occupancy_map_arguements():
     occ_map = CircleRobotOccupancyMap(1, 100, 200, 5)
 
     assert 1 == occ_map.cell_size
-    assert 100 == occ_map.grid_length
-    assert 200 == occ_map.grid_width
+    assert 100 == occ_map.grid_x_length
+    assert 200 == occ_map.grid_y_length
 
 
 
