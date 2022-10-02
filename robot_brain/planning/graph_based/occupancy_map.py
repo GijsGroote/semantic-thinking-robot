@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import numpy as np
 
 def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 
@@ -13,7 +12,7 @@ class OccupancyMap(ABC):
     """ Occupancy map represents the environment in obstacle space
     free space, movable obstacle space and unknown obstacle space.
 
-    The center represents the origin, an occupancy map can only 
+    The center represents the origin, an occupancy map can only
     take rectangular sizes where the origin is in the center.
     """
 
@@ -21,6 +20,7 @@ class OccupancyMap(ABC):
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
+            objects: dict
             ):
 
         # assert the grid can be descritized in square cells
@@ -31,6 +31,7 @@ class OccupancyMap(ABC):
         self._cell_size = cell_size
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
+        self._objects = objects
 
     @abstractmethod
     def cell_idx_to_position(self, x_idx: int, y_idx: int) -> (float, float):
@@ -59,5 +60,7 @@ class OccupancyMap(ABC):
     @property
     def grid_y_length(self):
         return self._grid_y_length
-    
-    # TODO: want to enforce things as visualise? 
+
+    @property
+    def objects(self):
+        return self._objects

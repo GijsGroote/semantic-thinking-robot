@@ -27,6 +27,7 @@ pyarrow = "^7.0.0"
 pynput = "^1.7.6"
 dash-dangerously-set-inner-html = "^0.0.2"
 beautifulsoup4 = "^4.10.0"
+torch = "^1.12.1"
 
 [tool.poetry.extras]
 
