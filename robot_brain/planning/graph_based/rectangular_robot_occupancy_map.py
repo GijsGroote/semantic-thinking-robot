@@ -10,7 +10,6 @@ from robot_brain.planning.object import Object
 class RectangularRobotOccupancyMap(OccupancyMap):
     """ Occupancy map represents the environment in obstacle space
     free space, movable obstacle space and unknown obstacle space.
-
     """
 
     def __init__(self,
@@ -24,6 +23,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length)
         self._robot_x_length = robot_x_length
         self._robot_y_length = robot_y_length
+        self._robot_dimension_min = min(self.robot_x_length, self.robot_y_length)
+        self._robot_dimension_max = max(self.robot_x_length, self.robot_y_length)
         self._n_orientations = n_orientations
 
         self._grid_map = np.zeros((
@@ -41,35 +42,29 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             2 -> movable object space
             3 -> unknown object space
         """
+        for i_robot_orientation in range(self.n_orientations):
+            for obj in objects.values():
+                match obj.type:
+                    case "unmovable":
+                        self.setup_object(obj, 2*math.pi*i_robot_orientation/self.n_orientations, i_robot_orientation, 1)
 
-        i_robot_orientation = 0 # this should loop through orientations
+                    case "movable":
+                        self.setup_object(obj, 2*math.pi*i_robot_orientation/self.n_orientations, i_robot_orientation, 2)
 
-        for (key, obj) in objects.items():
-
-            match obj.type:
-                case "unmovable":
-                    # TODO 1.0 is not the orientation which I acually want here
-                    self.setup_object(obj, 1.0, i_robot_orientation, 1)
-
-                case "movable":
-                    self.setup_object(obj, 1.0, i_robot_orientation, 2)
-
-                case "unknown":
-                        self.setup_object(obj, 0, i_robot_orientation, 3)
-                case _:
-                    raise TypeError(f"unknown type: {obj.type}")
+                    case "unknown":
+                        self.setup_object(obj, 2*math.pi*i_robot_orientation/self.n_orientations, i_robot_orientation, 3)
+                    case _:
+                        raise TypeError(f"unknown type: {obj.type}")
 
     def setup_object(self, obj: Object, robot_orientation: float, i_robot_orientation: int, val: int):
         """ Set the object overlapping with grid cells to a integer value. """ 
 
         match obj.obstacle.type():
-
             case "cylinder"| "sphere":
-                
                 self.setup_circular_object(obj, robot_orientation, i_robot_orientation, val)
 
             case "box":
-                print("TODO: create setup rectangular objectC")
+                self.setup_rectangular_object(obj, robot_orientation, i_robot_orientation, val)
 
             case _:
                 raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
@@ -77,28 +72,24 @@ class RectangularRobotOccupancyMap(OccupancyMap):
       
     def setup_circular_object(self, obj: Object, robot_orientation: float, i_robot_orientation: int, val: int):
         """ Set the circular object overlapping with grid cells to a integer value. """ 
-         # find corner points of the robot
-        # TODO: filter some points pretty close ot the obstacle, so you do not to loop over all of them
-        # assuming that is faster than calculating every line to every cylinder or edge of obstacle
-        cos_rw = math.cos(robot_orientation)*self.robot_x_length/2
-        sin_rw = math.sin(robot_orientation)*self.robot_x_length/2
-        cos_rl = math.cos(robot_orientation)*self.robot_y_length/2
-        sin_rl = math.sin(robot_orientation)*self.robot_y_length/2
+
+        # cos_rl = cos(orientation_of_robot) * robot_length_in_x / 2
+        cos_rl = math.cos(robot_orientation)*self.robot_x_length/2
+        sin_rl = math.sin(robot_orientation)*self.robot_x_length/2
+        cos_rw = math.cos(robot_orientation)*self.robot_y_length/2
+        sin_rw = math.sin(robot_orientation)*self.robot_y_length/2
         
         obj_xy = obj.state.get_xy_position()
-        max_robot_obj_distance= max(self.robot_y_length, self.robot_x_length)/2 + obj.obstacle.radius()
+        max_robot_obj_distance= (math.sqrt(self.robot_x_length**2 + self.robot_y_length**2))/2 + obj.obstacle.radius()
 
-        (obj_clearance_x_min, _) = self.position_to_cell_idx(obj_xy[0]-max_robot_obj_distance, 0) 
-        (obj_clearance_x_max, _) = self.position_to_cell_idx(obj_xy[0]+max_robot_obj_distance, 0) 
-        (_, obj_clearance_y_min) = self.position_to_cell_idx(0, obj_xy[1]-max_robot_obj_distance) 
-        (_, obj_clearance_y_max) = self.position_to_cell_idx(0, obj_xy[1]+max_robot_obj_distance) 
+        # only search around obstacle 
+        (obj_clearance_x_min, obj_clearance_y_min) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]-max_robot_obj_distance, obj_xy[1]-max_robot_obj_distance)
+        (obj_clearance_x_max, obj_clearance_y_max) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]+max_robot_obj_distance, obj_xy[1]+max_robot_obj_distance)
 
-
-        # find the boundaries imporatnt to check, do not loop over everything
         for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
                 # if the cell is inside the object, it is in collision
-                if np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius():
+                if np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius() + self.robot_dimension_min / 2:
                     self.grid_map[x_idx, y_idx, i_robot_orientation] = val
                     continue
 
@@ -117,7 +108,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
                 obj_r = obj.obstacle.radius() 
 
-
                 # check if the edges of the robot overlap with the obstacle
                 if self.distance_point_to_line(obj_xy, a, b) <= obj_r:
                     self.grid_map[x_idx, y_idx, i_robot_orientation] = val
@@ -134,6 +124,57 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 elif self.distance_point_to_line(obj_xy, d, a) <= obj_r:
                     self.grid_map[x_idx, y_idx, i_robot_orientation] = val
                     continue
+
+    def setup_rectangular_object(self, obj: Object, robot_orientation: float, i_robot_orientation: int, val: int):
+        """ Set the rectangular object overlapping with grid cells to a integer value. """ 
+
+        # cos_rw = cos(orientation_of_robot)* robot_width / 2
+        cos_rl = math.cos(robot_orientation)*self.robot_x_length/2
+        sin_rl = math.sin(robot_orientation)*self.robot_x_length/2
+        cos_rw = math.cos(robot_orientation)*self.robot_y_length/2
+        sin_rw = math.sin(robot_orientation)*self.robot_y_length/2
+        
+
+        # cos_ol = cos(orientation_of_object)* object_length / 2
+        cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
+        sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
+        cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
+        sin_ow = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
+
+        max_robot_to_obj_x_distance = abs(sin_rl) + abs(cos_rw) + abs(sin_ol) + abs(cos_ow)
+        max_robot_to_obj_y_distance = abs(cos_rl) + abs(sin_rw) + abs(cos_ol) + abs(sin_ow)
+        
+        obj_xy = obj.state.get_xy_position()
+
+        # only search around obstacle
+        (x_min, y_min) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]-max_robot_to_obj_x_distance, obj_xy[1]-max_robot_to_obj_y_distance)
+        (x_max, y_max) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]+max_robot_to_obj_x_distance, obj_xy[1]+max_robot_to_obj_y_distance)
+        
+        # orientation with cos/sin could make x_min > x_max
+        obj_clearance_x_min = min(x_min, x_max)
+        obj_clearance_x_max = max(x_min, x_max)
+        obj_clearance_y_min = min(y_min, y_max)
+        obj_clearance_y_max = max(y_min, y_max)
+
+        for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
+            for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
+                # if the cell is inside the object, it is in collision
+                self.grid_map[x_idx, y_idx, i_robot_orientation] = val
+
+                # print(np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy))
+                # print((self.robot_dimension_min + min(obj.obstacle.length(), obj.obstacle.width()))/2)
+
+                if (np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= 
+                (self.robot_dimension_min + min(obj.obstacle.length(), obj.obstacle.width()))/2):
+                    self.grid_map[x_idx, y_idx, i_robot_orientation] = val
+                    continue
+
+
+
+            # check if the two rectangles overlap
+
+            # calculate edge points of the robot
+
 
 
     def distance_point_to_line(self, p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
@@ -173,6 +214,33 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2)
 
+    def position_to_cell_idx_or_grid_edge(self, x_position: float, y_position: float) -> (int, int):
+        """ returns the index of the cell a position is in, 
+        if the position is outside the boundary of the grid map the edges 
+        will be returned.
+        """
+        try: 
+            x_idx = self.position_to_cell_idx(x_position, 0)[0]
+        except IndexError as e:
+            if x_position > self.grid_x_length/2:
+                x_idx = int(self.grid_x_length/self.cell_size-1)
+            elif x_position < -self.grid_x_length/2:
+                x_idx = 0
+            else:
+                raise IndexError(f"x_position: {x_position} could not be converted to cell index.")
+
+        try: 
+            y_idx = self.position_to_cell_idx(0, y_position)[1]
+        except IndexError as e:
+            if y_position > self.grid_y_length/2:
+                y_idx = int(self.grid_y_length/self.cell_size-1)
+            elif y_position < -self.grid_y_length/2:
+                y_idx = 0
+            else:
+                raise IndexError(f"y_position: {y_position} could not be converted to cell index.")
+
+        return (x_idx, y_idx)
+
     def position_to_cell_idx(self, x_position: float, y_position: float) -> (int, int):
         """ returns the index of the cell a position is in. """  
         if abs(x_position) > self.grid_x_length/2:
@@ -182,7 +250,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         if abs(y_position) > self.grid_y_length/2:
             raise IndexError(f"y_position: {y_position} is larger than the grid"\
                     f" [{-self.grid_y_length/2}, {self.grid_y_length/2}]")
-
+        # print(f" converting x position {x_position}") 
+        # print(f"rounding {(x_position + self.grid_x_length/2)/self.cell_size} to the number {int((x_position + self.grid_x_length/2)/self.cell_size)}")
         x_idx = int((x_position + self.grid_x_length/2)/self.cell_size)
         y_idx = int((y_position + self.grid_y_length/2)/self.cell_size)
         
@@ -223,11 +292,10 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         """ Display the occupancy map for a specific orientation of the robot. """
 
         fig = px.imshow(self.grid_map[:,:,i_orientation],
-                y=list(np.arange((self.cell_size-self.grid_x_length)/2, (self.cell_size+self.grid_x_length)/2, self.cell_size)),
                 x=list(np.arange((self.cell_size-self.grid_y_length)/2, (self.cell_size+self.grid_y_length)/2, self.cell_size)),
-
+                y=list(np.arange((self.cell_size-self.grid_x_length)/2, (self.cell_size+self.grid_x_length)/2, self.cell_size)),
                 labels={"x": "y-axis", "y": "x-axis"},
-                title="Occupancy Map for Rectangular Robot",
+                title=f"Occupancy Map for Rectangular Robot at orientation [{2*i_orientation/self.n_orientations})pi in [0,2) pi",
                 )
 
         # add the objects over the gridmap
@@ -284,6 +352,14 @@ class RectangularRobotOccupancyMap(OccupancyMap):
     @property
     def robot_y_length(self):
         return self._robot_y_length
+
+    @property
+    def robot_dimension_min(self):
+        return self._robot_dimension_min
+
+    @property
+    def robot_dimension_max(self):
+        return self._robot_dimension_max
 
     @property
     def n_orientations(self):

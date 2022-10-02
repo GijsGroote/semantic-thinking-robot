@@ -14,38 +14,38 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 def objects_set1():
 
     cylinder_dict = {
-        "type": "cylinder",
-        "position": [1.0, 1.0, 1.0],
-        "geometry": {"radius": 0.5, "height": 0.3},
-    }
+            "type": "cylinder",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 0.5, "height": 0.3},
+            }
     cylinder_obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
     cylinder_state = State(pos=np.array([5,5,0]))
     cylinder_object = Object("simple_cylinder", cylinder_state, "urdf")
     cylinder_object.obstacle = cylinder_obstacle
 
     sphere_dict = {
-        "type": "sphere",
-        "position": [1.0, 1.0, 1.0],
-        "geometry": {"radius": 0.5},
-    }
+            "type": "sphere",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 0.5},
+            }
     sphere_obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
     sphere_state = State(pos=np.array([8,1,0]))
     sphere_object = Object("simple_sphere", sphere_state, "urdf")
     sphere_object.obstacle = sphere_obstacle
 
     box_dict = {
-        "type": "box",
-        "position": [2.0, 2.0, 1.0],
-        "geometry": {"length": 2, "width": 1, "height": 0.3},
-    }
+            "type": "box",
+            "position": [2.0, 2.0, 1.0],
+            "geometry": {"length": 2, "width": 1, "height": 0.3},
+            }
     box_obstacle = BoxObstacle(name="simple_box", content_dict=box_dict)
     box_state = State(pos=np.array([1,1,0]), vel=np.array([1,0,2]))
     box_object = Object("simple_box", box_state, "urdf")
     box_object.obstacle = box_obstacle
 
     objects = {"simple_box": box_object,
-                "simple_cylinder": cylinder_object,
-                "simple_sphere": sphere_object}
+            "simple_cylinder": cylinder_object,
+            "simple_sphere": sphere_object}
 
     return objects
 
@@ -180,46 +180,129 @@ def test_position_to_cell_idx_out_of_bounds():
     with pytest.raises(IndexError):
         occ_map.position_to_cell_idx(-1, 75.01)
 
+def test_position_to_cell_or_grid_edge():
+    occ_map = RectangularRobotOccupancyMap(1, 6, 6, 1, 2, 1)
+
+    assert (0,0) == occ_map.position_to_cell_idx_or_grid_edge(-5, -5)
+    assert (5,5) == occ_map.position_to_cell_idx_or_grid_edge(5, 5)
+    assert (5,5) == occ_map.position_to_cell_idx_or_grid_edge(3, 3)
+    assert (3,4) == occ_map.position_to_cell_idx_or_grid_edge(0.1, 1.543)
+
+def test_occupancy_map_circular_objects():
+    occ_map = RectangularRobotOccupancyMap(1, 5, 4, 2, 1, 1)
+
+    cylinder_dict = {
+            "type": "cylinder",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 1., "height": 0.3},
+            }
+    cylinder_object = Object("simple_cylinder", State(pos=np.array([0, 0, 0])), "urdf")
+    cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
+
+    sphere_dict= {
+            "type": "sphere",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 1.},
+            }
+    sphere_object = Object("simple_sphere",  State(pos=np.array([2,-1,0])), "urdf")
+    sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
+
+    objects = {"cylinder": cylinder_object,
+            "sphere": sphere_object}
+
+    occ_map.setup(objects)
+    print(occ_map.grid_map)
 
 ################################################################################################
 ############### MANUAL MANUAL MANUAL INSPECTION TESTS, SHOULD BE COMMENTED OUT##################
 ################################################################################################
+def test_rectange_small():
+    occ_map = RectangularRobotOccupancyMap(1, 6, 10, 3, 1, 4)
 
-# def test_rectange_cylinder_cube_obstacles():
-#     occ_map = RectangularRobotOccupancyMap(0.5, 11, 13, 2, 1, 1)
-#
-#     cylinder_dict = {
-#             "type": "cylinder",
-#             "position": [1.0, 1.0, 1.0],
-#             "geometry": {"radius": 1., "height": 0.3},
-#         }
-#     cylinder_object = Object("simple_cylinder", State(pos=np.array([0, 0, 0])), "urdf")
-#     cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
-#
-#     sphere_dict= {
-#             "type": "sphere",
-#             "position": [1.0, 1.0, 1.0],
-#             "geometry": {"radius": 1.},
-#         }
-#     sphere_object = Object("simple_sphere",  State(pos=np.array([2,-1,0])), "urdf")
-#     sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
-#     #
-#     # box_dict = {
-#     #         "type": "box",
-#     #         "position": [1.0, 1.0, 1.0],
-#     #         "geometry": {"width": 1., "length": 2, "height": 0.3},
-#     #     }
-#     # box_object = Object("simple_box", State(pos=np.array([0,0,np.pi/4])), "urdf")
-#     # box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
-#
-#
-#     objects = {"cylinder": cylinder_object,
-#                "sphere": sphere_object}
-#     #             "box": box_object}
-#
-#     occ_map.setup(objects)
-#     occ_map.visualise(0, objects)
-#
-#     assert False
-#
+    box_dict = {
+            "type": "box",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"length": 3, "width": 1, "height": 0.3},
+            }
 
+    box_object = Object("simple_box", State(pos=np.array([0,0,0])), "urdf")
+    box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
+
+    objects = {"box": box_object}
+
+    occ_map.setup(objects)
+    print(occ_map.grid_map[:,:,0])
+    occ_map.visualise(0, objects)
+    # occ_map.visualise(1, objects)
+    # occ_map.visualise(2, objects)
+    # occ_map.visualise(3, objects)
+
+    assert False
+
+
+def test_rectange_please():
+    occ_map = RectangularRobotOccupancyMap(1, 50, 60, 10, 1, 4)
+
+    box_dict = {
+            "type": "box",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"length": 20, "width": 10., "height": 0.3},
+            }
+
+    box_object = Object("simple_box", State(pos=np.array([0,0,0])), "urdf")
+
+    box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
+
+
+    objects = {"box": box_object}
+
+    occ_map.setup(objects)
+
+    print(occ_map.grid_map[:,:,0])
+    occ_map.visualise(0, objects)
+    occ_map.visualise(1, objects)
+    occ_map.visualise(2, objects)
+    occ_map.visualise(3, objects)
+
+    assert False
+
+
+def test_rectange_cylinder_cube_obstacles():
+    occ_map = RectangularRobotOccupancyMap(1, 40, 60, 4, 1, 4)
+
+    cylinder_dict = {
+            "type": "cylinder",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 3., "height": 0.3},
+            }
+    cylinder_object = Object("simple_cylinder", State(pos=np.array([15, 0, 0])), "urdf")
+    cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
+
+    sphere_dict= {
+            "type": "sphere",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"radius": 2.},
+            }
+    sphere_object = Object("simple_sphere",  State(pos=np.array([-5,-10,0])), "urdf")
+    sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
+
+    box_dict = {
+            "type": "box",
+            "position": [1.0, 1.0, 1.0],
+            "geometry": {"width": 3, "length": 8, "height": 0.3},
+            }
+    box_object = Object("simple_box", State(pos=np.array([-10,0,0])), "urdf")
+    box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
+
+
+    objects = {"cylinder": cylinder_object,
+            "sphere": sphere_object,
+            "box": box_object}
+
+    occ_map.setup(objects)
+    occ_map.visualise(0, objects)
+    occ_map.visualise(1, objects)
+    occ_map.visualise(2, objects)
+    occ_map.visualise(3, objects)
+
+    assert False
