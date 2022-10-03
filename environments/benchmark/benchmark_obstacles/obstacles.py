@@ -50,48 +50,54 @@ dead_end = {
 
 # surrounded
 surrounded = {
-        "box1": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox1": BoxObstacle(name="simpleBox1", content_dict={
             "movable": True,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [253, 1, 0],
             "position": [-2, 0, 0.6],
             "geometry": {"length": 1.2, "width": 1.2, "height": 1.2},
             }),
-        "box2": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox2": BoxObstacle(name="simlpeBox2", content_dict={
             "movable": False,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [160, 214, 54],
             "position": [2, 0, 0.6],
             "geometry": {"length": 1.2, "width": 1.2, "height": 1.2},
             }),
-        "box3": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox3": BoxObstacle(name="simlpeBox3", content_dict={
             "movable": False,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [238, 222, 4],
             "position": [1, math.sqrt(3), 0.6],
             "geometry": {"length": 1.2, "width": 1.2, "height": 1.2},
             }),
-        "box4": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox4": BoxObstacle(name="simlpeBox4", content_dict={
             "movable": False,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [247, 105, 21],
             "position": [-1, math.sqrt(3), 0.6],
             "geometry": {"length": 1.2, "width": 1.2, "height": 1.2},
             }),
-        "box5": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox5": BoxObstacle(name="simlpeBox5", content_dict={
             "movable": False,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [47, 162, 54],
             "position": [1, -math.sqrt(3), 0.6],
             "geometry": {"length": 1.2, "width": 1.2, "height": 1.2},
             }),
-        "box6": BoxObstacle(name="simpeBox", content_dict={
+        "simpleBox6": BoxObstacle(name="simlpeBox6", content_dict={
             "movable": False,
+            "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,
             "color": [51, 62, 212],

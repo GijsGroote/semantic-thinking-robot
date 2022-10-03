@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 from robot_brain.planning.graph_based.occupancy_map import OccupancyMap
 import math
 import plotly.express as px
@@ -7,6 +8,8 @@ import plotly.graph_objects as go
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle, do_intersect
 from robot_brain.planning.object import Object
 
+
+from scipy.spatial.transform import Rotation
 
 class RectangularRobotOccupancyMap(OccupancyMap):
     """ Occupancy map represents the environment in obstacle space
@@ -60,7 +63,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
     def setup_object(self, obj: Object, robot_orientation: float, i_robot_orientation: int, val: int):
         """ Set the object overlapping with grid cells to a integer value. """ 
-
+        
         match obj.obstacle.type():
             case "cylinder"| "sphere":
                 self.setup_circular_object(obj, robot_orientation, i_robot_orientation, val)
@@ -129,7 +132,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
     def setup_rectangular_object(self, obj: object, robot_orientation: float, i_robot_orientation: int, val: int):
         """ set the rectangular object overlapping with grid cells (representing the robot) to a integer value. """ 
-        
+
         cos_rl = math.cos(robot_orientation)*self.robot_y_length/2
         sin_rl = math.sin(robot_orientation)*self.robot_y_length/2
         cos_rw = math.cos(robot_orientation)*self.robot_x_length/2
@@ -259,8 +262,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         if abs(y_position) > self.grid_y_length/2:
             raise IndexError(f"y_position: {y_position} is larger than the grid"\
                     f" [{-self.grid_y_length/2}, {self.grid_y_length/2}]")
-        # print(f" converting x position {x_position}") 
-        # print(f"rounding {(x_position + self.grid_x_length/2)/self.cell_size} to the number {int((x_position + self.grid_x_length/2)/self.cell_size)}")
+
         x_idx = int((x_position + self.grid_x_length/2)/self.cell_size)
         y_idx = int((y_position + self.grid_y_length/2)/self.cell_size)
         
@@ -297,14 +299,13 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
         return self.grid_map[y_idx, x_idx, i_orientation]
 
-    def visualise(self, i_orientation):
+    def visualise(self, i_orientation=0, save=False):
         """ Display the occupancy map for a specific orientation of the robot. """
 
         fig = px.imshow(self.grid_map[:,:,i_orientation],
                 x=list(np.arange((self.cell_size-self.grid_y_length)/2, (self.cell_size+self.grid_y_length)/2, self.cell_size)),
                 y=list(np.arange((self.cell_size-self.grid_x_length)/2, (self.cell_size+self.grid_x_length)/2, self.cell_size)),
                 labels={"x": "y-axis", "y": "x-axis"},
-                title=f"Occupancy Map for Rectangular Robot at orientation {2*i_orientation/self.n_orientations} pi in [0,2) pi",
                 )
 
         # add the objects over the gridmap
@@ -360,8 +361,15 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 paper_bgcolor= "rgb(230, 230, 255)",
                 plot_bgcolor= "rgb(230, 230, 255)",
                 coloraxis_showscale= False, 
+                autosize = True,
                 showlegend= False)
-        fig.show()
+
+        if save:
+            with open("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/occupancy_map.pickle", "wb") as f:
+                pickle.dump(fig, f)
+        else:
+            fig.show()
+
 
     @property
     def grid_map(self):

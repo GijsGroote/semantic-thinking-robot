@@ -70,7 +70,7 @@ class State:
                 raise Exception("velocity has incorrect dimensions")
         except(AttributeError, TypeError, IndexError) as exc:
             raise exc
-            
+
     @property
     def acc(self):
         return self._acc
@@ -100,7 +100,8 @@ class State:
             elif value.shape[0] == 3:
                 self._ang_p = value
             elif value.shape[0] == 4:
-                self._ang_p = R.from_quat(value)
+                rot = R.from_quat(value)
+                self._ang_p = rot.as_euler('xyz', degrees=False)
             else:
                 raise Exception("angular position has incorrect dimensions")
         except(AttributeError, TypeError, IndexError) as exc:

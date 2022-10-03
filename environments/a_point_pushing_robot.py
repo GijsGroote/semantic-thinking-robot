@@ -59,6 +59,8 @@ def main(conn=None):
         "obstacles": obstacles
     }, ob)
 
+    brain.update(ob)
+
     action =default_action
 
     for i in range(n_steps):
@@ -78,7 +80,7 @@ def main(conn=None):
 
 
         ob, reward, done, info = env.step(action)
-        print(ob["joint_state"]["position"])
+        # print(ob["joint_state"]["position"])
 
         brain.update(ob)
 

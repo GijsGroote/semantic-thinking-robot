@@ -15,7 +15,7 @@ class Dashboard:
         # todo: other graphs
         self.app = app
 
-        self.loading_html = '''
+        self.loading_html = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -31,7 +31,7 @@ class Dashboard:
             body {
                 display: block;
                 margin: 0px;
-                background-color: ''' + FIG_BG_COLOR + ''';
+                background-color: """ + FIG_BG_COLOR + """;
                 height: 450px;
             }
         
@@ -47,7 +47,7 @@ class Dashboard:
                 height: 50px;
                 animation: spin 2s linear infinite;
                 margin: auto;
-                background-color: ''' + FIG_BG_COLOR+ ''';
+                background-color: """ + FIG_BG_COLOR+ """;
         
             }
         
@@ -62,7 +62,7 @@ class Dashboard:
         </style>
         </body>
         </html>
-        '''
+        """
 
         # THIS LOADING IFRAME COULD BE USEFULL
         # html.Iframe(
@@ -72,29 +72,29 @@ class Dashboard:
 
         self.app.layout = html.Div(children=[
             dcc.Interval(
-                id='interval-input',
+                id="interval-input",
                 interval=1 * 1000,
                 n_intervals=0
             ),
             html.Div([
                 html.Div([
-                    html.H4('Hypothesis Graph'),
+                    html.H4("Hypothesis Graph"),
                     html.Iframe(
                         id="hGraph",
                         srcDoc=self.loading_html,
                         className="graph"
                     ),
                     dcc.Interval(
-                        id='hgraph-interval-component',
+                        id="hgraph-interval-component",
                         interval=1 * 1000,
                         n_intervals=0
                     )
                 ], className="item"),
                 html.Div([
-                    html.H4('Controller Live Feed'),
-                    dcc.Graph(id='live-update-controller-graph', animate=True),
+                    html.H4("Controller Live Feed"),
+                    dcc.Graph(id="live-update-controller-graph", animate=True),
                     dcc.Interval(
-                        id='controller-interval-component',
+                        id="controller-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
                     )
@@ -107,20 +107,36 @@ class Dashboard:
                         className="graph"
                     ),
                     dcc.Interval(
-                        id='kgraph-interval-component',
+                        id="kgraph-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
                     )
                 ], className="item"),
                 html.Div([
-                    html.H4('extra plot space'),
-                    dcc.Graph(figure=no_data_found_dict),
+                    html.H4("Occupancy Graph"),
+                    html.Iframe(
+                        id="occupancy_map",
+                        srcDoc=self.loading_html,
+                        className="graph"
+                    ),
+                    dcc.Interval(
+                        id="occupancy-interval-component",
+                        interval=1 * 1000,  # in milliseconds
+                        n_intervals=0
+                        )
+                    ], className="item"),
+                    html.Div([
+                    html.H4("Test the Occupancy graph"),
+                    dcc.Graph(id="live-update-occupancy-map" , responsive=True),
+                    dcc.Interval(
+                        id="occupancy-map-interval-component",
+                        interval=1 * 1000,  # in milliseconds
+                        n_intervals=0
+                    )
                 ], className="item"),
-
             ], className="container")
         ])
         register_callbacks(self.app)
-
 
 def start_dash_server():
     # change working directory
@@ -141,6 +157,6 @@ def start_dash_server():
             threaded=False
         )
 
-    # Run on a separate process so that it doesn't block
+    # Run on a separate process so that it doesn"t block
     app.server_process = multiprocessing.Process(target=run)
     app.server_process.start()

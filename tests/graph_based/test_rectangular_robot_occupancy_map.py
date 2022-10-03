@@ -207,7 +207,7 @@ def test_position_to_cell_or_grid_edge():
 #
 #     occ_map.setup(objects)
 #     print(occ_map.grid_map[:,:,0])
-#     occ_map.visualise(0, objects)
+#     occ_map.visualise(nn0, objects)
 #     occ_map.visualise(1, objects)
 #     occ_map.visualise(2, objects)
 #     occ_map.visualise(3, objects)

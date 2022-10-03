@@ -13,12 +13,14 @@ from robot_brain.graph.conf_set_node import ConfSetNode
 from robot_brain.graph.object_set_node import ObjectSetNode
 from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.graph.edge import Edge
+
+from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
+
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
-
 
 class RBrain:
     """
@@ -37,6 +39,7 @@ class RBrain:
         self.default_action = None
         self.dt = None
         self.target_state = None # should become goal
+        self.occupancy_map = None
         self.hgraph = None
         self.kgraph = None
         self.time_it = 0 # can be delted
@@ -46,6 +49,7 @@ class RBrain:
 
     def setup(self, stat_world_info, ob):
         # create robot
+
         robot = Object(
                 "robot",
                 State(pos=ob["joint_state"]["position"],
@@ -54,7 +58,6 @@ class RBrain:
 
         # TODO: this state above in incorrect for the x and xdot
         self.robot = robot
-        self.objects["robot"] = robot
 
         # Create objects
         if "obstacleSensor" in ob.keys():
@@ -79,7 +82,6 @@ class RBrain:
         self.dt = stat_world_info["dt"]
         self.target_state = stat_world_info["target_state"]
 
-        
 
     def update(self, ob):
         """
@@ -108,13 +110,6 @@ class RBrain:
                     self.objects[key].state.ang_p = val["pose"]["orientation"]
                     self.objects[key].state.ang_v = val["twist"]["angular"]
 
-        # this can be deleted
-        self.time_it = self.time_it + 1
-        if self.time_it == 150:
-            self.hgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
-            self.kgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
-
-
     def respond(self):
         """
         Respond to request with the latest action.
@@ -136,6 +131,11 @@ class RBrain:
     def calculate_plan(self):
         # set brain state to thinking
         if self.hgraph is None:
+
+            # occupancy graph
+            self.occ_graph = RectangularRobotOccupancyMap(0.1, 10, 26, self.objects, 0.8, 0.5, 1)
+            self.occ_graph.setup()
+            self.occ_graph.visualise(save=True)
             # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
             hgraph = HGraph()
 
@@ -155,7 +155,7 @@ class RBrain:
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
 
-            self.hgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
+            self.hgraph.visualise(path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
 
             kgraph = KGraph()
 
@@ -178,7 +178,7 @@ class RBrain:
 
             self.kgraph = kgraph
 
-            self.kgraph.visualise("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
+            self.kgraph.visualise(path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
         self.controller = Mpc()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()

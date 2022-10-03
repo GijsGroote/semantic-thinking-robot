@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from numpy import dstack
 from robot_brain.global_variables import FIG_BG_COLOR
+import plotly.express as px
+
 
 pd.options.plotting.backend = "plotly"
 
@@ -67,10 +69,6 @@ def create_no_data_found_html(app):
             </body>
             </html>
             '''
-
-def create_graph_plot(graph, path):
-    # honestly this could also be done from the RBrain.py every so what seconds...
-    graph.visualise(path)
 
 def create_mpc_plot(df):
 
@@ -160,5 +158,15 @@ def create_mpc_plot(df):
     fig.update_layout({"title": {"text": "MPC controller"}})
 
     fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
+
+    return fig
+
+
+def create_occupancy_map():
+
+    img_rgb = np.array([[[255, 0, 0], [0, 255, 0], [0, 0, 255]],
+                        [[0, 255, 0], [0, 0, 255], [255, 0, 0]]
+                       ], dtype=np.uint8)
+    fig = px.imshow(img_rgb)
 
     return fig

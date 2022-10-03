@@ -14,7 +14,7 @@ from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-USER_INPUT_MODE = True
+USER_INPUT_MODE = False
 
 def main(conn=None):
     env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
@@ -23,24 +23,27 @@ def main(conn=None):
 
     ob = env.reset()
 
-    env.add_obstacle(surrounded["box1"])
-    env.add_obstacle(surrounded["box2"])
-    env.add_obstacle(surrounded["box3"])
-    env.add_obstacle(surrounded["box4"])
-    env.add_obstacle(surrounded["box5"])
-    env.add_obstacle(surrounded["box6"])
+    env.add_obstacle(surrounded["simpleBox1"])
+    env.add_obstacle(surrounded["simpleBox2"])
+    env.add_obstacle(surrounded["simpleBox3"])
+    env.add_obstacle(surrounded["simpleBox4"])
+    env.add_obstacle(surrounded["simpleBox5"])
+    env.add_obstacle(surrounded["simpleBox6"])
 
 
     brain = None
     if not USER_INPUT_MODE:
         sensor = ObstacleSensor()
+        sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
         env.add_sensor(sensor)
+
+        ob, _, _, _ = env.step(action)
         target_state = State(pos=target_pos, ang_p=target_ang_p)
         brain = RBrain()
         brain.setup({
             "dt": DT,
             "target_state": target_state,
-            "obstacles": []
+            "obstacles": surrounded,
         }, ob)
 
     for _ in range(1000):
