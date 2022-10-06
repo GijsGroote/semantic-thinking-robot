@@ -168,28 +168,11 @@ class RBrain:
             raise Exception("Unable to respond")
 
     def plot_occupancy_graph(self, save=True):
-
         """plot the occupancy graph for the robot"""
-        
-        start_comp = timeit.default_timer()
-
-        self.occ_graph = RectangularRobotOccupancyMap(
-            0.1, 9, 8, self.objects, 0.8, 0.5, 10
-        )
-
+        self.occ_graph = RectangularRobotOccupancyMap(1, 9, 8, self.objects, 0.8, 0.5, 1)
         self.occ_graph.setup()
-        stop_comp = timeit.default_timer()
+        self.occ_graph.visualise(save=save)
 
-        start = timeit.default_timer()
-
-        print(f"time it took for computation: {stop_comp-start_comp}")
-
-        start= timeit.default_timer()
-
-        self.occ_graph.visualise()
-        stop = timeit.default_timer()
-
-        print(f"time it took for plotting and storing: {stop-start}")
     def calculate_plan(self):
         # set brain state to thinking
         if self.hgraph is None:

@@ -30,7 +30,7 @@ blockade_obstacles = {
                 "movable": False,
                 "type": "box",
                 "orientation": [0, 0, math.pi/2],
-                "color": [1, 0, 0],
+                "color": [245, 181, 27, 1],
                 "position": [3.9, 0, 0.2],
                 "geometry": {"length": 1.8, "width": 0.2, "height": 0.4},
             }),
