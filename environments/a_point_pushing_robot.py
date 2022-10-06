@@ -60,16 +60,18 @@ def main(conn=None):
     }, ob)
 
     brain.update(ob)
-
     action =default_action
 
     for i in range(n_steps):
         if i == 500:
             brain.controller.set_target_state(State(pos=np.array([2,3,0])))
+            brain.plot_occupancy_graph()
         if i == 700:
             brain.controller.set_target_state(State(pos=np.array([-2,3,2])))
+            brain.plot_occupancy_graph()
         if i == 900:
             brain.controller.set_target_state(State(pos=np.array([2,-3,1])))
+            brain.plot_occupancy_graph()
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
@@ -81,6 +83,10 @@ def main(conn=None):
 
         ob, reward, done, info = env.step(action)
         # print(ob["joint_state"]["position"])
+        # if i == 1000 or i == 400 or i == 800 or i == 1200:
+        #     print(i)
+        #  3print(ob["obstacleSensor"]["simple_box"]["pose"]["orientation"])
+
 
         brain.update(ob)
 

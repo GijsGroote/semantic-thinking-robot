@@ -113,21 +113,15 @@ class Dashboard:
                     )
                 ], className="item"),
                 html.Div([
-                    html.H4("Occupancy Graph"),
+                    html.H4("open space "),
                     html.Iframe(
-                        id="occupancy_map",
                         srcDoc=self.loading_html,
                         className="graph"
                     ),
-                    dcc.Interval(
-                        id="occupancy-interval-component",
-                        interval=1 * 1000,  # in milliseconds
-                        n_intervals=0
-                        )
-                    ], className="item"),
-                    html.Div([
-                    html.H4("Test the Occupancy graph"),
-                    dcc.Graph(id="live-update-occupancy-map" , responsive=True),
+                ], className="item"),
+                html.Div([
+                    html.H4("Occupancy Map"),
+                    dcc.Graph(id="live-update-occupancy-map"),
                     dcc.Interval(
                         id="occupancy-map-interval-component",
                         interval=1 * 1000,  # in milliseconds

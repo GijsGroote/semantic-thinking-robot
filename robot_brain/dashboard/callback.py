@@ -85,26 +85,6 @@ def register_callbacks(app):
             if df.type[0] == "mpc":
                 return create_mpc_plot(df)
 
-    @app.callback(
-        Output("occupancy_map", "srcDoc"), Input("controller-interval-component", "n_intervals"))
-    def update_occupancy_map(n):
-
-        path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/occupancy_map.html"
-
-        # read in controller data if it exists
-        if not Path(path).is_file():
-            return create_no_data_found_html(app)
-        else:
-            # only update up-to-date files, exception for n = 0
-            if n > 0:
-                check_file_is_up_to_date(path)
-
-            # open text file in read mode
-            with open(path, "r") as file:
-                data = file.read()
-
-            return data
-
     @app.callback(Output("live-update-occupancy-map", "figure"),
                        Input("occupancy-map-interval-component", "n_intervals"))
 
@@ -118,8 +98,34 @@ def register_callbacks(app):
             if n > 0:
                 check_file_is_up_to_date("../robot_brain/dashboard/data/occupancy_map.pickle")
 
-            file = open("../robot_brain/dashboard/data/occupancy_map.pickle", "rb")
+            with open("../robot_brain/dashboard/data/occupancy_map.pickle", "rb") as file:
 
-            return pickle.load(file)
+                fig = pickle.load(file)
+                fig.update_layout(
+                        paper_bgcolor=FIG_BG_COLOR,
+                        plot_bgcolor=FIG_BG_COLOR)
+                        
+
+                return fig
+
+                # return pickle.load(file)
+        #
+        #         # read in controller data if it exists
+        # if not Path("../robot_brain/dashboard/data/mpc_data.feather").is_file():
+        #     return no_data_found_dict
+        #
+        # else:
+        #     # only update up-to-date files, exception for n = 0
+        #     if n > 0:
+        #         check_file_is_up_to_date("../robot_brain/dashboard/data/mpc_data.feather")
+        #
+        #     df = feather.read_feather("../robot_brain/dashboard/data/mpc_data.feather")
+        #
+        #     # todo: this can be done better, send metadata with the dataframe
+        #
+        #     if df.type[0] == "mpc":
+        #         return create_mpc_plot(df)
+
+
 
 

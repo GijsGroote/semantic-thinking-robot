@@ -13,14 +13,17 @@ from robot_brain.graph.conf_set_node import ConfSetNode
 from robot_brain.graph.object_set_node import ObjectSetNode
 from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.graph.edge import Edge
-
-from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
+import timeit
+from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import (
+    RectangularRobotOccupancyMap,
+)
 
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
+
 
 class RBrain:
     """
@@ -38,50 +41,86 @@ class RBrain:
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
-        self.target_state = None # should become goal
+        self.target_state = None  # should become goal
         self.occupancy_map = None
         self.hgraph = None
         self.kgraph = None
-        self.time_it = 0 # can be delted
+        self.time_it = 0  # can be delted
+        self.obstacles_in_env = None
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
             start_dash_server()
 
     def setup(self, stat_world_info, ob):
+
         # create robot
+        # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
+        if "robot_type" in stat_world_info:
+            if (
+                stat_world_info["robot_type"] == "boxer_robot"
+                or stat_world_info["robot_type"] == "point_robot"
+            ):
+                self.robot = Object(
+                    stat_world_info["robot_type"],
+                    State(
+                        pos=ob["joint_state"]["position"],
+                        vel=ob["joint_state"]["velocity"],
+                    ),
+                    "urdf",
+                )
 
-        robot = Object(
-                "robot",
-                State(pos=ob["joint_state"]["position"],
-                    vel=ob["joint_state"]["velocity"]),
-                "urdf")
+            else:
+                raise ValueError(
+                    "only robot type 'boxer_robot' and 'point_robot' are allowed"
+                )
+        else:
+            warnings.warn("robot type is not set")
 
-        # TODO: this state above in incorrect for the x and xdot
-        self.robot = robot
+        if "dt" in stat_world_info:
+            self.dt = stat_world_info["dt"]
+        else:
+            warnings.warn("No DT found in static world info")
 
-        # Create objects
-        if "obstacleSensor" in ob.keys():
+        if "obstacles_in_env" in stat_world_info:
+            self.obstacles_in_env = stat_world_info["obstacles_in_env"]
+        else:
+            raise AttributeError(
+                "there was no indication if this environment has obstacles"
+            )
+
+        if self.obstacles_in_env:
+            assert (
+                "obstacleSensor" in ob.keys()
+            ), "no obstacle sensor found in initial observation"
+            assert (
+                "obstacles" in stat_world_info
+            ), "no obstacle dict found in static world info"
+
             for key, val in ob["obstacleSensor"].items():
-                s_temp = State(pos=val["pose"]["position"],
-                      vel=val["twist"]["linear"],
-                      ang_p=val["pose"]["orientation"],
-                      ang_v=val["twist"]["angular"])
+
+                s_temp = State(
+                    pos=val["pose"]["position"],
+                    vel=val["twist"]["linear"],
+                    ang_p=val["pose"]["orientation"],
+                    ang_v=val["twist"]["angular"],
+                )
                 self.objects[key] = Object(key, s_temp, "urdf")
 
-        # add static object info to the list of objects
-        if "obstacles" in stat_world_info.keys():
-            for (key, obst) in stat_world_info["obstacles"].items():
                 try:
-                    self.objects[obst.name()].obstacle = obst
-                except KeyError:
-                    raise KeyError("first add obstacles, then sensors, did you set_bullet_id_to_obst?")
+                    self.objects[key].obstacle = stat_world_info["obstacles"][key]
+                except KeyError as exc:
+                    raise KeyError(
+                        f"the obstacle {key} was returned from the obstacle sensor but not from the given obstacles"
+                    ) from exc
 
         if "defaultAction" in stat_world_info.keys():
             self.default_action = stat_world_info["defaultAction"]
 
-        self.dt = stat_world_info["dt"]
-        self.target_state = stat_world_info["target_state"]
-
+        # TODO: this should be a task, set of objects and target states
+        if "target_state" in stat_world_info:
+            self.target_state = stat_world_info["target_state"]
+        else:
+            warnings.warn("no target state set")
 
     def update(self, ob):
         """
@@ -104,7 +143,7 @@ class RBrain:
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
                 if key in self.objects:
-                # if key in self.objects.keys():
+                    # if key in self.objects.keys():
                     self.objects[key].state.pos = val["pose"]["position"]
                     self.objects[key].state.vel = val["twist"]["linear"]
                     self.objects[key].state.ang_p = val["pose"]["orientation"]
@@ -128,12 +167,37 @@ class RBrain:
         else:
             raise Exception("Unable to respond")
 
+    def plot_occupancy_graph(self, save=True):
+
+        """plot the occupancy graph for the robot"""
+        
+        start_comp = timeit.default_timer()
+
+        self.occ_graph = RectangularRobotOccupancyMap(
+            0.1, 9, 8, self.objects, 0.8, 0.5, 10
+        )
+
+        self.occ_graph.setup()
+        stop_comp = timeit.default_timer()
+
+        start = timeit.default_timer()
+
+        print(f"time it took for computation: {stop_comp-start_comp}")
+
+        start= timeit.default_timer()
+
+        self.occ_graph.visualise()
+        stop = timeit.default_timer()
+
+        print(f"time it took for plotting and storing: {stop-start}")
     def calculate_plan(self):
         # set brain state to thinking
         if self.hgraph is None:
 
             # occupancy graph
-            self.occ_graph = RectangularRobotOccupancyMap(0.1, 10, 26, self.objects, 0.8, 0.5, 1)
+            self.occ_graph = RectangularRobotOccupancyMap(
+                0.1, 10, 10, self.objects, 0.8, 0.5, 1
+            )
             self.occ_graph.setup()
             self.occ_graph.visualise(save=True)
             # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
@@ -155,7 +219,9 @@ class RBrain:
             self.hgraph = hgraph
             # this hgraph is amazing, save it as html
 
-            self.hgraph.visualise(path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html")
+            self.hgraph.visualise(
+                path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html"
+            )
 
             kgraph = KGraph()
 
@@ -178,15 +244,18 @@ class RBrain:
 
             self.kgraph = kgraph
 
-            self.kgraph.visualise(path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html")
+            self.kgraph.visualise(
+                path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html"
+            )
         self.controller = Mpc()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
         def dyn_model(x, u):
             dx_next = vertcat(
-                    x[0] + 0.05*np.cos(x[2]) * u[0],
-                    x[1] + 0.05*np.sin(x[2]) * u[0],
-                    x[2] + 0.05 * u[1])
+                x[0] + 0.05 * np.cos(x[2]) * u[0],
+                x[1] + 0.05 * np.sin(x[2]) * u[0],
+                x[2] + 0.05 * u[1],
+            )
             return dx_next
 
         self.controller.setup(dyn_model, self.robot.state, self.target_state)

@@ -11,9 +11,6 @@ from robot_brain.global_variables import DT
 
 from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 
-target_pos = np.array([0, 0, 0])
-target_ang_p = np.array([0, 0, 0])
-
 USER_INPUT_MODE = False
 
 def main(conn=None):
@@ -33,20 +30,35 @@ def main(conn=None):
 
     brain = None
     if not USER_INPUT_MODE:
+
         sensor = ObstacleSensor()
         sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
         env.add_sensor(sensor)
 
-        ob, _, _, _ = env.step(action)
-        target_state = State(pos=target_pos, ang_p=target_ang_p)
+        ob, reward, done, info = env.step(np.zeros(env.n()))
+
         brain = RBrain()
         brain.setup({
             "dt": DT,
-            "target_state": target_state,
+            "robot_type": "boxer_robot",
+            "target_state": State(),
+            "obstacles_in_env": True,
             "obstacles": surrounded,
         }, ob)
 
-    for _ in range(1000):
+    for i in range(1000):
+
+
+        brain.plot_occupancy_graph()
+        if i == 300:
+            brain.controller.set_target_state(State(pos=np.array([2,3,0])))
+            brain.plot_occupancy_graph(save=True)
+        if i == 500:
+            brain.controller.set_target_state(State(pos=np.array([-8,1,0])))
+            brain.plot_occupancy_graph()
+        if i == 900:
+            brain.plot_occupancy_graph(save=True)
+
 
         if USER_INPUT_MODE:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})

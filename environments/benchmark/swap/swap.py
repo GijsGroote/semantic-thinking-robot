@@ -8,35 +8,36 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.rbrain import State
 
-from environments.benchmark.benchmark_obstacles.obstacles import duck_small, box_small
-
+from environments.benchmark.benchmark_obstacles.obstacles import swap
+from robot_brain.global_variables import DT
 
 target_pos = np.array([0, 0, 0])
 target_ang_p = np.array([0, 0, 0])
 
-user_input_mode = True
+user_input_mode = False
 
 def main(conn=None):
-    dt = 0.05
-    env = gym.make("boxer-robot-vel-v0", dt=dt, render=True)
+    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
 
     ob = env.reset()
     
-    env.add_obstacle(duck_small)
-    env.add_obstacle(box_small)
+    env.add_obstacle(swap["small_duck"])
+    env.add_obstacle(swap["small_box"])
 
     sensor = ObstacleSensor()
+    sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
     env.add_sensor(sensor)
-    ob, _, _, _ = env.step(np.array([0.0, 0.0]))
+    ob, _, _, _ = env.step(np.zeros(env.n()))
 
     brain = None
     if not user_input_mode:
-        targetState = State(pos=target_pos, ang_p=target_ang_p)
         brain = RBrain()
         brain.setup({
-            "dt": dt,
-            "targetState": targetState,
-            "obstacles": []
+            "dt": DT,
+            "robot_type": "boxer_robot",
+            "target_state": State(),
+            "obstacles_in_env": True,
+            "obstacles": swap,
         }, ob)
 
     for _ in range(1000):

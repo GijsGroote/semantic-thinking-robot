@@ -2,7 +2,8 @@ import numpy as np
 from robot_brain.planning.graph_based.occupancy_map import OccupancyMap
 import math
 import plotly.express as px
-import plotly.graph_objects as go
+import plotly.graph_objects as go 
+import warnings
 
 import pickle
 
@@ -53,18 +54,34 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
     def setup_object(self, obj: Object, val: int):
         """ Set the object overlapping with grid cells to a integer value. """ 
-        
+  
         match obj.obstacle.type():
-            case "cylinder"| "sphere":
+            case "cylinder":
+                # "objects" x-axis is parallel to the global z-axis (normal situation)
+                if not (math.isclose(math.sin(obj.state.ang_p[0]), 0, abs_tol=0.01) and 
+                        math.isclose(math.sin(obj.state.ang_p[1]), 0, abs_tol=0.01)):
+                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up/down is not up)")
+
+                self.setup_circular_object(obj, val)
+
+            case "sphere":
                 self.setup_circular_object(obj, val)
 
             case "box":
+                # "objects" x-axis is parallel to the global z-axis (normal situation)
+                if not ((math.isclose(obj.state.ang_p[0], 0, abs_tol=0.01) or 
+                        math.isclose(obj.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
+                        math.isclose(obj.state.ang_p[1], 0, abs_tol=0.01) or
+                        math.isclose(obj.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
+                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up is not up)")
+
                 self.setup_rectangular_object(obj, val)
 
             case _:
                 raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
 
-      
+       
+       
     def setup_circular_object(self, obj: Object, val: int):
         """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
         
@@ -141,69 +158,6 @@ class CircleRobotOccupancyMap(OccupancyMap):
                 elif minimal_distance_point_to_line(robot_xy, obst_d, obst_a) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
                     continue
-
-    def cell_idx_to_position(self, x_idx: int, y_idx: int) -> (float, float):
-        """ returns the center position that the cell represents. """  
-
-        if (x_idx >= self.grid_x_length/self.cell_size or
-                x_idx < 0):
-            raise IndexError(f"x_idx: {x_idx} is larger than the grid"\
-                    f" [0, {int(self.grid_x_length/self.cell_size-1)}]")
-        if (abs(y_idx) >= self.grid_y_length/self.cell_size or
-                y_idx < 0):
-            raise IndexError(f"y_idx: {y_idx} is larger than the grid"\
-                    f" [0, {int(self.grid_y_length/self.cell_size-1)}]")
-        
-        return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
-                self.cell_size*(0.5+y_idx) - self.grid_y_length/2)
-
-    def position_to_cell_idx_or_grid_edge(self, x_position: float, y_position: float) -> (int, int):
-        """ returns the index of the cell a position is in, 
-        if the position is outside the boundary of the grid map the edges 
-        will be returned.
-        """
-        try: 
-            x_idx = self.position_to_cell_idx(x_position, 0)[0]
-        except IndexError as e:
-            if x_position > self.grid_x_length/2:
-                x_idx = int(self.grid_x_length/self.cell_size-1)
-            elif x_position < -self.grid_x_length/2:
-                x_idx = 0
-            else:
-                raise IndexError(f"x_position: {x_position} could not be converted to cell index.")
-
-        try: 
-            y_idx = self.position_to_cell_idx(0, y_position)[1]
-        except IndexError as e:
-            if y_position > self.grid_y_length/2:
-                y_idx = int(self.grid_y_length/self.cell_size-1)
-            elif y_position < -self.grid_y_length/2:
-                y_idx = 0
-            else:
-                raise IndexError(f"y_position: {y_position} could not be converted to cell index.")
-
-        return (x_idx, y_idx)
-
-    def position_to_cell_idx(self, x_position: float, y_position: float) -> (int, int):
-        """ returns the index of the cell a position is in. """  
-        if abs(x_position) > self.grid_x_length/2:
-            raise IndexError(f"x_position: {x_position} is larger than the grid"\
-                    f" [{-self.grid_x_length/2}, {self.grid_x_length/2}]")
-
-        if abs(y_position) > self.grid_y_length/2:
-            raise IndexError(f"y_position: {y_position} is larger than the grid"\
-                    f" [{-self.grid_y_length/2}, {self.grid_y_length/2}]")
-
-        x_idx = int((x_position + self.grid_x_length/2)/self.cell_size)
-        y_idx = int((y_position + self.grid_y_length/2)/self.cell_size)
-        
-        # if the cell index is exactly on the 'south' or 'east' border, decrement index
-        if x_idx == int(self.grid_x_length/self.cell_size):
-            x_idx -= 1
-        if y_idx == int(self.grid_y_length/self.cell_size):
-            y_idx -= 1
-
-        return (x_idx, y_idx)
 
     def occupancy(self, x_idx: int, y_idx: int, *args):
         if (x_idx > self.grid_map.shape[0] or

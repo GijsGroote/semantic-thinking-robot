@@ -1,4 +1,5 @@
 import warnings
+import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -37,6 +38,15 @@ class State:
     def get_xy_position(self):
         return np.array([self.pos[0], self.pos[1]])
 
+
+    def lies_on_a_side(self) -> bool:
+        """ indicates if one (x,y,z) points perpendicular to the ground plane. """
+
+        assert self.ang_p.shape == (3,), "angular position should be of shape (3,)."
+
+        return ((math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[1]), 0, abs_tol=0.01)) or
+                (math.isclose(math.cos(self.ang_p[0]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[2]), 0, abs_tol=0.01)) or
+                (math.isclose(math.cos(self.ang_p[1]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01)))
     @property
     def pos(self):
         return self._pos

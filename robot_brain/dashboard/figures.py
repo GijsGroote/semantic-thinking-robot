@@ -135,7 +135,7 @@ def create_mpc_plot(df):
         y=df["pred_error"],
         name="prediction error",
         line=dict(color='red'),
-    ), row=2, col=1)       
+    ), row=2, col=1)
 
     # scale the axis
     fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
@@ -158,15 +158,5 @@ def create_mpc_plot(df):
     fig.update_layout({"title": {"text": "MPC controller"}})
 
     fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
-
-    return fig
-
-
-def create_occupancy_map():
-
-    img_rgb = np.array([[[255, 0, 0], [0, 255, 0], [0, 0, 255]],
-                        [[0, 255, 0], [0, 0, 255], [255, 0, 0]]
-                       ], dtype=np.uint8)
-    fig = px.imshow(img_rgb)
 
     return fig
