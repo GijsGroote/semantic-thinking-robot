@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+import numpy as np
+import math
+import warnings
+
+from robot_brain.planning.object import Object
 
 def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 
@@ -6,7 +11,6 @@ def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
     scaled_y = int(y * scaling_factor)
 
     return (scaled_x % scaled_y) == 0
-
 
 class OccupancyMap(ABC):
     """ Occupancy map represents the environment in obstacle space
@@ -20,7 +24,9 @@ class OccupancyMap(ABC):
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
-            objects: dict
+            objects: dict,
+            robot_position: np.ndarray,
+            n_orientations: int
             ):
 
         # assert the grid can be descritized in square cells
@@ -33,9 +39,76 @@ class OccupancyMap(ABC):
         self._grid_y_length = grid_y_length
         self._objects = objects
 
+        assert robot_position.shape == (2,) or robot_position.shape == (3,), \
+                f"robot position should be of shape (2,), it's: {robot_position.shape}"
+        self._robot_position = robot_position
+
+        self._n_orientations = n_orientations
+
+    def setup(self):
+        """
+        Setup the gridmap for a number of obstacles.
+
+        indices in the grid_map indicat the following:
+            0 -> free space
+            1 -> obstacle space
+            2 -> movable object space
+            3 -> unknown object space
+        """
+        for i_r_orien in range(self.n_orientations):
+            
+            for obj in self.objects.values():
+                match obj.type:
+                    case "unmovable":
+                        self.setup_object(obj, 1, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+
+                    case "movable":
+                        self.setup_object(obj, 2, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+
+                    case "unknown":
+                        self.setup_object(obj, 3, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+
+                    case _:
+                        raise TypeError(f"unknown type: {obj.type}")
+  
+    def setup_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
+        """ Set the object overlapping with grid cells to a integer value. """ 
+
+        match obj.obstacle.type():
+            case "cylinder":
+                # "objects" x-axis is parallel to the global z-axis (normal situation)
+                if not (math.isclose(math.sin(obj.state.ang_p[0]), 0, abs_tol=0.01) and 
+                        math.isclose(math.sin(obj.state.ang_p[1]), 0, abs_tol=0.01)):
+                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up/down is not up)")
+
+                self.setup_circular_object(obj, val, r_orien, i_r_orien)
+
+            case "sphere":
+                self.setup_circular_object(obj, val, r_orien, i_r_orien)
+
+            case "box":
+                # "objects" x-axis is parallel to the global z-axis (normal situation)
+                if not ((math.isclose(obj.state.ang_p[0], 0, abs_tol=0.01) or 
+                        math.isclose(obj.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
+                        math.isclose(obj.state.ang_p[1], 0, abs_tol=0.01) or
+                        math.isclose(obj.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
+                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up is not up)")
+
+                self.setup_rectangular_object(obj, val, r_orien, i_r_orien)
+
+            case "urdf":
+                warnings.warn(f"the urdf type is not yet implemented")
+
+            case _:
+                
+                raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
 
     @abstractmethod
-    def setup(self, obstacles):
+    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, i_r_orien: int):
+        pass
+
+    @abstractmethod
+    def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
         pass
 
     @abstractmethod
@@ -122,3 +195,11 @@ class OccupancyMap(ABC):
     @property
     def objects(self):
         return self._objects
+
+    @property
+    def robot_position(self):
+        return self._robot_position
+
+    @property
+    def n_orientations(self):
+        return self._n_orientations

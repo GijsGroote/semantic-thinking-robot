@@ -17,6 +17,9 @@ import timeit
 from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import (
     RectangularRobotOccupancyMap,
 )
+from robot_brain.planning.graph_based.circular_robot_occupancy_map import (
+    CircleRobotOccupancyMap,
+)
 
 pd.options.plotting.backend = "plotly"
 
@@ -52,14 +55,17 @@ class RBrain:
             start_dash_server()
 
     def setup(self, stat_world_info, ob):
-
         # create robot
-        # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
         if "robot_type" in stat_world_info:
             if (
                 stat_world_info["robot_type"] == "boxer_robot"
                 or stat_world_info["robot_type"] == "point_robot"
             ):
+
+                # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
+                # that way I could access the robot's dimensions more easily
+
+
                 self.robot = Object(
                     stat_world_info["robot_type"],
                     State(
@@ -68,7 +74,6 @@ class RBrain:
                     ),
                     "urdf",
                 )
-
             else:
                 raise ValueError(
                     "only robot type 'boxer_robot' and 'point_robot' are allowed"
@@ -169,7 +174,14 @@ class RBrain:
 
     def plot_occupancy_graph(self, save=True):
         """plot the occupancy graph for the robot"""
-        self.occ_graph = RectangularRobotOccupancyMap(1, 9, 8, self.objects, 0.8, 0.5, 1)
+
+        if self.robot.name == "point_robot":
+            self.occ_graph = CircleRobotOccupancyMap(1, 10, 12, self.objects, 1.1, self.robot.state.get_2d_pose())
+        elif self.robot.name == "boxer_robot":
+            self.occ_graph = RectangularRobotOccupancyMap(1, 10, 12, self.objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
+        else:
+            raise ValueError("unknown robot_type: {self.robot_type}")
+
         self.occ_graph.setup()
         self.occ_graph.visualise(save=save)
 
@@ -177,15 +189,7 @@ class RBrain:
         # set brain state to thinking
         if self.hgraph is None:
 
-            # occupancy graph
-            self.occ_graph = RectangularRobotOccupancyMap(
-                0.1, 10, 10, self.objects, 0.8, 0.5, 1
-            )
-            self.occ_graph.setup()
-            self.occ_graph.visualise(save=True)
-            # THIS CHUNK OF STUFF IS WHAT SHOULD GO IN HGRAPH
             hgraph = HGraph()
-
             # adding nodes
             hgraph.add_node(ConfSetNode(1, "P", []))
             hgraph.add_node(ConfSetNode(2, "Pi", []))
@@ -247,4 +251,5 @@ class RBrain:
 
         return self.controller.respond(self.robot.state)
 
+        
     # TODO: all setters and getters should be sanitized properly, and test!

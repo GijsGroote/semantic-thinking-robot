@@ -369,7 +369,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "imageio"
-version = "2.22.0"
+version = "2.22.1"
 description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
 category = "main"
 optional = false
@@ -1164,7 +1164,7 @@ test = ["pre-commit", "pytest"]
 
 [[package]]
 name = "trimesh"
-version = "3.15.2"
+version = "3.15.3"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
 optional = false
@@ -1174,9 +1174,9 @@ python-versions = "*"
 numpy = "*"
 
 [package.extras]
-all = ["setuptools", "lxml", "scipy", "svg.path", "scikit-image", "xxhash", "jsonschema", "sympy", "networkx", "requests", "glooey", "xatlas", "pillow", "mapbox-earcut", "chardet", "python-fcl", "rtree", "pyglet", "colorlog", "msgpack", "meshio", "psutil", "pycollada", "shapely"]
-easy = ["xxhash", "requests", "setuptools", "pillow", "lxml", "mapbox-earcut", "chardet", "scipy", "rtree", "pyglet", "svg.path", "colorlog", "msgpack", "jsonschema", "sympy", "networkx", "pycollada", "shapely"]
-test = ["pytest-cov", "pyinstrument", "pytest", "coveralls", "ezdxf"]
+all = ["rtree", "sympy", "python-fcl", "setuptools", "chardet", "xxhash", "requests", "msgpack", "pillow", "scikit-image", "networkx", "svg.path", "psutil", "shapely", "glooey", "jsonschema", "meshio", "colorlog", "lxml", "pycollada", "pyglet", "mapbox-earcut", "xatlas", "scipy"]
+easy = ["rtree", "shapely", "mapbox-earcut", "sympy", "requests", "jsonschema", "setuptools", "pycollada", "colorlog", "chardet", "svg.path", "lxml", "xxhash", "msgpack", "pyglet", "pillow", "networkx", "scipy"]
+test = ["coveralls", "pytest", "pyinstrument", "pytest-cov", "ezdxf"]
 
 [[package]]
 name = "typing-extensions"
@@ -1555,8 +1555,8 @@ idna = [
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
 ]
 imageio = [
-    {file = "imageio-2.22.0-py3-none-any.whl", hash = "sha256:aff0e9b5faf4936728f982a1ab63797b1339847a4533c3e4c8343635149dfbfc"},
-    {file = "imageio-2.22.0.tar.gz", hash = "sha256:a332d127ec387b2d3dca967fd065a90f1c1a4ba2343570b03fe2cebb6ed064ea"},
+    {file = "imageio-2.22.1-py3-none-any.whl", hash = "sha256:a8e7be75ebc3920e8c9a7dcc8e47b54331125fc0932d050df4af9a6f5904d472"},
+    {file = "imageio-2.22.1.tar.gz", hash = "sha256:465ec35f919d538906d3023b61ccec766d8e7575fe55fcbd7669ece55afb97ca"},
 ]
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
@@ -2275,8 +2275,8 @@ traitlets = [
     {file = "traitlets-5.4.0.tar.gz", hash = "sha256:3f2c4e435e271592fe4390f1746ea56836e3a080f84e7833f0f801d9613fec39"},
 ]
 trimesh = [
-    {file = "trimesh-3.15.2-py3-none-any.whl", hash = "sha256:27e03e05fde129638ed02ba9351b6f6f6d3dc02db0da0ed690ad0e753c2e1aa4"},
-    {file = "trimesh-3.15.2.tar.gz", hash = "sha256:467a879aa176f6bd5553cb3ddb49b1404f347f690928726d326462d51d9c6803"},
+    {file = "trimesh-3.15.3-py3-none-any.whl", hash = "sha256:ee74d5a69b3195181dc1c8ba0bd8d360c113e82ed46907b3e9d45b054d55393a"},
+    {file = "trimesh-3.15.3.tar.gz", hash = "sha256:c2fa316574a53d61227f03f819d820e30b158c31a6e4dce16998c0519f3ce992"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},

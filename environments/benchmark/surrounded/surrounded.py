@@ -48,8 +48,8 @@ def main(conn=None):
 
     for i in range(1000):
 
-        # if i % 50 == 0: 
-            # brain.plot_occupancy_graph()
+        if i % 50 == 0: 
+            brain.plot_occupancy_graph()
         if i == 300:
             brain.controller.set_target_state(State(pos=np.array([2,3,0])))
             brain.plot_occupancy_graph(save=True)

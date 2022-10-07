@@ -1,14 +1,13 @@
 from multiprocessing import Process, Pipe
 import numpy as np
 import gym
-import urdfenvs.point_robot_urdf
-import urdfenvs.boxer_robot
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
+import urdfenvs.boxer_robot # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.planning.state import State
-from robot_brain.controller.mpc.mpc import Mpc
 from robot_brain.global_variables import DT
 
 
@@ -26,13 +25,20 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    # env = gym.make('point-robot-urdf-vel-v0', dt=dt, render=True)
-    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
+    # boxer-robot-vel
+    # boxer-robot-acc
+    # point-robot-vel
+    # point-robot-acc
+
+    env = gym.make("pointRobot-vel-v1", dt=DT, render=True)
+    # env = gym.make("boxer-robot-vel", dt=DT, render=True)
 
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-    default_action = np.array([0.0, 0.0])
+    default_action = np.array(np.zeros(env.n()))
+    print(default_action)
+
     n_steps = 10000
 
     obstacles = {box.name(): box,
@@ -54,13 +60,15 @@ def main(conn=None):
     brain = RBrain()
     brain.setup({
         "dt": DT,
+        "robot_type": "point_robot",
+        "obstacles_in_env": True,
         "default_action": default_action,
         "target_state": State(pos=np.array([0, 0, 0])),
         "obstacles": obstacles
     }, ob)
 
     brain.update(ob)
-    action =default_action
+    action = default_action
 
     for i in range(n_steps):
         if i == 500:
@@ -78,7 +86,7 @@ def main(conn=None):
             keyboard_data = conn.recv()
             action[0:2] = keyboard_data["action"]
         else:
-            action = brain.respond()
+            action[0:2] = brain.respond()
 
 
         ob, reward, done, info = env.step(action)
@@ -93,7 +101,7 @@ def main(conn=None):
 
     conn.send({"request_action": False, "kill_child": True})
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if not user_input_mode:
         main()

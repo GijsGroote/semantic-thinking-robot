@@ -42,6 +42,7 @@ def main():
     for i in range(10000):
 
         if i % 50 == 0:
+
             brain.plot_occupancy_graph()
         
         if i==200:

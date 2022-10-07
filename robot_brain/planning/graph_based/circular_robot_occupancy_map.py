@@ -5,84 +5,34 @@ import plotly.express as px
 import plotly.graph_objects as go 
 import warnings
 
+
+
 import pickle
 
-from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
+from helper_functions.geometrics import minimal_distance_point_to_line
 from robot_brain.planning.object import Object
+from robot_brain.global_variables import FIG_BG_COLOR
 
 class CircleRobotOccupancyMap(OccupancyMap):
-    """ 2 dimensional occupancy map representing the environment
+    """ 2-dimensional occupancy map representing the environment
     in obstacle space, free space, movable obstacle space and
     unknown obstacle space for a circular robot.
     """
-
     def __init__(self,
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
             objects: dict,
-            robot_radius: float):
+            robot_radius: float,
+            robot_position: np.ndarray):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects)
+        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_position, 1)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
-
-    def setup(self):
-        """
-        Setup the gridmap for a number of obstacles.
-
-        indices in the grid_map indicat the following:
-            0 -> free space
-            1 -> obstacle space
-            2 -> movable object space
-            3 -> unknown object space
-        """
-        for obj in self.objects.values():
-            match obj.type:
-                case "unmovable":
-                    self.setup_object(obj, 1)
-
-                case "movable":
-                    self.setup_object(obj, 2)
-
-                case "unknown":
-                    self.setup_object(obj, 3)
-                case _:
-                    raise TypeError(f"unknown type: {obj.type}")
-
-    def setup_object(self, obj: Object, val: int):
-        """ Set the object overlapping with grid cells to a integer value. """ 
-  
-        match obj.obstacle.type():
-            case "cylinder":
-                # "objects" x-axis is parallel to the global z-axis (normal situation)
-                if not (math.isclose(math.sin(obj.state.ang_p[0]), 0, abs_tol=0.01) and 
-                        math.isclose(math.sin(obj.state.ang_p[1]), 0, abs_tol=0.01)):
-                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up/down is not up)")
-
-                self.setup_circular_object(obj, val)
-
-            case "sphere":
-                self.setup_circular_object(obj, val)
-
-            case "box":
-                # "objects" x-axis is parallel to the global z-axis (normal situation)
-                if not ((math.isclose(obj.state.ang_p[0], 0, abs_tol=0.01) or 
-                        math.isclose(obj.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
-                        math.isclose(obj.state.ang_p[1], 0, abs_tol=0.01) or
-                        math.isclose(obj.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
-                    warnings.warn(f"obstacle {obj.name} is not in correct orientation (up is not up)")
-
-                self.setup_rectangular_object(obj, val)
-
-            case _:
-                raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
-
        
-       
-    def setup_circular_object(self, obj: Object, val: int):
+    def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
         """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
         
         obj_xy = obj.state.get_xy_position()
@@ -102,7 +52,7 @@ class CircleRobotOccupancyMap(OccupancyMap):
                 if np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius() + self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
 
-    def setup_rectangular_object(self, obj: object, val: int):
+    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, i_r_orien: int):
         """ set the rectangular object overlapping with grid cells (representing the robot) to a integer value. """ 
 
         # cos_ol = cos(orientation_of_object)* object_length / 2
@@ -140,8 +90,6 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
                 robot_xy = np.array(self.cell_idx_to_position(x_idx, y_idx))
                 
-                print(f" here yuou {robot_xy}, {robot_xy.shape}")
-
                 # check if the edges of the robot overlap with the obstacle
                 if minimal_distance_point_to_line(robot_xy, obst_a, obst_b) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
@@ -178,15 +126,61 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
         return self.grid_map[y_idx, x_idx]
 
-    def visualise(self, save=False):
+    def visualise(self, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
-
-        fig = px.imshow(self.grid_map[:,:],
-                x=list(np.arange((self.cell_size-self.grid_y_length)/2, (self.cell_size+self.grid_y_length)/2, self.cell_size)),
-                y=list(np.arange((self.cell_size-self.grid_x_length)/2, (self.cell_size+self.grid_x_length)/2, self.cell_size)),
-                labels={"x": "y-axis", "y": "x-axis"},
+       
+        
+        trace = go.Heatmap(
+                x=list(np.arange((self.cell_size-(self.grid_y_length))/2, (self.cell_size+(self.grid_y_length))/2, self.cell_size)),
+                y=list(np.arange((self.cell_size-(self.grid_x_length))/2, (self.cell_size+(self.grid_x_length))/2, self.cell_size)),
+                z=self.grid_map,
+                type = "heatmap",
+                colorscale = [[0.0, "rgba(11,156,49,0.1)"], [0.25, "rgba(11,156,49,0.1)"], [0.25, "#b2b2ff"], [0.5, "#b2b2ff"],
+                    [0.5, "#e763fa"], [0.75, "#e763fa"], [0.75, "#ab63fa"], [1.0, "#ab63fa"]], 
+                colorbar=dict(title="Space Legend",
+                    tickvals=[0.3, 1.05, 1.8, 2.55, 3.3],
+                    ticktext=["Free", "Obstacle", "Movable", "Unknown"],
+                    y=.6,
+                    len=.2,
+                    ),
                 )
 
+        fig = go.Figure(data=trace)
+
+        fig.add_trace(go.Scatter(
+            x=[self.robot_position[1]],
+            y=[self.robot_position[0]],
+            text="robot",
+            mode="text",
+            textfont=dict(
+                color="black",
+                size=18,
+                family="Arail",
+                )
+            )
+        )
+        fig.add_shape(type="circle",
+                xref="x", yref="y",
+                x0=self.robot_position[1]-self.robot_radius,
+                y0=self.robot_position[0]-self.robot_radius,
+                x1=self.robot_position[1]+self.robot_radius,
+                y1=self.robot_position[0]+self.robot_radius,
+                line_color="black",
+        )
+
+        # add the boundaries of the map
+        fig.add_shape(type="rect",
+                x0=self.grid_y_length/2, y0=self.grid_x_length/2, x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
+                line_color="black",
+                )
+        
+
+        # add the boundaries of the map
+        fig.add_shape(type="rect",
+                x0=self.grid_y_length/2, y0=self.grid_x_length/2, x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
+                line_color="black",
+                )
+        
         # add the objects over the gridmap
         for obj in self.objects.values():
 
@@ -215,10 +209,10 @@ class CircleRobotOccupancyMap(OccupancyMap):
                             line_color="black",
                             )
                 case "box":
-                    cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
-                    sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
-                    cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
-                    sin_ow = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
+                    cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
+                    sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
+                    cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
+                    sin_ow = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
 
                     fig.add_trace(go.Scatter(y=[obj.state.pos[0]-sin_ol+cos_ow,
                         obj.state.pos[0]-sin_ol-cos_ow,
@@ -233,22 +227,26 @@ class CircleRobotOccupancyMap(OccupancyMap):
                         line_color="black",
                         mode='lines'))
 
+                case "urdf":
+                    warnings.warn("the urdf objstacle is not yet implemented")
+
                 case _:
                     raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
 
         fig.update_layout(
-                paper_bgcolor= "rgb(230, 230, 255)",
-                plot_bgcolor= "rgb(230, 230, 255)",
-                coloraxis_showscale= False, 
-                autosize = True,
-                showlegend= False)
+                height=900,
+                showlegend= False,
+                paper_bgcolor=FIG_BG_COLOR,
+                plot_bgcolor=FIG_BG_COLOR,
+            )
 
+        fig.update_yaxes(autorange="reversed")
         if save:
-            with open("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/occupancy_map.pickle", "wb") as f:
-                pickle.dump(fig, f)
-
+            with open("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/occupancy_map.pickle", "wb") as file:
+                pickle.dump(fig, file)
         else:
             fig.show()
+
 
     @property
     def grid_map(self):
