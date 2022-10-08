@@ -30,8 +30,8 @@ def main(conn=None):
     # point-robot-vel
     # point-robot-acc
 
-    env = gym.make("pointRobot-vel-v1", dt=DT, render=True)
-    # env = gym.make("boxer-robot-vel", dt=DT, render=True)
+    env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
+    # env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
 
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
@@ -60,10 +60,10 @@ def main(conn=None):
     brain = RBrain()
     brain.setup({
         "dt": DT,
-        "robot_type": "point_robot",
+        "robot_type": "boxer_robot",
         "obstacles_in_env": True,
         "default_action": default_action,
-        "target_state": State(pos=np.array([0, 0, 0])),
+        "target_state": State(pos=np.array([4.3212, 30, 1])),
         "obstacles": obstacles
     }, ob)
 
@@ -71,15 +71,15 @@ def main(conn=None):
     action = default_action
 
     for i in range(n_steps):
-        if i == 500:
-            brain.controller.set_target_state(State(pos=np.array([2,3,0])))
-            brain.plot_occupancy_graph()
-        if i == 700:
-            brain.controller.set_target_state(State(pos=np.array([-2,3,2])))
-            brain.plot_occupancy_graph()
-        if i == 900:
-            brain.controller.set_target_state(State(pos=np.array([2,-3,1])))
-            brain.plot_occupancy_graph()
+        # if i == 500:
+        #     brain.controller.set_target_state(State(pos=np.array([2,3,0])))
+        #     brain.plot_occupancy_graph()
+        # if i == 700:
+        #     brain.controller.set_target_state(State(pos=np.array([-2,3,2])))
+        #     brain.plot_occupancy_graph()
+        # if i == 900:
+        #     brain.controller.set_target_state(State(pos=np.array([2,-3,1])))
+        #     brain.plot_occupancy_graph()
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})

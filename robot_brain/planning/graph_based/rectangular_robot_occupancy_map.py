@@ -1,4 +1,4 @@
-
+import sys
 import numpy as np
 import pickle
 from robot_brain.planning.graph_based.occupancy_map import OccupancyMap
@@ -200,55 +200,84 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
 
         return self.grid_map[y_idx, x_idx, i_orientation]
-
+    
     def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
         """ use the Dijkstra algorithm to find the shortest path. """ 
 
         # convert position to indices on the grid
-        (x_idx_start, y_idx_start, orient_idx_start) = self.pose_2d_to_cell_idx(pose_2d_start)
-        (x_idx_target, y_idx_target, orient_idx_target) = self.pose_2d_to_cell_idx(pose_2d_target)
-
-        # mark all indices as unvisited, filter in obstacle space(including unknown) and free space(including movable)
-
-        # cost_vis_prev holds for a cell 2d index the following information:
-        # the cost to start in cost_vis_prev[x_idx, y_idx, orien_idx, 0]
-        # a visited flag (0 for unvisited, 1 for visited) in cost_vis_prev[x_idx, y_idx, orien_idx, 1]
-        # the previous cell pose in cost_vis_prev[x_idx, y_idx, orien_idx, 2:5]
-        cost_vis_prev = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2], 5))
+        idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_cell_idx(pose_2d_start)
+        idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_cell_idx(pose_2d_target)
         
-
+        #TODO: split visited and previous apart
+        # vis_prev holds for a cell 2d index the following information:
+        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited) in vis_prev[x_idx, y_idx, orien_idx, 0]
+        # the previous cell pose in vis_prev[x_idx, y_idx, orien_idx, 1:4]
+        vis_prev = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2], 4)).astype(int)
+        
+        # set all cost to maximal size, except for the starting cell position
+        cost = sys.maxsize*np.ones(self.grid_map.shape)
+        cost[x_idx_start, y_idx_start, orien_idx_start] = 0
+        
         queue = []
-        queue.append((x_idx_start, y_idx_start, orient_idx_start))
-
+        queue.append(idx_start)
+    
+        (x_max, y_max, orien_max) = self.grid_map.shape
+        
         while len(queue) != 0:
-            cell_pose_temp = queue.pop()
+            cell_pose_temp = queue.pop(0)
             
+            # set cell_pose_temp to visited
+            vis_prev[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], 0] = 2
+
             x_low = max(cell_pose_temp[0]-1, 0)
-            x_high = min(cell_pose_temp[0]+1, x_max)
+            x_high = min(cell_pose_temp[0]+1, x_max-1)
             y_low = max(cell_pose_temp[1]-1, 0)
-            x_high = min(cell_pose_temp[1]+1, y_max)
+            y_high = min(cell_pose_temp[1]+1, y_max-1)
             orien_low = max(cell_pose_temp[2]-1, 0)
-            orien_high = min(cell_pose_temp[2]+1, orien_max)
+            orien_high = min(cell_pose_temp[2]+1, orien_max-1)
 
             # loop though neighboring indexes
             for x_idx in range(x_low, x_high+1):
                 for y_idx in range(y_low, y_high+1):
                     for orien_idx in range(orien_low, orien_high+1):
-             
-               # TODO: check if the unvisited cells could be given a lower cost from the cell_pose_temp
 
-        # loop through all unvisited nodes
-            # for all nodes find unvisited neighbor nodes
-            # update weight of neigbor nodes if it is lower
+                        idx = (x_idx, y_idx, orien_idx)
 
-        # from target loop through surrounding nodes append the lowest index to list
+                        # only compare unvisited cells
+                        if vis_prev[idx + (0,)] != 2:
+
+                            # put cell in the queue if not already in there
+                            if vis_prev[idx + (0,)] == 0:
+                                vis_prev[idx + (0,)] = 1 
+                                queue.append(idx)
+                            
+                            temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
+                            if temp_cost < cost[idx]:
+
+                                cost[idx] = temp_cost
+                                vis_prev[x_idx, y_idx, orien_idx, 1:4] = cell_pose_temp
+                                
+
+
+
+        shortest_path_reversed = []
+        cell_pose_temp = idx_target
+        # cell_pose_temp = np.array([x_idx_start, y_idx_start, orien_idx_start])
+        
+        # find shortest path from target to start
+        while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
+
+            shortest_path_reversed.append(vis_prev[cell_pose_temp[0],cell_pose_temp[1],cell_pose_temp[2], 1:4])
+            cell_pose_temp = vis_prev[cell_pose_temp[0],cell_pose_temp[1],cell_pose_temp[2], 1:4]
 
         # reverse list and convert to 2D positions
+        shortest_path_reversed.pop()
+        shortest_path = [tuple(pose_2d_start)]
 
-        # return list
-
-
-        return ["not", "yet", "implemented"]
+        while len(shortest_path_reversed) != 0:
+            shortest_path.append(self.cell_idx_to_pose_2d(*shortest_path_reversed.pop()))
+        shortest_path.append(tuple(pose_2d_target))
+        return shortest_path
 
 
     def pose_2d_to_cell_idx(self, pose_2d: np.ndarray) -> (int, int, int):
@@ -260,16 +289,36 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         if pose_2d[2] >= 2*math.pi or pose_2d[2] < 0:
             raise ValueError(f"orientation: {pose_2d[2]} is not in the interval [0, 2*pi)")
         
-        normalised_orientation = pose_2d[2]/(2*math.pi) + 1/(self.n_orientations*2)
-        if normalised_orientation >= 1:
-            normalised_orientation = 0
+        normalised_orien= pose_2d[2]/(2*math.pi) + 1/(self.n_orientations*2)
+        if normalised_orien >= 1:
+            normalised_orien = 0
 
-        orientation_idx = int(normalised_orientation*self.n_orientations)
+        orien_idx = int(normalised_orien*self.n_orientations)
         
         (x_idx, y_idx) = self.position_to_cell_idx(pose_2d[0], pose_2d[1])
 
-        return (x_idx, y_idx, orientation_idx)
+        return (x_idx, y_idx, orien_idx)
+    
+    def cell_idx_to_pose_2d(self, x_idx: int, y_idx: int, orien_idx: int) -> (float, float, float):
+        """ returns the center position that the cell represents. """
+
+        if (x_idx >= self.grid_x_length/self.cell_size or
+                x_idx < 0):
+            raise IndexError(f"x_idx: {x_idx} is larger than the grid"\
+                    f" [0, {int(self.grid_x_length/self.cell_size-1)}]")
+        if (abs(y_idx) >= self.grid_y_length/self.cell_size or
+                y_idx < 0):
+            raise IndexError(f"y_idx: {y_idx} is larger than the grid"\
+                    f" [0, {int(self.grid_y_length/self.cell_size-1)}]")
+        if orien_idx < 0 or orien_idx >= self.n_orientations:
+            raise IndexError(f"orien_idx: {orien_idx} is larger than the number of grid orientations"\
+                    f" [0, {self.n_orientations-1}]")
         
+        return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
+                self.cell_size*(0.5+y_idx) - self.grid_y_length/2,
+                2*math.pi*orien_idx/self.n_orientations)
+
+    
 
     def visualise(self, i_orientation:int=0, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
