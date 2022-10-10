@@ -163,8 +163,7 @@ class RBrain:
         if self.is_doing is IS_EXECUTING:
             # send action
             if self.controller is not None:
-                # print(f"hey {self.robot.state.get_xy_position()} - {self.target_state.get_xy_position()}")
-                print(f"hey the target is {self.target_state.get_xy_position()},  {self.robot.state.get_xy_position()} - {self.target_state.get_xy_position()}")
+
                 if np.linalg.norm(self.robot.state.get_xy_position() - self.target_state.get_xy_position()) < 0.5:
                     
                     next_target = self.path[0]
@@ -173,7 +172,8 @@ class RBrain:
                     self.target_state = State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]]))
                     self.controller.set_target_state(State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]])))
                 
-
+                
+                print(f"target state is: {self.target_state.to_string()}")
                 return self.controller.respond(self.robot.state)
 
             else:
@@ -252,20 +252,26 @@ class RBrain:
         if self.robot.name == "point_robot":
             print("start with the planning toward target state")
             self.occ_graph = CircleRobotOccupancyMap(1, 10, 12, self.objects, 1.1, self.robot.state.get_2d_pose())
+            self.occ_graph.setup()
             path_to_target = self.occ_graph.shortest_path(self.robot.state.get_2d_pose(), self.target_state)
             print(path_to_target)
 
         elif self.robot.name == "boxer_robot":
+            
             print("start with the planning toward target state")
-            self.occ_graph = RectangularRobotOccupancyMap(1, 10, 60, self.objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
+            self.occ_graph = RectangularRobotOccupancyMap(1, 10, 12, self.objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
             
             # temp fix for negative angles
             start = self.robot.state.get_2d_pose()
             if self.robot.state.get_2d_pose()[2] < 0:
-                start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi 
+                start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi
+
+            self.occ_graph.setup()
             path_to_target = self.occ_graph.shortest_path(start, self.target_state.get_2d_pose())
+
             print(path_to_target)
             self.path = path_to_target
+            self.occ_graph.visualise()
 
         else:
             raise ValueError("unknown robot_type: {self.robot_type}")

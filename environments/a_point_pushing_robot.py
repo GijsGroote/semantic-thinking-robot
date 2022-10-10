@@ -30,8 +30,8 @@ def main(conn=None):
     # point-robot-vel
     # point-robot-acc
 
-    env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
-    # env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
+    # env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
+    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
 
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
@@ -63,7 +63,7 @@ def main(conn=None):
         "robot_type": "boxer_robot",
         "obstacles_in_env": True,
         "default_action": default_action,
-        "target_state": State(pos=np.array([4.3212, 30, 1])),
+        "target_state": State(pos=np.array([1.3212, 3.80, 0])),
         "obstacles": obstacles
     }, ob)
 

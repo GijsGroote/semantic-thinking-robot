@@ -3,9 +3,7 @@ import numpy as np
 import pickle
 from robot_brain.planning.graph_based.occupancy_map import OccupancyMap
 import math
-import plotly.express as px
 import plotly.graph_objects as go
-import plotly.subplots as sp
 import warnings
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle, do_intersect
@@ -35,7 +33,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size),
             n_orientations))
-
       
     def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
         """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
@@ -102,7 +99,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         sin_rl = math.sin(r_orien)*self.robot_y_length/2
         cos_rw = math.cos(r_orien)*self.robot_x_length/2
         sin_rw = math.sin(r_orien)*self.robot_x_length/2
-
       
         cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
         sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
@@ -134,6 +130,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
 
                 # if the center of the robot is in the obstacle, then they are in collision
+                # NOTE: this assumes the 3 points to form a rectangle 
+                # if the object is rotated it could form a diamond shape instead of a rectangle
                 if point_in_rectangle(np.array(self.cell_idx_to_position(x_idx, y_idx)),
                         obst_a, obst_b, obst_c):
                     self.grid_map[x_idx, y_idx, i_r_orien] = val 
@@ -176,43 +174,43 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
                     self.grid_map[x_idx, y_idx, i_r_orien] = val 
 
-    def occupancy(self, x_idx: int, y_idx: int, *args):
-        if (x_idx > self.grid_map.shape[0] or
+    def idx_to_occupancy(self, x_idx: int, y_idx: int, orien_idx: int) -> int:
+        """ returns the occupancy of a grid cell """
+        if not (type(x_idx) == int and type(y_idx) == int and type(orien_idx) == int):
+            raise TypeError("all arguements should be intergers")
+
+        if (x_idx >= self.grid_map.shape[0] or
             x_idx < 0):
             raise ValueError(f"x_idx should be in range [0, {self.grid_map.shape[0]}] and is {x_idx}")
 
-        if (y_idx > self.grid_map.shape[1] or
+        if (y_idx >= self.grid_map.shape[1] or
             y_idx < 0):
             raise ValueError(f"y_idx should be in range [0, {self.grid_map.shape[1]}] and is {y_idx}")
 
-        if len(args) != 1: 
-            raise TypeError(f"*args must be an integer")
+        if (orien_idx >= self.grid_map.shape[2] or
+            orien_idx < 0):
+            raise ValueError(f"orien_idx should be in range [0, {self.grid_map.shape[2]}] and is {orien_idx}")
 
-        if not (isinstance(args[0], int) and
-            type(args[0]) is int):
-            raise TypeError(f"*args must be an integer")
+        return self.grid_map[x_idx, y_idx, orien_idx]
 
-        i_orientation = int(args[0])
-
-        if (i_orientation > self.n_orientations or
-            i_orientation < 0):
-            raise ValueError(f"*args must be an integer in range [0, {self.n_orientations}] and is {i_orientation}")
+    def occupancy(self, pose_2d: np.ndarray) -> int:
+        """ return the occupancy of a grid cell from a 2d pose. """
+        idx = self.pose_2d_to_cell_idx(pose_2d) 
+        return self.idx_to_occupancy(*idx)
 
 
-        return self.grid_map[y_idx, x_idx, i_orientation]
-    
     def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
         """ use the Dijkstra algorithm to find the shortest path. """ 
 
         # convert position to indices on the grid
         idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_cell_idx(pose_2d_start)
         idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_cell_idx(pose_2d_target)
+
+        print(f'Plannig toward yesyes target state {pose_2d_target}')
         
-        #TODO: split visited and previous apart
-        # vis_prev holds for a cell 2d index the following information:
-        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited) in vis_prev[x_idx, y_idx, orien_idx, 0]
-        # the previous cell pose in vis_prev[x_idx, y_idx, orien_idx, 1:4]
-        vis_prev = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2], 4)).astype(int)
+        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
+        visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
+        previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2], 3)).astype(int)
         
         # set all cost to maximal size, except for the starting cell position
         cost = sys.maxsize*np.ones(self.grid_map.shape)
@@ -227,7 +225,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             cell_pose_temp = queue.pop(0)
             
             # set cell_pose_temp to visited
-            vis_prev[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], 0] = 2
+            visited[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2]] = 2
 
             x_low = max(cell_pose_temp[0]-1, 0)
             x_high = min(cell_pose_temp[0]+1, x_max-1)
@@ -244,31 +242,37 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                         idx = (x_idx, y_idx, orien_idx)
 
                         # only compare unvisited cells
-                        if vis_prev[idx + (0,)] != 2:
+                        if visited[idx] != 2:
 
-                            # put cell in the queue if not already in there
-                            if vis_prev[idx + (0,)] == 0:
-                                vis_prev[idx + (0,)] = 1 
-                                queue.append(idx)
-                            
-                            temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
-                            if temp_cost < cost[idx]:
+                            # path cannot go through obstacles
+                            if not self.idx_to_occupancy(x_idx, y_idx, orien_idx) == 0:
+                                print("a cell is not in the free space")
 
-                                cost[idx] = temp_cost
-                                vis_prev[x_idx, y_idx, orien_idx, 1:4] = cell_pose_temp
+                            if self.idx_to_occupancy(x_idx, y_idx, orien_idx) == 0:
+                                # if self.idx_to_occupancy(x_idx, y_idx, orien_idx) != 1:
+
+                                # put cell in the queue if not already in there
+                                if visited[idx] == 0:
+                                    visited[idx] = 1 
+                                    queue.append(idx)
                                 
+                                temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
+                                if temp_cost < cost[idx]:
 
-
+                                    cost[idx] = temp_cost
+                                    previous_cell[idx[0], idx[1], idx[2], :] = cell_pose_temp
 
         shortest_path_reversed = []
         cell_pose_temp = idx_target
-        # cell_pose_temp = np.array([x_idx_start, y_idx_start, orien_idx_start])
-        
+       
+  
+        print("the cost to get somewhere")
+        print(cost)
         # find shortest path from target to start
         while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
 
-            shortest_path_reversed.append(vis_prev[cell_pose_temp[0],cell_pose_temp[1],cell_pose_temp[2], 1:4])
-            cell_pose_temp = vis_prev[cell_pose_temp[0],cell_pose_temp[1],cell_pose_temp[2], 1:4]
+            shortest_path_reversed.append(previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :])
+            cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :]
 
         # reverse list and convert to 2D positions
         shortest_path_reversed.pop()
@@ -277,8 +281,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         while len(shortest_path_reversed) != 0:
             shortest_path.append(self.cell_idx_to_pose_2d(*shortest_path_reversed.pop()))
         shortest_path.append(tuple(pose_2d_target))
-        return shortest_path
 
+        return shortest_path
 
     def pose_2d_to_cell_idx(self, pose_2d: np.ndarray) -> (int, int, int):
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
@@ -317,8 +321,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2,
                 2*math.pi*orien_idx/self.n_orientations)
-
-    
 
     def visualise(self, i_orientation:int=0, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
