@@ -14,7 +14,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
     """ Occupancy map represents the environment in obstacle space
     free space, movable obstacle space and unknown obstacle space.
     """
-
     def __init__(self,
         cell_size: float,
         grid_x_length: float,
@@ -206,8 +205,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_cell_idx(pose_2d_start)
         idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_cell_idx(pose_2d_target)
 
-        print(f'Plannig toward yesyes target state {pose_2d_target}')
-        
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
         visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
         previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2], 3)).astype(int)
@@ -245,11 +242,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                         if visited[idx] != 2:
 
                             # path cannot go through obstacles
-                            if not self.idx_to_occupancy(x_idx, y_idx, orien_idx) == 0:
-                                print("a cell is not in the free space")
-
-                            if self.idx_to_occupancy(x_idx, y_idx, orien_idx) == 0:
-                                # if self.idx_to_occupancy(x_idx, y_idx, orien_idx) != 1:
+                            # TODO: Do you want to plan around everything, go through
+                            if self.idx_to_occupancy(x_idx, y_idx, orien_idx) != 1:
 
                                 # put cell in the queue if not already in there
                                 if visited[idx] == 0:
@@ -265,9 +259,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         shortest_path_reversed = []
         cell_pose_temp = idx_target
        
-  
-        print("the cost to get somewhere")
-        print(cost)
         # find shortest path from target to start
         while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
 
@@ -286,7 +277,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
     def pose_2d_to_cell_idx(self, pose_2d: np.ndarray) -> (int, int, int):
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
-        raises an error if the 2D pose is outside of the grid
+        raises an error if the 2D pose is outside of the grid.
         """
         if pose_2d.shape != (3,):
             raise IndexError(f"the shape of pose_2d is {pose_2d.shape} and should be (3,)")
