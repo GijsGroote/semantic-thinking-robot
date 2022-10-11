@@ -1,12 +1,8 @@
 
 
-#TODO: this is old below, We use pytest now, update!
-# execute specific test with
-python -m unittest mypkg.tests.test_module.TestClass.test_method
+# Pytest usage:
+`pytest /file/to/test`
 
-# execute all test in file with
-python3 -m unittest tests/this_test_file.py
-
-# execute all test with, make sure all test files end with _test.py
-python -m unittest discover -s ./tests/ -p '*_test.py'
+# and you could also do:
+`pytest /file/to/test::test_this_one_specifically`
 
