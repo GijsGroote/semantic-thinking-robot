@@ -3,7 +3,7 @@ import gym
 import urdfenvs.boxer_robot
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
-from robot_brain.rbrain import State
+from robot_brain.global_planning.state import State
 
 target_pos = np.array([3, 2, 0])
 target_ang_p = np.array([0, 0, 2])

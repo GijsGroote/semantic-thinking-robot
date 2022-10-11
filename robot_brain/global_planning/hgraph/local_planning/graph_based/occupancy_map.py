@@ -3,7 +3,7 @@ import numpy as np
 import math
 import warnings
 
-from robot_brain.planning.object import Object
+from robot_brain.object import Object
 
 def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 

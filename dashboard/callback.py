@@ -7,7 +7,7 @@ from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 import pandas as pd
 pd.options.plotting.backend = "plotly"
-from robot_brain.dashboard.figures import *
+from dashboard.figures import *
 
 
 def check_file_is_up_to_date(path):
@@ -28,7 +28,7 @@ def register_callbacks(app):
 
 
         # TODO: do not go for a hardcoded line!
-        path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hgraph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -48,7 +48,7 @@ def register_callbacks(app):
         Output("kGraph", "srcDoc"), Input("controller-interval-component", "n_intervals"))
     def update_kgraph_live(n):
 
-        path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/kgraph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -70,15 +70,15 @@ def register_callbacks(app):
     def update_controller_graph_live(n):
 
         # read in controller data if it exists
-        if not Path("../robot_brain/dashboard/data/mpc_data.feather").is_file():
+        if not Path("../dashboard/data/mpc_data.feather").is_file():
             return no_data_found_dict
 
         else:
             # only update up-to-date files, exception for n = 0
             if n > 0:
-                check_file_is_up_to_date("../robot_brain/dashboard/data/mpc_data.feather")
+                check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
 
-            df = feather.read_feather("../robot_brain/dashboard/data/mpc_data.feather")
+            df = feather.read_feather("../dashboard/data/mpc_data.feather")
 
             # todo: this can be done better, send metadata with the dataframe
 
@@ -90,42 +90,19 @@ def register_callbacks(app):
 
     def update_occupancy_map(n):
         # read in controller data if it exists
-        if not Path("../robot_brain/dashboard/data/occupancy_map.pickle").is_file():
+        if not Path("../dashboard/data/occupancy_map.pickle").is_file():
             return no_data_found_dict
 
         else:
             # only update up-to-date files, exception for n = 0
             if n > 0:
-                check_file_is_up_to_date("../robot_brain/dashboard/data/occupancy_map.pickle")
+                check_file_is_up_to_date("../dashboard/data/occupancy_map.pickle")
 
-            with open("../robot_brain/dashboard/data/occupancy_map.pickle", "rb") as file:
+            with open("../dashboard/data/occupancy_map.pickle", "rb") as file:
 
                 fig = pickle.load(file)
                 fig.update_layout(
                         paper_bgcolor=FIG_BG_COLOR,
                         plot_bgcolor=FIG_BG_COLOR)
                         
-
                 return fig
-
-                # return pickle.load(file)
-        #
-        #         # read in controller data if it exists
-        # if not Path("../robot_brain/dashboard/data/mpc_data.feather").is_file():
-        #     return no_data_found_dict
-        #
-        # else:
-        #     # only update up-to-date files, exception for n = 0
-        #     if n > 0:
-        #         check_file_is_up_to_date("../robot_brain/dashboard/data/mpc_data.feather")
-        #
-        #     df = feather.read_feather("../robot_brain/dashboard/data/mpc_data.feather")
-        #
-        #     # todo: this can be done better, send metadata with the dataframe
-        #
-        #     if df.type[0] == "mpc":
-        #         return create_mpc_plot(df)
-
-
-
-

@@ -153,4 +153,4 @@ class Plotter():
         else:
             data_frame["time"] = np.arange(data_frame.index[0], current_time, DT)
 
-        feather.write_feather(data_frame, '../robot_brain/dashboard/data/mpc_data.feather')
+        feather.write_feather(data_frame, '../dashboard/data/mpc_data.feather')

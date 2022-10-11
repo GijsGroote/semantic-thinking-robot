@@ -1,33 +1,20 @@
 import warnings
 import numpy as np
-from casadi import vertcat
 import pandas as pd
-from robot_brain.dashboard.app import start_dash_server
-from robot_brain.planning.state import State
-from robot_brain.planning.object import Object
-from robot_brain.controller.mpc.mpc import Mpc
+from dashboard.app import start_dash_server
+from robot_brain.state import State
+from robot_brain.object import Object
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
-from robot_brain.graph.h_graph import HGraph
-from robot_brain.graph.k_graph import KGraph
-from robot_brain.graph.conf_set_node import ConfSetNode
-from robot_brain.graph.object_set_node import ObjectSetNode
-from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
-from robot_brain.graph.edge import Edge
+from robot_brain.global_planning.hgraph.hgraph import HGraph
+
 import timeit
 import math
-from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import (
-    RectangularRobotOccupancyMap,
-)
-from robot_brain.planning.graph_based.circular_robot_occupancy_map import (
-    CircleRobotOccupancyMap,
-)
 
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
-
 
 class RBrain:
     """
@@ -41,17 +28,13 @@ class RBrain:
         # TODO: these should be private, en make some getters
         self.objects = {}  # Object information dictionary
         self.robot = None  # Player information
-        self.controller = None
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
-        self.target_state = None  # should become goal
-        self.occupancy_map = None
         self.hgraph = None
         self.kgraph = None
-        self.time_it = 0  # can be delted
-        self.path = None
         self.obstacles_in_env = None
+
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
             start_dash_server()
@@ -66,7 +49,6 @@ class RBrain:
 
                 # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
                 # that way I could access the robot's dimensions more easily
-
 
                 self.robot = Object(
                     stat_world_info["robot_type"],
@@ -161,120 +143,26 @@ class RBrain:
         Respond to request with the latest action.
         """
         if self.is_doing is IS_EXECUTING:
-            # send action
-            if self.controller is not None:
-
-                if np.linalg.norm(self.robot.state.get_xy_position() - self.target_state.get_xy_position()) < 0.5:
-                    # hey the controller dit that thing
-                    
-                    if len(self.path) == 0:
-                        print("controller is done!!")
-                        print("turning off this controller")
-                        self.controller = None
-                        self.path = None
-                        # todo: hey Hgraph, give me the next thing allright!
-                    else:
-                        next_target = self.path[0]
-                        print(f"target reached, now setting {next_target} as goal")
-                        self.path = self.path[1:]
-                        self.target_state = State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]]))
-                
-                return self.controller.respond(self.robot.state)
+            if self.hgraph is not None:
+                return self.hgraph.respond(self.robot.state)
 
             else:
                 warnings.warn("returning default action")
                 return self.default_action
-
         elif self.is_doing is IS_DOING_NOTHING:
-            return self.calculate_plan()
+            
+            # create HGraph with a (for now temporary task: placing the robot at some next location)
+            self.is_doing = IS_EXECUTING
 
+            self.hgraph = HGraph(self.robot)
+
+            self.hgraph.search_hypothesis(
+                    [(self.robot, self.target_state)],
+                self.objects)
+
+            return self.hgraph.respond(self.robot.state)
+            
         else:
             raise Exception("Unable to respond")
-
-    def calculate_plan(self):
-        # set brain state to thinking
-        if self.hgraph is None:
-
-            self.hgraph = HGraph()
-            self.hgraph.start()
-            self.hgraph.visualise(
-                path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html"
-            )
-
-            kgraph = KGraph()
-
-            # the robot
-            node1 = ObjectSetNode(1, "robot", [])
-            kgraph.add_node(node1)
-            node2 = ChangeOfConfSetNode(2, "position", [])
-            kgraph.add_node(node2)
-            kgraph.add_edge(Edge("id", 1, 2, "MPC", "PEM"))
-            # kgraph.addEdge(Edge("id", 1, 2, "MPC", "IPEM"))
-
-            # adding expanded start and target node
-            node3 = ObjectSetNode(3, "robot_and_red_sphere", [])
-            node4 = ChangeOfConfSetNode(4, "box position", [])
-            kgraph.add_node(node3)
-            kgraph.add_node(node4)
-            # kgraph.addNode(ObjectSetNode(5, "unknown_object", []))
-
-            kgraph.add_edge(Edge("id", 3, 4, "EMPPI", "LSTM"))
-
-            self.kgraph = kgraph
-
-            self.kgraph.visualise(
-                path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/kgraph.html"
-            )
-
-        if self.robot.name == "point_robot":
-            print("start with the planning toward target state")
-            self.occ_graph = CircleRobotOccupancyMap(1, 10, 12, self.objects, 1.1, self.robot.state.get_2d_pose())
-            self.occ_graph.setup()
-            path_to_target = self.occ_graph.shortest_path(self.robot.state.get_2d_pose(), self.target_state)
-            print(path_to_target)
-
-        elif self.robot.name == "boxer_robot":
-            
-            print("start with the planning toward target state")
-            self.occ_graph = RectangularRobotOccupancyMap(1, 10, 12, self.objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
-            
-            # temp fix for negative angles
-            start = self.robot.state.get_2d_pose()
-            if self.robot.state.get_2d_pose()[2] < 0:
-                start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi
-
-            self.occ_graph.setup()
-            path_to_target = self.occ_graph.shortest_path(start, self.target_state.get_2d_pose())
-
-            print(path_to_target)
-            self.path = path_to_target
-            self.occ_graph.visualise()
-
-        else:
-            raise ValueError("unknown robot_type: {self.robot_type}")
-
-
-
-        self.controller = Mpc()
-        # dyn_model = Dynamics()
-        # dyn_model.set_boxer_model()
-        def dyn_model(x, u):
-            dx_next = vertcat(
-                x[0] + 0.05 * np.cos(x[2]) * u[0],
-                x[1] + 0.05 * np.sin(x[2]) * u[0],
-                x[2] + 0.05 * u[1],
-            )
-            return dx_next
-
-        # self.controller.setup(dyn_model, self.robot.state, self.target_state)
-        self.target_state = self.robot.state
-        self.controller.setup(dyn_model, self.robot.state, self.robot.state)
-
-
-
-        self.is_doing = IS_EXECUTING
-
-        return self.controller.respond(self.robot.state)
-
-        
+       
     # TODO: all setters and getters should be sanitized properly, and test!

@@ -5,8 +5,8 @@ from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from multiprocessing import Process, Pipe
-from robot_brain.RBrain import RBrain
-from robot_brain.RBrain import State
+from robot_brain.rbrain import RBrain
+from robot_brain.global_planning.state import State
 from environments.objects.urdf_objects import urdf_duck2
 
 target_pos = np.array([-2, -1, 0])

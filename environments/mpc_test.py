@@ -2,7 +2,7 @@ import numpy as np
 from casadi import vertcat
 
 import urdfenvs.boxer_robot
-import urdfenvs.point_robot_urdf
+# import urdfenvs.point_rocompletedbot_urdf
 
 import gym
 from robot_brain.controller.mpc.mpc import Mpc
@@ -10,8 +10,7 @@ from robot_brain.rbrain import State
 from robot_brain.global_variables import DT
 
 def main():
-    env = gym.make('boxer-robot-vel-v0', dt=DT, render=True)
-    # env = gym.make('pointRobotUrdf-vel-v0', dt=DT, render=True)
+    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
 
     default_action = np.array([0.0, 0.0, 0.0])
     n_steps = 1000
@@ -50,9 +49,6 @@ def main():
         action = mpc_controller.respond(current_state)
 
         ob, _, _, _ = env.step(action)
-
-        if i==200:
-            mpc_controller.visualise()
 
         if i == 50:
             mpc_controller.set_target_state(

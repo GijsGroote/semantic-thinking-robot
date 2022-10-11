@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import math
 
-from robot_brain.planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
 
 
 # THis cannot be called a test TODO: create actual shortest path test

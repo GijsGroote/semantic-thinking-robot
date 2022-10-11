@@ -1,5 +1,5 @@
-from robot_brain.graph.node import Node
-from robot_brain.planning.configuration import Configuration
+from robot_brain.global_planning.node import Node
+from robot_brain.configuration import Configuration
 
 
 class ConfSetNode(Node):

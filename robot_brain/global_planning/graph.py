@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from pyvis.network import Network
-from robot_brain.graph.edge import Edge
+from robot_brain.global_planning.edge import Edge
 
 
 class Graph(ABC):

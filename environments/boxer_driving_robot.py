@@ -7,8 +7,9 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.rbrain import State
 # from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from MotionPlanningEnv.sphereObstacle import SphereObstacle
-from MotionPlanningEnv.boxObstacle import BoxObstacle 
+# make obstacles in seperate file
+# from MotionPlanningEnv.sphereObstacle import SphereObstacle
+# from MotionPlanningEnv.boxObstacle import BoxObstacle
 
 user_input_mode = True
 
@@ -26,49 +27,49 @@ def main(conn=None):
 
     default_action = np.array([0.0, 0.0])
 
-    trans_sphere_dict = {
-        "movable": True,
-        "mass": 1,
-        "type": "sphere",
-        "color": [1, 0, 0, 0.4],
-        "position": [-1.0, 2.0, 1.8],
-        "geometry": {"radius": 0.9},
-    }
-    sphere_dict = {
-        "movable": True,
-        "mass": 1,
-        "type": "sphere",
-        "color": [1, 0, 0, 1.0],
-        "position": [2.0, 1.0, 1.8],
-        "geometry": {"radius": 0.9},
-    }
-    trans_sphere= SphereObstacle(name="simpeSphere", content_dict=trans_sphere_dict)
-    sphere = SphereObstacle(name="simpeSphere", content_dict=sphere_dict)
-
-    trans_box_dict = {
-        "movable": True,
-        "mass": 1,
-        "type": "box",
-        "color": [0, 1, 0, 0.4],
-        "position": [2.0, -1.0, 1.8],
-        "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
-    }
-    box_dict = {
-        "movable": True,
-        "mass": 1,
-        "type": "box",
-        "color": [0, 1, 0, 1.0],
-        "position": [-3.0, 0, 1.8],
-        "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
-    }
-
-    trans_box= BoxObstacle(name="simpeBox", content_dict=trans_box_dict)
-    box = BoxObstacle(name="simpleBox", content_dict=box_dict)
-
-    # env.add_obstacle(trans_sphere)
-    # env.add_obstacle(trans_box)
-    env.add_obstacle(sphere)
-    env.add_obstacle(box)
+    # trans_sphere_dict = {
+    #     "movable": True,
+    #     "mass": 1,
+    #     "type": "sphere",
+    #     "color": [1, 0, 0, 0.4],
+    #     "position": [-1.0, 2.0, 1.8],
+    #     "geometry": {"radius": 0.9},
+    # }
+    # sphere_dict = {
+    #     "movable": True,
+    #     "mass": 1,
+    #     "type": "sphere",
+    #     "color": [1, 0, 0, 1.0],
+    #     "position": [2.0, 1.0, 1.8],
+    #     "geometry": {"radius": 0.9},
+    # }
+    # trans_sphere= SphereObstacle(name="simpeSphere", content_dict=trans_sphere_dict)
+    # sphere = SphereObstacle(name="simpeSphere", content_dict=sphere_dict)
+    #
+    # trans_box_dict = {
+    #     "movable": True,
+    #     "mass": 1,
+    #     "type": "box",
+    #     "color": [0, 1, 0, 0.4],
+    #     "position": [2.0, -1.0, 1.8],
+    #     "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
+    # }
+    # box_dict = {
+    #     "movable": True,
+    #     "mass": 1,
+    #     "type": "box",
+    #     "color": [0, 1, 0, 1.0],
+    #     "position": [-3.0, 0, 1.8],
+    #     "geometry": {"length": 0.3, "width": 0.4, "height": 0.5},
+    # }
+    #
+    # trans_box= BoxObstacle(name="simpeBox", content_dict=trans_box_dict)
+    # box = BoxObstacle(name="simpleBox", content_dict=box_dict)
+    #
+    # # env.add_obstacle(trans_sphere)
+    # # env.add_obstacle(trans_box)
+    # env.add_obstacle(sphere)
+    # env.add_obstacle(box)
 
     # sensor = ObstacleSensor()
     # env.add_sensor(sensor)

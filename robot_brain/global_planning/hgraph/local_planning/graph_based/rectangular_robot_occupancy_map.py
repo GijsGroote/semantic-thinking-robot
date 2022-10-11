@@ -1,13 +1,13 @@
 import sys
 import numpy as np
 import pickle
-from robot_brain.planning.graph_based.occupancy_map import OccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.occupancy_map import OccupancyMap
 import math
 import plotly.graph_objects as go
 import warnings
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle, do_intersect
-from robot_brain.planning.object import Object
+from robot_brain.object import Object
 from robot_brain.global_variables import FIG_BG_COLOR
 
 class RectangularRobotOccupancyMap(OccupancyMap):
@@ -437,7 +437,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
         fig.update_yaxes(autorange="reversed")
         if save:
-            with open("/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/occupancy_map.pickle", "wb") as file:
+            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/occupancy_map.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

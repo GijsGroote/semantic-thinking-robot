@@ -1,3 +1,3 @@
-from robot_brain.dashboard.app import startDashServer
+from dashboard.app import start_dash_server
 
-startDashServer()
+start_dash_server()

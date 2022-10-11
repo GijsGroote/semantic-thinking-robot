@@ -1,5 +1,5 @@
-from robot_brain.graph.node import Node
-from robot_brain.planning.object import Object
+from robot_brain.global_planning.node import Node
+from robot_brain.object import Object
 
 class ObjectSetNode(Node):
     """

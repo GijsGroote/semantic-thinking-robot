@@ -1,10 +1,10 @@
 import os
 import multiprocessing
 from dash import Dash, html, dcc
-from robot_brain.dashboard.callback import register_callbacks
+from dashboard.callback import register_callbacks
+from dashboard.figures import no_data_found_dict
 # from IPython.display import display, HTML, Image
 from robot_brain.global_variables import FIG_BG_COLOR
-from robot_brain.dashboard.figures import no_data_found_dict
 
 class Dashboard:
     """
@@ -137,7 +137,10 @@ def start_dash_server():
     os.chdir("/home/gijs/Documents/semantic-thinking-robot/environments/")
 
     # create app
-    app = Dash(__name__, title="DashBoard", update_title=None)
+    app = Dash(__name__,
+            title="DashBoard",
+            update_title=None,
+            assets_folder="assets")
 
     # create dashboard
     Dashboard(app)

@@ -1,7 +1,7 @@
-from robot_brain.graph.KGraph import KGraph
-from robot_brain.graph.ChangeOfConfSetNode import ChangeOfConfSetNode
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.Edge import Edge
+from robot_brain.global_planning.kgraph import KGraph
+from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.edge import Edge
 
 def main():
     # create a knowledge graph and visualise

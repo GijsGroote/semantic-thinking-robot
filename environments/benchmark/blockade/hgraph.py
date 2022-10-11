@@ -1,7 +1,7 @@
-from robot_brain.graph.HGraph import HGraph
-from robot_brain.graph.ConfSetNode import ConfSetNode
-from robot_brain.graph.ObjectSetNode import ObjectSetNode
-from robot_brain.graph.Edge import Edge
+from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.global_planning.conf_set_node import ConfSetNode
+from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.edge import Edge
 
 def main(stage):
 

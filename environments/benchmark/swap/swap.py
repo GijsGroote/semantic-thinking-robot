@@ -6,7 +6,7 @@ from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
-from robot_brain.rbrain import State
+from robot_brain.global_planning.state import State
 
 from environments.benchmark.benchmark_obstacles.obstacles import swap
 from robot_brain.global_variables import DT

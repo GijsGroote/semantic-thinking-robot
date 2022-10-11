@@ -1,10 +1,10 @@
 import os
 from pyvis.network import Network
-from robot_brain.graph.graph import Graph
-from robot_brain.graph.node import Node
-from robot_brain.graph.conf_set_node import ConfSetNode
-from robot_brain.graph.object_set_node import ObjectSetNode
-from robot_brain.graph.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_planning.graph import Graph
+from robot_brain.global_planning.node import Node
+from robot_brain.global_planning.conf_set_node import ConfSetNode
+from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
 
@@ -15,6 +15,21 @@ class KGraph(Graph):
     def __init__(self):
         Graph.__init__(self)
 
+
+# T5HIS IS SOME STUFF TO INITIALISE THE kgRAPH LATER
+##  temp KGraph
+            # kgraph = KGraph()
+            # # the robot
+            # node1 = ObjectSetNode(1, "robot", [])
+            # kgraph.add_node(node1)
+            # node2 = ChangeOfConfSetNode(2, "position", [])
+            # kgraph.add_node(node2)
+            # kgraph.add_edge(Edge("id", 1, 2, "MPC", "PEM"))
+            #
+            # self.kgraph = kgraph
+            # self.kgraph.visualise(
+            #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/kgraph.html"
+            
     def visualise(self, path=None):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
@@ -24,7 +39,7 @@ class KGraph(Graph):
         # set a custom style sheet
         # TODO: relative path (which works)
         # net.path = os.getcwd() + 
-        net.path = "/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/assets/graph_template.html"
+        net.path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/assets/graph_template.html"
 
 
         net.set_edge_smooth('dynamic')
@@ -33,7 +48,7 @@ class KGraph(Graph):
                 # TODO: relative path, somehow this image shows, but not if it runs on the server...
                 # os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
                 path_to_png = "/home/gijs/Documents/semantic-thinking-robot"\
-                        "/robot_brain/dashboard/assets/images/" +  node.name + ".png"
+                        "/dashboard/assets/images/" +  node.name + ".png"
 
                 if os.path.exists(path_to_png):
                     net.add_node(node.iden,

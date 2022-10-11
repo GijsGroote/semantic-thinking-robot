@@ -1,6 +1,6 @@
 import pytest
 
-from robot_brain.planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
 
 
 # TODO: update test here below, and update the entire circlerobot hting

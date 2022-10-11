@@ -5,9 +5,9 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 
-from robot_brain.planning.object import Object
-from robot_brain.planning.state import State
-from robot_brain.planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
+from robot_brain.object import Object
+from robot_brain.state import State
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
 
 
 def test_occupancy_map_arguements():
