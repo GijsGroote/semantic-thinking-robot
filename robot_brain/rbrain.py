@@ -165,15 +165,20 @@ class RBrain:
             if self.controller is not None:
 
                 if np.linalg.norm(self.robot.state.get_xy_position() - self.target_state.get_xy_position()) < 0.5:
+                    # hey the controller dit that thing
                     
-                    next_target = self.path[0]
-                    print(f"target reached, now setting {next_target} as goal")
-                    self.path = self.path[1:]
-                    self.target_state = State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]]))
-                    self.controller.set_target_state(State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]])))
+                    if len(self.path) == 0:
+                        print("controller is done!!")
+                        print("turning off this controller")
+                        self.controller = None
+                        self.path = None
+                        # todo: hey Hgraph, give me the next thing allright!
+                    else:
+                        next_target = self.path[0]
+                        print(f"target reached, now setting {next_target} as goal")
+                        self.path = self.path[1:]
+                        self.target_state = State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]]))
                 
-                
-                print(f"target state is: {self.target_state.to_string()}")
                 return self.controller.respond(self.robot.state)
 
             else:
@@ -186,40 +191,12 @@ class RBrain:
         else:
             raise Exception("Unable to respond")
 
-    def plot_occupancy_graph(self, save=True):
-        """plot the occupancy graph for the robot"""
-
-        if self.robot.name == "point_robot":
-            self.occ_graph = CircleRobotOccupancyMap(1, 10, 12, self.objects, 1.1, self.robot.state.get_2d_pose())
-        elif self.robot.name == "boxer_robot":
-            self.occ_graph = RectangularRobotOccupancyMap(1, 10, 12, self.objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
-        else:
-            raise ValueError("unknown robot_type: {self.robot_type}")
-
-        self.occ_graph.setup()
-        self.occ_graph.visualise(save=save)
-
     def calculate_plan(self):
         # set brain state to thinking
         if self.hgraph is None:
 
-            hgraph = HGraph()
-            # adding nodes
-            hgraph.add_node(ConfSetNode(1, "P", []))
-            hgraph.add_node(ConfSetNode(2, "Pi", []))
-            hgraph.add_target_node(ConfSetNode(3, "Pis", []))
-            hgraph.add_start_node(ObjectSetNode(4, "P", []))
-            hgraph.add_node(ObjectSetNode(5, "P", []))
-
-            hgraph.add_edge(Edge("id", 2, 3, "pid", "controller"))
-            hgraph.add_edge(Edge("id", 5, 1, "pid", "controller"))
-            hgraph.add_edge(Edge("id", 3, 1, "pid", "controller"))
-            hgraph.add_edge(Edge("id", 3, 3, "EMPPI", "controller"))
-            hgraph.add_edge(Edge("id", 4, 5, "mpc", "controller"))
-
-            self.hgraph = hgraph
-            # this hgraph is amazing, save it as html
-
+            self.hgraph = HGraph()
+            self.hgraph.start()
             self.hgraph.visualise(
                 path="/home/gijs/Documents/semantic-thinking-robot/robot_brain/dashboard/data/hgraph.html"
             )
