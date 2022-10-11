@@ -266,7 +266,9 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :]
 
         # reverse list and convert to 2D positions
-        shortest_path_reversed.pop()
+        if len(shortest_path_reversed) != 0:
+            shortest_path_reversed.pop()
+
         shortest_path = [tuple(pose_2d_start)]
 
         while len(shortest_path_reversed) != 0:

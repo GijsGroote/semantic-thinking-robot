@@ -6,7 +6,7 @@ from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
-from robot_brain.global_planning.state import State
+from robot_brain.state import State
 from robot_brain.global_variables import DT
 
 from environments.benchmark.benchmark_obstacles.obstacles import surrounded
@@ -14,7 +14,7 @@ from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 USER_INPUT_MODE = False
 
 def main(conn=None):
-    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
+    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
 
     action = np.zeros(env.n())
 
@@ -44,20 +44,15 @@ def main(conn=None):
             "target_state": State(),
             "obstacles_in_env": True,
             "obstacles": surrounded,
+            "default_action": action,
         }, ob)
 
     for i in range(1000):
 
-        if i % 50 == 0: 
-            brain.plot_occupancy_graph()
         if i == 300:
             brain.controller.set_target_state(State(pos=np.array([2,3,0])))
-            brain.plot_occupancy_graph(save=True)
         if i == 500:
             brain.controller.set_target_state(State(pos=np.array([-8,1,0])))
-            brain.plot_occupancy_graph()
-        if i == 900:
-            brain.plot_occupancy_graph(save=True)
 
 
         if USER_INPUT_MODE:
@@ -68,6 +63,7 @@ def main(conn=None):
 
         else:
             action = brain.respond()
+
             ob, _, _, _ = env.step(action)
             brain.update(ob)
 

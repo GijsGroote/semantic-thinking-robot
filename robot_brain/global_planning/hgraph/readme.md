@@ -2,4 +2,4 @@
 
 
 
-![Structure Robot Framework](../../../figures/hgraph_flowchart.png)
+![Structure Robot Framework](../../../images/hgraph_flowchart.png)

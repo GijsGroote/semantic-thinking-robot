@@ -102,12 +102,19 @@ class RBrain:
                         f"the obstacle {key} was returned from the obstacle sensor but not from the given obstacles"
                     ) from exc
 
-        if "defaultAction" in stat_world_info.keys():
-            self.default_action = stat_world_info["defaultAction"]
+        if "default_action" in stat_world_info.keys():
+            self.default_action = stat_world_info["default_action"]
 
         # TODO: this should be a task, set of objects and target states
         if "target_state" in stat_world_info:
+             # create HGraph with a (for now temporary task: placing the robot at some target location)
             self.target_state = stat_world_info["target_state"]
+            self.is_doing = IS_EXECUTING
+            self.hgraph = HGraph(self.robot)
+
+            self.hgraph.search_hypothesis(
+                    [(self.robot, stat_world_info["target_state"])],
+                self.objects)
         else:
             warnings.warn("no target state set")
 
@@ -144,24 +151,19 @@ class RBrain:
         """
         if self.is_doing is IS_EXECUTING:
             if self.hgraph is not None:
-                return self.hgraph.respond(self.robot.state)
-
+                try:
+                    return self.hgraph.respond(self.robot.state)
+                except StopIteration as exc:
+                    self.is_doing = IS_DOING_NOTHING
+                    print(f"Stop with executing, because {exc}")
+                    return self.default_action
             else:
                 warnings.warn("returning default action")
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
             
-            # create HGraph with a (for now temporary task: placing the robot at some next location)
-            self.is_doing = IS_EXECUTING
-
-            self.hgraph = HGraph(self.robot)
-
-            self.hgraph.search_hypothesis(
-                    [(self.robot, self.target_state)],
-                self.objects)
-
-            return self.hgraph.respond(self.robot.state)
-            
+            return self.default_action
+           
         else:
             raise Exception("Unable to respond")
        
