@@ -1,3 +1,6 @@
+from robot_brain.state import State
+import numpy as np
+
 class Edge:
     """
     Edge or transition, describes the way/method of transitioning from
@@ -11,6 +14,7 @@ class Edge:
         self.controller = controller
         self.dyn_model = "use a al dynamical model please"
         self.path = path
+        self.temp_target = State(pos=np.array(path[0][0:2]), ang_p=np.array([0, 0, path[0][2]]))
         self.alpha = None
 
     def to_string(self):

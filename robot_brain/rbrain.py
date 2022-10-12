@@ -5,7 +5,8 @@ from dashboard.app import start_dash_server
 from robot_brain.state import State
 from robot_brain.object import Object
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
-from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.global_planning.hgraph.point_robot_hgraph import PointRobotHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
 
 import timeit
 import math
@@ -38,6 +39,9 @@ class RBrain:
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
             start_dash_server()
+
+    def visualise_grid(self):
+        self.hgraph.plot_occupancy_graph()
 
     def setup(self, stat_world_info, ob):
         # create robot
@@ -110,9 +114,15 @@ class RBrain:
              # create HGraph with a (for now temporary task: placing the robot at some target location)
             self.target_state = stat_world_info["target_state"]
             self.is_doing = IS_EXECUTING
-            self.hgraph = HGraph(self.robot)
-
-            self.hgraph.search_hypothesis(
+   
+            if self.robot.name == "point_robot":
+                self.hgraph = PointRobotHGraph(self.robot)
+            elif self.robot.name == "boxer_robot":
+                self.hgraph = BoxerRobotHGraph(self.robot)
+            else:
+                raise ValueError("unknown robot_type: {robot.name}")
+ 
+            self.hgraph.setup(
                     [(self.robot, stat_world_info["target_state"])],
                 self.objects)
         else:
@@ -161,10 +171,10 @@ class RBrain:
                 warnings.warn("returning default action")
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
-            
+
             return self.default_action
-           
+
         else:
             raise Exception("Unable to respond")
-       
+
     # TODO: all setters and getters should be sanitized properly, and test!
