@@ -46,8 +46,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         max_robot_obj_distance= (math.sqrt(self.robot_x_length**2 + self.robot_y_length**2))/2 + obj.obstacle.radius()
 
         # only search around obstacle 
-        (obj_clearance_x_min, obj_clearance_y_min) = self.pose_2d_to_p_idx_or_grid_edge(obj_xy[0]-max_robot_obj_distance, obj_xy[1]-max_robot_obj_distance)
-        (obj_clearance_x_max, obj_clearance_y_max) = self.pose_2d_to_p_idx_or_grid_edge(obj_xy[0]+max_robot_obj_distance, obj_xy[1]+max_robot_obj_distance)
+        (obj_clearance_x_min, obj_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(obj_xy[0]-max_robot_obj_distance, obj_xy[1]-max_robot_obj_distance)
+        (obj_clearance_x_max, obj_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(obj_xy[0]+max_robot_obj_distance, obj_xy[1]+max_robot_obj_distance)
 
         for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
@@ -116,8 +116,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         obj_cart_2d = obj.state.get_xy_position()
 
         # only search around obstacle
-        (x_min, y_min) = self.pose_2d_to_p_idx_or_grid_edge(obj_cart_2d[0]-max_robot_to_obj_x_distance, obj_cart_2d[1]-max_robot_to_obj_y_distance)
-        (x_max, y_max) = self.pose_2d_to_p_idx_or_grid_edge(obj_cart_2d[0]+max_robot_to_obj_x_distance, obj_cart_2d[1]+max_robot_to_obj_y_distance)
+        (x_min, y_min) = self.cart_2d_to_c_idx_or_grid_edge(obj_cart_2d[0]-max_robot_to_obj_x_distance, obj_cart_2d[1]-max_robot_to_obj_y_distance)
+        (x_max, y_max) = self.cart_2d_to_c_idx_or_grid_edge(obj_cart_2d[0]+max_robot_to_obj_x_distance, obj_cart_2d[1]+max_robot_to_obj_y_distance)
         
         # orientation with cos/sin could make x_min > x_max
         obj_clearance_x_min = min(x_min, x_max)

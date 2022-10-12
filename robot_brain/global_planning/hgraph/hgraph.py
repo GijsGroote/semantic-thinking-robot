@@ -114,7 +114,7 @@ class HGraph(Graph):
         self.target_state = State(pos=np.array(next_target[0:2]), ang_p=np.array([0, 0, next_target[2]]))
     def estimate_robot_path_existance(self, target_state, objects):
 
-        occ_graph = RectangularRobotOccupancyMap(1, 10, 12, objects, self.robot.state.get_2d_pose(), 1, 0.8, 0.5)
+        occ_graph = RectangularRobotOccupancyMap(1, 10, 12, objects, self.robot.state.get_xy_position(), 1, 0.8, 0.5)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()
