@@ -1,11 +1,10 @@
 import numpy as np
+
+import sys
 from robot_brain.global_planning.hgraph.local_planning.graph_based.occupancy_map import OccupancyMap
 import math
-import plotly.express as px
 import plotly.graph_objects as go 
 import warnings
-
-
 
 import pickle
 
@@ -107,7 +106,14 @@ class CircleRobotOccupancyMap(OccupancyMap):
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-    def occupancy(self, x_idx: int, y_idx: int, *args):
+    def occupancy(self, position: np.ndarray) -> int:
+        """ returns the occupancy of the grid cell """
+        assert position.shape == (2,), f"position not of shape (2,) but {position.shape}"
+        idx = self.position_to_cell_idx(position[0], position[1]) 
+        return self.idx_to_occupancy(*idx)
+
+
+    def idx_to_occupancy(self, x_idx: int, y_idx: int):
         if (x_idx > self.grid_map.shape[0] or
             x_idx < 0):
             raise ValueError(f"x_idx should be in range [0, {self.grid_map.shape[0]}] and is {x_idx}")
@@ -116,15 +122,84 @@ class CircleRobotOccupancyMap(OccupancyMap):
             y_idx < 0):
             raise ValueError(f"y_idx should be in range [0, {self.grid_map.shape[1]}] and is {y_idx}")
 
-        if len(args) != 1: 
-            raise TypeError(f"*args must be an integer")
+        return self.grid_map[x_idx, y_idx]
+    
+    def shortest_path(self, position_start: np.ndarray, position_target: np.ndarray) -> list:
 
-        if not (isinstance(args[0], int) and
-            type(args[0]) is int):
-            raise TypeError(f"*args must be an integer")
+        # convert position to indices on the grid
+        idx_start = (x_idx_start, y_idx_start) = self.position_to_cell_idx(position_start[0], position_start[1])
+        idx_target = (x_idx_target, y_idx_target) = self.position_to_cell_idx(position_target[0], position_target[1])
+
+        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
+        visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1])).astype(int)
+        previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], 2)).astype(int)
+        
+        # set all cost to maximal size, except for the starting cell position
+        cost = sys.maxsize*np.ones(self.grid_map.shape)
+        cost[x_idx_start, y_idx_start] = 0
+        
+        queue = []
+        queue.append(idx_start)
+    
+        (x_max, y_max) = self.grid_map.shape
+        
+        while len(queue) != 0:
+            cell_pose_temp = queue.pop(0)
+            
+            # set cell_pose_temp to visited
+            visited[cell_pose_temp[0], cell_pose_temp[1]] = 2
+
+            x_low = max(cell_pose_temp[0]-1, 0)
+            x_high = min(cell_pose_temp[0]+1, x_max-1)
+            y_low = max(cell_pose_temp[1]-1, 0)
+            y_high = min(cell_pose_temp[1]+1, y_max-1)
+
+            # loop though neighboring indexes
+            for x_idx in range(x_low, x_high+1):
+                for y_idx in range(y_low, y_high+1):
+
+                        idx = (x_idx, y_idx)
+
+                        # only compare unvisited cells
+                        if visited[idx] != 2:
+
+                            # path cannot go through obstacles
+                            if self.idx_to_occupancy(x_idx, y_idx) != 1:
+
+                                # put cell in the queue if not already in there
+                                if visited[idx] == 0:
+                                    visited[idx] = 1 
+                                    queue.append(idx)
+                                
+                                temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
+                                if temp_cost < cost[idx]:
+
+                                    cost[idx] = temp_cost
+                                    previous_cell[idx[0], idx[1], :] = cell_pose_temp
+
+        shortest_path_reversed = []
+        cell_pose_temp = idx_target
+       
+        # find shortest path from target to start
+        while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
+
+            shortest_path_reversed.append(previous_cell[cell_pose_temp[0], cell_pose_temp[1], :])
+            cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], :]
+
+        # reverse list and convert to 2D positions
+        if len(shortest_path_reversed) != 0:
+            shortest_path_reversed.pop()
+
+        shortest_path = [tuple(position_start)]
+
+        while len(shortest_path_reversed) != 0:
+            # CELL_IDX_TO_PSE_2D SHOULD NOT BE USED HERE, USE THE 2 DIM VERSION
+            shortest_path.append(self.cell_idx_to_position(*shortest_path_reversed.pop()))
+        shortest_path.append(tuple(position_target))
+
+        return shortest_path
 
 
-        return self.grid_map[y_idx, x_idx]
 
     def visualise(self, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """

@@ -22,6 +22,20 @@ def test_grid_map_shape():
     occ_map = CircleRobotOccupancyMap(1, 100, 200, {}, 5, np.array([0,0]))
     assert (100, 200) == occ_map.grid_map.shape
 
+def test_shortest_path():
+    occ_map = CircleRobotOccupancyMap(
+            cell_size=1,
+            grid_x_length=100,
+            grid_y_length=200,
+            objects={},
+            robot_radius=5,
+            robot_position=np.array([0,0])
+            )
+    shortest_path = occ_map.shortest_path(position_start= np.array([0,0]),
+            position_target=np.array([20,20]))
+    print(f"and the shortest path is: {shortest_path}")
+
+    assert False
 
 # def test_manually_visual_inspection():
 #
