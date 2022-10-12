@@ -19,12 +19,12 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         grid_x_length: float,
         grid_y_length: float,
         objects: dict,
-        robot_position: np.ndarray,
+        robot_cart_2d: np.ndarray,
         n_orientations: int,
         robot_x_length: float,
         robot_y_length: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_position, n_orientations)
+        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_cart_2d, n_orientations)
         self._robot_x_length = robot_x_length
         self._robot_y_length = robot_y_length
 
@@ -33,7 +33,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             int(self.grid_y_length/self.cell_size),
             n_orientations))
       
-    def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
+    def setup_circular_object(self, obj: Object, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
 
         # cos_rl = cos(orientation_of_robot) * robot_length_in_x / 2
@@ -46,49 +46,49 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         max_robot_obj_distance= (math.sqrt(self.robot_x_length**2 + self.robot_y_length**2))/2 + obj.obstacle.radius()
 
         # only search around obstacle 
-        (obj_clearance_x_min, obj_clearance_y_min) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]-max_robot_obj_distance, obj_xy[1]-max_robot_obj_distance)
-        (obj_clearance_x_max, obj_clearance_y_max) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]+max_robot_obj_distance, obj_xy[1]+max_robot_obj_distance)
+        (obj_clearance_x_min, obj_clearance_y_min) = self.pose_2d_to_p_idx_or_grid_edge(obj_xy[0]-max_robot_obj_distance, obj_xy[1]-max_robot_obj_distance)
+        (obj_clearance_x_max, obj_clearance_y_max) = self.pose_2d_to_p_idx_or_grid_edge(obj_xy[0]+max_robot_obj_distance, obj_xy[1]+max_robot_obj_distance)
 
         for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
                 #  closeby (<= radius + smallest dimension robot) cells are always in collision with the obstacle 
-                if np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius() + min(self.robot_x_length, self.robot_y_length) / 2:
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val
+                if np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius() + min(self.robot_x_length, self.robot_y_length) / 2:
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
                # corner points of the robot
-                a = self.cell_idx_to_position(x_idx, y_idx) \
+                a = self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
 
-                b =  self.cell_idx_to_position(x_idx, y_idx) \
+                b =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
 
-                c =  self.cell_idx_to_position(x_idx, y_idx) \
+                c =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
 
-                d =  self.cell_idx_to_position(x_idx, y_idx) \
+                d =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
 
                 obj_r = obj.obstacle.radius() 
 
                 # check if the edges of the robot overlap with the obstacle
                 if minimal_distance_point_to_line(obj_xy, a, b) <= obj_r:
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
                 elif minimal_distance_point_to_line(obj_xy, b, c) <= obj_r:
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
                 elif minimal_distance_point_to_line(obj_xy, c, d) <= obj_r:
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
                 elif minimal_distance_point_to_line(obj_xy, d, a) <= obj_r:
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
-    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, i_r_orien: int):
+    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, r_orien_idx: int):
         """ set the rectangular object overlapping with grid cells (representing the robot) to a integer value. """ 
         
         # TODO: project a box object toward the ground plane, find the edge points and convert that area to 
@@ -113,11 +113,11 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         max_robot_to_obj_x_distance = abs(sin_rl) + abs(cos_rw) + abs(sin_ol) + abs(cos_ow)
         max_robot_to_obj_y_distance = abs(cos_rl) + abs(sin_rw) + abs(cos_ol) + abs(sin_ow)
         
-        obj_xy = obj.state.get_xy_position()
+        obj_cart_2d = obj.state.get_xy_position()
 
         # only search around obstacle
-        (x_min, y_min) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]-max_robot_to_obj_x_distance, obj_xy[1]-max_robot_to_obj_y_distance)
-        (x_max, y_max) = self.position_to_cell_idx_or_grid_edge(obj_xy[0]+max_robot_to_obj_x_distance, obj_xy[1]+max_robot_to_obj_y_distance)
+        (x_min, y_min) = self.pose_2d_to_p_idx_or_grid_edge(obj_cart_2d[0]-max_robot_to_obj_x_distance, obj_cart_2d[1]-max_robot_to_obj_y_distance)
+        (x_max, y_max) = self.pose_2d_to_p_idx_or_grid_edge(obj_cart_2d[0]+max_robot_to_obj_x_distance, obj_cart_2d[1]+max_robot_to_obj_y_distance)
         
         # orientation with cos/sin could make x_min > x_max
         obj_clearance_x_min = min(x_min, x_max)
@@ -131,22 +131,22 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 # if the center of the robot is in the obstacle, then they are in collision
                 # NOTE: this assumes the 3 points to form a rectangle 
                 # if the object is rotated it could form a diamond shape instead of a rectangle
-                if point_in_rectangle(np.array(self.cell_idx_to_position(x_idx, y_idx)),
+                if point_in_rectangle(np.array(self.c_idx_to_cart_2d(x_idx, y_idx)),
                         obst_a, obst_b, obst_c):
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val 
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val 
                     continue
 
                 # corner points of the robot
-                a = self.cell_idx_to_position(x_idx, y_idx) \
+                a = self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
 
-                b =  self.cell_idx_to_position(x_idx, y_idx) \
+                b =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
 
-                c =  self.cell_idx_to_position(x_idx, y_idx) \
+                c =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
 
-                d =  self.cell_idx_to_position(x_idx, y_idx) \
+                d =  self.c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
 
                 # check if the edges of the robot overlap with the obstacle
@@ -171,9 +171,9 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                     do_intersect(d, a, obst_c, obst_d) or
                     do_intersect(d, a, obst_d, obst_a)):
 
-                    self.grid_map[x_idx, y_idx, i_r_orien] = val 
+                    self.grid_map[x_idx, y_idx, r_orien_idx] = val 
 
-    def idx_to_occupancy(self, x_idx: int, y_idx: int, orien_idx: int) -> int:
+    def p_idx_to_occupancy(self, x_idx: int, y_idx: int, orien_idx: int) -> int:
         """ returns the occupancy of a grid cell """
         if not (type(x_idx) == int and type(y_idx) == int and type(orien_idx) == int):
             raise TypeError("all arguements should be intergers")
@@ -194,16 +194,16 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
     def occupancy(self, pose_2d: np.ndarray) -> int:
         """ return the occupancy of a grid cell from a 2d pose. """
-        idx = self.pose_2d_to_cell_idx(pose_2d) 
-        return self.idx_to_occupancy(*idx)
+        idx = self.pose_2d_to_p_idx(pose_2d) 
+        return self.p_idx_to_occupancy(*idx)
 
 
     def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
         """ use the Dijkstra algorithm to find the shortest path. """ 
-
+        
         # convert position to indices on the grid
-        idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_cell_idx(pose_2d_start)
-        idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_cell_idx(pose_2d_target)
+        p_idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_p_idx(pose_2d_start)
+        p_idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_p_idx(pose_2d_target)
 
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
         visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
@@ -211,10 +211,10 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         
         # set all cost to maximal size, except for the starting cell position
         cost = sys.maxsize*np.ones(self.grid_map.shape)
-        cost[x_idx_start, y_idx_start, orien_idx_start] = 0
+        cost[p_idx_start] = 0
         
         queue = []
-        queue.append(idx_start)
+        queue.append(p_idx_start)
     
         (x_max, y_max, orien_max) = self.grid_map.shape
         
@@ -236,31 +236,31 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 for y_idx in range(y_low, y_high+1):
                     for orien_idx in range(orien_low, orien_high+1):
 
-                        idx = (x_idx, y_idx, orien_idx)
+                        p_idx = (x_idx, y_idx, orien_idx)
 
                         # only compare unvisited cells
-                        if visited[idx] != 2:
+                        if visited[p_idx] != 2:
 
                             # path cannot go through obstacles
                             # TODO: Do you want to plan around everything, go through
-                            if self.idx_to_occupancy(x_idx, y_idx, orien_idx) != 1:
+                            if self.p_idx_to_occupancy(*p_idx) != 1:
 
                                 # put cell in the queue if not already in there
-                                if visited[idx] == 0:
-                                    visited[idx] = 1 
-                                    queue.append(idx)
+                                if visited[p_idx] == 0:
+                                    visited[p_idx] = 1 
+                                    queue.append(p_idx)
                                 
-                                temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
-                                if temp_cost < cost[idx]:
+                                temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(p_idx))
+                                if temp_cost < cost[p_idx]:
 
-                                    cost[idx] = temp_cost
-                                    previous_cell[idx[0], idx[1], idx[2], :] = cell_pose_temp
+                                    cost[p_idx] = temp_cost
+                                    previous_cell[x_idx, y_idx, orien_idx, :] = cell_pose_temp
 
         shortest_path_reversed = []
-        cell_pose_temp = idx_target
+        cell_pose_temp = p_idx_target
        
         # find shortest path from target to start
-        while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
+        while not all(x == y for x, y in zip(cell_pose_temp, p_idx_start)):
 
             shortest_path_reversed.append(previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :])
             cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :]
@@ -272,12 +272,12 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         shortest_path = [tuple(pose_2d_start)]
 
         while len(shortest_path_reversed) != 0:
-            shortest_path.append(self.cell_idx_to_pose_2d(*shortest_path_reversed.pop()))
+            shortest_path.append(self.p_idx_to_pose_2d(*shortest_path_reversed.pop()))
         shortest_path.append(tuple(pose_2d_target))
 
         return shortest_path
 
-    def pose_2d_to_cell_idx(self, pose_2d: np.ndarray) -> (int, int, int):
+    def pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> (int, int, int):
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
         raises an error if the 2D pose is outside of the grid.
         """
@@ -292,11 +292,11 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
         orien_idx = int(normalised_orien*self.n_orientations)
         
-        (x_idx, y_idx) = self.position_to_cell_idx(pose_2d[0], pose_2d[1])
+        (x_idx, y_idx) = self.cart_2d_to_c_idx(pose_2d[0], pose_2d[1])
 
         return (x_idx, y_idx, orien_idx)
     
-    def cell_idx_to_pose_2d(self, x_idx: int, y_idx: int, orien_idx: int) -> (float, float, float):
+    def p_idx_to_pose_2d(self, x_idx: int, y_idx: int, orien_idx: int) -> (float, float, float):
         """ returns the center position that the cell represents. """
 
         if (x_idx >= self.grid_x_length/self.cell_size or
@@ -315,10 +315,10 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2,
                 2*math.pi*orien_idx/self.n_orientations)
 
-    def visualise(self, i_orientation:int=0, save:bool=True):
+    def visualise(self, orien_idx:int=0, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
        
-        grid_2D = np.reshape(self.grid_map[:,:,i_orientation], (int(self.grid_x_length/self.cell_size), int(self.grid_y_length/self.cell_size)))
+        grid_2D = np.reshape(self.grid_map[:,:,orien_idx], (int(self.grid_x_length/self.cell_size), int(self.grid_y_length/self.cell_size)))
         
         trace = go.Heatmap(
                 x=list(np.arange((self.cell_size-(self.grid_y_length))/2, (self.cell_size+(self.grid_y_length))/2, self.cell_size)),
@@ -338,14 +338,16 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         fig = go.Figure(data=trace)
 
         # put the robot on the map 
-        r_orien = i_orientation/self.n_orientations*2*math.pi
+        r_orien = orien_idx/self.n_orientations*2*math.pi
+
         cos_rl = math.cos(r_orien)*self.robot_y_length/2
         sin_rl = math.sin(r_orien)*self.robot_y_length/2
         cos_rw = math.cos(r_orien)*self.robot_x_length/2
         sin_rw = math.sin(r_orien)*self.robot_x_length/2
+
         fig.add_trace(go.Scatter(
-            x=[self.robot_position[1]],
-            y=[self.robot_position[0]],
+            x=[self.robot_pose_2d[1]],
+            y=[self.robot_pose_2d[0]],
             text="robot",
             mode="text",
             textfont=dict(
@@ -357,16 +359,16 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         )
 
         fig.add_trace(go.Scatter(
-            y=[self.robot_position[0]-sin_rl+cos_rw,
-            self.robot_position[0]-sin_rl-cos_rw,
-            self.robot_position[0]+sin_rl-cos_rw,
-            self.robot_position[0]+sin_rl+cos_rw,
-            self.robot_position[0]-sin_rl+cos_rw],
-            x=[self.robot_position[1]+cos_rl+sin_rw,
-                self.robot_position[1]+cos_rl-sin_rw,
-                self.robot_position[1]-cos_rl-sin_rw,
-                self.robot_position[1]-cos_rl+sin_rw,
-                self.robot_position[1]+cos_rl+sin_rw],
+            y=[self.robot_pose_2d[0]-sin_rl+cos_rw,
+            self.robot_pose_2d[0]-sin_rl-cos_rw,
+            self.robot_pose_2d[0]+sin_rl-cos_rw,
+            self.robot_pose_2d[0]+sin_rl+cos_rw,
+            self.robot_pose_2d[0]-sin_rl+cos_rw],
+            x=[self.robot_pose_2d[1]+cos_rl+sin_rw,
+                self.robot_pose_2d[1]+cos_rl-sin_rw,
+                self.robot_pose_2d[1]-cos_rl-sin_rw,
+                self.robot_pose_2d[1]-cos_rl+sin_rw,
+                self.robot_pose_2d[1]+cos_rl+sin_rw],
             line_color="black",
             mode='lines'
             )

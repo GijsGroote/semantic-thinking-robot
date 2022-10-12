@@ -1,11 +1,9 @@
 import numpy as np
-
 import sys
 from robot_brain.global_planning.hgraph.local_planning.graph_based.occupancy_map import OccupancyMap
 import math
 import plotly.graph_objects as go 
 import warnings
-
 import pickle
 
 from helper_functions.geometrics import minimal_distance_point_to_line
@@ -22,39 +20,39 @@ class CircleRobotOccupancyMap(OccupancyMap):
             grid_x_length: float,
             grid_y_length: float,
             objects: dict,
-            robot_radius: float,
-            robot_position: np.ndarray):
+            robot_cart_2d: np.ndarray,
+            robot_radius: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_position, 1)
+        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_cart_2d, 1)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
-       
-    def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
+
+    def setup_circular_object(self, obj: Object, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
         
-        obj_xy = obj.state.get_xy_position()
+        obj_cart_2d = obj.state.get_xy_position()
 
         # only search around obstacle 
-        (obj_clearance_x_min, obj_clearance_y_min) = self.position_to_cell_idx_or_grid_edge(
-                obj_xy[0]-(self.robot_radius + obj.obstacle.radius()), 
-                obj_xy[1]-(self.robot_radius + obj.obstacle.radius()))
+        (obj_clearance_x_min, obj_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
+                obj_cart_2d[0]-(self.robot_radius + obj.obstacle.radius()), 
+                obj_cart_2d[1]-(self.robot_radius + obj.obstacle.radius()))
 
-        (obj_clearance_x_max, obj_clearance_y_max) = self.position_to_cell_idx_or_grid_edge(
-                obj_xy[0]+(self.robot_radius + obj.obstacle.radius()),
-                obj_xy[1]+(self.robot_radius + obj.obstacle.radius()))
+        (obj_clearance_x_max, obj_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
+                obj_cart_2d[0]+(self.robot_radius + obj.obstacle.radius()),
+                obj_cart_2d[1]+(self.robot_radius + obj.obstacle.radius()))
 
         for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
                 #  closeby (<= radius + smallest dimension robot) cells are always in collision with the obstacle 
-                if np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= obj.obstacle.radius() + self.robot_radius:
+                if np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obj_cart_2d) <= obj.obstacle.radius() + self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
 
-    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, i_r_orien: int):
+    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, r_orien_idx: int):
         """ set the rectangular object overlapping with grid cells (representing the robot) to a integer value. """ 
 
-        # cos_ol = cos(orientation_of_object)* object_length / 2
+        # cos_ol = cos_object_length
         cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
         sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
         cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
@@ -68,52 +66,51 @@ class CircleRobotOccupancyMap(OccupancyMap):
         max_robot_to_obj_x_distance = self.robot_radius + abs(sin_ol) + abs(cos_ow)
         max_robot_to_obj_y_distance = self.robot_radius + abs(cos_ol) + abs(sin_ow)
         
-        obj_xy = obj.state.get_xy_position()
+        obj_cart_2d = obj.state.get_xy_position()
 
         # only search around obstacle
-        (obj_clearance_x_min, obj_clearance_y_min) = self.position_to_cell_idx_or_grid_edge(
-                obj_xy[0]-max_robot_to_obj_x_distance, obj_xy[1]-max_robot_to_obj_y_distance)
+        (obj_clearance_x_min, obj_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
+                obj_cart_2d[0]-max_robot_to_obj_x_distance, obj_cart_2d[1]-max_robot_to_obj_y_distance)
 
-        (obj_clearance_x_max, obj_clearance_y_max) = self.position_to_cell_idx_or_grid_edge(
-                obj_xy[0]+max_robot_to_obj_x_distance, obj_xy[1]+max_robot_to_obj_y_distance)
+        (obj_clearance_x_max, obj_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
+                obj_cart_2d[0]+max_robot_to_obj_x_distance, obj_cart_2d[1]+max_robot_to_obj_y_distance)
 
         for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
             for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
 
                 #  closeby (<= robot_radius + smallest dimension obstacle) cells are always in collision with the obstacle 
-                if (np.linalg.norm(self.cell_idx_to_position(x_idx, y_idx)-obj_xy) <= self.robot_radius
+                if (np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obj_cart_2d) <= self.robot_radius
                     + min(obj.obstacle.width(), obj.obstacle.length()) / 2):
 
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-                robot_xy = np.array(self.cell_idx_to_position(x_idx, y_idx))
+                r_cart_2d = np.array(self.c_idx_to_cart_2d(x_idx, y_idx))
                 
                 # check if the edges of the robot overlap with the obstacle
-                if minimal_distance_point_to_line(robot_xy, obst_a, obst_b) <= self.robot_radius:
+                if minimal_distance_point_to_line(r_cart_2d, obst_a, obst_b) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-                elif minimal_distance_point_to_line(robot_xy, obst_b, obst_c) <= self.robot_radius:
+                elif minimal_distance_point_to_line(r_cart_2d, obst_b, obst_c) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-                elif minimal_distance_point_to_line(robot_xy, obst_c, obst_d) <= self.robot_radius:
+                elif minimal_distance_point_to_line(r_cart_2d, obst_c, obst_d) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-                elif minimal_distance_point_to_line(robot_xy, obst_d, obst_a) <= self.robot_radius:
+                elif minimal_distance_point_to_line(r_cart_2d, obst_d, obst_a) <= self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-    def occupancy(self, position: np.ndarray) -> int:
+    def occupancy(self, cart_2d: np.ndarray) -> int:
         """ returns the occupancy of the grid cell """
-        assert position.shape == (2,), f"position not of shape (2,) but {position.shape}"
-        idx = self.position_to_cell_idx(position[0], position[1]) 
-        return self.idx_to_occupancy(*idx)
+        assert cart_2d.shape == (2,), f"cart_2d not of shape (2,) but {cart_2d.shape}"
+        idx = self.cart_2d_to_c_idx(cart_2d[0], cart_2d[1]) 
+        return self.c_idx_to_occupancy(*idx)
 
-
-    def idx_to_occupancy(self, x_idx: int, y_idx: int):
+    def c_idx_to_occupancy(self, x_idx: int, y_idx: int):
         if (x_idx > self.grid_map.shape[0] or
             x_idx < 0):
             raise ValueError(f"x_idx should be in range [0, {self.grid_map.shape[0]}] and is {x_idx}")
@@ -124,11 +121,11 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
         return self.grid_map[x_idx, y_idx]
     
-    def shortest_path(self, position_start: np.ndarray, position_target: np.ndarray) -> list:
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
 
         # convert position to indices on the grid
-        idx_start = (x_idx_start, y_idx_start) = self.position_to_cell_idx(position_start[0], position_start[1])
-        idx_target = (x_idx_target, y_idx_target) = self.position_to_cell_idx(position_target[0], position_target[1])
+        c_idx_start = (x_idx_start, y_idx_start) = self.cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
+        c_idx_target = (x_idx_target, y_idx_target) = self.cart_2d_to_c_idx(cart_2d_target[0], cart_2d_target[1])
 
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
         visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1])).astype(int)
@@ -139,71 +136,67 @@ class CircleRobotOccupancyMap(OccupancyMap):
         cost[x_idx_start, y_idx_start] = 0
         
         queue = []
-        queue.append(idx_start)
+        queue.append(c_idx_start)
     
         (x_max, y_max) = self.grid_map.shape
         
         while len(queue) != 0:
-            cell_pose_temp = queue.pop(0)
+            c_idx_temp = queue.pop(0)
             
-            # set cell_pose_temp to visited
-            visited[cell_pose_temp[0], cell_pose_temp[1]] = 2
+            # set c_idx_temp to visited
+            visited[c_idx_temp[0], c_idx_temp[1]] = 2
 
-            x_low = max(cell_pose_temp[0]-1, 0)
-            x_high = min(cell_pose_temp[0]+1, x_max-1)
-            y_low = max(cell_pose_temp[1]-1, 0)
-            y_high = min(cell_pose_temp[1]+1, y_max-1)
+            x_low = max(c_idx_temp[0]-1, 0)
+            x_high = min(c_idx_temp[0]+1, x_max-1)
+            y_low = max(c_idx_temp[1]-1, 0)
+            y_high = min(c_idx_temp[1]+1, y_max-1)
 
             # loop though neighboring indexes
             for x_idx in range(x_low, x_high+1):
                 for y_idx in range(y_low, y_high+1):
 
-                        idx = (x_idx, y_idx)
+                        c_idx = (x_idx, y_idx)
 
                         # only compare unvisited cells
-                        if visited[idx] != 2:
+                        if visited[c_idx] != 2:
 
                             # path cannot go through obstacles
-                            if self.idx_to_occupancy(x_idx, y_idx) != 1:
+                            if self.c_idx_to_occupancy(x_idx, y_idx) != 1:
 
                                 # put cell in the queue if not already in there
-                                if visited[idx] == 0:
-                                    visited[idx] = 1 
-                                    queue.append(idx)
+                                if visited[c_idx] == 0:
+                                    visited[c_idx] = 1 
+                                    queue.append(c_idx)
                                 
-                                temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(idx))
-                                if temp_cost < cost[idx]:
+                                temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
+                                if temp_cost < cost[c_idx]:
 
-                                    cost[idx] = temp_cost
-                                    previous_cell[idx[0], idx[1], :] = cell_pose_temp
+                                    cost[c_idx] = temp_cost
+                                    previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
 
         shortest_path_reversed = []
-        cell_pose_temp = idx_target
+        c_idx_temp = c_idx_target
        
         # find shortest path from target to start
-        while not all(x == y for x, y in zip(cell_pose_temp, idx_start)):
+        while not all(x == y for x, y in zip(c_idx_temp, c_idx_start)):
 
-            shortest_path_reversed.append(previous_cell[cell_pose_temp[0], cell_pose_temp[1], :])
-            cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], :]
+            shortest_path_reversed.append(previous_cell[c_idx_temp[0], c_idx_temp[1], :])
+            c_idx_temp = previous_cell[c_idx_temp[0], c_idx_temp[1], :]
 
-        # reverse list and convert to 2D positions
+        # reverse list and convert to 2D cartesian position
         if len(shortest_path_reversed) != 0:
             shortest_path_reversed.pop()
 
-        shortest_path = [tuple(position_start)]
+        shortest_path = [tuple(cart_2d_start)]
 
         while len(shortest_path_reversed) != 0:
-            # CELL_IDX_TO_PSE_2D SHOULD NOT BE USED HERE, USE THE 2 DIM VERSION
-            shortest_path.append(self.cell_idx_to_position(*shortest_path_reversed.pop()))
-        shortest_path.append(tuple(position_target))
+            shortest_path.append(self.c_idx_to_cart_2d(*shortest_path_reversed.pop()))
+        shortest_path.append(tuple(cart_2d_target))
 
         return shortest_path
 
-
-
     def visualise(self, save:bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
-       
         
         trace = go.Heatmap(
                 x=list(np.arange((self.cell_size-(self.grid_y_length))/2, (self.cell_size+(self.grid_y_length))/2, self.cell_size)),
@@ -223,8 +216,8 @@ class CircleRobotOccupancyMap(OccupancyMap):
         fig = go.Figure(data=trace)
 
         fig.add_trace(go.Scatter(
-            x=[self.robot_position[1]],
-            y=[self.robot_position[0]],
+            x=[self.robot_cart_2d[1]],
+            y=[self.robot_cart_2d[0]],
             text="robot",
             mode="text",
             textfont=dict(
@@ -236,10 +229,10 @@ class CircleRobotOccupancyMap(OccupancyMap):
         )
         fig.add_shape(type="circle",
                 xref="x", yref="y",
-                x0=self.robot_position[1]-self.robot_radius,
-                y0=self.robot_position[0]-self.robot_radius,
-                x1=self.robot_position[1]+self.robot_radius,
-                y1=self.robot_position[0]+self.robot_radius,
+                x0=self.robot_cart_2d[1]-self.robot_radius,
+                y0=self.robot_cart_2d[0]-self.robot_radius,
+                x1=self.robot_cart_2d[1]+self.robot_radius,
+                y1=self.robot_cart_2d[0]+self.robot_radius,
                 line_color="black",
         )
 
@@ -321,7 +314,6 @@ class CircleRobotOccupancyMap(OccupancyMap):
                 pickle.dump(fig, file)
         else:
             fig.show()
-
 
     @property
     def grid_map(self):

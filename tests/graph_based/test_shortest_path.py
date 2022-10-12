@@ -7,7 +7,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_r
 
 # THis cannot be called a test TODO: create actual shortest path test
 def test_shortest_path():
-    occ_map = RectangularRobotOccupancyMap(1, 10, 10, {}, np.array([0,0,0]),
+    occ_map = RectangularRobotOccupancyMap(1, 10, 10, {}, np.array([0,0]),
             n_orientations=1, robot_x_length=1, robot_y_length=1)
 
     print("starting to find that shortest path:")

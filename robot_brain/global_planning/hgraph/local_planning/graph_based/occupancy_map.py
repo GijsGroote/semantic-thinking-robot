@@ -25,7 +25,7 @@ class OccupancyMap(ABC):
             grid_x_length: float,
             grid_y_length: float,
             objects: dict,
-            robot_position: np.ndarray,
+            robot_cart_2d: np.ndarray,
             n_orientations: int
             ):
 
@@ -38,10 +38,9 @@ class OccupancyMap(ABC):
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
         self._objects = objects
-
-        assert robot_position.shape == (2,) or robot_position.shape == (3,), \
-                f"robot position should be of shape (2,), it's: {robot_position.shape}"
-        self._robot_position = robot_position
+        assert robot_cart_2d.shape == (2,), \
+                f"robot position should be of shape (2,), it's: {robot_cart_2d.shape}"
+        self._robot_cart_2d = robot_cart_2d
 
         self._n_orientations = n_orientations
 
@@ -55,36 +54,36 @@ class OccupancyMap(ABC):
             2 -> movable object space
             3 -> unknown object space
         """
-        for i_r_orien in range(self.n_orientations):
-            
+        for r_orien_idx in range(self.n_orientations):
             for obj in self.objects.values():
                 match obj.type:
                     case "unmovable":
-                        self.setup_object(obj, 1, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+                        self.setup_object(obj, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case "movable":
-                        self.setup_object(obj, 2, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+                        self.setup_object(obj, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case "unknown":
-                        self.setup_object(obj, 3, 2*math.pi*i_r_orien/self.n_orientations, i_r_orien)
+                        self.setup_object(obj, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case _:
                         raise TypeError(f"unknown type: {obj.type}")
   
-    def setup_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
+    def setup_object(self, obj: Object, val: int, r_orien: float, r_orien_idx: int):
         """ Set the object overlapping with grid cells to a integer value. """ 
 
         match obj.obstacle.type():
+            # TODO: create a shadow function, which removes the need for warnings when unusual orienatations occur
             case "cylinder":
                 # "objects" x-axis is parallel to the global z-axis (normal situation)
                 if not (math.isclose(math.sin(obj.state.ang_p[0]), 0, abs_tol=0.01) and 
                         math.isclose(math.sin(obj.state.ang_p[1]), 0, abs_tol=0.01)):
                     warnings.warn(f"obstacle {obj.name} is not in correct orientation (up/down is not up)")
 
-                self.setup_circular_object(obj, val, r_orien, i_r_orien)
+                self.setup_circular_object(obj, val, r_orien, r_orien_idx)
 
             case "sphere":
-                self.setup_circular_object(obj, val, r_orien, i_r_orien)
+                self.setup_circular_object(obj, val, r_orien, r_orien_idx)
 
             case "box":
                 # "objects" x-axis is parallel to the global z-axis (normal situation)
@@ -94,7 +93,7 @@ class OccupancyMap(ABC):
                         math.isclose(obj.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
                     warnings.warn(f"obstacle {obj.name} is not in correct orientation (up is not up)")
 
-                self.setup_rectangular_object(obj, val, r_orien, i_r_orien)
+                self.setup_rectangular_object(obj, val, r_orien, r_orien_idx)
 
             case "urdf":
                 warnings.warn(f"the urdf type is not yet implemented")
@@ -104,18 +103,18 @@ class OccupancyMap(ABC):
                 raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
 
     @abstractmethod
-    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, i_r_orien: int):
+    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod
-    def setup_circular_object(self, obj: Object, val: int, r_orien: float, i_r_orien: int):
+    def setup_circular_object(self, obj: Object, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod
     def occupancy(self, y_position, x_position, *args):
         pass
 
-    def cell_idx_to_position(self, x_idx: int, y_idx: int) -> (float, float):
+    def c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> (float, float):
         """ returns the center position that the cell represents. """
 
         if (x_idx >= self.grid_x_length/self.cell_size or
@@ -130,13 +129,13 @@ class OccupancyMap(ABC):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2)
 
-    def position_to_cell_idx_or_grid_edge(self, x_position: float, y_position: float) -> (int, int):
+    def cart_2d_to_c_idx_or_grid_edge(self, x_position: float, y_position: float) -> (int, int):
         """ returns the index of the cell a position is in,
         if the position is outside the boundary of the grid map the edges
         will be returned.
         """
         try:
-            x_idx = self.position_to_cell_idx(x_position, 0)[0]
+            x_idx = self.cart_2d_to_c_idx(x_position, 0)[0]
         except IndexError as exc:
             if x_position > self.grid_x_length/2:
                 x_idx = int(self.grid_x_length/self.cell_size-1)
@@ -147,7 +146,7 @@ class OccupancyMap(ABC):
                         "could not be converted to cell index.") from exc
 
         try:
-            y_idx = self.position_to_cell_idx(0, y_position)[1]
+            y_idx = self.cart_2d_to_c_idx(0, y_position)[1]
         except IndexError as exc:
             if y_position > self.grid_y_length/2:
                 y_idx = int(self.grid_y_length/self.cell_size-1)
@@ -159,7 +158,7 @@ class OccupancyMap(ABC):
 
         return (x_idx, y_idx)
 
-    def position_to_cell_idx(self, x_position: float, y_position: float) -> (int, int):
+    def cart_2d_to_c_idx(self, x_position: float, y_position: float) -> (int, int):
         """ returns the index of the cell a position is in. """
         if abs(x_position) > self.grid_x_length/2:
             raise IndexError(f"x_position: {x_position} is larger than the grid"\
@@ -197,8 +196,9 @@ class OccupancyMap(ABC):
         return self._objects
 
     @property
-    def robot_position(self):
-        return self._robot_position
+    def robot_cart_2d(self):
+        return self._robot_cart_2d
+
 
     @property
     def n_orientations(self):

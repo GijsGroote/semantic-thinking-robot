@@ -11,7 +11,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 
 
 def test_occupancy_map_arguements():
-    occ_map = CircleRobotOccupancyMap(1, 100, 200, {}, 5, np.array([0, 0]))
+    occ_map = CircleRobotOccupancyMap(1, 100, 200, {}, np.array([0, 0]), 5)
 
     assert 1 == occ_map.cell_size
     assert 100 == occ_map.grid_x_length
@@ -19,23 +19,24 @@ def test_occupancy_map_arguements():
     assert 5 == occ_map.robot_radius
 
 def test_grid_map_shape():
-    occ_map = CircleRobotOccupancyMap(1, 100, 200, {}, 5, np.array([0,0]))
+    occ_map = CircleRobotOccupancyMap(1, 100, 200, {}, np.array([0,0]), 5)
     assert (100, 200) == occ_map.grid_map.shape
 
-def test_shortest_path():
-    occ_map = CircleRobotOccupancyMap(
-            cell_size=1,
-            grid_x_length=100,
-            grid_y_length=200,
-            objects={},
-            robot_radius=5,
-            robot_position=np.array([0,0])
-            )
-    shortest_path = occ_map.shortest_path(position_start= np.array([0,0]),
-            position_target=np.array([20,20]))
-    print(f"and the shortest path is: {shortest_path}")
 
-    assert False
+# def test_shortest_path():
+#     occ_map = CircleRobotOccupancyMap(
+#             cell_size=1,
+#             grid_x_length=100,
+#             grid_y_length=200,
+#             objects={},
+#             robot_radius=5,
+#             robot_cart_2d=np.array([0,0])
+#             )
+#     shortest_path = occ_map.shortest_path(cart_2d_start= np.array([-0.120,0]),
+#             cart_2d_target=np.array([20.1,20]))
+#     print(f"and the shortest path is: {shortest_path}")
+#
+#     assert False
 
 # def test_manually_visual_inspection():
 #
