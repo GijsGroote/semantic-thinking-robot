@@ -151,7 +151,7 @@ class HGraph(Graph):
         # self.add_edge(Edge("id", 3, 3, "EMPPI", "controller"))
         # self.add_edge(Edge("id", 4, 5, "mpc", "controller"))
         # self.visualise(
-        #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hgraph.html"
+        #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html"
         # )
         
         # TODO: create occupancy map, and return controller

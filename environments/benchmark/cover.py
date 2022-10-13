@@ -6,7 +6,7 @@ from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from multiprocessing import Process, Pipe
 from robot_brain.rbrain import RBrain
-from robot_brain.global_planning.state import State
+from robot_brain.state import State
 from environments.objects.urdf_objects import urdf_duck2
 
 target_pos = np.array([-2, -1, 0])
@@ -16,7 +16,7 @@ user_input_mode = False
 
 def main(conn=None):
     dt = 0.05
-    env = gym.make('boxer-robot-vel-v0', dt=dt, render=True)
+    env = gym.make("boxerRobot-vel-v7", dt=dt, render=True)
 
     ob = env.reset()
     

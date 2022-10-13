@@ -28,7 +28,7 @@ class KGraph(Graph):
             #
             # self.kgraph = kgraph
             # self.kgraph.visualise(
-            #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/kgraph.html"
+            #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
             
     def visualise(self, path=None):
         """"

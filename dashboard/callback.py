@@ -28,7 +28,7 @@ def register_callbacks(app):
 
 
         # TODO: do not go for a hardcoded line!
-        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -48,7 +48,7 @@ def register_callbacks(app):
         Output("kGraph", "srcDoc"), Input("controller-interval-component", "n_intervals"))
     def update_kgraph_live(n):
 
-        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/kgraph.html"
+        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
