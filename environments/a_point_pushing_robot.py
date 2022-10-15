@@ -8,6 +8,7 @@ from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
+from robot_brain.configuration import Configuration
 from robot_brain.global_variables import DT
 
 
@@ -32,7 +33,6 @@ def main(conn=None):
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
     default_action = np.array(np.zeros(env.n()))
-    print(default_action)
 
     n_steps = 10000
 
@@ -42,6 +42,7 @@ def main(conn=None):
 
     # add obstacles
     env.add_obstacle(box)
+    
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
@@ -58,7 +59,12 @@ def main(conn=None):
         "robot_type": "boxer_robot",
         "obstacles_in_env": True,
         "default_action": default_action,
-        "target_state": State(pos=np.array([1.3212, 3.80, 0])),
+        "task": [("robot", State(pos=np.array([-3.3212, 3.80, 0]))),# (box, State(pos=np.array([-2.3, -3.80, 0]))),
+            ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
+            ("robot", State(pos=np.array([3,0,0]))),
+            ("robot", State(pos=np.array([1, 2.2, 0]))),
+            ],
+        # "target_state": State(pos=np.array([-0.3212, -5.80, 0])),
         "obstacles": obstacles
     }, ob)
 
@@ -66,15 +72,6 @@ def main(conn=None):
     action = default_action
 
     for i in range(n_steps):
-        # if i == 500:
-        #     brain.controller.set_target_state(State(pos=np.array([2,3,0])))
-        #     brain.plot_occupancy_graph()
-        # if i == 700:
-        #     brain.controller.set_target_state(State(pos=np.array([-2,3,2])))
-        #     brain.plot_occupancy_graph()
-        # if i == 900:
-        #     brain.controller.set_target_state(State(pos=np.array([2,-3,1])))
-        #     brain.plot_occupancy_graph()
 
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})

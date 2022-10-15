@@ -24,9 +24,9 @@ class BoxerRobotHGraph(HGraph):
     Hypothesis graph for a Boxer Robot.
     """
     def __init__(self, robot):
-        HGraph.__init__(self, robot)
+        HGraph.__init__(self)
 
-        print("the boxerRobtoHGraph is now created")
+        self.robot = robot
         
     
     def estimate_robot_path_existance(self, target_state, objects):
@@ -39,7 +39,11 @@ class BoxerRobotHGraph(HGraph):
             start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi
 
         occ_graph.setup()
+        occ_graph.visualise()
         self.path = occ_graph.shortest_path(start, target_state.get_2d_pose())
         
         return self.path
 
+    def robot(self):
+        # TODO: sanitize and make private
+        return self.robot

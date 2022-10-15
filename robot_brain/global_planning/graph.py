@@ -29,7 +29,21 @@ class Graph(ABC):
         return self._edges
 
     def add_edge(self, edge):
-        # TODO: input sanitizition:
+
         if not isinstance(edge, Edge):
             raise TypeError("Only an Edge is allowed as edge")
+
+        source_exists = False
+        to_exists = False
+        for node in self.nodes:
+            if edge.source == node.iden:
+                source_exists = True
+            if edge.to == node.iden:
+                to_exists = True
+
+        if not source_exists:
+            raise IndexError(f"edge.source identifyer: {edge.source} does not exist")
+        if not to_exists:
+            raise IndexError(f"edge.to identifyer: {edge.to} does not exist")
+
         self._edges.append(edge)

@@ -24,10 +24,11 @@ class PointRobotHGraph(HGraph):
     Hypothesis graph for a Point Robot.
     """
     def __init__(self, robot):
-        HGraph.__init__(self, robot)
+        HGraph.__init__(self)
 
         print("the pointrobot is now created")
         
+        self.robot = robot
     
     def estimate_robot_path_existance(self, target_state, objects):
 
@@ -41,3 +42,6 @@ class PointRobotHGraph(HGraph):
         occ_graph.setup()
         self.path = occ_graph.shortest_path(start, target_state.get_2d_pose())
 
+    def robot(self):
+        # TODO: sanitize and make private
+        return self.robot

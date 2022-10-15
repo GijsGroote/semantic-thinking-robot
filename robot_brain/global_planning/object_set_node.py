@@ -9,6 +9,9 @@ class ObjectSetNode(Node):
     def __init__(self, iden, name, object_set):
         Node.__init__(self, iden)
         self.name = name
+
+        # TODO: find a better name/method to keep track of uncompleted/completed target nodes, Gijs, 15 okt 2022
+        self.completed = False
         self.object_set = object_set
 
     def to_string(self):

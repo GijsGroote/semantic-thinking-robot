@@ -243,7 +243,11 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
                             # path cannot go through obstacles
                             # TODO: Do you want to plan around everything, go through
-                            if self.p_idx_to_occupancy(*p_idx) != 1:
+
+                            # if self.p_idx_to_occupancy(*p_idx) != 1:
+
+                            # above: Plan around obstacle space, below plan around everything
+                            if self.p_idx_to_occupancy(*p_idx) == 0:
 
                                 # put cell in the queue if not already in there
                                 if visited[p_idx] == 0:
@@ -346,8 +350,8 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         sin_rw = math.sin(r_orien)*self.robot_x_length/2
 
         fig.add_trace(go.Scatter(
-            x=[self.robot_pose_2d[1]],
-            y=[self.robot_pose_2d[0]],
+            x=[self.robot_cart_2d[1]],
+            y=[self.robot_cart_2d[0]],
             text="robot",
             mode="text",
             textfont=dict(
@@ -359,16 +363,16 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         )
 
         fig.add_trace(go.Scatter(
-            y=[self.robot_pose_2d[0]-sin_rl+cos_rw,
-            self.robot_pose_2d[0]-sin_rl-cos_rw,
-            self.robot_pose_2d[0]+sin_rl-cos_rw,
-            self.robot_pose_2d[0]+sin_rl+cos_rw,
-            self.robot_pose_2d[0]-sin_rl+cos_rw],
-            x=[self.robot_pose_2d[1]+cos_rl+sin_rw,
-                self.robot_pose_2d[1]+cos_rl-sin_rw,
-                self.robot_pose_2d[1]-cos_rl-sin_rw,
-                self.robot_pose_2d[1]-cos_rl+sin_rw,
-                self.robot_pose_2d[1]+cos_rl+sin_rw],
+            y=[self.robot_cart_2d[0]-sin_rl+cos_rw,
+            self.robot_cart_2d[0]-sin_rl-cos_rw,
+            self.robot_cart_2d[0]+sin_rl-cos_rw,
+            self.robot_cart_2d[0]+sin_rl+cos_rw,
+            self.robot_cart_2d[0]-sin_rl+cos_rw],
+            x=[self.robot_cart_2d[1]+cos_rl+sin_rw,
+                self.robot_cart_2d[1]+cos_rl-sin_rw,
+                self.robot_cart_2d[1]-cos_rl-sin_rw,
+                self.robot_cart_2d[1]-cos_rl+sin_rw,
+                self.robot_cart_2d[1]+cos_rl+sin_rw],
             line_color="black",
             mode='lines'
             )

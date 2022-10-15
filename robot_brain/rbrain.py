@@ -74,59 +74,80 @@ class RBrain:
         else:
             warnings.warn("No DT found in static world info")
 
+        if "default_action" in stat_world_info.keys():
+            self.default_action = stat_world_info["default_action"]
+
         if "obstacles_in_env" in stat_world_info:
             self.obstacles_in_env = stat_world_info["obstacles_in_env"]
+            if self.obstacles_in_env:
+                self.setup_obstacles(stat_world_info, ob)
         else:
             raise AttributeError(
                 "there was no indication if this environment has obstacles"
             )
 
-        if self.obstacles_in_env:
-            assert (
-                "obstacleSensor" in ob.keys()
-            ), "no obstacle sensor found in initial observation"
-            assert (
-                "obstacles" in stat_world_info
-            ), "no obstacle dict found in static world info"
-
-            for key, val in ob["obstacleSensor"].items():
-
-                s_temp = State(
-                    pos=val["pose"]["position"],
-                    vel=val["twist"]["linear"],
-                    ang_p=val["pose"]["orientation"],
-                    ang_v=val["twist"]["angular"],
-                )
-                self.objects[key] = Object(key, s_temp, "urdf")
-
-                try:
-                    self.objects[key].obstacle = stat_world_info["obstacles"][key]
-                except KeyError as exc:
-                    raise KeyError(
-                        f"the obstacle {key} was returned from the obstacle sensor but not from the given obstacles"
-                    ) from exc
-
-        if "default_action" in stat_world_info.keys():
-            self.default_action = stat_world_info["default_action"]
-
-        # TODO: this should be a task, set of objects and target states
-        if "target_state" in stat_world_info:
-             # create HGraph with a (for now temporary task: placing the robot at some target location)
-            self.target_state = stat_world_info["target_state"]
-            self.is_doing = IS_EXECUTING
-   
-            if self.robot.name == "point_robot":
-                self.hgraph = PointRobotHGraph(self.robot)
-            elif self.robot.name == "boxer_robot":
-                self.hgraph = BoxerRobotHGraph(self.robot)
-            else:
-                raise ValueError("unknown robot_type: {robot.name}")
- 
-            self.hgraph.setup(
-                    [(self.robot, stat_world_info["target_state"])],
-                self.objects)
+        if "task" in stat_world_info:
+            self.setup_task(stat_world_info)
         else:
-            warnings.warn("no target state set")
+            warnings.warn("no task was set")
+
+   
+    def setup_obstacles(self, stat_world_info, ob):
+        """ save obstacles and their dimensions. """
+
+        assert (
+            "obstacleSensor" in ob.keys()
+        ), "no obstacle sensor found in initial observation"
+        assert (
+            "obstacles" in stat_world_info
+        ), "no obstacle dict found in static world info"
+
+        for key, val in ob["obstacleSensor"].items():
+
+            s_temp = State(
+                pos=val["pose"]["position"],
+                vel=val["twist"]["linear"],
+                ang_p=val["pose"]["orientation"],
+                ang_v=val["twist"]["angular"],
+            )
+            self.objects[key] = Object(key, s_temp, "urdf")
+
+            try:
+                self.objects[key].obstacle = stat_world_info["obstacles"][key]
+            except KeyError as exc:
+                raise KeyError(
+                    f"the obstacle {key} was returned from the obstacle sensor but not from the given obstacles"
+                ) from exc
+
+    def setup_task(self, stat_world_info):
+        """ Setup Hypothesis graph initialised with the task. """
+
+        if self.robot.name == "point_robot":
+            self.hgraph = PointRobotHGraph(self.robot)
+        elif self.robot.name == "boxer_robot":
+            self.hgraph = BoxerRobotHGraph(self.robot)
+        else:
+            raise ValueError("unknown robot_type: {robot.name}")
+
+        task = []
+        for (obstacle, target) in stat_world_info["task"]:
+        
+            if obstacle == "robot":
+                object_temp = self.robot
+            else:
+                object_temp = self.objects[obstacle.name()]
+            
+            assert isinstance(target, State), f"the target should be a State object and is: {type(target)}"
+
+            assert isinstance(object_temp, Object), "not an ojbect delete this"
+            task.append((object_temp, target))
+
+
+        self.hgraph.setup(
+                task=task,
+                objects=self.objects)
+    
+        self.is_doing = IS_EXECUTING
 
     def update(self, ob):
         """
@@ -171,8 +192,10 @@ class RBrain:
                 warnings.warn("returning default action")
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
-
-            return self.default_action
+           
+            # TODO: why is the default action not 0,0
+            return np.array([0, 0])
+            # return self.default_action
 
         else:
             raise Exception("Unable to respond")

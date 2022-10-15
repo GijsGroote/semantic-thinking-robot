@@ -97,28 +97,21 @@ class Dashboard:
                         id="controller-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
-                    )
-                ], className="item"),
+                        )
+                    ], className="item"),
                 html.Div([
                     html.H4("Knowledge Graph"),
                     html.Iframe(
                         id="kGraph",
                         srcDoc=self.loading_html,
                         className="graph"
-                    ),
+                        ),
                     dcc.Interval(
                         id="kgraph-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
-                    )
-                ], className="item"),
-                html.Div([
-                    html.H4("open space "),
-                    html.Iframe(
-                        srcDoc=self.loading_html,
-                        className="graph"
-                    ),
-                ], className="item"),
+                        )
+                    ], className="item"),
                 html.Div([
                     html.H4("Occupancy Map"),
                     dcc.Graph(id="live-update-occupancy-map"),
@@ -126,8 +119,16 @@ class Dashboard:
                         id="occupancy-map-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
-                    )
-                ], className="item"),
+                        )
+                    ], className="item"),
+                html.Div([
+                    html.H4("open space "),
+                    html.Iframe(
+                        srcDoc=self.loading_html,
+                        className="graph"
+                        ),
+                    ], className="item"),
+
             ], className="container")
         ])
         register_callbacks(self.app)

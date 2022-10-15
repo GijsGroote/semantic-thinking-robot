@@ -14,7 +14,7 @@ class Edge:
         self.controller = controller
         self.dyn_model = "use a al dynamical model please"
         self.path = path
-        self.temp_target = State(pos=np.array(path[0][0:2]), ang_p=np.array([0, 0, path[0][2]]))
+        self.path_pointer = 0
         self.alpha = None
 
     def to_string(self):
@@ -23,6 +23,37 @@ class Edge:
         :return: String
         """
         return f"id: {self.iden}\nverb: {self.verb}"
+    
+    def completed(self) -> bool:
+        """ returns true if the path is completed, otherwise false. """
+        return self.path_pointer >= len(self.path)-1
+    
+    def increment_current_target(self):
+        """ updates toward the next current target from path. """
+        
+        if self.path_pointer < len(self.path)-1:
+            self.path_pointer += 1
+        
+        next_target = State(
+                pos=np.array(self.path[self.path_pointer][0:2]),
+                ang_p=np.array([0, 0, self.path[self.path_pointer][2]])
+                )
+
+        self.controller.set_target_state(next_target)
+
+        print(f"target reached, now setting {self.path[self.path_pointer]} as goal")
+
+
+    
+    def get_current_target(self) -> State:
+        """ returns the current target the controller tries to steer toward. """
+        temp = self.path[self.path_pointer]
+
+        return State(pos=np.array(temp[0:2]), ang_p=np.array([0, 0, temp[2]]))
+
+    def respond(self, state) -> np.ndarray:
+        """ respond to the current state. """
+        return self.controller.respond(state)
 
     @property
     def iden(self):
@@ -54,6 +85,7 @@ class Edge:
 
     @verb.setter
     def verb(self, val):
+        assert isinstance(val, str), f"verb should be of type str and is {type(val)}"
         self._verb = val
 
     @property

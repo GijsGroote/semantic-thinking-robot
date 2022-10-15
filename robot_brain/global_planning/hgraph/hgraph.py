@@ -18,9 +18,13 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 )
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
+
+from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.conf_set_node import ConfSetNode
 from robot_brain.global_planning.object_set_node import ObjectSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.configuration import Configuration
+from robot_brain.object import Object
 from robot_brain.global_planning.edge import Edge
 import math
 from robot_brain.state import State
@@ -32,7 +36,7 @@ class HGraph(Graph):
     """
     Hypothesis graph.
     """
-    def __init__(self, robot):
+    def __init__(self):
         Graph.__init__(self)
         
         self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
@@ -43,19 +47,11 @@ class HGraph(Graph):
         self.current_node = None
         self.target_state = None
         self.controller = None
+
         self.hypothesis = []
-        # todo: dependent on point_robot or boxer_robot, create an abstract class which handles that specific robot
-        # USE INHERITANCE!!
-        self.robot = robot
-        if robot.name == "point_robot":
-            self.robot_name = robot.name
+        self.hypothesis_pointer = 0
 
-        elif robot.name == "boxer_robot":
-            self.robot_name = robot.name
-
-        else:
-            raise ValueError("unknown robot_type: {robot.name}")
-       # TODO: task definition
+        # TODO: task definition
 
         # TODO: keep track of the current state we are in
 
@@ -65,27 +61,34 @@ class HGraph(Graph):
     
         if self.in_loop == IN_EXECUTION_LOOP:
 
-            current_edge = self.hypothesis[0]
+            current_edge = self.hypothesis[self.hypothesis_pointer]
+
             # check if the next target state is almost reached
-            if np.linalg.norm(current_state.get_xy_position() - current_edge.temp_target.get_xy_position()) < 0.5:
+            if np.linalg.norm(current_state.get_xy_position() - current_edge.get_current_target().get_xy_position()) < 0.5:
 
-                if len(current_edge.path) != 0:
+                if current_edge.completed():
+                    print(f"the length of hyptesis {len(self.hypothesis)} and the pointer {self.hypothesis_pointer}")
+                    if self.hypothesis_completed():
+                        print("a hypothesis was completed!@")
+                        self.get_target_node(current_edge.to).completed = True
+                        self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
+                        
+                        # TODO: check if all subtasks are completed
+                        # raise StopIteration("The path has been completed!")
 
-                    next_target = State(pos=np.array(current_edge.path[0][0:2]), ang_p=np.array([0, 0, current_edge.path[0][2]]))
-                    print(f"target reached, now setting {next_target} as goal")
-                    current_edge.temp_target = next_target
-                    current_edge.controller.set_target_state(next_target)
-                    current_edge.path = current_edge.path[1:]
-                            
+                    else:
+                        self.increment_hypothesis_pointer()
+
                 else:
-                    print("controller is done!!")
-                    self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
-                    raise StopIteration("The path has been completed allright")
+                    current_edge.increment_current_target()
 
-            return current_edge.controller.respond(current_state)
+            return current_edge.respond(current_state)
 
         elif self.in_loop == IN_SEARCH_HYPOTHESIS_LOOP:
-            return self.search_hypothesis()
+            print("searching a new hypothesis")
+            self.search_hypothesis()
+
+            return np.zeros(2)
         else:
             raise ValueError(f"HGraph in an unknown loop: {self.in_loop}")
 
@@ -94,8 +97,8 @@ class HGraph(Graph):
         # that while loop here
 
         # while len(subtasks) != 0:
-
-            # find a start and target node to connect
+        
+        # find a start and target node to connect
 
             # check knowledge graph for information
 
@@ -110,52 +113,125 @@ class HGraph(Graph):
             # if first action is planned
             
             # go to execution state
- 
-        (self.robot, robot_target) = self.task[0] # that is the first subtask in the list
-        path = self.estimate_robot_path_existance(robot_target, self.objects)
-       
-        # create controller
-        self.target_state = robot_target
-        self.create_controller()
-        # path from occu graph
-        edge = Edge(iden = 1,
-                source = "start",
-                to = "target",
-                verb = "driving",
-                controller = self.controller,
-                path = path,
-                )
-        
-        self.hypothesis = [edge]
 
+        # (start_node, target_node) = self.find_subtask()
+        #
+        # print(f"found 2 nodes, connect iden {start_node}, to {target_node}")
+        #
+        # self.add_edge(Edge("identifyer", start_node.iden, target_node.iden, "drivnig?", []))
+        #  
+        # # Manually set that target to completed
+        # target_node.completed = True
+        #
+        #
+        start_node = ObjectSetNode(100, "temp_noide", [Object("naaam", State(), "urdf")])
+        hypothesis = []
+        
+        # for target in self.target_nodes:
+        #     print(f"all nodes names : {target.name}")
+        while start_node.name != self.robot.name:
+
+            (start_node, target_node) = self.find_subtask()
+            
+            print(f"This should be robot iden {start_node.iden}, to {target_node.iden}")
+
+            path = self.estimate_robot_path_existance(target_node.object_set[0].state, self.objects)
+            print(f"the path {path}")
+            controller = self.create_controller()
+            edge = Edge("iden", start_node.iden, target_node.iden, "driving", controller, path=path)
+        
+            self.add_edge(edge)
+            hypothesis.append(edge)
+
+        print(f"found a hypothesis which drives to {self.get_target_node(edge.to).object_set[0].state.pos}")
+        self.hypothesis = hypothesis
+        
+
+        self.visualise(path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html")
         self.in_loop = IN_EXECUTION_LOOP
 
+        
+
+    def hypothesis_completed(self) -> bool:
+        """ returns true if the hypothesis is completed, otherwise false. """
+        return self.hypothesis_pointer >= len(self.hypothesis)-1
+
+    def increment_hypothesis_pointer(self):
+        """ updates toward the next edge in the hypothesis. """
+        if self.hypothesis_pointer < len(self.hypothesis)-1:
+            self.hypothesis_pointer += 1
+
     def setup(self, task, objects):
-        """ create start and target nodes
-        TODO: this docstring """
+        """ create start and target nodes. """
+
         self.task = task
         self.objects = objects
-        print(f"objects from setup in hgraph {self.objects}")
+
+        # always add robot as start_state
+        self.add_start_node(ObjectSetNode(1, self.robot.name, [self.robot]))
+
+        for (object_temp, target) in task:
+            if object_temp != self.robot:
+                self.add_start_node(ObjectSetNode(self.unique_iden(), object_temp.name, [object_temp]))
+
+            self.add_target_node(ObjectSetNode(self.unique_iden(), object_temp.name+"_target", [Object(object_temp.name, target, "urdf")]))
+
+        self.visualise(path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html")
+
         self.search_hypothesis()
-        # Temp hgraph here please
-        # self.add_node(ConfSetNode(1, "P", []))
-        # self.add_node(ConfSetNode(2, "Pi", []))
-        # self.add_node(ConfSetNode(3, "Pis", []))
-        #
-        # self.add_start_node(ObjectSetNode(4, "P", []))
-        # self.add_node(ObjectSetNode(5, "P", []))
-        #
-        # self.add_edge(Edge("id", 2, 3, "pid", "controller"))
-        # self.add_edge(Edge("id", 5, 1, "pid", "controller"))
-        # self.add_edge(Edge("id", 3, 1, "pid", "controller"))
-        # self.add_edge(Edge("id", 3, 3, "EMPPI", "controller"))
-        # self.add_edge(Edge("id", 4, 5, "mpc", "controller"))
-        # self.visualise(
-        #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html"
-        # )
+       
         
-        # TODO: create occupancy map, and return controller
+    def unique_iden(self) -> int:
+        """ return a unique identifyer. """
+        iden = 0
+        existing_idens = []
+
+        for node in self.nodes:
+            existing_idens.append(node.iden)
+
+        while iden in existing_idens:
+            iden += 1
+
+        return iden
+
+
+    def find_subtask(self) -> (Node, Node):
+        """ returns 2 nodes in the hgraph to connect if these exist. """
         
+        unfinished_target_nodes = [target_node for target_node in self.target_nodes if not target_node.completed]
+        
+        obstacle_target_node = None
+        robot_target_node = None
+
+        for unfinished_target_node in unfinished_target_nodes:
+            if unfinished_target_node.name == self.robot.name + "_target":
+                robot_target_node = unfinished_target_node
+            else:
+                obstacle_target_node = unfinished_target_node
+
+        if obstacle_target_node is None:
+            if robot_target_node is None:
+                raise StopIteration("No more subtasks, No Solution Found!")
+            else:
+                # TODO A better check to see if start and target belong to the same object --> compare the  object itself
+                # next line assumes a start_node.name + 7 letters == target_node.name, notice "_target" are 7 letters
+                start_node = [start_node for start_node in self.start_nodes if start_node.name  == robot_target_node.name[0:-7]][0]
+                final_target_node = robot_target_node
+        else:
+            start_node = [start_node for start_node in self.start_nodes if start_node.name == obstacle_target_node.name[0:-7]][0]
+            final_target_node = obstacle_target_node
+
+
+        edge_to_target_list = [edge for edge in self.edges if edge.to == final_target_node.iden]
+        target_node = final_target_node
+        
+        # find iden of node point toward target, but nothing pointing toward itself
+        while len(edge_to_target_list) != 0:
+            target_node = self.get_target_node(edge_to_target_list[0].to)
+            edge_to_target_list = [edge for edge in self.edges if edge.to == edge_to_target_list[0].source]
+
+        return (start_node, target_node)
+
 
     @abstractmethod
     def estimate_robot_path_existance(self, target_state, objects):
@@ -174,9 +250,9 @@ class HGraph(Graph):
             )
             return dx_next
 
-        controller.setup(dyn_model, self.robot.state, self.target_state)
+        controller.setup(dyn_model, self.robot.state, self.robot.state)
         
-        self.controller = controller
+        return controller
 
 
     def plot_occupancy_graph(self, save=True):
@@ -216,7 +292,7 @@ class HGraph(Graph):
             if node == self.current_node:
                 continue
             net.add_node(node.iden,
-                    title = "Starting Node:<br>" + node.to_string() + "<br>",
+                    title = f"Starting Node: {node.iden}<br>{node.to_string()}<br>",
                     x=1.0,
                     y=1.0,
                     label = node.name,
@@ -236,7 +312,7 @@ class HGraph(Graph):
             if node == self.current_node:
                 continue
             net.add_node(node.iden,
-                    title = "Target Node:<br>" + node.to_string() + "<br>",
+                    title = f"Target Node: {node.iden}<br>{node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
                     label = node.name,
@@ -254,7 +330,7 @@ class HGraph(Graph):
             if node == self.current_node:
                 continue
             net.add_node(node.iden,
-                    title = "Node:<br>" + node.to_string() + "<br>",
+                    title = f"Node: {node.iden}<br>{node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
                     color= {
@@ -270,7 +346,7 @@ class HGraph(Graph):
 
         if self.current_node is not None:
             net.add_node(self.current_node.iden,
-                    title = "Current node:<br>" + self.current_node.to_string() + "<br>",
+                    title = f"Current node: {self.current_node.iden}<br>{self.current_node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
                     color= {
@@ -303,9 +379,20 @@ class HGraph(Graph):
         # net.show_buttons(filter_=['physics'])
 
         if path is None:
+            print("now visualising the plot")
             net.show("delete.html")
         else:
             net.write_html(path)
+    
+    def get_target_node(self, iden) -> Node:
+        """ return target node by id, raises error if the identifyer does not exist. """
+        
+        target_node_list = [node for node in self.target_nodes if node.iden  == iden]
+
+        if len(target_node_list) == 0:
+            raise IndexError(f"a target node with identifyer {iden} does not exist.")
+        else:
+            return target_node_list[0]
 
     def add_node(self, node):
         if isinstance(node, ChangeOfConfSetNode):
@@ -315,9 +402,23 @@ class HGraph(Graph):
     def add_start_node(self, node):
         if not isinstance(node, ObjectSetNode):
             raise TypeError("ObjectSetNode's are only allowed as starting node in HGraph")
+        self.add_node(node)
         self.start_nodes.append(node)
 
     def add_target_node(self, node):
-        if not isinstance(node, ConfSetNode):
-            raise TypeError("ConfSetNode's are only allowed as target node in HGraph")
+        if isinstance(node, ChangeOfConfSetNode):
+            raise TypeError("ChangeOfConfSetNode's are not allowed as target node in HGraph")
+
+        # Configurations are perhaps not needed. Work with states, any unknown position, orientation is set to 0, 15 oct, Gijs Groote
+        # if not isinstance(node, ConfSetNode):
+        #     raise TypeError("ConfSetNode's are only allowed as target node in HGraph")
+
+        self.add_node(node)
         self.target_nodes.append(node)
+
+        # todo: dependent on point_robot or boxer_robot, create an abstract class which handles that specific robot
+
+    @abstractmethod
+    def robot(self):
+        pass
+
