@@ -104,6 +104,10 @@ class RBrain:
             )
             self.objects[key] = Object(key, s_temp, "urdf")
 
+            # pretent that obstacles are unmovable, falsely mislabeled
+            # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
+            self.objects[key].type = "unmovable"
+
             try:
                 self.objects[key].obstacle = stat_world_info["obstacles"][key]
             except KeyError as exc:

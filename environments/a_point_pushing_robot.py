@@ -26,8 +26,8 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    # robot_type = "pointRobot-vel-v7"
-    robot_type = "boxerRobot-vel-v7"
+    robot_type = "pointRobot-vel-v7"
+    # robot_type = "boxerRobot-vel-v7"
     env = gym.make(robot_type, dt=DT, render=True)
 
     action = np.zeros(env.n())
@@ -61,18 +61,18 @@ def main(conn=None):
         "robot_type": robot_type,
         "obstacles_in_env": True,
         "default_action": np.array(np.zeros(2)),
-        "task": [("robot", State(pos=np.array([-3.3212, 3.80, 0]))),# (box, State(pos=np.array([-2.3, -3.80, 0]))),
-            ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
-            ("robot", State(pos=np.array([3,0,0]))),
-            ("robot", State(pos=np.array([1, 2.2, 0]))),
-            ],
-        # "task": [("robot", State(pos=np.array([1.12, 1, 0]))),
-        #     ("robot", State(pos=np.array([-1.3212, 0, 0]))),
-        #     ("robot", State(pos=np.array([1.3212, 3, 0]))),
-        #     ("robot", State(pos=np.array([-3.3212, -3, 0]))),
-        #     ("robot", State(pos=np.array([-1.3212, 5, 0]))),
-        #     ("robot", State(pos=np.array([0, -1.2, 0]))),
+        # "task": [("robot", State(pos=np.array([-3.3212, 3.80, 0]))),# (box, State(pos=np.array([-2.3, -3.80, 0]))),
+        #     ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
+        #     ("robot", State(pos=np.array([3,0,0]))),
+        #     ("robot", State(pos=np.array([1, 2.2, 0]))),
         #     ],
+        "task": [("robot", State(pos=np.array([1.12, 3, 0]))),
+            ("robot", State(pos=np.array([-3.3212, 3, 0]))),
+            ("robot", State(pos=np.array([1.3212, 4, 0]))),
+            ("robot", State(pos=np.array([3.3212, -3, 0]))),
+            ("robot", State(pos=np.array([-1.3212, 5, 0]))),
+            ("robot", State(pos=np.array([0, -1.2, 0]))),
+            ],
         "obstacles": obstacles
     }, ob)
 

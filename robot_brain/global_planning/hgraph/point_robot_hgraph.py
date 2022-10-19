@@ -32,21 +32,17 @@ class PointRobotHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, objects):
 
-        occ_graph = CircleRobotOccupancyMap(cell_size=1,
+        occ_graph = CircleRobotOccupancyMap(cell_size=0.5,
                 grid_x_length= 10,
                 grid_y_length= 12,
                 objects= objects,
                 robot_cart_2d= self.robot.state.get_xy_position(),
                 robot_radius= 0.4)
         
-        # temp fix for negative angles
-        start = self.robot.state.get_2d_pose()
-        if self.robot.state.get_2d_pose()[2] < 0:
-            start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi
 
         occ_graph.setup()
         occ_graph.visualise()
-        return occ_graph.shortest_path(start, target_state.get_2d_pose())
+        return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
     def create_mpc_driving_controller(self):
 

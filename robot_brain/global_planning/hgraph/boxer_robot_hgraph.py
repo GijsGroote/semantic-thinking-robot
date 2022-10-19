@@ -30,7 +30,7 @@ class BoxerRobotHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, objects):
 
-        occ_graph = RectangularRobotOccupancyMap(1, 15, 15, objects, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
+        occ_graph = RectangularRobotOccupancyMap(0.5, 15, 15, objects, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()
