@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
     """ returns the minimal distance from a point to a line.
@@ -105,3 +106,12 @@ def orientation(p: np.ndarray, q: np.ndarray, r: np.ndarray) -> int:
     else:
         # Collinear orientation
         return 0
+
+def to_interval_zero_to_two_pi(val: float) -> float:
+    """ returns the angle in interval [0, 2*pi). """
+    while val >= 2*math.pi:
+        val -= 2*math.pi
+    while val < 0:
+        val += 2*math.pi
+    return val
+

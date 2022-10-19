@@ -6,7 +6,13 @@ import math
 import plotly.graph_objects as go
 import warnings
 
-from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle, do_intersect
+from helper_functions.geometrics import (
+        minimal_distance_point_to_line,
+        point_in_rectangle,
+        do_intersect,
+        to_interval_zero_to_two_pi,
+        )
+
 from robot_brain.object import Object
 from robot_brain.global_variables import FIG_BG_COLOR
 
@@ -199,11 +205,20 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
 
     def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
+        # TODO for this method: additionally plan around unknown obstacles with a default flag
+        # detect if planning goes through a movable obstacle.
         """ use the Dijkstra algorithm to find the shortest path. """ 
         
+        # convert angles to inteval [0, 2*pi) 
+        pose_2d_start[2] = to_interval_zero_to_two_pi(pose_2d_start[2])
+        pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
+
+        assert self.occupancy(pose_2d_start) != 1, "the start position is in obstacle space"
+        assert self.occupancy(pose_2d_target) != 1, "the target position is in obstacle space"
+
         # convert position to indices on the grid
-        p_idx_start = (x_idx_start, y_idx_start, orien_idx_start) = self.pose_2d_to_p_idx(pose_2d_start)
-        p_idx_target = (x_idx_target, y_idx_target, orien_idx_target) = self.pose_2d_to_p_idx(pose_2d_target)
+        p_idx_start = self.pose_2d_to_p_idx(pose_2d_start)
+        p_idx_target = self.pose_2d_to_p_idx(pose_2d_target)
 
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
         visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
@@ -242,18 +257,16 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                         if visited[p_idx] != 2:
 
                             # path cannot go through obstacles
-                            # TODO: Do you want to plan around everything, go through
-
-                            # if self.p_idx_to_occupancy(*p_idx) != 1:
-
-                            # above: Plan around obstacle space, below plan around everything
-                            if self.p_idx_to_occupancy(*p_idx) == 0:
+                            if self.p_idx_to_occupancy(*p_idx) != 1:
+                            # above: Plan around obstacle space, below plan around everything which is not free space
+                            # if self.p_idx_to_occupancy(*p_idx) == 0:
 
                                 # put cell in the queue if not already in there
                                 if visited[p_idx] == 0:
                                     visited[p_idx] = 1 
                                     queue.append(p_idx)
-                                
+                               
+                                # update cost and previous cell is a lower cost to a cell is found
                                 temp_cost = cost[cell_pose_temp] + np.linalg.norm(cell_pose_temp-np.array(p_idx))
                                 if temp_cost < cost[p_idx]:
 
@@ -262,26 +275,28 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
         shortest_path_reversed = []
         cell_pose_temp = p_idx_target
-       
-        # find shortest path from target to start
+        
+        # find path from target to start
         while not all(x == y for x, y in zip(cell_pose_temp, p_idx_start)):
-
-            shortest_path_reversed.append(previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :])
             cell_pose_temp = previous_cell[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2], :]
-
-        # reverse list and convert to 2D positions
+            shortest_path_reversed.append(cell_pose_temp)
+        
+        # remove start position
         if len(shortest_path_reversed) != 0:
             shortest_path_reversed.pop()
 
         shortest_path = [tuple(pose_2d_start)]
 
+        # reverse list and convert to 2D poses
         while len(shortest_path_reversed) != 0:
             shortest_path.append(self.p_idx_to_pose_2d(*shortest_path_reversed.pop()))
+
         shortest_path.append(tuple(pose_2d_target))
 
         return shortest_path
 
     def pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> (int, int, int):
+
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
         raises an error if the 2D pose is outside of the grid.
         """

@@ -1,4 +1,9 @@
 import warnings
+# import required libraries
+import traceback
+import sys
+
+
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -57,6 +62,9 @@ class State:
             if value.shape[0] == 3:
                 self._pos = value
             elif value.shape[0] == 2:
+                print('are you printed a lot?') 
+                # traceback.print_exception(*sys.exc_info())
+
                 warnings.warn(f"shape of position is: {value.shape}, and should be (3,)")
                 self._pos = np.array([value[0], value[1], 0])
             else:

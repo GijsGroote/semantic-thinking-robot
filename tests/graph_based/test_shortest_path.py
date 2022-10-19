@@ -3,25 +3,124 @@ import numpy as np
 import math
 
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
+
+from tests.graph_based.obstacle_data.boxes import box
+from tests.graph_based.obstacle_data.spheres import sphere
+from tests.graph_based.obstacle_data.cylinders import cylinder
+from robot_brain.object import Object
+from robot_brain.state import State
 
 
-# THis cannot be called a test TODO: create actual shortest path test
-def test_shortest_path():
-    occ_map = RectangularRobotOccupancyMap(1, 10, 10, {}, np.array([0,0]),
-            n_orientations=1, robot_x_length=1, robot_y_length=1)
-
-    print("starting to find that shortest path:")
-    path = occ_map.shortest_path(np.array([-4.8, -4.894, np.pi/2-1]), np.array([4.1, 4 ,0]))
-    print("printing the path found")
-    print(path)
-    print(occ_map.occupancy(np.array([-3, 4, 1])))
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, 0]))
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, math.pi/2]))
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, math.pi]))
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, 1.5*math.pi]))
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, math.pi*2-0.001]))
-
-    # occ_map.pose_2d_to_cell_idx(np.array([-2, -2, math.pi*2]))
-
-    assert True 
+def test_shortest_path_rect():
+    occ_map = RectangularRobotOccupancyMap(
+            cell_size=1,
+            grid_x_length=10,
+            grid_y_length=10,
+            objects={},
+            robot_cart_2d=np.array([0,0]),
+            n_orientations=8,
+            robot_x_length=1,
+            robot_y_length=1)
     
+    expected_paths = []
+    starts = []
+    targets = []
+
+    # from middle to south east corner
+    expected_paths.append([(-0.1,-0.1,0), (0.5,0.5,0), (1.5,1.5,0), (2.5,2.5,0), (3.3,3.2,0)])
+    starts.append((-0.1,-0.1,0))
+    targets.append((3.3, 3.2, 0))
+
+     # from north west corner to north east corner
+    expected_paths.append([(-4.1,-4.1,0), (-4.5,-3.5,0), (-4.5,-2.5,0), (-4.5,-1.5,0),
+        (-4.5,-0.5,0),(-4.5,0.5,0),(-4.5,1.5,0),(-4.5,2.5,0), (-4.5,3.5,0), (-4.3, 4.2, 0)])
+    starts.append((-4.1,-4.1,0))
+    targets.append((-4.3, 4.2, 0))
+    # Turning to 3*pi/4
+    expected_paths.append([(0, 0, 2*math.pi-0.2), (0.5, 0.5, math.pi/4), (0.5, 0.5, math.pi/2), (0, 0, 3*math.pi/4+0.03)])
+    starts.append((0, 0, -0.2))
+    targets.append((0, 0, 3*math.pi/4+0.03))
+    
+    for (expected_path, start, target) in zip(expected_paths, starts, targets):
+        path = occ_map.shortest_path(np.array(start), np.array(target))
+        assert path == expected_path
+
+def test_shortest_path_circ():
+    occ_map = CircleRobotOccupancyMap(
+            cell_size=1,
+            grid_x_length=10,
+            grid_y_length=10,
+            objects={},
+            robot_cart_2d=np.array([0,0]),
+            robot_radius=1)
+    
+    expected_paths = []
+    starts = []
+    targets = []
+
+    # from middle to south east corner
+    expected_paths.append([(-0.1,-0.1), (0.5,0.5), (1.5,1.5), (2.5,2.5), (3.3,3.2)])
+    starts.append((-0.1,-0.1))
+    targets.append((3.3, 3.2))
+
+     # from north west corner to north east corner
+    expected_paths.append([(-4.1,-4.1), (-4.5,-3.5), (-4.5,-2.5), (-4.5,-1.5),
+        (-4.5,-0.5),(-4.5, 0.5),(-4.5,1.5),(-4.5,2.5), (-4.5,3.5), (-4.3, 4.2)])
+    starts.append((-4.1,-4.1))
+    targets.append((-4.3, 4.2 ))
+    
+    for (expected_path, start, target) in zip(expected_paths, starts, targets):
+        path = occ_map.shortest_path(np.array(start), np.array(target))
+        assert path == expected_path
+
+
+def test_shortest_path_with_obstacles():
+    objects = {}
+
+    objects[box.name()] = Object(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), "urdf")
+    objects[box.name()].type = "unmovable"
+    objects[box.name()].obstacle = box
+    objects[sphere.name()] = Object(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), "urdf")
+    objects[sphere.name()].type = "unmovable"
+    objects[sphere.name()].obstacle = sphere
+    objects[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), "urdf")
+    objects[cylinder.name()].type = "unmovable"
+    objects[cylinder.name()].obstacle = cylinder
+
+    occ_map = RectangularRobotOccupancyMap(
+            cell_size=2,
+            grid_x_length=10,
+            grid_y_length=10,
+            objects=objects,
+            robot_cart_2d=np.array([0,0]),
+            n_orientations=8,
+            robot_x_length=1,
+            robot_y_length=1)
+
+    occ_map.setup()
+
+    expected_paths = []
+    starts = []
+    targets = []
+
+    # from north west corner to north east corner
+    expected_paths.append([(3, -2, 0),
+        (2.0, -2.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (2.0, 2.0, 0.0),
+        (3, 2, 0)])
+
+    starts.append((3, -2, 0))
+    # targets.append((3, 0, 0))
+    targets.append((3, 2, 0))
+
+    for (expected_path, start, target) in zip(expected_paths, starts, targets):
+        print(expected_path)
+        path = occ_map.shortest_path(np.array(start), np.array(target))
+        print(path)
+        print()
+        assert path == expected_path
+
+
+    assert True

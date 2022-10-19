@@ -30,26 +30,32 @@ class Edge:
     
     def increment_current_target(self):
         """ updates toward the next current target from path. """
-        
+
         if self.path_pointer < len(self.path)-1:
             self.path_pointer += 1
-        
+
+        if  len(self.path[self.path_pointer]) == 3:
+            orien = self.path[self.path_pointer][2]
+        else:
+            orien = 0
+
         next_target = State(
-                pos=np.array(self.path[self.path_pointer][0:2]),
-                ang_p=np.array([0, 0, self.path[self.path_pointer][2]])
+                pos=np.array([self.path[self.path_pointer][0], self.path[self.path_pointer][1], 0]),
+                ang_p=np.array([0, 0, orien])
                 )
 
         self.controller.set_target_state(next_target)
 
         print(f"target reached, now setting {self.path[self.path_pointer]} as goal")
 
-
-    
     def get_current_target(self) -> State:
         """ returns the current target the controller tries to steer toward. """
-        temp = self.path[self.path_pointer]
-
-        return State(pos=np.array(temp[0:2]), ang_p=np.array([0, 0, temp[2]]))
+        if len(self.path[self.path_pointer]) == 3:
+            orien = self.path[self.path_pointer][2]
+        else:
+            orien = 0
+        return State(pos=np.append(self.path[self.path_pointer][0:2], [[0]]),
+                ang_p=np.array([0, 0, orien]))
 
     def respond(self, state) -> np.ndarray:
         """ respond to the current state. """

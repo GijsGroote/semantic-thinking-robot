@@ -32,7 +32,12 @@ class PointRobotHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, objects):
 
-        occ_graph = CircleRobotOccupancyMap(1, 10, 12, objects, self.robot.state.get_xy_position(), 1, 0.8)
+        occ_graph = CircleRobotOccupancyMap(cell_size=1,
+                grid_x_length= 10,
+                grid_y_length= 12,
+                objects= objects,
+                robot_cart_2d= self.robot.state.get_xy_position(),
+                robot_radius= 0.4)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()
@@ -40,7 +45,28 @@ class PointRobotHGraph(HGraph):
             start[2] = self.robot.state.get_2d_pose()[2]+2*math.pi
 
         occ_graph.setup()
-        self.path = occ_graph.shortest_path(start, target_state.get_2d_pose())
+        occ_graph.visualise()
+        return occ_graph.shortest_path(start, target_state.get_2d_pose())
+
+    def create_mpc_driving_controller(self):
+
+
+        print('creating an mpc controller from inside the pointrobot thingy')
+        controller = Mpc()
+        # dyn_model = Dynamics()
+        # dyn_model.set_boxer_model()
+        def dyn_model(x, u):
+            dx_next = vertcat(
+                x[0] + 0.05 *  u[0],
+                x[1] + 0.05 *  u[1],
+                x[2],
+            )
+            return dx_next
+
+        controller.setup(dyn_model, self.robot.state, self.robot.state)
+        
+        return controller
+
 
     def robot(self):
         # TODO: sanitize and make private

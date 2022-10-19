@@ -26,13 +26,15 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    # env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
-    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
+    # robot_type = "pointRobot-vel-v7"
+    robot_type = "boxerRobot-vel-v7"
+    env = gym.make(robot_type, dt=DT, render=True)
+
+    action = np.zeros(env.n())
 
     pos0 = np.array([1.0, 0.1])
     vel0 = np.array([0.0, 0.0])
     env.reset(pos=pos0, vel=vel0)
-    default_action = np.array(np.zeros(env.n()))
 
     n_steps = 10000
 
@@ -40,9 +42,9 @@ def main(conn=None):
             sphere.name(): sphere,
             cylinder.name(): cylinder}
 
+
     # add obstacles
     env.add_obstacle(box)
-    
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
@@ -51,35 +53,38 @@ def main(conn=None):
     sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
     env.add_sensor(sensor)
 
-    ob, reward, done, info = env.step(default_action)
+    ob, reward, done, info = env.step(action)
 
     brain = RBrain()
     brain.setup({
         "dt": DT,
-        "robot_type": "boxer_robot",
+        "robot_type": robot_type,
         "obstacles_in_env": True,
-        "default_action": default_action,
+        "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([-3.3212, 3.80, 0]))),# (box, State(pos=np.array([-2.3, -3.80, 0]))),
             ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
             ("robot", State(pos=np.array([3,0,0]))),
             ("robot", State(pos=np.array([1, 2.2, 0]))),
             ],
-        # "target_state": State(pos=np.array([-0.3212, -5.80, 0])),
+        # "task": [("robot", State(pos=np.array([1.12, 1, 0]))),
+        #     ("robot", State(pos=np.array([-1.3212, 0, 0]))),
+        #     ("robot", State(pos=np.array([1.3212, 3, 0]))),
+        #     ("robot", State(pos=np.array([-3.3212, -3, 0]))),
+        #     ("robot", State(pos=np.array([-1.3212, 5, 0]))),
+        #     ("robot", State(pos=np.array([0, -1.2, 0]))),
+        #     ],
         "obstacles": obstacles
     }, ob)
 
     brain.update(ob)
-    action = default_action
 
     for i in range(n_steps):
-
         if user_input_mode:
             conn.send({"request_action": True, "kill_child": False, "ob": ob})
             keyboard_data = conn.recv()
             action[0:2] = keyboard_data["action"]
         else:
             action[0:2] = brain.respond()
-
 
         ob, reward, done, info = env.step(action)
         # print(ob["joint_state"]["position"])

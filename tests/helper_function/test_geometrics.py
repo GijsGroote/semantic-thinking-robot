@@ -1,10 +1,13 @@
 import numpy as np
+import math
 import pytest
+
 
 from helper_functions.geometrics import (
         minimal_distance_point_to_line,
         point_in_rectangle,
         do_intersect,
+        to_interval_zero_to_two_pi,
         )
 
 def test_do_overlap():
@@ -45,4 +48,9 @@ def test_minimal_distance_point_to_line():
     for (answer, p, lp1, lp2) in data:
         assert answer == pytest.approx(minimal_distance_point_to_line(p, lp1, lp2))
 
-
+def test_to_zero_to_two_pi():
+    assert to_interval_zero_to_two_pi(-math.pi-1) == math.pi-1
+    assert to_interval_zero_to_two_pi(0) == 0
+    assert to_interval_zero_to_two_pi(math.pi) == math.pi
+    assert to_interval_zero_to_two_pi(2*math.pi) == 0
+    assert to_interval_zero_to_two_pi(3*math.pi) == math.pi

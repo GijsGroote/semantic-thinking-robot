@@ -122,18 +122,22 @@ class CircleRobotOccupancyMap(OccupancyMap):
         return self.grid_map[x_idx, y_idx]
     
     def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
+        """ Dijkstra shortest path algorithm. """
+
+        assert self.occupancy(cart_2d_start) != 1, "the start position is in obstacle space"
+        assert self.occupancy(cart_2d_target) != 1, "the target position is in obstacle space"
 
         # convert position to indices on the grid
-        c_idx_start = (x_idx_start, y_idx_start) = self.cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
-        c_idx_target = (x_idx_target, y_idx_target) = self.cart_2d_to_c_idx(cart_2d_target[0], cart_2d_target[1])
+        c_idx_start =  self.cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
+        c_idx_target = self.cart_2d_to_c_idx(cart_2d_target[0], cart_2d_target[1])
 
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
-        visited = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1])).astype(int)
+        visited = np.zeros(self.grid_map.shape).astype(int)
         previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], 2)).astype(int)
         
         # set all cost to maximal size, except for the starting cell position
         cost = sys.maxsize*np.ones(self.grid_map.shape)
-        cost[x_idx_start, y_idx_start] = 0
+        cost[c_idx_start] = 0
         
         queue = []
         queue.append(c_idx_start)
@@ -144,7 +148,7 @@ class CircleRobotOccupancyMap(OccupancyMap):
             c_idx_temp = queue.pop(0)
             
             # set c_idx_temp to visited
-            visited[c_idx_temp[0], c_idx_temp[1]] = 2
+            visited[c_idx_temp] = 2
 
             x_low = max(c_idx_temp[0]-1, 0)
             x_high = min(c_idx_temp[0]+1, x_max-1)
@@ -161,13 +165,14 @@ class CircleRobotOccupancyMap(OccupancyMap):
                         if visited[c_idx] != 2:
 
                             # path cannot go through obstacles
-                            if self.c_idx_to_occupancy(x_idx, y_idx) != 1:
+                            if self.c_idx_to_occupancy(*c_idx) != 1:
 
                                 # put cell in the queue if not already in there
                                 if visited[c_idx] == 0:
                                     visited[c_idx] = 1 
                                     queue.append(c_idx)
-                                
+                               
+                                # update cost and previous cell if lower cost is found 
                                 temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
                                 if temp_cost < cost[c_idx]:
 
@@ -180,8 +185,8 @@ class CircleRobotOccupancyMap(OccupancyMap):
         # find shortest path from target to start
         while not all(x == y for x, y in zip(c_idx_temp, c_idx_start)):
 
-            shortest_path_reversed.append(previous_cell[c_idx_temp[0], c_idx_temp[1], :])
             c_idx_temp = previous_cell[c_idx_temp[0], c_idx_temp[1], :]
+            shortest_path_reversed.append(c_idx_temp)
 
         # reverse list and convert to 2D cartesian position
         if len(shortest_path_reversed) != 0:
@@ -191,6 +196,7 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
         while len(shortest_path_reversed) != 0:
             shortest_path.append(self.c_idx_to_cart_2d(*shortest_path_reversed.pop()))
+
         shortest_path.append(tuple(cart_2d_target))
 
         return shortest_path

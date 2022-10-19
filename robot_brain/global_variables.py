@@ -1,7 +1,7 @@
 DT = 0.02
 
 # dashboard global variables
-CREATE_SERVER_DASHBOARD =True
+CREATE_SERVER_DASHBOARD = False
 PLOT_CONTROLLER = False
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"

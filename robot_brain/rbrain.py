@@ -46,26 +46,17 @@ class RBrain:
     def setup(self, stat_world_info, ob):
         # create robot
         if "robot_type" in stat_world_info:
-            if (
-                stat_world_info["robot_type"] == "boxer_robot"
-                or stat_world_info["robot_type"] == "point_robot"
-            ):
+            # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
+            # that way I could access the robot's dimensions more easily
 
-                # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
-                # that way I could access the robot's dimensions more easily
-
-                self.robot = Object(
-                    stat_world_info["robot_type"],
-                    State(
-                        pos=ob["joint_state"]["position"],
-                        vel=ob["joint_state"]["velocity"],
-                    ),
-                    "urdf",
-                )
-            else:
-                raise ValueError(
-                    "only robot type 'boxer_robot' and 'point_robot' are allowed"
-                )
+            self.robot = Object(
+                stat_world_info["robot_type"],
+                State(
+                    pos=ob["joint_state"]["position"],
+                    vel=ob["joint_state"]["velocity"],
+                ),
+                "urdf",
+            )
         else:
             warnings.warn("robot type is not set")
 
@@ -76,6 +67,7 @@ class RBrain:
 
         if "default_action" in stat_world_info.keys():
             self.default_action = stat_world_info["default_action"]
+
 
         if "obstacles_in_env" in stat_world_info:
             self.obstacles_in_env = stat_world_info["obstacles_in_env"]
@@ -122,25 +114,27 @@ class RBrain:
     def setup_task(self, stat_world_info):
         """ Setup Hypothesis graph initialised with the task. """
 
-        if self.robot.name == "point_robot":
+        if stat_world_info["robot_type"] == "pointRobot-vel-v7" or stat_world_info["robot_type"] == "pointRobot-acc-v7":
             self.hgraph = PointRobotHGraph(self.robot)
-        elif self.robot.name == "boxer_robot":
+
+        elif stat_world_info["robot_type"] == "boxerRobot-vel-v7" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
             self.hgraph = BoxerRobotHGraph(self.robot)
+
         else:
-            raise ValueError("unknown robot_type: {robot.name}")
+            raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
         task = []
-        for (obstacle, target) in stat_world_info["task"]:
+        for (obstacle_key, target) in stat_world_info["task"]:
         
-            if obstacle == "robot":
-                object_temp = self.robot
+            if obstacle_key == "robot":
+                obstacle = self.robot
             else:
-                object_temp = self.objects[obstacle.name()]
+                obstacle = self.objects[obstacle_key.name()]
             
             assert isinstance(target, State), f"the target should be a State object and is: {type(target)}"
+            assert isinstance(obstacle, Object), f"the obstacle should be of type object and in {type(obstacle)}"
 
-            assert isinstance(object_temp, Object), "not an ojbect delete this"
-            task.append((object_temp, target))
+            task.append((obstacle, target))
 
 
         self.hgraph.setup(
@@ -159,7 +153,7 @@ class RBrain:
         # TODO: make this to better thingy if that is there
         pos = ob["joint_state"]["position"][0:2]
         vel = ob["joint_state"]["velocity"][0:2]
-
+        
         self.robot.state.pos = np.array([pos[0], pos[1], 0])
         self.robot.state.vel = np.array([vel[0], vel[1], 0])
 
@@ -187,15 +181,14 @@ class RBrain:
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
                     print(f"Stop with executing, because {exc}")
+                    print('HEHERHE')
                     return self.default_action
             else:
                 warnings.warn("returning default action")
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
            
-            # TODO: why is the default action not 0,0
-            return np.array([0, 0])
-            # return self.default_action
+            return self.default_action
 
         else:
             raise Exception("Unable to respond")
