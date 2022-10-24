@@ -1,12 +1,12 @@
-from robot_brain.global_variables import FIG_BG_COLOR, DT
-
 import numpy as np
 from numpy import dstack
 from plotly.subplots import make_subplots
 from pyarrow import feather
 import plotly.graph_objects as go
 import pandas as pd
+from robot_brain.global_variables import FIG_BG_COLOR, DT
 pd.options.plotting.backend = "plotly"
+
 
 class Plotter():
     """

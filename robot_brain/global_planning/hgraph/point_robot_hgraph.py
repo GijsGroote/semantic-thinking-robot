@@ -2,7 +2,7 @@ import numpy as np
 from pyvis.network import Network
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
@@ -13,7 +13,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_planning.edge import Edge
 import math
@@ -30,12 +30,12 @@ class PointRobotHGraph(HGraph):
         
         self.robot = robot
     
-    def estimate_robot_path_existance(self, target_state, objects):
+    def estimate_robot_path_existance(self, target_state, obstacles):
 
         occ_graph = CircleRobotOccupancyMap(cell_size=0.5,
                 grid_x_length= 10,
                 grid_y_length= 12,
-                objects= objects,
+                obstacles= obstacles,
                 robot_cart_2d= self.robot.state.get_xy_position(),
                 robot_radius= 0.4)
         

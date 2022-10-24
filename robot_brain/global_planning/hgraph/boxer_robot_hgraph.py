@@ -2,7 +2,7 @@ import numpy as np
 from pyvis.network import Network
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
@@ -13,7 +13,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_r
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_planning.edge import Edge
 import math
@@ -28,9 +28,9 @@ class BoxerRobotHGraph(HGraph):
         self.robot = robot
         
     
-    def estimate_robot_path_existance(self, target_state, objects):
+    def estimate_robot_path_existance(self, target_state, obstacles):
 
-        occ_graph = RectangularRobotOccupancyMap(0.5, 15, 15, objects, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
+        occ_graph = RectangularRobotOccupancyMap(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()

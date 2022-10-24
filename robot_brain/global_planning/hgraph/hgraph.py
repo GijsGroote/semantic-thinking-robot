@@ -3,13 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
-from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
-from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
-from robot_brain.controller.mpc.mpc import Mpc
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import (
     RectangularRobotOccupancyMap,
 )
@@ -18,13 +14,12 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 )
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
-
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.configuration import Configuration
-from robot_brain.object import Object
+from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.edge import Edge
 import math
 from robot_brain.state import State
@@ -44,6 +39,7 @@ class HGraph(Graph):
         self.target_nodes = []
         self.subtasks = []
         self.initial_robot_node = None
+        self.obstacles = {}
         self.start_nodes = []
         self.current_node = None
         self.target_state = None
@@ -103,7 +99,7 @@ class HGraph(Graph):
 
         # this start node exist to compile the upcoming while loop 
         # TODO: write function which randomly selects a target node
-        start_node = ObjectSetNode(1000, "this_node_should_not_exist", [Object("This node should not exist", State(), "urdf")])
+        start_node = ObstacleSetNode(1000, "this_node_should_not_exist", [Obstacle("This node should not exist", State(), "empty")])
 
         # search for unfinished target node and connect to starting node
         while start_node.name != self.robot.name:
@@ -113,7 +109,7 @@ class HGraph(Graph):
             
             # estimate path existance
             # TODO: this path existence check is a motion planner, create an actual motion planner
-            path = self.estimate_robot_path_existance(target_node.object_set[0].state, self.objects)
+            path = self.estimate_robot_path_existance(target_node.obstacle_set[0].state, self.obstacles)
             
             # TODO: randomly sample a controller 
             # TODO: the knowledge graph should come into play here
@@ -130,7 +126,7 @@ class HGraph(Graph):
 
         print(f"found an hypothesiss of length {len(self.hypothesis)}")
         for edge in hypothesis:
-            print(f"{edge.verb} from {self.get_start_node(edge.source).object_set[0].state.pos} to {self.get_target_node(edge.to).object_set[0].state.pos}")
+            print(f"{edge.verb} from {self.get_start_node(edge.source).obstacle_set[0].state.pos} to {self.get_target_node(edge.to).obstacle_set[0].state.pos}")
             print(f" via path {edge.path}:")
 
         print(" ")
@@ -146,31 +142,29 @@ class HGraph(Graph):
         """ updates toward the next edge in the hypothesis. """
         self.edge_pointer = self.edge_pointer + 1
 
-    def setup(self, task, objects):
+    def setup(self, task, obstacles):
         """ create start and target nodes. """
 
-        obstacles = [subtask[0] for subtask in task]
-
         self.task = task
-        self.objects = objects
+        self.obstacles = obstacles
 
         #  add robot as start_state
-        self.initial_robot_node = ObjectSetNode(0, self.robot.name, [self.robot])
+        self.initial_robot_node = ObstacleSetNode(0, self.robot.name, [self.robot])
         self.add_start_node(self.initial_robot_node)
         
         # For every task create a start and target node
-        for (object_temp, target) in task:
-            if object_temp != self.robot:
-                self.add_start_node(ObjectSetNode(
+        for (obst_temp, target) in task:
+            if obst_temp != self.robot:
+                self.add_start_node(ObstacleSetNode(
                     self.unique_iden(),
-                    object_temp.name,
-                    [object_temp]
+                    obst_temp.name,
+                    [obst_temp]
                     ))
 
-            self.add_target_node(ObjectSetNode(
+            self.add_target_node(ObstacleSetNode(
                 self.unique_iden(),
-                object_temp.name+"_target",
-                [Object(object_temp.name, target, "urdf")]
+                obst_temp.name+"_target",
+                [Obstacle(obst_temp.name, target, "empty")]
                 ))
 
 
@@ -196,7 +190,7 @@ class HGraph(Graph):
             if robot_target_node is None:
                 raise StopIteration("No more subtasks, No Solution Found!")
             else:
-                # TODO A better check to see if start and target belong to the same object --> compare the  object itself
+                # TODO A better check to see if start and target belong to the same obstacle  --> compare the  obstacle itself
                 # next line assumes a start_node.name + 7 letters == target_node.name, notice "_target" are 7 letters
                 start_node = [start_node for start_node in self.start_nodes if start_node.name  == robot_target_node.name[0:-7]][0]
                 final_target_node = robot_target_node
@@ -222,7 +216,7 @@ class HGraph(Graph):
 
 
     @abstractmethod
-    def estimate_robot_path_existance(self, target_state, objects):
+    def estimate_robot_path_existance(self, target_state, obstacles):
         pass
 
     @abstractmethod
@@ -381,8 +375,8 @@ class HGraph(Graph):
         self.nodes.append(node)
 
     def add_start_node(self, node):
-        if not isinstance(node, ObjectSetNode):
-            raise TypeError("ObjectSetNode's are only allowed as starting node in HGraph")
+        if not isinstance(node, ObstacleSetNode):
+            raise TypeError("ObstacleSetNode's are only allowed as starting node in HGraph")
         self.add_node(node)
         self.start_nodes.append(node)
 
@@ -402,4 +396,15 @@ class HGraph(Graph):
     @abstractmethod
     def robot(self):
         pass
+
+    @property
+    def obstacles(self):
+        return self._obstacles
+
+
+    @obstacles.setter
+    def obstacles(self, obstacles):
+        assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
+        self._obstacles = obstacles
+
 

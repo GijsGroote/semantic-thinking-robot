@@ -3,7 +3,7 @@ from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_variables import FIG_BG_COLOR
 

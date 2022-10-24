@@ -1,6 +1,6 @@
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.edge import Edge
 
 hgraph = HGraph()
@@ -8,7 +8,7 @@ hgraph = HGraph()
 def main(stage):
 
     hgraph = HGraph()
-    hgraph.addStartNode(ObjectSetNode(1, "start robot", []))
+    hgraph.addStartNode(ObstacleSetNode(1, "start robot", []))
     hgraph.addTargetNode(ConfSetNode(2, "target robot", []))
 
     if stage==1:

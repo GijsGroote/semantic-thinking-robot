@@ -1,16 +1,27 @@
 from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
+from motion_planning_env.box_obstacle import BoxObstacle
 
 
-class Object:
+class Obstacle:
     """
-    Object class.
+    Obstacle class.
     """
-    def __init__(self, name, state, urfd):
+    def __init__(self, name, state, properties):
         self.name = name
-        self.obstacle = None
-        self.type = "unknown"
         self.state = state
-        self.urdf = urfd
+        # create empty nonetype properties
+        if properties == "empty":
+            box_dict = {
+                "movable": False,
+                "type": "box",
+                "color": [0/255, 255/255, 0/255, 1],
+                "position": [0, 0, 0],
+                "geometry": {"length": 1, "width": 1, "height": 1},
+            }
+            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
+
+        self.properties = properties
+        self.type = "unknown"
 
     # name getter
     @property
@@ -24,13 +35,13 @@ class Object:
 
     # obstacle getter
     @property
-    def obstacle(self) -> FreeCollisionObstacle:
-        return self._obstacle
+    def properties(self) -> FreeCollisionObstacle:
+        return self._properties
 
-    # obstacle setter
-    @obstacle.setter
-    def obstacle(self, val: FreeCollisionObstacle):
-        self._obstacle = val
+    # property setter
+    @properties.setter
+    def properties(self, val: FreeCollisionObstacle):
+        self._properties = val
 
     # type getter
     @property
@@ -55,13 +66,3 @@ class Object:
     def state(self, stat):
         # TODO: input sanitization
         self._state = stat
-
-    @property
-    def urdf(self):
-        return self._urdf
-
-    # urdf setter
-    @urdf.setter
-    def urdf(self, val):
-        # TODO: input sanitization
-        self._urdf = val

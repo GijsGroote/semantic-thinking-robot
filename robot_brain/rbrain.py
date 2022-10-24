@@ -3,13 +3,11 @@ import numpy as np
 import pandas as pd
 from dashboard.app import start_dash_server
 from robot_brain.state import State
-from robot_brain.object import Object
+from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
 from robot_brain.global_planning.hgraph.point_robot_hgraph import PointRobotHGraph
 from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
 
-import timeit
-import math
 
 pd.options.plotting.backend = "plotly"
 
@@ -27,7 +25,7 @@ class RBrain:
 
     def __init__(self):
         # TODO: these should be private, en make some getters
-        self.objects = {}  # Object information dictionary
+        self.obstacles = {} # obstacle information dictionary
         self.robot = None  # Player information
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
@@ -46,16 +44,17 @@ class RBrain:
     def setup(self, stat_world_info, ob):
         # create robot
         if "robot_type" in stat_world_info:
-            # TODO: detect which robot we are dealing with and give the robot some dimensions with robot.obstacle = obstacle..
+            # TODO: detect which robot we are dealing with and give the 
+            # robot some dimensions with robot.obstacle = obstacle..
             # that way I could access the robot's dimensions more easily
 
-            self.robot = Object(
-                stat_world_info["robot_type"],
-                State(
+            self.robot = Obstacle(
+                name=stat_world_info["robot_type"],
+                state=State(
                     pos=ob["joint_state"]["position"],
                     vel=ob["joint_state"]["velocity"],
                 ),
-                "urdf",
+                properties="empty",
             )
         else:
             warnings.warn("robot type is not set")
@@ -83,7 +82,6 @@ class RBrain:
         else:
             warnings.warn("no task was set")
 
-   
     def setup_obstacles(self, stat_world_info, ob):
         """ save obstacles and their dimensions. """
 
@@ -102,26 +100,32 @@ class RBrain:
                 ang_p=val["pose"]["orientation"],
                 ang_v=val["twist"]["angular"],
             )
-            self.objects[key] = Object(key, s_temp, "urdf")
+
+            try:
+                self.obstacles[key] = Obstacle(name=key,
+                            state=s_temp,
+                            properties=stat_world_info["obstacles"][key])
+
+            except KeyError as exc:
+                raise KeyError(
+                    f"the obstacle {key} was returned from the\
+                     obstacle sensor but not from the given obstacles"
+                ) from exc
 
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
-            self.objects[key].type = "unmovable"
+            self.obstacles[key].type = "unmovable"
 
-            try:
-                self.objects[key].obstacle = stat_world_info["obstacles"][key]
-            except KeyError as exc:
-                raise KeyError(
-                    f"the obstacle {key} was returned from the obstacle sensor but not from the given obstacles"
-                ) from exc
 
     def setup_task(self, stat_world_info):
         """ Setup Hypothesis graph initialised with the task. """
 
-        if stat_world_info["robot_type"] == "pointRobot-vel-v7" or stat_world_info["robot_type"] == "pointRobot-acc-v7":
+        if (stat_world_info["robot_type"] == "pointRobot-vel-v7" or
+                stat_world_info["robot_type"] == "pointRobot-acc-v7"):
             self.hgraph = PointRobotHGraph(self.robot)
 
-        elif stat_world_info["robot_type"] == "boxerRobot-vel-v7" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
+        elif (stat_world_info["robot_type"] == "boxerRobot-vel-v7" or
+                stat_world_info["robot_type"] == "boxerRobot-acc-v7"):
             self.hgraph = BoxerRobotHGraph(self.robot)
 
         else:
@@ -129,27 +133,28 @@ class RBrain:
 
         task = []
         for (obstacle_key, target) in stat_world_info["task"]:
-        
+
             if obstacle_key == "robot":
                 obstacle = self.robot
             else:
-                obstacle = self.objects[obstacle_key.name()]
-            
-            assert isinstance(target, State), f"the target should be a State object and is: {type(target)}"
-            assert isinstance(obstacle, Object), f"the obstacle should be of type object and in {type(obstacle)}"
+                obstacle = self.obstacles[obstacle_key.name()]
+
+            assert isinstance(target, State), \
+            f"the target should be a State object and is: {type(target)}"
+            assert isinstance(obstacle, Obstacle), \
+                    f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
             task.append((obstacle, target))
 
-
         self.hgraph.setup(
                 task=task,
-                objects=self.objects)
-    
+                obstacles=self.obstacles)
+
         self.is_doing = IS_EXECUTING
 
     def update(self, ob):
         """
-        Update all objects states.
+        Update all obstacle states.
         :param ob:
         :return:
         """
@@ -157,22 +162,22 @@ class RBrain:
         # TODO: make this to better thingy if that is there
         pos = ob["joint_state"]["position"][0:2]
         vel = ob["joint_state"]["velocity"][0:2]
-        
+
         self.robot.state.pos = np.array([pos[0], pos[1], 0])
         self.robot.state.vel = np.array([vel[0], vel[1], 0])
 
         self.robot.state.ang_p = ob["joint_state"]["position"][2]
         self.robot.state.ang_v = ob["joint_state"]["velocity"][2]
 
-        # update objects
+        # update obstacles
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                if key in self.objects:
-                    # if key in self.objects.keys():
-                    self.objects[key].state.pos = val["pose"]["position"]
-                    self.objects[key].state.vel = val["twist"]["linear"]
-                    self.objects[key].state.ang_p = val["pose"]["orientation"]
-                    self.objects[key].state.ang_v = val["twist"]["angular"]
+                if key in self.obstacles:
+                    # if key in self.obstacle.keys():
+                    self.obstacles[key].state.pos = val["pose"]["position"]
+                    self.obstacles[key].state.vel = val["twist"]["linear"]
+                    self.obstacles[key].state.ang_p = val["pose"]["orientation"]
+                    self.obstacles[key].state.ang_v = val["twist"]["angular"]
 
     def respond(self):
         """
@@ -184,6 +189,7 @@ class RBrain:
                     return self.hgraph.respond(self.robot.state)
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
+
                     print(f"Stop with executing, because {exc}")
                     print('HEHERHE')
                     return self.default_action
@@ -191,10 +197,20 @@ class RBrain:
                 warnings.warn("returning default action")
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
-           
+
             return self.default_action
 
         else:
             raise Exception("Unable to respond")
 
     # TODO: all setters and getters should be sanitized properly, and test!
+    @property
+    def obstacles(self):
+        return self._obstacles
+
+
+    @obstacles.setter
+    def obstacles(self, obstacles):
+        assert isinstance(obstacles, dict), \
+                f"obstacles should be a dictionary and is {type(obstacles)}"
+        self._obstacles = obstacles

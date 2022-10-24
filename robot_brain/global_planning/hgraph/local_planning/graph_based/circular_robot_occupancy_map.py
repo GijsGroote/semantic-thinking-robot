@@ -7,7 +7,7 @@ import warnings
 import pickle
 
 from helper_functions.geometrics import minimal_distance_point_to_line
-from robot_brain.object import Object
+from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR
 
 class CircleRobotOccupancyMap(OccupancyMap):
@@ -19,68 +19,68 @@ class CircleRobotOccupancyMap(OccupancyMap):
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
-            objects: dict,
+            obstacles: dict,
             robot_cart_2d: np.ndarray,
             robot_radius: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, objects, robot_cart_2d, 1)
+        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, 1)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
 
-    def setup_circular_object(self, obj: Object, val: int, r_orien: float, r_orien_idx: int):
-        """ Set the circular object overlapping with grid cells (representing the robot) to a integer value. """ 
+    def setup_circular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+        """ Set the circular obstacle overlapping with grid cells (representing the robot) to a integer value. """ 
         
-        obj_cart_2d = obj.state.get_xy_position()
+        obst_cart_2d = obst.state.get_xy_position()
 
         # only search around obstacle 
-        (obj_clearance_x_min, obj_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
-                obj_cart_2d[0]-(self.robot_radius + obj.obstacle.radius()), 
-                obj_cart_2d[1]-(self.robot_radius + obj.obstacle.radius()))
+        (obst_clearance_x_min, obst_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
+                obst_cart_2d[0]-(self.robot_radius + obst.properties.radius()), 
+                obst_cart_2d[1]-(self.robot_radius + obst.properties.radius()))
 
-        (obj_clearance_x_max, obj_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
-                obj_cart_2d[0]+(self.robot_radius + obj.obstacle.radius()),
-                obj_cart_2d[1]+(self.robot_radius + obj.obstacle.radius()))
+        (obst_clearance_x_max, obst_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
+                obst_cart_2d[0]+(self.robot_radius + obst.properties.radius()),
+                obst_cart_2d[1]+(self.robot_radius + obst.properties.radius()))
 
-        for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
-            for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
+        for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
+            for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
                 #  closeby (<= radius + smallest dimension robot) cells are always in collision with the obstacle 
-                if np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obj_cart_2d) <= obj.obstacle.radius() + self.robot_radius:
+                if np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obst_cart_2d) <= obst.properties.radius() + self.robot_radius:
                     self.grid_map[x_idx, y_idx] = val
 
-    def setup_rectangular_object(self, obj: object, val: int, r_orien: float, r_orien_idx: int):
-        """ set the rectangular object overlapping with grid cells (representing the robot) to a integer value. """ 
+    def setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+        """ set the rectangular obstect overlapping with grid cells (representing the robot) to a integer value. """ 
 
-        # cos_ol = cos_object_length
-        cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
-        sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
-        cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
-        sin_ow = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
+        # cos_ol = cos_obstect_length
+        cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+        sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
+        cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+        sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
         # corner points of the obstacle
-        obst_a = np.array([obj.state.pos[0]-sin_ol+cos_ow, obj.state.pos[1]+cos_ol+sin_ow])
-        obst_b = np.array([obj.state.pos[0]-sin_ol-cos_ow, obj.state.pos[1]+cos_ol-sin_ow])
-        obst_c = np.array([obj.state.pos[0]+sin_ol-cos_ow, obj.state.pos[1]-cos_ol-sin_ow])
-        obst_d = np.array([obj.state.pos[0]+sin_ol+cos_ow, obj.state.pos[1]-cos_ol+sin_ow])
+        obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
+        obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
+        obst_c = np.array([obst.state.pos[0]+sin_ol-cos_ow, obst.state.pos[1]-cos_ol-sin_ow])
+        obst_d = np.array([obst.state.pos[0]+sin_ol+cos_ow, obst.state.pos[1]-cos_ol+sin_ow])
 
-        max_robot_to_obj_x_distance = self.robot_radius + abs(sin_ol) + abs(cos_ow)
-        max_robot_to_obj_y_distance = self.robot_radius + abs(cos_ol) + abs(sin_ow)
+        max_robot_to_obst_x_distance = self.robot_radius + abs(sin_ol) + abs(cos_ow)
+        max_robot_to_obst_y_distance = self.robot_radius + abs(cos_ol) + abs(sin_ow)
         
-        obj_cart_2d = obj.state.get_xy_position()
+        obst_cart_2d = obst.state.get_xy_position()
 
         # only search around obstacle
-        (obj_clearance_x_min, obj_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
-                obj_cart_2d[0]-max_robot_to_obj_x_distance, obj_cart_2d[1]-max_robot_to_obj_y_distance)
+        (obst_clearance_x_min, obst_clearance_y_min) = self.cart_2d_to_c_idx_or_grid_edge(
+                obst_cart_2d[0]-max_robot_to_obst_x_distance, obst_cart_2d[1]-max_robot_to_obst_y_distance)
 
-        (obj_clearance_x_max, obj_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
-                obj_cart_2d[0]+max_robot_to_obj_x_distance, obj_cart_2d[1]+max_robot_to_obj_y_distance)
+        (obst_clearance_x_max, obst_clearance_y_max) = self.cart_2d_to_c_idx_or_grid_edge(
+                obst_cart_2d[0]+max_robot_to_obst_x_distance, obst_cart_2d[1]+max_robot_to_obst_y_distance)
 
-        for x_idx in range(obj_clearance_x_min, obj_clearance_x_max+1):
-            for y_idx in range(obj_clearance_y_min, obj_clearance_y_max+1):
+        for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
+            for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
 
                 #  closeby (<= robot_radius + smallest dimension obstacle) cells are always in collision with the obstacle 
-                if (np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obj_cart_2d) <= self.robot_radius
-                    + min(obj.obstacle.width(), obj.obstacle.length()) / 2):
+                if (np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obst_cart_2d) <= self.robot_radius
+                    + min(obst.properties.width(), obst.properties.length()) / 2):
 
                     self.grid_map[x_idx, y_idx] = val
                     continue
@@ -255,14 +255,14 @@ class CircleRobotOccupancyMap(OccupancyMap):
                 line_color="black",
                 )
         
-        # add the objects over the gridmap
-        for obj in self.objects.values():
+        # add the obstacles over the gridmap
+        for obst in self.obstacles.values():
 
-            # add the name of the object
+            # add the name of the obstect
             fig.add_trace(go.Scatter(
-                x=[obj.state.pos[1]],
-                y=[obj.state.pos[0]],
-                text=[obj.name],
+                x=[obst.state.pos[1]],
+                y=[obst.state.pos[0]],
+                text=[obst.name],
                 mode="text",
                 textfont=dict(
                     color="black",
@@ -272,40 +272,40 @@ class CircleRobotOccupancyMap(OccupancyMap):
                 )
             )
 
-            match obj.obstacle.type():
+            match obst.properties.type():
                 case "sphere" | "cylinder":
                     fig.add_shape(type="circle",
                             xref="x", yref="y",
-                            x0=obj.state.pos[1]-obj.obstacle.radius(),
-                            y0=obj.state.pos[0]-obj.obstacle.radius(),
-                            x1=obj.state.pos[1]+obj.obstacle.radius(),
-                            y1=obj.state.pos[0]+obj.obstacle.radius(),
+                            x0=obst.state.pos[1]-obst.properties.radius(),
+                            y0=obst.state.pos[0]-obst.properties.radius(),
+                            x1=obst.state.pos[1]+obst.properties.radius(),
+                            y1=obst.state.pos[0]+obst.properties.radius(),
                             line_color="black",
                             )
                 case "box":
-                    cos_ol = math.cos(obj.state.ang_p[2])*obj.obstacle.width()/2
-                    sin_ol = math.sin(obj.state.ang_p[2])*obj.obstacle.width()/2
-                    cos_ow = math.cos(obj.state.ang_p[2])*obj.obstacle.length()/2
-                    sin_ow = math.sin(obj.state.ang_p[2])*obj.obstacle.length()/2
+                    cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+                    sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+                    cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+                    sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
 
-                    fig.add_trace(go.Scatter(y=[obj.state.pos[0]-sin_ol+cos_ow,
-                        obj.state.pos[0]-sin_ol-cos_ow,
-                        obj.state.pos[0]+sin_ol-cos_ow,
-                        obj.state.pos[0]+sin_ol+cos_ow,
-                        obj.state.pos[0]-sin_ol+cos_ow],
-                        x=[obj.state.pos[1]+cos_ol+sin_ow,
-                            obj.state.pos[1]+cos_ol-sin_ow,
-                            obj.state.pos[1]-cos_ol-sin_ow,
-                            obj.state.pos[1]-cos_ol+sin_ow,
-                            obj.state.pos[1]+cos_ol+sin_ow],
+                    fig.add_trace(go.Scatter(y=[obst.state.pos[0]-sin_ol+cos_ow,
+                        obst.state.pos[0]-sin_ol-cos_ow,
+                        obst.state.pos[0]+sin_ol-cos_ow,
+                        obst.state.pos[0]+sin_ol+cos_ow,
+                        obst.state.pos[0]-sin_ol+cos_ow],
+                        x=[obst.state.pos[1]+cos_ol+sin_ow,
+                            obst.state.pos[1]+cos_ol-sin_ow,
+                            obst.state.pos[1]-cos_ol-sin_ow,
+                            obst.state.pos[1]-cos_ol+sin_ow,
+                            obst.state.pos[1]+cos_ol+sin_ow],
                         line_color="black",
                         mode='lines'))
 
                 case "urdf":
-                    warnings.warn("the urdf objstacle is not yet implemented")
+                    warnings.warn("the urdf obststacle is not yet implemented")
 
                 case _:
-                    raise TypeError(f"Could not recognise obstacle type: {obj.obstacle.type()}")
+                    raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
         fig.update_layout(
                 height=900,

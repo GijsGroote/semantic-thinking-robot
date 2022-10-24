@@ -49,9 +49,12 @@ class State:
 
         assert self.ang_p.shape == (3,), "angular position should be of shape (3,)."
 
-        return ((math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[1]), 0, abs_tol=0.01)) or
-                (math.isclose(math.cos(self.ang_p[0]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[2]), 0, abs_tol=0.01)) or
-                (math.isclose(math.cos(self.ang_p[1]), 0, abs_tol=0.01) and math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01)))
+        return ((math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01) and
+            math.isclose(math.sin(self.ang_p[1]), 0, abs_tol=0.01)) or
+                (math.isclose(math.cos(self.ang_p[0]), 0, abs_tol=0.01) and
+                    math.isclose(math.sin(self.ang_p[2]), 0, abs_tol=0.01)) or
+                (math.isclose(math.cos(self.ang_p[1]), 0, abs_tol=0.01) and
+                    math.isclose(math.sin(self.ang_p[0]), 0, abs_tol=0.01)))
     @property
     def pos(self):
         return self._pos
@@ -62,7 +65,7 @@ class State:
             if value.shape[0] == 3:
                 self._pos = value
             elif value.shape[0] == 2:
-                print('are you printed a lot?') 
+                print('are you printed a lot?')
                 # traceback.print_exception(*sys.exc_info())
 
                 warnings.warn(f"shape of position is: {value.shape}, and should be (3,)")

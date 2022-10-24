@@ -1,5 +1,5 @@
 from robot_brain.global_planning.node import Node
-from robot_brain.global_planning.object_set_node import ObjectSetNode
+from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
 from robot_brain.global_planning.conf_set_node import ConfSetNode
 from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
 from robot_brain.global_planning.graph import Graph
@@ -9,13 +9,13 @@ from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGra
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from robot_brain.state import State
-from robot_brain.object import Object
+from robot_brain.obstacle import Obstacle
 import pytest
 
 
 @pytest.fixture
 def hgraph():
-    robot = Object(
+    robot = Obstacle(
             "point_robot",
             State(),
             "urdf",
@@ -23,7 +23,7 @@ def hgraph():
     return BoxerRobotHGraph(robot)
 
 def test_is_instance(hgraph):
-    obj_set_node = ObjectSetNode(2, "P", [])
+    obj_set_node = ObstacleSetNode(2, "P", [])
     conf_set_node = ConfSetNode(2, "P", [])
     change_of_conf_set_node = ChangeOfConfSetNode(2, "P", [])
     kgraph = KGraph()
@@ -37,9 +37,9 @@ def test_is_instance(hgraph):
     assert isinstance(kgraph, Graph)
 
 def test_adding_nodes(hgraph):
-    node1 = ObjectSetNode(1, "P", [])
-    node2 = ObjectSetNode(2, "P", [])
-    node3 = ObjectSetNode(3, "P", [])
+    node1 = ObstacleSetNode(1, "P", [])
+    node2 = ObstacleSetNode(2, "P", [])
+    node3 = ObstacleSetNode(3, "P", [])
 
     kgraph = KGraph()
 
@@ -58,7 +58,7 @@ def test_allowed_node_types(hgraph):
     kgraph = KGraph()
 
     conf_set_node = ConfSetNode(3, "P", [])
-    obj_set_node = ObjectSetNode(2, "P", [])
+    obj_set_node = ObstacleSetNode(2, "P", [])
     change_of_conf_set_node = ChangeOfConfSetNode(6, "wutwat", [])
 
     # allowed

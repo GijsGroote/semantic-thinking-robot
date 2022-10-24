@@ -1,5 +1,5 @@
-from robot_brain.state import State
 import numpy as np
+from robot_brain.state import State
 
 class Edge:
     """
@@ -23,11 +23,11 @@ class Edge:
         :return: String
         """
         return f"id: {self.iden}\nverb: {self.verb}"
-    
+
     def completed(self) -> bool:
         """ returns true if the path is completed, otherwise false. """
         return self.path_pointer >= len(self.path)-1
-    
+
     def increment_current_target(self):
         """ updates toward the next current target from path. """
 

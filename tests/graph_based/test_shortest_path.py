@@ -8,7 +8,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
 from tests.graph_based.obstacle_data.cylinders import cylinder
-from robot_brain.object import Object
+from robot_brain.obstacle import Obstacle
 from robot_brain.state import State
 
 
@@ -17,7 +17,7 @@ def test_shortest_path_rect():
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
-            objects={},
+            obstacles={},
             robot_cart_2d=np.array([0,0]),
             n_orientations=8,
             robot_x_length=1,
@@ -51,7 +51,7 @@ def test_shortest_path_circ():
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
-            objects={},
+            obstacles={},
             robot_cart_2d=np.array([0,0]),
             robot_radius=1)
     
@@ -76,23 +76,20 @@ def test_shortest_path_circ():
 
 
 def test_shortest_path_with_obstacles():
-    objects = {}
+    obstacles = {}
 
-    objects[box.name()] = Object(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), "urdf")
-    objects[box.name()].type = "unmovable"
-    objects[box.name()].obstacle = box
-    objects[sphere.name()] = Object(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), "urdf")
-    objects[sphere.name()].type = "unmovable"
-    objects[sphere.name()].obstacle = sphere
-    objects[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), "urdf")
-    objects[cylinder.name()].type = "unmovable"
-    objects[cylinder.name()].obstacle = cylinder
+    obstacles[box.name()] = Obstacle(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
+    obstacles[box.name()].type = "unmovable"
+    obstacles[sphere.name()] = Obstacle(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), sphere)
+    obstacles[sphere.name()].type = "unmovable"
+    obstacles[cylinder.name()] = Obstacle(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
+    obstacles[cylinder.name()].type = "unmovable"
 
     occ_map = RectangularRobotOccupancyMap(
             cell_size=2,
             grid_x_length=10,
             grid_y_length=10,
-            objects=objects,
+            obstacles=obstacles,
             robot_cart_2d=np.array([0,0]),
             n_orientations=8,
             robot_x_length=1,
