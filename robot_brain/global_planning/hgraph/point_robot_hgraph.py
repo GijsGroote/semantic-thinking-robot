@@ -5,7 +5,7 @@ from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_configuration_grid_map import (
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
     CircleRobotConfigurationGridMap,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph

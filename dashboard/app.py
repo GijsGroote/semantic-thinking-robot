@@ -113,10 +113,10 @@ class Dashboard:
                         )
                     ], className="item"),
                 html.Div([
-                    html.H4("Occupancy Map"),
-                    dcc.Graph(id="live-update-occupancy-map"),
+                    html.H4("Configuration Map"),
+                    dcc.Graph(id="live-update-configuration-map"),
                     dcc.Interval(
-                        id="occupancy-map-interval-component",
+                        id="configuration-map-interval-component",
                         interval=1 * 1000,  # in milliseconds
                         n_intervals=0
                         )

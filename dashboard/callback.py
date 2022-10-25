@@ -85,10 +85,10 @@ def register_callbacks(app):
             if df.type[0] == "mpc":
                 return create_mpc_plot(df)
 
-    @app.callback(Output("live-update-occupancy-map", "figure"),
-                       Input("occupancy-map-interval-component", "n_intervals"))
+    @app.callback(Output("live-update-configuration-map", "figure"),
+            Input("configuration-map-interval-component", "n_intervals"))
 
-    def update_occupancy_map(n):
+    def update_configuration_map(n):
 
         file_path = "../dashboard/data/configuration_grid.pickle"
         # read in controller data if it exists
@@ -98,7 +98,7 @@ def register_callbacks(app):
         else:
             # only update up-to-date files, exception for n = 0
             if n > 0:
-                check_file_is_up_to_date()
+                check_file_is_up_to_date(file_path)
 
             with open(file_path, "rb") as file:
 
