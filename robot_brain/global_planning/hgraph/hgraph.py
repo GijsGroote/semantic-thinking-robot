@@ -15,10 +15,8 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robo
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.node import Node
-from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
-from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
-from robot_brain.configuration import Configuration
+from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.edge import Edge
 import math
@@ -99,7 +97,7 @@ class HGraph(Graph):
 
         # this start node exist to compile the upcoming while loop 
         # TODO: write function which randomly selects a target node
-        start_node = ObstacleSetNode(1000, "this_node_should_not_exist", [Obstacle("This node should not exist", State(), "empty")])
+        start_node = ObstacleNode(1000, "this_node_should_not_exist", Obstacle("This node should not exist", State(), "empty"))
 
         # search for unfinished target node and connect to starting node
         while start_node.name != self.robot.name:
@@ -109,7 +107,7 @@ class HGraph(Graph):
             
             # estimate path existance
             # TODO: this path existence check is a motion planner, create an actual motion planner
-            path = self.estimate_robot_path_existance(target_node.obstacle_set[0].state, self.obstacles)
+            path = self.estimate_robot_path_existance(target_node.obstacle.state, self.obstacles)
             
             # TODO: randomly sample a controller 
             # TODO: the knowledge graph should come into play here
@@ -126,7 +124,7 @@ class HGraph(Graph):
 
         print(f"found an hypothesiss of length {len(self.hypothesis)}")
         for edge in hypothesis:
-            print(f"{edge.verb} from {self.get_start_node(edge.source).obstacle_set[0].state.pos} to {self.get_target_node(edge.to).obstacle_set[0].state.pos}")
+            print(f"{edge.verb} from {self.get_start_node(edge.source).obstacle.state.pos} to {self.get_target_node(edge.to).obstacle.state.pos}")
             print(f" via path {edge.path}:")
 
         print(" ")
@@ -149,22 +147,22 @@ class HGraph(Graph):
         self.obstacles = obstacles
 
         #  add robot as start_state
-        self.initial_robot_node = ObstacleSetNode(0, self.robot.name, [self.robot])
+        self.initial_robot_node = ObstacleNode(0, self.robot.name, self.robot)
         self.add_start_node(self.initial_robot_node)
         
         # For every task create a start and target node
         for (obst_temp, target) in task:
             if obst_temp != self.robot:
-                self.add_start_node(ObstacleSetNode(
+                self.add_start_node(ObstacleNode(
                     self.unique_iden(),
                     obst_temp.name,
-                    [obst_temp]
+                    obst_temp,
                     ))
 
-            self.add_target_node(ObstacleSetNode(
+            self.add_target_node(ObstacleNode(
                 self.unique_iden(),
                 obst_temp.name+"_target",
-                [Obstacle(obst_temp.name, target, "empty")]
+                Obstacle(obst_temp.name, target, "empty"),
                 ))
 
 
@@ -370,28 +368,25 @@ class HGraph(Graph):
             return target_node_list[0]
 
     def add_node(self, node):
-        if isinstance(node, ChangeOfConfSetNode):
-            raise TypeError("ChangeOfConfSetNode's are not allowed in HGraph")
+        if isinstance(node, ChangeOfStateNode):
+            raise TypeError("ChangeOfStateNode's are not allowed in HGraph")
         self.nodes.append(node)
 
     def add_start_node(self, node):
-        if not isinstance(node, ObstacleSetNode):
-            raise TypeError("ObstacleSetNode's are only allowed as starting node in HGraph")
+        if not isinstance(node, ObstacleNode):
+            raise TypeError("ObstacleNode's are only allowed as starting node in HGraph")
         self.add_node(node)
         self.start_nodes.append(node)
 
     def add_target_node(self, node):
-        if isinstance(node, ChangeOfConfSetNode):
-            raise TypeError("ChangeOfConfSetNode's are not allowed as target node in HGraph")
-
-        # Configurations are perhaps not needed. Work with states, any unknown position, orientation is set to 0, 15 oct, Gijs Groote
-        # if not isinstance(node, ConfSetNode):
-        #     raise TypeError("ConfSetNode's are only allowed as target node in HGraph")
+        if isinstance(node, ChangeOfStateNode):
+            raise TypeError("ChangeOfStateNode's are not allowed as target node in HGraph")
 
         self.add_node(node)
         self.target_nodes.append(node)
 
-        # todo: dependent on point_robot or boxer_robot, create an abstract class which handles that specific robot
+        # todo: dependent on point_robot or boxer_robot
+        # create an abstract class which handles that specific robot
 
     @abstractmethod
     def robot(self):
@@ -401,10 +396,7 @@ class HGraph(Graph):
     def obstacles(self):
         return self._obstacles
 
-
     @obstacles.setter
     def obstacles(self, obstacles):
         assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
         self._obstacles = obstacles
-
-

@@ -12,8 +12,6 @@ def test_input_types():
     with pytest.raises(AttributeError):
         State(vel=True)
     with pytest.raises(AttributeError):
-        State(acc=13)
-    with pytest.raises(AttributeError):
         State(ang_p=13 / 70)
     with pytest.raises(AttributeError):
         State(ang_p=False)
@@ -29,8 +27,6 @@ def test_warning():
         State(pos=np.array([3, 2]))
     with pytest.warns(Warning):
         State(vel=np.array([3, 2]))
-    with pytest.warns(Warning):
-        State(acc=np.array([3, 2]))
 
 
 def test_exception():
@@ -39,12 +35,8 @@ def test_exception():
     with pytest.raises(Exception):
         State(vel=np.array([31]))
     with pytest.raises(Exception):
-        State(acc=np.array([31, -30, 50.0, 12]))
-    with pytest.raises(Exception):
         State(ang_p=np.array([3, 1, 13, 15, 98]))
     with pytest.raises(Exception):
         State(pos=True)
     with pytest.raises(Exception):
         State(ang_v=np.array([3, 2, 5, 53]))
-    with pytest.raises(Exception):
-        State(ang_a=np.array([3, 52, True, 3]))

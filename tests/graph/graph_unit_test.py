@@ -1,7 +1,7 @@
+import pytest
 from robot_brain.global_planning.node import Node
-from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
-from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
@@ -10,7 +10,6 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
-import pytest
 
 
 @pytest.fixture
@@ -23,23 +22,28 @@ def hgraph():
     return BoxerRobotHGraph(robot)
 
 def test_is_instance(hgraph):
-    obj_set_node = ObstacleSetNode(2, "P", [])
-    conf_set_node = ConfSetNode(2, "P", [])
-    change_of_conf_set_node = ChangeOfConfSetNode(2, "P", [])
+    obst = Obstacle(name="obst",
+            state=State(),
+            properties=None)
+
+    obst_node = ObstacleNode(iden=2,
+            name="P",
+            obstacle=obst)
+
+    change_of_state_node = ChangeOfStateNode(2, "P", [])
     kgraph = KGraph()
 
-    assert isinstance(obj_set_node, Node)
-    assert isinstance(conf_set_node, Node)
-    assert isinstance(change_of_conf_set_node, Node)
+    assert isinstance(obst_node, Node)
+    assert isinstance(change_of_state_node, Node)
     assert isinstance(hgraph, HGraph)
     assert isinstance(hgraph, Graph)
     assert isinstance(kgraph, KGraph)
     assert isinstance(kgraph, Graph)
 
 def test_adding_nodes(hgraph):
-    node1 = ObstacleSetNode(1, "P", [])
-    node2 = ObstacleSetNode(2, "P", [])
-    node3 = ObstacleSetNode(3, "P", [])
+    node1 = ObstacleNode(1, "P", Obstacle("node1", State(), None))
+    node2 = ObstacleNode(2, "P", Obstacle("node1", State(), None))
+    node3 = ObstacleNode(3, "P", Obstacle("node1", State(), None))
 
     kgraph = KGraph()
 
@@ -57,34 +61,26 @@ def test_adding_nodes(hgraph):
 def test_allowed_node_types(hgraph):
     kgraph = KGraph()
 
-    conf_set_node = ConfSetNode(3, "P", [])
-    obj_set_node = ObstacleSetNode(2, "P", [])
-    change_of_conf_set_node = ChangeOfConfSetNode(6, "wutwat", [])
+    obst = Obstacle(name="obst",
+            state=State(),
+            properties=None)
+
+    obst_node = ObstacleNode(iden=2,
+            name="P",
+            obstacle=obst)
+
+    change_of_state_node = ChangeOfStateNode(6, "wutwat", [])
 
     # allowed
-    hgraph.add_target_node(conf_set_node)
-    hgraph.add_start_node(obj_set_node)
-    hgraph.add_node(conf_set_node)
-    hgraph.add_node(obj_set_node)
-    kgraph.add_node(obj_set_node)
-    kgraph.add_node(change_of_conf_set_node)
-
-    # not allowed
-    # TODO: this test is an exeption, Gijs Still has to decide if it is time for configurations or only states
-    # with pytest.raises(TypeError):
-    #     hgraph.add_target_node(obj_set_node)
-    #
-    with pytest.raises(TypeError):
-        hgraph.add_target_node(change_of_conf_set_node)
+    hgraph.add_target_node(obst_node)
+    hgraph.add_start_node(obst_node)
+    hgraph.add_node(obst_node)
+    hgraph.add_node(obst_node)
+    kgraph.add_node(obst_node)
+    kgraph.add_node(change_of_state_node)
 
     with pytest.raises(TypeError):
-        hgraph.add_node(change_of_conf_set_node)
+        hgraph.add_node(change_of_state_node)
 
     with pytest.raises(TypeError):
-        hgraph.add_start_node(change_of_conf_set_node)
-
-    with pytest.raises(TypeError):
-        hgraph.add_start_node(conf_set_node)
-
-    with pytest.raises(TypeError):
-        kgraph.add_node(conf_set_node)
+        hgraph.add_start_node(change_of_state_node)

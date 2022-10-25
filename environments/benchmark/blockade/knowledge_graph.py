@@ -1,7 +1,8 @@
-from robot_brain.global_planning.kgraph.kgraph import KGraph
-from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
-from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
+from  robot_brain.global_planning.kgraph.kgraph import KGraph
+from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
+from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.edge import Edge
+from robot_brain.global_planning.state import StateNode
 
 def main():
     # create a knowledge graph and visualise
@@ -9,29 +10,29 @@ def main():
     kgraph = KGraph()
 
     # robot
-    node1 = ObstacleSetNode(1, "robot", [])
+    node1 = ObstacleNode(1, "robot", [])
     kgraph.add_node(node1)
-    node2 = ChangeOfConfSetNode(2, "robot position", [])
+    node2 = ChangeOfStateNode(2, "robot position", [])
     kgraph.add_node(node2)
     kgraph.add_edge(Edge("id", 1, 2, "MPC", "PEM"))
 
     # cube 
-    node3 = ObstacleSetNode(3, "robot_and_red_cube", [])
-    node4 = ChangeOfConfSetNode(4, "cube position", [])
+    node3 = ObstacleNode(3, "robot_and_red_cube", [])
+    node4 = ChangeOfStateNode(4, "cube position", [])
     kgraph.add_node(node3)
     kgraph.add_node(node4)
     kgraph.add_edge(Edge("id", 3, 4, "MPPI", "forward model"))
    
     # wall
-    node3 = ObstacleSetNode(5, "robot_and_green_wall", [])
-    node4 = ChangeOfConfSetNode(6, "wall position", [])
+    node3 = ObstacleNode(5, "robot_and_green_wall", [])
+    node4 = ChangeOfStateNode(6, "wall position", [])
     kgraph.add_node(node3)
     kgraph.add_node(node4)
     kgraph.add_edge(Edge("id", 5, 6, "unmovable", "unmovable"))
    
     # duck
-    node3 = ObstacleSetNode(7, "robot_and_duck", [])
-    node4 = ChangeOfConfSetNode(8, "duck position", [])
+    node3 = ObstacleNode(7, "robot_and_duck", [])
+    node4 = ChangeOfStateNode(8, "duck position", [])
     kgraph.add_node(node3)
     kgraph.add_node(node4)
     kgraph.add_edge(Edge("id", 7, 8, "RMPPI", "LSTM"))

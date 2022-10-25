@@ -5,7 +5,6 @@ import urdfenvs.boxer_robot # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
-from robot_brain.configuration import Configuration
 from robot_brain.global_variables import DT
 
 from environments.objects.boxes import box

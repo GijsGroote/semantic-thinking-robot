@@ -2,9 +2,8 @@ import os
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
-from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
-from robot_brain.global_planning.change_of_conf_set_node import ChangeOfConfSetNode
+from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
 
@@ -44,7 +43,7 @@ class KGraph(Graph):
 
         net.set_edge_smooth('dynamic')
         for node in self.nodes:
-            if isinstance(node, ObjectSetNode):
+            if isinstance(node, ObstacleNode):
                 # TODO: relative path, somehow this image shows, but not if it runs on the server...
                 # os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
                 path_to_png = "/home/gijs/Documents/semantic-thinking-robot"\
@@ -108,6 +107,6 @@ class KGraph(Graph):
 
 
     def add_node(self, node):
-        if not(isinstance(node, Node) and not isinstance(node, ConfSetNode)):
-            raise TypeError("ObjectSetNodes's and ChangeOfConfSetNodes are only allowed in KGraph")
+        if not(isinstance(node, Node)):
+            raise TypeError("todo: only allowed in KGraph")
         self.nodes.append(node)

@@ -1,6 +1,6 @@
 from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
-from robot_brain.global_planning.conf_set_node import ConfSetNode
-from robot_brain.global_planning.obstacle_set_node import ObstacleSetNode
+from robot_brain.global_planning.state_node import StateNode
+from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.edge import Edge
 
 def main(stage):
@@ -8,7 +8,7 @@ def main(stage):
     hgraph = BoxerRobotHGraph()
 
     hgraph.addStartNode(ObstacleSetNode(1, "start robot", []))
-    hgraph.addTargetNode(ConfSetNode(3, "target cube", []))
+    hgraph.addTargetNode(StateNode(3, "target cube", []))
     hgraph.addStartNode(ObstacleSetNode(2, "R: start cube", []))
 
     if stage==1:
@@ -38,11 +38,11 @@ def main(stage):
             hgraph.current_node = node4
         hgraph.addNode(node4)
 
-        hgraph.addNode(ConfSetNode(5, "RM: cube", []))
-        hgraph.addNode(ConfSetNode(6, "R: target green wall", []))
-        node7 = ConfSetNode(7, "RM: green wall", [])
+        hgraph.addNode(StateNode(5, "RM: cube", []))
+        hgraph.addNode(StateNode(6, "R: target green wall", []))
+        node7 = StateNode(7, "RM: green wall", [])
         hgraph.addNode(node7)
-        hgraph.addNode(ConfSetNode(8, "R: green wall", []))
+        hgraph.addNode(StateNode(8, "R: green wall", []))
         hgraph.addEdge(Edge("id", 1, 2, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 5, 3, "MPPI", "controller"))
         hgraph.addEdge(Edge("id", 2, 4, "Forward Model", "controller", True))
@@ -57,12 +57,12 @@ def main(stage):
     if stage == 5:
         node4 = ObstacleSetNode(4, "RM: cube", [])
         hgraph.addNode(node4)
-        hgraph.addNode(ConfSetNode(5, "RM: cube", []))
-        hgraph.addNode(ConfSetNode(6, "(aborted) R: target green wall ", []))
+        hgraph.addNode(StateNode(5, "RM: cube", []))
+        hgraph.addNode(StateNode(6, "(aborted) R: target green wall ", []))
         node7 = ObstacleSetNode(7, "RM: green wall", [])
         hgraph.current_node = node7
         hgraph.addNode(node7)
-        hgraph.addNode(ConfSetNode(8, "R: green wall", []))
+        hgraph.addNode(StateNode(8, "R: green wall", []))
         hgraph.addEdge(Edge("id", 1, 2, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 5, 3, "MPPI", "controller"))
         hgraph.addEdge(Edge("id", 2, 4, "Forward Model", "controller", True))
@@ -74,22 +74,22 @@ def main(stage):
     if stage==6:
         node4 = ObstacleSetNode(4, "RM: cube", [])
         hgraph.addNode(node4)
-        hgraph.addNode(ConfSetNode(5, "RM: cube", []))
-        hgraph.addNode(ConfSetNode(6, "(aborted) R: target green wall", []))
+        hgraph.addNode(StateNode(5, "RM: cube", []))
+        hgraph.addNode(StateNode(6, "(aborted) R: target green wall", []))
         node7 = ObstacleSetNode(7, "RM: green wall", [])
         hgraph.current_node = node7
         hgraph.addNode(node7)
-        hgraph.addNode(ConfSetNode(8, "R: green wall", []))
+        hgraph.addNode(StateNode(8, "R: green wall", []))
         hgraph.addEdge(Edge("id", 1, 2, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 5, 3, "MPPI", "controller"))
         hgraph.addEdge(Edge("id", 2, 4, "Forward Model", "controller", True))
         hgraph.addEdge(Edge("id", 4, 8, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 8, 7, "model fitting", "controller", True))
         hgraph.addEdge(Edge("id", 6, 5, "MPC", "controller"))
-        hgraph.addNode(ConfSetNode(11, "R: duck", []))
-        hgraph.addNode(ConfSetNode(12, "RM: duck", []))
-        hgraph.addNode(ConfSetNode(13, "target duck", []))
-        hgraph.addNode(ConfSetNode(14, "RM: cube", [])) 
+        hgraph.addNode(StateNode(11, "R: duck", []))
+        hgraph.addNode(StateNode(12, "RM: duck", []))
+        hgraph.addNode(StateNode(13, "target duck", []))
+        hgraph.addNode(StateNode(14, "RM: cube", [])) 
         hgraph.addEdge(Edge("id", 7, 11, "MPC", "controller"))
         hgraph.addEdge(Edge("id", 11, 12, "LSTM", "controller"))
         hgraph.addEdge(Edge("id", 12, 13, "RMPPI", "controller"))
@@ -99,23 +99,23 @@ def main(stage):
     if stage==7:
         node4 = ObstacleSetNode(4, "RM: cube", [])
         hgraph.addNode(node4)
-        hgraph.addNode(ConfSetNode(5, "RM: cube", []))
-        hgraph.addNode(ConfSetNode(6, "(aborted) R: target green wall", []))
+        hgraph.addNode(StateNode(5, "RM: cube", []))
+        hgraph.addNode(StateNode(6, "(aborted) R: target green wall", []))
         node7 = ObstacleSetNode(7, "RM: green wall", [])
         hgraph.addNode(node7)
-        hgraph.addNode(ConfSetNode(8, "R: green wall", []))
+        hgraph.addNode(StateNode(8, "R: green wall", []))
         hgraph.addEdge(Edge("id", 1, 2, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 5, 3, "MPPI", "controller"))
         hgraph.addEdge(Edge("id", 2, 4, "Forward Model", "controller", True))
         hgraph.addEdge(Edge("id", 4, 8, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 8, 7, "model fitting", "controller", True))
         hgraph.addEdge(Edge("id", 6, 5, "MPC", "controller"))
-        hgraph.addNode(ConfSetNode(11, "R: duck", []))
-        hgraph.addNode(ConfSetNode(12, "RM: duck", []))
-        node13 = ConfSetNode(13, "target duck", [])
+        hgraph.addNode(StateNode(11, "R: duck", []))
+        hgraph.addNode(StateNode(12, "RM: duck", []))
+        node13 = StateNode(13, "target duck", [])
         hgraph.current_node = node13
         hgraph.addNode(node13)
-        hgraph.addNode(ConfSetNode(14, "RM: cube", [])) 
+        hgraph.addNode(StateNode(14, "RM: cube", [])) 
         hgraph.addEdge(Edge("id", 7, 11, "MPC", "controller", True))
         hgraph.addEdge(Edge("id", 11, 12, "LSTM", "controller", True))
         hgraph.addEdge(Edge("id", 12, 13, "RMPPI", "controller", True))
