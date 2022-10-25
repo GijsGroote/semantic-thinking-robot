@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 import pickle
-from robot_brain.global_planning.hgraph.local_planning.graph_based.occupancy_map import OccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 import math
 import plotly.graph_objects as go
 import warnings
@@ -16,9 +16,10 @@ from helper_functions.geometrics import (
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR
 
-class RectangularRobotOccupancyMap(OccupancyMap):
-    """ Occupancy map represents the environment in obstacle space
-    free space, movable obstacle space and unknown obstacle space.
+class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
+    """ Configuration grid map represents the environment in obstacle space
+    free space, movable obstacle space and unknown obstacle space including the
+    dimension of the robot.
     """
     def __init__(self,
         cell_size: float,
@@ -30,7 +31,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         robot_x_length: float,
         robot_y_length: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, n_orientations)
+        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, n_orientations)
         self._robot_x_length = robot_x_length
         self._robot_y_length = robot_y_length
 
@@ -39,7 +40,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
             int(self.grid_y_length/self.cell_size),
             n_orientations))
       
-    def setup_circular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular obstect overlapping with grid cells (representing the robot) to a integer value. """ 
 
         # cos_rl = cos(orientation_of_robot) * robot_length_in_x / 2
@@ -296,7 +297,6 @@ class RectangularRobotOccupancyMap(OccupancyMap):
         return shortest_path
 
     def pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> (int, int, int):
-
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
         raises an error if the 2D pose is outside of the grid.
         """
@@ -335,7 +335,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
                 2*math.pi*orien_idx/self.n_orientations)
 
     def visualise(self, orien_idx:int=0, save:bool=True):
-        """ Display the occupancy map for a specific orientation of the robot. """
+        """ Display the configuration grid map for a specific orientation of the robot. """
        
         grid_2D = np.reshape(self.grid_map[:,:,orien_idx], (int(self.grid_x_length/self.cell_size), int(self.grid_y_length/self.cell_size)))
         
@@ -460,7 +460,7 @@ class RectangularRobotOccupancyMap(OccupancyMap):
 
         fig.update_yaxes(autorange="reversed")
         if save:
-            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/occupancy_map.pickle", "wb") as file:
+            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/configuration_grid.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

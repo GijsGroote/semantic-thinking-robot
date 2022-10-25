@@ -8,7 +8,7 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.urdf_obstacle import UrdfObstacle
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
 from robot_brain.obstacle import Obstacle
 from robot_brain.state import State
 
@@ -49,7 +49,7 @@ def objects_set1():
     return objects
 
 def test_occupancy_map_arguements():
-    occ_map = RectangularRobotOccupancyMap(1.0, 100, 200, {}, robot_cart_2d=np.array([1,2]), n_orientations=360, robot_x_length=10, robot_y_length=6)
+    occ_map = RectangularRobotConfigurationGridMap(1.0, 100, 200, {}, robot_cart_2d=np.array([1,2]), n_orientations=360, robot_x_length=10, robot_y_length=6)
 
     assert 1 == occ_map.cell_size
     assert 100 == occ_map.grid_x_length
@@ -59,7 +59,7 @@ def test_occupancy_map_arguements():
     assert 360 == occ_map.n_orientations
 
 def test_occupancy_exceptions():
-    occ_map = RectangularRobotOccupancyMap(1.0, 100, 200, {}, robot_cart_2d=np.array([1,2]), n_orientations=360, robot_x_length=10, robot_y_length=6)
+    occ_map = RectangularRobotConfigurationGridMap(1.0, 100, 200, {}, robot_cart_2d=np.array([1,2]), n_orientations=360, robot_x_length=10, robot_y_length=6)
     # x_index to large
     with pytest.raises(ValueError):
         occ_map.p_idx_to_occupancy(101, 0, 0)
@@ -90,20 +90,20 @@ def test_occupancy_exceptions():
 
 def test_c_idx_to_cart_2d_even():
     # test even grid_x_length and grid_y_length
-    occ_map = RectangularRobotOccupancyMap(0.5, 4, 4, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=2, robot_y_length=1)
+    occ_map = RectangularRobotConfigurationGridMap(0.5, 4, 4, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=2, robot_y_length=1)
     assert (-1/4, 1/4) == occ_map.c_idx_to_cart_2d(3, 4)
     assert (-1.75, -1.75) == occ_map.c_idx_to_cart_2d(0, 0)
     assert (3/4, 1/4) == occ_map.c_idx_to_cart_2d(5, 4)
 
 def test_c_idx_to_cart_2d_uneven():
     # test uneven grid_x_length and grid_y_length
-    occ_map = RectangularRobotOccupancyMap(1.0, 3, 3, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=2)
+    occ_map = RectangularRobotConfigurationGridMap(1.0, 3, 3, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=2)
     assert (-1, -1) == occ_map.c_idx_to_cart_2d(0, 0)
     assert (0, 0) == occ_map.c_idx_to_cart_2d(1, 1)
     assert (0, 1) == occ_map.c_idx_to_cart_2d(1, 2)
 
 def test_c_idx_to_cart_2d_out_of_bounds():
-    occ_map = RectangularRobotOccupancyMap(1.0, 4, 7, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=2)
+    occ_map = RectangularRobotConfigurationGridMap(1.0, 4, 7, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=2)
     with pytest.raises(IndexError):
         occ_map.c_idx_to_cart_2d(4, 3)
     with pytest.raises(IndexError):
@@ -114,7 +114,7 @@ def test_c_idx_to_cart_2d_out_of_bounds():
         occ_map.c_idx_to_cart_2d(-1, 0)
 
 def test_cart_2d_to_c_idx_in_cell():
-    occ_map = RectangularRobotOccupancyMap(30, 90, 90, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=1)
+    occ_map = RectangularRobotConfigurationGridMap(30, 90, 90, {}, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=1)
     assert (2, 2) == occ_map.cart_2d_to_c_idx(15.01, 15.01)
     assert (2, 2) == occ_map.cart_2d_to_c_idx(44.99, 15.01)
 
@@ -129,7 +129,7 @@ def test_cart_2d_to_c_idx_in_cell():
     assert (0, 2) == occ_map.cart_2d_to_c_idx(-44.99, 44.99,)
 
 def test_cart_2d_to_c_idx_on_boundary():
-    occ_map = RectangularRobotOccupancyMap(5.0, 30, 40, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
+    occ_map = RectangularRobotConfigurationGridMap(5.0, 30, 40, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
 
     assert (0,0) == occ_map.cart_2d_to_c_idx(-15, -17.5)
     assert (1,0) == occ_map.cart_2d_to_c_idx(-10, -17.5)
@@ -141,7 +141,7 @@ def test_cart_2d_to_c_idx_on_boundary():
     assert (5,7) == occ_map.cart_2d_to_c_idx(12.5, 15)
 
 def test_cart_2d_to_c_idx_out_of_bounds():
-    occ_map = RectangularRobotOccupancyMap(1, 100, 150, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
+    occ_map = RectangularRobotConfigurationGridMap(1, 100, 150, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
     with pytest.raises(IndexError):
         occ_map.cart_2d_to_c_idx(50.1, 3)
     with pytest.raises(IndexError):
@@ -152,7 +152,7 @@ def test_cart_2d_to_c_idx_out_of_bounds():
         occ_map.cart_2d_to_c_idx(-1, 75.01)
 
 def test_position_to_cell_or_grid_edge():
-    occ_map = RectangularRobotOccupancyMap(1.0, 6, 6, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
+    occ_map = RectangularRobotConfigurationGridMap(1.0, 6, 6, {}, robot_cart_2d=np.array([1,2]), n_orientations=4, robot_x_length=1, robot_y_length=10)
 
     assert (0,0) == occ_map.cart_2d_to_c_idx_or_grid_edge(-5, -5)
     assert (5,5) == occ_map.cart_2d_to_c_idx_or_grid_edge(5, 5)
@@ -160,7 +160,7 @@ def test_position_to_cell_or_grid_edge():
     assert (3,4) == occ_map.cart_2d_to_c_idx_or_grid_edge(0.1, 1.543)
 
 # def test_occupancy_map_circular_objects():
-#     occ_map = RectangularRobotOccupancyMap(1, 5, 4, 2, 1, 1)
+#     occ_map = RectangularRobotConfigurationGridMap(1, 5, 4, 2, 1, 1)
 #
 #     cylinder_dict = {
 #             "type": "cylinder",
@@ -187,7 +187,7 @@ def test_position_to_cell_or_grid_edge():
 ############### MANUAL MANUAL MANUAL INSPECTION TESTS, SHOULD BE COMMENTED OUT##################
 ################################################################################################
 # def test_rectange_small():
-#     occ_map = RectangularRobotOccupancyMap(0.1, 6, 10, 3, 1, 4)
+#     occ_map = RectangularRobotConfigurationGridMap(0.1, 6, 10, 3, 1, 4)
 #
 #     box_dict = {
 #             "type": "box",
@@ -211,7 +211,7 @@ def test_position_to_cell_or_grid_edge():
 #
 #
 # def test_rectange_please():
-#     occ_map = RectangularRobotOccupancyMap(1, 5, 6, 1, 2, 8)
+#     occ_map = RectangularRobotConfigurationGridMap(1, 5, 6, 1, 2, 8)
 #
 #     box_dict = {
 #             "type": "box",
@@ -281,7 +281,7 @@ def test_position_to_cell_or_grid_edge():
 #             "duck_urdf": urdf_object,
 #             "box": box_object}
 #
-#     occ_map = RectangularRobotOccupancyMap(1.0, 40, 60, objects, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=5)
+#     occ_map = RectangularRobotConfigurationGridMap(1.0, 40, 60, objects, robot_cart_2d=np.array([1,2]), n_orientations=1, robot_x_length=1, robot_y_length=5)
 #     occ_map.setup()
 #
 #     print("printint the shortest path")

@@ -89,16 +89,18 @@ def register_callbacks(app):
                        Input("occupancy-map-interval-component", "n_intervals"))
 
     def update_occupancy_map(n):
+
+        file_path = "../dashboard/data/configuration_grid.pickle"
         # read in controller data if it exists
-        if not Path("../dashboard/data/occupancy_map.pickle").is_file():
+        if not Path(file_path).is_file():
             return no_data_found_dict
 
         else:
             # only update up-to-date files, exception for n = 0
             if n > 0:
-                check_file_is_up_to_date("../dashboard/data/occupancy_map.pickle")
+                check_file_is_up_to_date()
 
-            with open("../dashboard/data/occupancy_map.pickle", "rb") as file:
+            with open(file_path, "rb") as file:
 
                 fig = pickle.load(file)
                 fig.update_layout(

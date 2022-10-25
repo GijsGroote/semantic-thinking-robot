@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 import math
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import RectangularRobotOccupancyMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotOccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap
 
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
@@ -13,7 +13,7 @@ from robot_brain.state import State
 
 
 def test_shortest_path_rect():
-    occ_map = RectangularRobotOccupancyMap(
+    occ_map = RectangularRobotConfigurationGridMap(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -47,7 +47,7 @@ def test_shortest_path_rect():
         assert path == expected_path
 
 def test_shortest_path_circ():
-    occ_map = CircleRobotOccupancyMap(
+    occ_map = CircleRobotConfigurationGridMap(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -85,7 +85,7 @@ def test_shortest_path_with_obstacles():
     obstacles[cylinder.name()] = Obstacle(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
     obstacles[cylinder.name()].type = "unmovable"
 
-    occ_map = RectangularRobotOccupancyMap(
+    occ_map = RectangularRobotConfigurationGridMap(
             cell_size=2,
             grid_x_length=10,
             grid_y_length=10,

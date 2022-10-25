@@ -6,12 +6,6 @@ from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import (
-    RectangularRobotOccupancyMap,
-)
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import (
-    CircleRobotOccupancyMap,
-)
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.node import Node

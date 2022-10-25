@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from robot_brain.global_planning.hgraph.local_planning.graph_based.occupancy_map import OccupancyMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap 
 import math
 import plotly.graph_objects as go 
 import warnings
@@ -10,8 +10,8 @@ from helper_functions.geometrics import minimal_distance_point_to_line
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR
 
-class CircleRobotOccupancyMap(OccupancyMap):
-    """ 2-dimensional occupancy map representing the environment
+class CircleRobotConfigurationGridMap(ConfigurationGridMap):
+    """ 2-dimensional configuration grid map representing the environment
     in obstacle space, free space, movable obstacle space and
     unknown obstacle space for a circular robot.
     """
@@ -23,13 +23,13 @@ class CircleRobotOccupancyMap(OccupancyMap):
             robot_cart_2d: np.ndarray,
             robot_radius: float):
 
-        OccupancyMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, 1)
+        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, 1)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
 
-    def setup_circular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular obstacle overlapping with grid cells (representing the robot) to a integer value. """ 
         
         obst_cart_2d = obst.state.get_xy_position()
@@ -316,7 +316,7 @@ class CircleRobotOccupancyMap(OccupancyMap):
 
         fig.update_yaxes(autorange="reversed")
         if save:
-            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/occupancy_map.pickle", "wb") as file:
+            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/configuration_grid.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

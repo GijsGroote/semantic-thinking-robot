@@ -4,8 +4,8 @@ from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_occupancy_map import (
-    RectangularRobotOccupancyMap,
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import (
+    RectangularRobotConfigurationGridMap,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.obstacle_node import ObstacleNode
@@ -25,7 +25,7 @@ class BoxerRobotHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, obstacles):
 
-        occ_graph = RectangularRobotOccupancyMap(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
+        occ_graph = RectangularRobotConfigurationGridMap(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 0.8, 0.5)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()

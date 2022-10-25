@@ -12,11 +12,12 @@ def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 
     return (scaled_x % scaled_y) == 0
 
-class OccupancyMap(ABC):
-    """ Occupancy map represents the environment in obstacle space
-    free space, movable obstacle space and unknown obstacle space.
+class ConfigurationGridMap(ABC):
+    """ Configuration grid map represents the environment in obstacle space
+    free space, movable obstacle space and unknown obstacle space and includes
+    the dimensions or the robot.
 
-    The center represents the origin, an occupancy map can only
+    The center represents the origin, an configuration grid map can only
     take rectangular sizes where the origin is in the center.
     """
 
@@ -81,10 +82,10 @@ class OccupancyMap(ABC):
                         math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
                     warnings.warn(f"obstacle {obst.name} is not in correct orientation (up/down is not up)")
 
-                self.setup_circular_obstacle(obst, val, r_orien, r_orien_idx)
+                self.setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "sphere":
-                self.setup_circular_obstacle(obst, val, r_orien, r_orien_idx)
+                self.setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "box":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
@@ -108,7 +109,7 @@ class OccupancyMap(ABC):
         pass
 
     @abstractmethod
-    def setup_circular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod

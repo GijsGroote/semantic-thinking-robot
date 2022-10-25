@@ -5,8 +5,8 @@ from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import (
-    CircleRobotOccupancyMap,
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_configuration_grid_map import (
+    CircleRobotConfigurationGridMap,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.edge import Edge
@@ -25,7 +25,7 @@ class PointRobotHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, obstacles):
 
-        occ_graph = CircleRobotOccupancyMap(cell_size=0.5,
+        occ_graph = CircleRobotConfigurationGridMap(cell_size=0.5,
                 grid_x_length= 10,
                 grid_y_length= 12,
                 obstacles= obstacles,
