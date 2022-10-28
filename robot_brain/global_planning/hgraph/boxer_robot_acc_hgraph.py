@@ -14,9 +14,9 @@ from robot_brain.global_planning.edge import Edge
 import math
 from robot_brain.state import State
 
-class BoxerRobotHGraph(HGraph):
+class BoxerRobotAccHGraph(HGraph):
     """
-    Hypothesis graph for a Boxer Robot.
+    Hypothesis graph for a Boxer Robot accepting acceleration input.
     """
     def __init__(self, robot):
         HGraph.__init__(self)
@@ -41,11 +41,12 @@ class BoxerRobotHGraph(HGraph):
         controller = Mpc()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
+        # TODO: MPC should have an accelaration input robot
         def dyn_model(x, u):
             dx_next = vertcat(
-                x[0] + 0.05 * np.cos(x[2]) * u[0],
-                x[1] + 0.05 * np.sin(x[2]) * u[0],
-                x[2] + 0.05 * u[1],
+                x[0] + 0.025 * np.cos(x[2]) * u[0],
+                x[1] + 0.025 * np.sin(x[2]) * u[0],
+                x[2] + 0.025 * u[1],
             )
             return dx_next
 

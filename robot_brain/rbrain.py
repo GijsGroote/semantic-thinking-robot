@@ -5,8 +5,10 @@ from dashboard.app import start_dash_server
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
-from robot_brain.global_planning.hgraph.point_robot_hgraph import PointRobotHGraph
-from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
+from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
+from robot_brain.global_planning.hgraph.point_robot_acc_hgraph import PointRobotAccHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_acc_hgraph import BoxerRobotAccHGraph
 
 
 pd.options.plotting.backend = "plotly"
@@ -118,15 +120,26 @@ class RBrain:
 
 
     def setup_task(self, stat_world_info):
-        """ Setup Hypothesis graph initialised with the task. """
+        """ 
+        Setup Hypothesis graph initialised with the task.
 
-        if (stat_world_info["robot_type"] == "pointRobot-vel-v7" or
-                stat_world_info["robot_type"] == "pointRobot-acc-v7"):
-            self.hgraph = PointRobotHGraph(self.robot)
+        4 types pointRobot-vel-v7, pointRobot-acc-v7, 
+                boxerRobot-vel-v7, boxerRobot-acc-v7
 
-        elif (stat_world_info["robot_type"] == "boxerRobot-vel-v7" or
-                stat_world_info["robot_type"] == "boxerRobot-acc-v7"):
-            self.hgraph = BoxerRobotHGraph(self.robot)
+        are of robot are allowed.
+        """
+
+        if stat_world_info["robot_type"] == "pointRobot-vel-v7":
+            self.hgraph = PointRobotVelHGraph(self.robot)
+
+        elif stat_world_info["robot_type"] == "pointRobot-acc-v7":
+            self.hgraph = PointRobotAccHGraph(self.robot)
+
+        elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
+            self.hgraph = BoxerRobotVelHGraph(self.robot)
+
+        elif stat_world_info["robot_type"] == "boxerRobot-acc-v7":
+            self.hgraph = BoxerRobotAccHGraph(self.robot)
 
         else:
             raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
