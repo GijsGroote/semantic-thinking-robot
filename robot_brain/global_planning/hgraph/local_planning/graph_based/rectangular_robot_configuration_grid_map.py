@@ -214,8 +214,11 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
         pose_2d_start[2] = to_interval_zero_to_two_pi(pose_2d_start[2])
         pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
 
-        assert self.occupancy(pose_2d_start) != 1, "the start position is in obstacle space"
-        assert self.occupancy(pose_2d_target) != 1, "the target position is in obstacle space"
+        if self.occupancy(pose_2d_start) != 1:
+            warnings.warn("the start position is in obstacle space")
+
+        if self.occupancy(pose_2d_target) != 1: 
+            warnings.warn("the target position is in obstacle space")
 
         # convert position to indices on the grid
         p_idx_start = self.pose_2d_to_p_idx(pose_2d_start)
@@ -400,7 +403,7 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
                 )
         
         # add the obstacles over the gridmap
-        for obst in self.properties.values():
+        for obst in self.obstacles.values():
 
             # add the name of the obstect
             fig.add_trace(go.Scatter(

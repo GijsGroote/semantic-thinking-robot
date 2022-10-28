@@ -141,6 +141,7 @@ class RBrain:
 
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
+
             assert isinstance(obstacle, Obstacle), \
                     f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
@@ -191,7 +192,8 @@ class RBrain:
                     self.is_doing = IS_DOING_NOTHING
 
                     print(f"Stop with executing, because {exc}")
-                    print('HEHERHE')
+
+                    self.hgraph.visualise()
                     return self.default_action
             else:
                 warnings.warn("returning default action")

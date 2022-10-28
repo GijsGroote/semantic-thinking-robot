@@ -59,8 +59,11 @@ class HGraph(Graph):
 
                         print("a hypothesis was completed!")
                         self.get_target_node(current_edge.to).completed = True
+                        self.current_node = None
+                        self.hypothesis = []
                         self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
                         self.search_hypothesis()
+
                         return self.respond(current_state)
 
                         # TODO: check if all subtasks are completed
@@ -116,13 +119,7 @@ class HGraph(Graph):
         # Now a hypothesist cannot be created in multiple steps
         self.hypothesis = hypothesis
 
-        print(f"found an hypothesiss of length {len(self.hypothesis)}")
-        for edge in hypothesis:
-            print(f"{edge.verb} from {self.get_start_node(edge.source).obstacle.state.pos} to {self.get_target_node(edge.to).obstacle.state.pos}")
-            print(f" via path {edge.path}:")
-
-        print(" ")
-
+        self.current_node = self.get_start_node(self.hypothesis[0].source)
         self.in_loop = IN_EXECUTION_LOOP
         self.visualise()
 
@@ -133,6 +130,7 @@ class HGraph(Graph):
     def increment_edge_pointer(self):
         """ updates toward the next edge in the hypothesis. """
         self.edge_pointer = self.edge_pointer + 1
+        self.current_node = self.hypothesis[self.edge_pointer]
 
     def setup(self, task, obstacles):
         """ create start and target nodes. """
@@ -308,18 +306,26 @@ class HGraph(Graph):
                     x=10.0,
                     y=10.0,
                     color= {
-                        'border': '#fb4b50', # red
+                        'border': '#fb4b50',
                         'background': '#fb7e81',
                         'highlight': {
                             'border': '#fb4b50',
                             'background': '#fcbcc4'
                             }
-                        },label = self.current_node.name,
+                        },
+                    #TODO this stuf
+                    # ,label = self.current_node.verb,
                     group = "current_node")
-
 
         # add edges
         for edge in self.edges:
+
+            value = 1.5 
+            if edge in self.hypothesis:
+                value = 3
+                color = '#fb4b50'
+            else:
+                color = "#438ced"
 
             dashes = False
             if edge.path is False:
@@ -327,10 +333,11 @@ class HGraph(Graph):
 
             net.add_edge(edge.source,
                     edge.to,
-                    weight=1.0,
                     dashes=dashes,
+                    width=value,
+                    color=color,
                     label=edge.verb,
-                    title="edge:<br>" + edge.to_string() + "<br>",
+                    title="edge:<br>"  + edge.to_string() + "<br>",
                     )
 
         # if you want to edit cusomize the graph

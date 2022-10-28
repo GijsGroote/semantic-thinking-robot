@@ -124,8 +124,11 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
     def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
         """ Dijkstra shortest path algorithm. """
 
-        assert self.occupancy(cart_2d_start) != 1, "the start position is in obstacle space"
-        assert self.occupancy(cart_2d_target) != 1, "the target position is in obstacle space"
+        if self.occupancy(cart_2d_start) != 1:
+            warnings.warn("the start position is in obstacle space")
+
+        if self.occupancy(cart_2d_target) != 1:
+            warnings.warn("the target position is in obstacle space")
 
         # convert position to indices on the grid
         c_idx_start =  self.cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
