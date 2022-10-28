@@ -1,13 +1,12 @@
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_planning.obstacle_node import ObstacleNode
-from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.global_variables import FIG_BG_COLOR
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
+from robot_brain.controller.mppi.mppi import Mppi
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
     CircleRobotConfigurationGridMap,
 )
+
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.edge import Edge
 from robot_brain.state import State
@@ -37,6 +36,27 @@ class PointRobotVelHGraph(HGraph):
         occ_graph.visualise()
         return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
+
+    def create_driving_controller(self):
+        # TODO: randomly sample over existing controller for driving
+        return self.create_mpc_driving_controller()
+
+        # return self.create_mppi_driving_controller()
+
+
+    def create_mppi_driving_controller(self):
+        """ create MPPI controller for driving an point robot velocity. """
+        controller = Mppi()
+
+        def dyn_model(x, u):
+            # TODO: this should simulate the dynamics 
+            return x
+
+        controller.setup(dyn_model, self.robot.state, self.robot.state)
+
+        return controller
+
+
     def create_mpc_driving_controller(self):
 
 
@@ -52,6 +72,7 @@ class PointRobotVelHGraph(HGraph):
             )
             return dx_next
 
+        # TODO: should the target state not also be passed insead of the robot state?
         controller.setup(dyn_model, self.robot.state, self.robot.state)
         
         return controller

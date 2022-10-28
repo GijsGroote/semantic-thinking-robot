@@ -34,7 +34,6 @@ class HGraph(Graph):
         self.obstacles = {}
         self.start_nodes = []
         self.current_node = None
-        self.target_state = None
         self.controller = None
         self.hypothesis = []
         self.edge_pointer = 0
@@ -108,7 +107,7 @@ class HGraph(Graph):
             
             # TODO: randomly sample a controller 
             # TODO: the knowledge graph should come into play here
-            controller = self.create_mpc_driving_controller()
+            controller = self.create_driving_controller()
 
             # add edge to hgraph and hypothesis
             edge = Edge("iden", start_node.iden, target_node.iden, "driving", controller, path=path)

@@ -37,6 +37,12 @@ class PointRobotAccHGraph(HGraph):
         occ_graph.visualise()
         return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
+    def create_driving_controller(self):
+        # TODO: randomly sample over existing controller for driving
+        return self.create_mpc_driving_controller()
+
+        # return self.create_mppi_driving_controller()
+
     def create_mpc_driving_controller(self):
 
 
