@@ -5,7 +5,7 @@ from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
-from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from robot_brain.state import State
@@ -19,7 +19,7 @@ def hgraph():
             State(),
             "urdf",
         )
-    return BoxerRobotHGraph(robot)
+    return BoxerRobotVelHGraph(robot)
 
 def test_is_instance(hgraph):
     obst = Obstacle(name="obst",
