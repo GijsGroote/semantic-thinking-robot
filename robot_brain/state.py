@@ -22,6 +22,13 @@ class State:
         return (np.linalg.norm(self.pos - state.pos) + np.linalg.norm(self.ang_p - state.ang_p)
             + np.linalg.norm(self.vel- state.vel) + np.linalg.norm(self.ang_v- state.ang_v))
 
+    def position_euclidean(self, state):
+        """
+        Calculate the euclidean distance between the position of two states.
+        """
+        return (np.linalg.norm(self.pos - state.pos) + np.linalg.norm(self.ang_p - state.ang_p))
+
+
     def to_string(self, decimals=2):
         return f"pos:({np.round(self.pos, decimals)}), vel:(\
                 {np.round(self.vel, decimals)}), ang_p:(\
@@ -33,6 +40,12 @@ class State:
 
     def get_xy_position(self):
         return np.array([self.pos[0], self.pos[1]])
+
+    def get_xy_dxdy(self):
+        return np.array([self.pos[0], self.pos[1], self.vel[0], self.vel[1]])
+
+    def get_xyt_dxdydt(self):
+        return np.array([self.pos[0], self.pos[1], self.ang_p[2], self.vel[0], self.vel[1], self.ang_v[2]])
 
     def lies_on_a_side(self) -> bool:
         """ indicates if one (x,y,z) points perpendicular to the ground plane. """

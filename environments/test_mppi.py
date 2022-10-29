@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from pytorch_mppi import mppi
-from casadi import vertcat
 from robot_brain.state import State
 
 import numpy as np
@@ -11,6 +10,7 @@ import urdfenvs.boxer_robot # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.state import State
 from robot_brain.global_variables import DT
+from robot_brain.controller.mppi.mppi import Mppi
 
 
 def main():
@@ -24,88 +24,68 @@ def main():
 
     action = np.zeros(env.n())
 
-    pos0 = np.array([1.0, 0.1])
+    pos0 = np.array([1.0, 1.0])
     vel0 = np.array([0.0, 0.0])
     ob = env.reset(pos=pos0, vel=vel0)
 
     n_steps = 10000
 
-    nx = 3
-    nu = 2
-    # network output is state residual
-    H_UNITS = 32
-    # ACTION_HIGH = 1
-    # ACTION_LOW = -1
-
-    d = torch.device("cpu")
+    #
+    # d = torch.device("cpu")
+    #
+    # def dynamics(x, u):
+    #
+    #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=d)
+    #
+    #     x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+    #     x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+    #
+    #     return x_next
+    #
+    # targetState = State(pos=np.array([1,1,0]), ang_p=np.array([0,0,0]))
+    # 
+    # def running_cost(x, u):
+    #     """ running_cost is euclidean distance toward target. """
+    #     return torch.subtract(x[:,0], targetState.pos[0])**2 +\
+    #             torch.subtract(x[:,1], targetState.pos[1])**2 +\
+    #             1e-4*(u[:,0]**2 + u[:,0]**2)
+    # 
+    # def set_target_state(target_state):
+    #     # new running cost function
+    #     def running_cost(x, u):
+    #         return torch.subtract(x[:,0], target_state.pos[0])**2 +\
+    #                 torch.subtract(x[:,1], target_state.pos[1])**2 +\
+    #                 1e-130*(u[:,0]**4 + u[:,1]**4)
+    #     # set the new running cost
+    #     ctrl.running_cost = running_cost
+    #
+    # # create controller with chosen parameters
+    # ctrl = mppi.MPPI(dynamics=dynamics,
+    #         running_cost=running_cost,
+    #         nx=2,
+    #         noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
+    #         num_samples=1000, # number of rolouts
+    #         horizon=5,
+    #         lambda_=1e-2,
+    #         # device=d, 
+    #         u_min=torch.tensor([-2, -2], dtype=torch.double, device=d),
+    #         u_max=torch.tensor([2, 2], dtype=torch.double, device=d)
+    #         )
 
     def dynamics(x, u):
-        # print(f' u {u.shape}')
-        # print(f' x {x.shape}')
 
-        # x = x.detach().numpy()
-        # u = u.detach().numpy()
-        #
-        # # loop over all rollouts
-        # next_state = np.zeros(x.shape)
-        # for k in range(next_state.shape[0]):
-        #     next_state[k,:] = np.array([x[k,0] + 0.05 *  u[k,0],
-        #         x[k,1] + 0.05 *  u[k,1],
-        #         x[k,2]]
-        #         ).reshape((3))
-        # # print(f"the next states {next_state}")
-        #
-        # next_state_tensor = torch.tensor(next_state)
+        x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
 
-        return x #next_state_tensor
+        x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+        x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
 
-    targetState = State(pos=np.array([3,2,0]), ang_p=np.array([0,0,0]))
+        return x_next
 
-    def running_cost(x, u):
-        x = x.detach().numpy()
+    mppi_controller = Mppi(order=2)
 
-        # print(f' shape of x {x.shape}, and of u {u.shape}')
-
-        # loop over all rollouts
-        next_state = np.zeros(x.shape)
-        cost = np.zeros(next_state.shape[0])
-        for k in range(next_state.shape[0]):
-            next_state[k,:] = np.array([x[k,0] + 0.05 *  u[k,0],
-                x[k,1] + 0.05 *  u[k,1],
-                x[k,2]]
-                ).reshape((3))
-             # linear cost toward the target
-            x_cost = abs(targetState.pos[0] - next_state[k,0])
-            y_cost = abs(targetState.pos[1] - next_state[k,1])
-            t_cost = abs(targetState.ang_p[2] - next_state[k,2])
-
-            cost[k] = x_cost + y_cost + t_cost
-            
-            # print(f"the next states {next_state}")
-
-        cost = torch.tensor(cost)
-        # print(f'retrunign cost {cost.shape}')
-
-        return cost
-
-
-    # mppi_gym = mppi.MPPI(dynamics, running_cost, nx, noise_sigma, num_samples=N_SAMPLES, horizon=TIMESTEPS,
-    #                      lambda_=lambda_, device=d, u_min=torch.tensor(ACTION_LOW, dtype=torch.double, device=d),
-    #                      u_max=torch.tensor(ACTION_HIGH, dtype=torch.double, device=d))
-    # total_reward, data = mppi.run_mppi(mppi_gym, env, train)
-
-    # create controller with chosen parameters
-    ctrl = mppi.MPPI(dynamics=dynamics,
-            running_cost=running_cost,
-            nx=nx,
-            noise_sigma=torch.tensor([[5,0],[0,5]], device=d, dtype=torch.double),
-            num_samples=250, # number of rolouts
-            horizon=15,
-            lambda_=1e-2,
-            # device=d, 
-            u_min=torch.tensor([-2, -2], dtype=torch.double, device=d),
-            u_max=torch.tensor([2, 2], dtype=torch.double, device=d)
-            )
+    mppi_controller.setup(dyn_model=dynamics,
+           current_state=State(),
+           target_state=State(pos=np.array([1,1,0])))
 
     # add sensors
     sensor = ObstacleSensor()
@@ -114,12 +94,14 @@ def main():
 
 
     # assuming you have a gym-like env
-    for _ in range(n_steps):
-        
-        state = np.array([ob["joint_state"]["position"]])
-        action[0:2] = ctrl.command(state).cpu().numpy()
+    for i in range(n_steps):
 
-        print(f'action: {action}')
+        if i == 50:
+            mppi_controller.visualise(save=False)
+        current_state = State(pos=ob["joint_state"]["position"])
+        action[0:2] = mppi_controller.respond(current_state=current_state)
+
+        # print(f'action: {action}')
 
         ob, reward, done, _ = env.step(action)
         # print(f"Observation: {ob}")

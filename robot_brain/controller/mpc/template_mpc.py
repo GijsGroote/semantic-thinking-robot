@@ -1,5 +1,5 @@
 import do_mpc
-from robot_brain.global_variables import PLOT_CONTROLLER, DT
+from robot_brain.global_variables import PLOT_CONTROLLER, DT, MIN_INPUT, MAX_INPUT
 
 
 def template_mpc(model, n_horizon, target_state):
@@ -52,11 +52,11 @@ def template_mpc(model, n_horizon, target_state):
     # mpc.bounds['upper', '_x', 'ang_p'] = 2 * np.pi
 
     # Lower bounds on inputs:
-    mpc.bounds['lower', '_u', 'u1'] = -1.5
-    mpc.bounds['lower', '_u', 'u2'] = -1.5
+    mpc.bounds['lower', '_u', 'u1'] = MIN_INPUT
+    mpc.bounds['lower', '_u', 'u2'] = MIN_INPUT
     # upper bounds on inputs:
-    mpc.bounds['upper', '_u', 'u1'] = 1.5
-    mpc.bounds['upper', '_u', 'u2'] = 1.5
+    mpc.bounds['upper', '_u', 'u1'] = MAX_INPUT
+    mpc.bounds['upper', '_u', 'u2'] = MAX_INPUT
 
     mpc.setup()
 

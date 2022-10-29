@@ -22,7 +22,7 @@ class Edge:
         Creates readable format of an Edge
         :return: String
         """
-        return f"id: {self.iden}\nverb: {self.verb}"
+        return f"iden: {self.iden}, controller: {self.controller.name}"
 
     def completed(self) -> bool:
         """ returns true if the path is completed, otherwise false. """

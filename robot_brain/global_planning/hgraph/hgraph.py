@@ -1,6 +1,7 @@
 # import pandas as pd
 from abc import ABC, abstractmethod
 import numpy as np
+import random
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR
@@ -13,6 +14,7 @@ from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.edge import Edge
+from robot_brain.controller.controller import Controller 
 import math
 from robot_brain.state import State
 
@@ -34,7 +36,6 @@ class HGraph(Graph):
         self.obstacles = {}
         self.start_nodes = []
         self.current_node = None
-        self.controller = None
         self.hypothesis = []
         self.edge_pointer = 0
 
@@ -105,7 +106,6 @@ class HGraph(Graph):
             # TODO: this path existence check is a motion planner, create an actual motion planner
             path = self.estimate_robot_path_existance(target_node.obstacle.state, self.obstacles)
             
-            # TODO: randomly sample a controller 
             # TODO: the knowledge graph should come into play here
             controller = self.create_driving_controller()
 
@@ -203,13 +203,37 @@ class HGraph(Graph):
 
         return (start_node, target_node)
 
+    
+    def create_driving_controller(self):
+        """for now: randomly select a driving controller. """
+        # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
+        # fallback option is random select over all the availeble controllers
+
+        possible_controllers = self.get_driving_controllers()
+
+        
+        controller = random.choice(possible_controllers)()
+
+        controller = self._create_mppi_driving_controller()
+        # you should do a check to see if the order of the robot matches the controller order
+        return controller
 
     @abstractmethod
-    def estimate_robot_path_existance(self, target_state, obstacles):
+    def get_driving_controllers(self) -> list:
+        pass
+    
+    def create_pushing_controller(self) -> Controller:
+        """ this functionality is not yet implemented """
+        possible_controllers = self.get_pushing_controllers()
+
+        return random.choice(possible_controllers)()
+
+    @abstractmethod
+    def get_pushing_controllers(self) -> list:
         pass
 
     @abstractmethod
-    def create_mpc_driving_controller(self):
+    def estimate_robot_path_existance(self, target_state, obstacles):
         pass
 
     def unique_iden(self) -> int:
@@ -224,7 +248,6 @@ class HGraph(Graph):
             iden += 1
 
         return iden
-
 
     def visualise(self, path=True):
         """"
@@ -381,16 +404,8 @@ class HGraph(Graph):
     def add_target_node(self, node):
         if isinstance(node, ChangeOfStateNode):
             raise TypeError("ChangeOfStateNode's are not allowed as target node in HGraph")
-
         self.add_node(node)
         self.target_nodes.append(node)
-
-        # todo: dependent on point_robot or boxer_robot
-        # create an abstract class which handles that specific robot
-
-    @abstractmethod
-    def robot(self):
-        pass
 
     @property
     def obstacles(self):
@@ -400,3 +415,13 @@ class HGraph(Graph):
     def obstacles(self, obstacles):
         assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
         self._obstacles = obstacles
+
+    @property
+    def robot_order(self):
+        return self._robot_order
+
+    @robot_order.setter
+    def robot_order(self, val):
+        assert isinstance(val, int), f"robot_order's type should be an int and is {type(val)}"
+        assert val > 0, f"robot order should be higher than 0 and is {val}"
+        self._robot_order = val

@@ -67,9 +67,9 @@ def main(conn=None):
         #     ],
         "task": [("robot", State(pos=np.array([1.12, 3, 0]))),
             ("robot", State(pos=np.array([-3.3212, 3, 0]))),
-            ("robot", State(pos=np.array([1.3212, 2, 0]))),
-            ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            ("robot", State(pos=np.array([-1.3212, -1, 0]))),
+            ("robot", State(pos=np.array([3.3212, 2, 0]))),
+            # ("robot", State(pos=np.array([3.3212, -2, 0]))),
+            # ("robot", State(pos=np.array([-1.3212, -1, 0]))),
             ],
         "obstacles": obstacles
     }, ob)

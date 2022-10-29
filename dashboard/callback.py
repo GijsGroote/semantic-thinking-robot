@@ -64,27 +64,62 @@ def register_callbacks(app):
 
             return data
 
-
     @app.callback(Output("live-update-controller-graph", "figure"),
                        Input("controller-interval-component", "n_intervals"))
     def update_controller_graph_live(n):
 
+        file_path = "../dashboard/data/controller.pickle"
         # read in controller data if it exists
-        if not Path("../dashboard/data/mpc_data.feather").is_file():
+        if not Path(file_path).is_file():
             return no_data_found_dict
 
         else:
             # only update up-to-date files, exception for n = 0
             if n > 0:
-                check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
+                check_file_is_up_to_date(file_path)
 
-            df = feather.read_feather("../dashboard/data/mpc_data.feather")
+            with open(file_path, "rb") as file:
 
-            # todo: this can be done better, send metadata with the dataframe
+                fig = pickle.load(file)
+                                       
+                return fig
 
-            if df.type[0] == "mpc":
-                return create_mpc_plot(df)
-
+        # # read in controller data if it exists
+        # if not Path("../dashboard/data/mpc_data.feather").is_file():
+        #     return no_data_found_dict
+        #
+        # else:
+        #     # only update up-to-date files, exception for n = 0
+        #     if n > 0:
+        #         check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
+        #
+        #     df = feather.read_feather("../dashboard/data/mpc_data.feather")
+        #
+        #     # todo: this can be done better, send metadata with the dataframe
+        #
+        #     if df.type[0] == "mpc":
+        #         return create_mpc_plot(df)
+        #
+    # @app.callback(Output("live-update-controller-graph", "figure"),
+    #                    Input("controller-interval-component", "n_intervals"))
+    # def update_controller_graph_live(n):
+    #
+    #     # read in controller data if it exists
+    #     if not Path("../dashboard/data/mpc_data.feather").is_file():
+    #         return no_data_found_dict
+    #
+    #     else:
+    #         # only update up-to-date files, exception for n = 0
+    #         if n > 0:
+    #             check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
+    #
+    #         df = feather.read_feather("../dashboard/data/mpc_data.feather")
+    #
+    #         # todo: this can be done better, send metadata with the dataframe
+    #
+    #         if df.type[0] == "mpc":
+    #             return create_mpc_plot(df)
+    #
     @app.callback(Output("live-update-configuration-map", "figure"),
             Input("configuration-map-interval-component", "n_intervals"))
 

@@ -1,3 +1,4 @@
+import torch
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from casadi import vertcat
@@ -10,6 +11,8 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.edge import Edge
 from robot_brain.state import State
+from robot_brain.global_variables import DT
+
 
 class PointRobotVelHGraph(HGraph):
     """
@@ -17,10 +20,8 @@ class PointRobotVelHGraph(HGraph):
     """
     def __init__(self, robot):
         HGraph.__init__(self)
-
-        print("the pointrobot is now created")
-        
         self.robot = robot
+        self.robot_order = 2 
     
     def estimate_robot_path_existance(self, target_state, obstacles):
 
@@ -30,40 +31,43 @@ class PointRobotVelHGraph(HGraph):
                 obstacles= obstacles,
                 robot_cart_2d= self.robot.state.get_xy_position(),
                 robot_radius= 0.4)
-        
 
         occ_graph.setup()
         occ_graph.visualise()
         return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
+    def get_driving_controllers(self) -> list:
+        """ returns list with all possible driving controllers. """
 
-    def create_driving_controller(self):
-        # TODO: randomly sample over existing controller for driving
-        return self.create_mpc_driving_controller()
+        return [self._create_mppi_driving_controller,
+                self._create_mpc_driving_controller]
 
-        # return self.create_mppi_driving_controller()
+    def get_pushing_controllers(self) -> list:
+        raise NotImplementedError()
 
-
-    def create_mppi_driving_controller(self):
+    def _create_mppi_driving_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
-        controller = Mppi()
+
+        controller = Mppi(order=self.robot_order)
 
         def dyn_model(x, u):
-            # TODO: this should simulate the dynamics 
-            return x
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
 
-        controller.setup(dyn_model, self.robot.state, self.robot.state)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+
+            return x_next
+
+        controller.setup(dyn_model=dyn_model,
+                current_state=self.robot.state,
+                target_state=self.robot.state)
 
         return controller
 
 
-    def create_mpc_driving_controller(self):
+    def _create_mpc_driving_controller(self):
+        controller = Mpc(order=self.robot_order)
 
-
-        print('creating an mpc controller from inside the pointrobot thingy')
-        controller = Mpc()
-        # dyn_model = Dynamics()
-        # dyn_model.set_boxer_model()
         def dyn_model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
@@ -74,10 +78,4 @@ class PointRobotVelHGraph(HGraph):
 
         # TODO: should the target state not also be passed insead of the robot state?
         controller.setup(dyn_model, self.robot.state, self.robot.state)
-        
         return controller
-
-
-    def robot(self):
-        # TODO: sanitize and make private
-        return self.robot

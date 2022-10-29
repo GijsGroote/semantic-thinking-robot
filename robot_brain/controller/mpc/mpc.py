@@ -11,26 +11,28 @@ class Mpc(Controller):
     Model Predictive Control controller, finds the optimal input that steers
     the system toward the target state by minimizing an objective function.
     """
-    def __init__(self):
-        Controller.__init__(self)
+    def __init__(self, order):
+        Controller.__init__(self, order)
+        self.name = "MPC"
         self.mpc = None
         self.model = None
         self.simulator = None
         self.plotter = None
-        self.target_state = None
         self.n_horizon = 15
         self.y_predicted = None
         self.pred_error = []
 
 
-    def setup(self, dyn_model, current_state, target_state):
-        self.target_state = target_state
+    def _setup(self, dyn_model, current_state):
 
         # fully define model
         self.model = template_model(dyn_model)
 
         # set all mpc parameters
-        self.mpc = template_mpc(self.model, 15, target_state)
+        self.mpc = template_mpc(model=self.model,
+                n_horizon=self.n_horizon,
+                target_state=self.target_state)
+
         initial_state = np.array([
             current_state.pos[0],
             current_state.pos[0],
@@ -45,9 +47,9 @@ class Mpc(Controller):
             tvp_template = simulator.get_tvp_template()
 
             def tvp_fun(t_now): # pylint: disable=unused-argument
-                tvp_template['pos_x_target'] = target_state.pos[0]
-                tvp_template['pos_y_target'] = target_state.pos[1]
-                tvp_template['ang_p_target'] = target_state.ang_p[2]
+                tvp_template['pos_x_target'] = self.target_state.pos[0]
+                tvp_template['pos_y_target'] = self.target_state.pos[1]
+                tvp_template['ang_p_target'] = self.target_state.ang_p[2]
 
                 return tvp_template
 
@@ -67,7 +69,7 @@ class Mpc(Controller):
 
         self.mpc.reset_history()
 
-    def find_input(self, current_state):
+    def _find_input(self, current_state):
         initial_state = current_state.get_2d_pose()
         self.mpc.x0 = initial_state
         system_input = self.mpc.make_step(initial_state) # solves minimisation problem
@@ -82,25 +84,22 @@ class Mpc(Controller):
 
         return np.reshape(system_input, (len(system_input),))
 
-    def set_target_state(self, state):
-
-        self.target_state = state
+    def _set_target_state(self):
 
         tvp_template = self.mpc.get_tvp_template()
 
         def tvp_fun(t_now): # pylint: disable=unused-argument
             for k in range(self.n_horizon+1):
-                tvp_template['_tvp',k,'pos_x_target'] = state.pos[0]
-                tvp_template['_tvp',k,'pos_y_target'] = state.pos[1]
-                tvp_template['_tvp',k,'ang_p_target'] = state.ang_p[2]
+                tvp_template['_tvp',k,'pos_x_target'] = self.target_state.pos[0]
+                tvp_template['_tvp',k,'pos_y_target'] = self.target_state.pos[1]
+                tvp_template['_tvp',k,'ang_p_target'] = self.target_state.ang_p[2]
 
             return tvp_template
 
         self.mpc.set_tvp_fun(tvp_fun)
 
-
     def visualise(self):
         self.plotter.visualise(self.target_state, self.pred_error)
 
-    def update_db(self):
+    def _update_db(self):
         self.plotter.update_db(self.target_state, self.pred_error)

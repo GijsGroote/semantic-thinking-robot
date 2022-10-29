@@ -21,6 +21,7 @@ class BoxerRobotAccHGraph(HGraph):
     def __init__(self, robot):
         HGraph.__init__(self)
         self.robot = robot
+        self.robot_order = 6
         
     
     def estimate_robot_path_existance(self, target_state, obstacles):
@@ -36,16 +37,19 @@ class BoxerRobotAccHGraph(HGraph):
         
         return path
 
-    def create_driving_controller(self):
-        # TODO: randomly sample over existing controller for driving
-        return self.create_mpc_driving_controller()
+    def get_driving_controllers(self) -> list:
+        """ returns list with all possible driving controllers. """
 
-        # return self.create_mppi_driving_controller()
+        # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
+        # fallback option is random select over all the availeble controllers
+        return [self._create_mpc_driving_controller]
 
+    def get_pushing_controllers(self) -> list:
+        raise NotImplementedError()
 
-    def create_mpc_driving_controller(self):
+    def _create_mpc_driving_controller(self):
 
-        controller = Mpc()
+        controller = Mpc(order=self.robot_order)
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
         # TODO: MPC should have an accelaration input robot
@@ -62,6 +66,3 @@ class BoxerRobotAccHGraph(HGraph):
         return controller
 
 
-    def robot(self):
-        # TODO: sanitize and make private
-        return self.robot
