@@ -1,6 +1,6 @@
 # Combining System Identification, Motion and Manipulation Planning.
 ## An application to pushing and navigation tasks.
-### Thesis project Gijs Groote, TU Delft, Faculty of Cognitive robotics (CoR) and Delft Center for System and Control (DCSC) 
+### Thesis project Gijs Groote, TU Delft, Faculty of Cognitive robotics (CoR) and Delft Center for System and Control (DCSC).
 
 ## Requirements
 - python3.10.x
