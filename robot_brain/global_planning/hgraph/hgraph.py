@@ -214,7 +214,7 @@ class HGraph(Graph):
         
         controller = random.choice(possible_controllers)()
 
-        controller = self._create_mppi_driving_controller()
+        # controller = self._create_mppi_driving_controller()
         # you should do a check to see if the order of the robot matches the controller order
         return controller
 

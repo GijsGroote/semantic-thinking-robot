@@ -8,7 +8,6 @@ from robot_brain.state import State
 from robot_brain.global_variables import (
         CREATE_SERVER_DASHBOARD,
         PLOT_CONTROLLER,
-        DT,
         MIN_INPUT,
         MAX_INPUT,
         FIG_BG_COLOR,
@@ -46,7 +45,7 @@ class Mppi(Controller):
         # create controller with chosen parameters
         self.controller = mppi.MPPI(dynamics=dyn_model,
                     running_cost=running_cost,
-                    nx=2, # number of states in the system
+                    nx=self.order, # number of states in the system
                     noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
                     num_samples=1000, # number of rolouts
                     horizon=self.n_horizon,
@@ -107,7 +106,24 @@ class Mppi(Controller):
     def _find_input(self, current_state):
         """ calculate input to sent to the robot and keep track of the prediction error. """
 
-        system_input = self.controller.command(current_state.get_2d_pose()).cpu().numpy()
+        # TODO: this in not allowed, use inheiritance please
+        match self.order:
+            case 2:
+                system_input = self.controller.command(current_state.get_xy_position()).cpu().numpy()
+
+            case 3:
+                system_input = self.controller.command(current_state.get_2d_pose()).cpu().numpy()
+
+            case 4:
+                system_input = self.controller.command(current_state.get_xy_dxdy()).cpu().numpy()
+
+            case 6:
+                system_input = self.controller.command(current_state.get_xyt_dxdydt()).cpu().numpy()
+
+            case _: 
+                raise ValueError(f"only order of 2, 3, 4 and 6 are available, not for {self.order}")
+
+
 
         if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD:
 
@@ -130,18 +146,22 @@ class Mppi(Controller):
                 return State(pos=np.array([xy_pos[0], xy_pos[1], 0]))
 
             case 3:
-                xy_2d_pose = self.model(current_state.get_2d_pose(), system_input).numpy()[0]
+                xy_2d_pose = self.model(torch.reshape(torch.Tensor(current_state.get_2d_pose()), (1,3)),
+                    torch.reshape(torch.Tensor(system_input), (1,2))).numpy()[0]
 
                 return State(pos=np.array([xy_2d_pose[0], xy_2d_pose[1], 0]),
                         ang_p=np.array([0, 0, xy_2d_pose[2]]))
 
             case 4:
-                xy_dxdy = self.model(current_state.get_xy_dxdy(), system_input).numpy()[0]
+                xy_dxdy = self.model(torch.reshape(torch.Tensor(current_state.get_xy_dxdy()), (1, 4)),
+                    torch.reshape(torch.Tensor(system_input), (1,2))).numpy()[0]
+
 
                 return State(pos=np.array([xy_dxdy[0], xy_dxdy[1], 0]),
                         vel=np.array([xy_dxdy[2], xy_dxdy[3], 0]))
             case 6:
-                xyt_dxdydt = self.model(current_state.get_xyt_dxdydt(), system_input).numpy()[0]
+                xyt_dxdydt = self.model(torch.reshape(torch.Tensor(current_state.get_xyt_dxdydt()), (1,6)),
+                    torch.reshape(torch.Tensor(system_input), (1,2))).numpy()[0]
 
                 return State(pos=np.array([xyt_dxdydt[0], xyt_dxdydt[1], 0]),
                         ang_p=np.array([0, 0, xyt_dxdydt[2]]),

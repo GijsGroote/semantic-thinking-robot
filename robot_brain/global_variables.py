@@ -1,11 +1,12 @@
 DT = 0.02
-# you could add a rotation constraints here as well
-MIN_INPUT = -1.0
-MAX_INPUT = 1.0
-
 # dashboard global variables
 CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = True
+
+# you could add a rotation constraints here as well
+MIN_INPUT = -2.0
+MAX_INPUT = 2.0
+
 
 # the number of time steps to plot for any controller
 PLOT_N_TIMESTEPS = 200 

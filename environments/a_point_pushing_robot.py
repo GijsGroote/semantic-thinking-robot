@@ -65,11 +65,11 @@ def main(conn=None):
         #     ("robot", State(pos=np.array([3,0,0]))),
         #     ("robot", State(pos=np.array([1, 2.2, 0]))),
         #     ],
-        "task": [("robot", State(pos=np.array([1.12, 3, 0]))),
+        "task": [("robot", State(pos=np.array([-4.12, 0, 0]))),
             ("robot", State(pos=np.array([-3.3212, 3, 0]))),
             ("robot", State(pos=np.array([3.3212, 2, 0]))),
-            # ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            # ("robot", State(pos=np.array([-1.3212, -1, 0]))),
+            ("robot", State(pos=np.array([3.3212, -2, 0]))),
+            ("robot", State(pos=np.array([-1.3212, -1, 0]))),
             ],
         "obstacles": obstacles
     }, ob)
@@ -85,7 +85,7 @@ def main(conn=None):
             action[0:2] = brain.respond()
 
         ob, reward, done, info = env.step(action)
-        # print(ob["joint_state"]["position"])
+        
         # if i == 1000 or i == 400 or i == 800 or i == 1200:
         #     print(i)
         #  3print(ob["obstacleSensor"]["simple_box"]["pose"]["orientation"])

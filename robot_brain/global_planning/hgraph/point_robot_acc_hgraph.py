@@ -1,10 +1,17 @@
+import torch
+import numpy as np
+import math
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.global_variables import FIG_BG_COLOR
+from robot_brain.global_variables import (
+        FIG_BG_COLOR,
+        DT
+        )
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
+from robot_brain.controller.mppi.mppi import Mppi
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
     CircleRobotConfigurationGridMap,
 )
@@ -40,14 +47,37 @@ class PointRobotAccHGraph(HGraph):
 
         # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
         # fallback option is random select over all the availeble controllers
-        return [self._create_mpc_driving_controller]
+        return [self._create_mpc_driving_controller,
+                self._create_mppi_driving_controller]
 
     def get_pushing_controllers(self) -> list:
         raise NotImplementedError()
 
+    def _create_mppi_driving_controller(self):
+        """ create MPPI controller for driving an point robot velocity. """
+
+        controller = Mppi(order=self.robot_order)
+
+        def dyn_model(x, u):
+            
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+
+            x_next[:,0] = x[:,0] + 5*DT*x[:,2] + 0.5*DT*u[:,0]*u[:,0] # x_pos_next = x_pos + DT * x_vel
+            x_next[:,1] = x[:,1] + 5*DT*x[:,3] + 0.5*DT*u[:,0]*u[:,1] # y_pos_next = y_pos + DT * y_vel
+            x_next[:,2] = x[:,2] + 4*DT*u[:,0] # x_vel_next = x_vel + DT * acc_x
+            x_next[:,3] = x[:,3] + 4*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
+
+            return x_next
+
+        controller.setup(dyn_model=dyn_model,
+                current_state=self.robot.state,
+                target_state=self.robot.state)
+
+        return controller
+
     def _create_mpc_driving_controller(self):
 
-        controller = Mpc(order=self.order)
+        controller = Mpc(order=self.robot_order)
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
         def dyn_model(x, u):

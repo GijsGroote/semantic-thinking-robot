@@ -98,6 +98,7 @@ def main():
 
         if i == 50:
             mppi_controller.visualise(save=False)
+
         current_state = State(pos=ob["joint_state"]["position"])
         action[0:2] = mppi_controller.respond(current_state=current_state)
 

@@ -1,9 +1,11 @@
 import numpy as np
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import FIG_BG_COLOR
+from robot_brain.global_variables import FIG_BG_COLOR, DT
 
 from casadi import vertcat
 from robot_brain.controller.mpc.mpc import Mpc
+from robot_brain.controller.mppi.mppi import Mppi
+import torch
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import (
     RectangularRobotConfigurationGridMap,
 )
@@ -42,11 +44,32 @@ class BoxerRobotVelHGraph(HGraph):
 
         # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
         # fallback option is random select over all the availeble controllers
-        return [self._create_mpc_driving_controller]
+        return [self._create_mpc_driving_controller,
+                self._create_mppi_driving_controller]
 
     def get_pushing_controllers(self) -> list:
         raise NotImplementedError()
 
+    def _create_mppi_driving_controller(self):
+        """ create MPPI controller for driving an boxerc robot velocity. """
+
+        controller = Mppi(order=self.robot_order)
+
+        def dyn_model(x, u):
+            
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+
+            x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
+            x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
+            x_next[:,2] = x[:,2] + DT*u[:,1]
+
+            return x_next
+
+        controller.setup(dyn_model=dyn_model,
+                current_state=self.robot.state,
+                target_state=self.robot.state)
+
+        return controller
     def _create_mpc_driving_controller(self):
 
         controller = Mpc(order=self.robot_order)
@@ -54,9 +77,11 @@ class BoxerRobotVelHGraph(HGraph):
         # dyn_model.set_boxer_model()
         def dyn_model(x, u):
             dx_next = vertcat(
-                x[0] + 0.05 * np.cos(x[2]) * u[0],
-                x[1] + 0.05 * np.sin(x[2]) * u[0],
-                x[2] + 0.05 * u[1],
+                # you could make DT a bit larger, used to be 0.05
+
+                x[0] + DT * np.cos(x[2]) * u[0],
+                x[1] + DT * np.sin(x[2]) * u[0],
+                x[2] + DT * u[1],
             )
             return dx_next
 

@@ -52,7 +52,13 @@ class Controller(ABC):
         assert isinstance(target_state, State), f" target_state should be a State and is {type(target_state)}" 
         self._target_state = target_state
 
-    # TODO: order of system here?
+    @property
+    def order(self):
+        return self._order
+
+    @order.setter
+    def order(self, val):
+        self._order = val
 
     # private methods below this point
     @abstractmethod
