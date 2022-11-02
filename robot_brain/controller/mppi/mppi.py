@@ -23,7 +23,7 @@ class Mppi(Controller):
         Controller.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 10
+        self.n_horizon = 30
         self.plot_data = {}
 
     def _setup(self, dyn_model, current_state: State):

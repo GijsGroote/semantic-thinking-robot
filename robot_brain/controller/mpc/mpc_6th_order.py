@@ -5,12 +5,11 @@ import pickle
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
-from robot_brain.global_variables import FIG_BG_COLOR, DT, PROJECT_PATH, PLOT_N_TIMESTEPS
 pd.options.plotting.backend = "plotly"
 
 from robot_brain.controller.mpc.mpc import Mpc
 from robot_brain.state import State
-from robot_brain.global_variables import PLOT_CONTROLLER, DT, MAX_INPUT, MIN_INPUT
+from robot_brain.global_variables import FIG_BG_COLOR, PLOT_CONTROLLER, DT, MAX_INPUT, MIN_INPUT, PLOT_N_TIMESTEPS, PROJECT_PATH
 
 class Plotter():
     """
@@ -54,6 +53,7 @@ class Plotter():
             t_vel = t_vel[-PLOT_N_TIMESTEPS:-1]
             sys_input1 = sys_input1[-PLOT_N_TIMESTEPS:-1]
             sys_input2 = sys_input2[-PLOT_N_TIMESTEPS:-1]
+            pred_error = pred_error[-PLOT_N_TIMESTEPS: -1]
 
         else:
             time = np.arange(0, dt_counter, 1)
@@ -82,19 +82,19 @@ class Plotter():
 
         # reference signals
         fig.append_trace(go.Scatter(
-            x=[time[0], time[-1]],
+            x=[time[0], time[0]+PLOT_N_TIMESTEPS],
             y=x_ref*np.ones((2,)),
             name="x-ref",
             line=dict(color='medium purple', width=1, dash='dash')
             ), row=1, col=1)
         fig.append_trace(go.Scatter(
-            x=[time[0], time[-1]],
+            x=[time[0], time[0]+PLOT_N_TIMESTEPS],
             y=y_ref*np.ones((2,)),
             name="y-ref",
             line=dict(color='forest green', width=1, dash='dash')
             ), row=1, col=1)
         fig.append_trace(go.Scatter(
-            x=[time[0], time[-1]],
+            x=[time[0], time[0]+PLOT_N_TIMESTEPS],
             y=theta_ref*np.ones((2,)),
             name="orien-ref",
             line=dict(color='dark green', width=1, dash='dash')
@@ -123,20 +123,20 @@ class Plotter():
         ), row=2, col=1)
 
         # scale the axis
-        fig.update_xaxes(range=[time[0], max(time[-1], PLOT_N_TIMESTEPS)],
+        fig.update_xaxes(range=[time[0], max(time[0]+PLOT_N_TIMESTEPS, PLOT_N_TIMESTEPS)],
                          row=1, col=1)
 
-        fig.update_xaxes(range=[time[0], max(time[-1], PLOT_N_TIMESTEPS)],
+        fig.update_xaxes(range=[time[0], max(time[0]+PLOT_N_TIMESTEPS, PLOT_N_TIMESTEPS)],
                          title_text="Time [steps]",
                          row=2, col=1)
 
-        fig.update_yaxes(range=[dstack((x_pos, y_pos, t_pos)).min() - 0.2,
-                                dstack((x_pos, y_pos, t_pos)).max() + 0.2],
+        fig.update_yaxes(range=[dstack((x_pos, y_pos, t_pos)).min() - 1.5,
+                                dstack((x_pos, y_pos, t_pos)).max() + 1.5],
                          title_text="position",
                          row=1, col=1)
 
-        fig.update_yaxes(range=[min(dstack((sys_input1, sys_input2)).min(), min(pred_error)) - 0.2,
-                                max(dstack((sys_input1, sys_input2)).max(), max(pred_error)) + 0.2],
+        fig.update_yaxes(range=[min(MIN_INPUT, min(pred_error)) - 0.2,
+                                max(MAX_INPUT, max(pred_error)) + 0.2],
                          title_text="input & error",
                          row=2, col=1)
 
@@ -217,10 +217,10 @@ class Mpc6thOrder(Mpc):
         """ return simulated state one step into the future. """
         pred_output = self.simulator.make_step(system_input)
 
-        return State(pos=np.array([pred_output[0], pred_output[1], 0]),
-                    ang_p=np.array([0, 0, pred_output[2]]),
-                    vel=np.array([pred_output[3], pred_output[4], 0]),
-                    ang_v=np.array([0, 0, pred_output[5]])
+        return State(pos=np.array([pred_output[0].item(), pred_output[1].item(), 0]),
+                    ang_p=np.array([0, 0, pred_output[2].item()]),
+                    vel=np.array([pred_output[3].item(), pred_output[4].item(), 0]),
+                    ang_v=np.array([0, 0, pred_output[5].item()])
                     )
 
     def template_model(self, dyn_model):

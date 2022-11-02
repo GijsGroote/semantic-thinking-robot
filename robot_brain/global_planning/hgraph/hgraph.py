@@ -210,12 +210,9 @@ class HGraph(Graph):
         # fallback option is random select over all the availeble controllers
 
         possible_controllers = self.get_driving_controllers()
-
         
         controller = random.choice(possible_controllers)()
 
-        controller = self._create_mpc_driving_controller()
-        # you should do a check to see if the order of the robot matches the controller order
         return controller
 
     @abstractmethod

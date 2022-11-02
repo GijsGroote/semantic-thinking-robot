@@ -61,8 +61,8 @@ class BoxerRobotAccHGraph(HGraph):
         def dyn_model(x, u):
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
 
-            x_next[:,0] = torch.add(x[:,0], x[:,3], alpha=DT*math.cos(x[:,2])) # x_next[0] = x_pos + DT * cos(orient) * x_vel
-            x_next[:,1] = torch.add(x[:,1], x[:,3], alpha=DT*math.sin(x[:,2])) # x_next[0] = x_pos + DT * cos(orient) * x_vel
+            x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2]) * x[:,3] # x_next[0] = x_pos + DT * cos(orient) * x_vel
+            x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2]) * x[:,3] # x_next[0] = x_pos + DT * cos(orient) * x_vel
             x_next[:,1] = torch.add(x[:,1], x[:,4], alpha=DT) # x_next[1] = x[1] + DT*u[1]
             x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
             x_next[:,3] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
@@ -82,27 +82,13 @@ class BoxerRobotAccHGraph(HGraph):
         controller = Mpc6thOrder()
 
         def dyn_model(x, u):
-            # dx_next = vertcat(
-            #     # you could make DT a bit larger, used to be 0.05
-            #
-            #     x[0] + DT * np.cos(x[2]) * u[0],
-            #     x[1] + DT * np.sin(x[2]) * u[0],
-            #     x[2] + DT * u[1],
-            #     x[3],# + DT*np.cos(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
-            #     x[4] ,#+ DT*np.sin(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
-            #     x[5] ,#+ DT*u[1], # x_next[1] = x[1] + DT*u[1]
-            # )
-            # return dx_next
-
-
-             
             dx_next = vertcat(
-                x[0] + DT*x[3] + 0.5*DT*DT*np.cos(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
-                x[1] + DT*x[4] + 0.5*DT*DT*np.sin(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
-                x[2] + DT*x[5] + 0.5*DT*DT*u[1], # x_next[1] = x[1] + DT*u[1]
+                x[0] + DT*x[3],# + 0.5*DT*DT*np.cos(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
+                x[1] + DT*x[4],# + 0.5*DT*DT*np.sin(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
+                x[2] + DT*x[5],# + 500*0.5*DT*DT*u[1], # x_next[1] = x[1] + DT*u[1]
                 x[3] + DT*np.cos(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
                 x[4] + DT*np.sin(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
-                x[5] + DT*u[1], # x_next[1] = x[1] + DT*u[1]
+                x[5] + 100*DT*u[1], # x_next[1] = x[1] + DT*u[1]
             )
             return dx_next
 

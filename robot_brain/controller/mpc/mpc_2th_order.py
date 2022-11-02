@@ -67,13 +67,13 @@ class Plotter():
 
         # reference signals
         fig.append_trace(go.Scatter(
-            x=[time[0], time[-1]],
+            x=[time[0], time[0]+PLOT_N_TIMESTEPS],
             y=x_ref*np.ones((2,)),
             name="x-ref",
             line=dict(color='medium purple', width=1, dash='dash')
             ), row=1, col=1)
         fig.append_trace(go.Scatter(
-            x=[time[0], time[-1]],
+            x=[time[0], time[0]+PLOT_N_TIMESTEPS],
             y=y_ref*np.ones((2,)),
             name="y-ref",
             line=dict(color='forest green', width=1, dash='dash')
@@ -102,20 +102,20 @@ class Plotter():
         ), row=2, col=1)
 
         # scale the axis
-        fig.update_xaxes(range=[time[0], max(time[-1], PLOT_N_TIMESTEPS)],
+        fig.update_xaxes(range=[time[0], max(time[0]+PLOT_N_TIMESTEPS, PLOT_N_TIMESTEPS)],
                          row=1, col=1)
 
-        fig.update_xaxes(range=[time[0], max(time[-1], PLOT_N_TIMESTEPS)],
+        fig.update_xaxes(range=[time[0], max(time[0]+PLOT_N_TIMESTEPS, PLOT_N_TIMESTEPS)],
                          title_text="Time [steps]",
                          row=2, col=1)
 
-        fig.update_yaxes(range=[dstack((x_pos, y_pos)).min() - 0.2,
-                                dstack((x_pos, y_pos)).max() + 0.2],
+        fig.update_yaxes(range=[dstack((x_pos, y_pos)).min() - 1.5,
+                                dstack((x_pos, y_pos)).max() + 1.5],
                          title_text="position",
                          row=1, col=1)
 
-        fig.update_yaxes(range=[min(dstack((sys_input1, sys_input2)).min(), min(pred_error)) - 0.2,
-                                max(dstack((sys_input1, sys_input2)).max(), max(pred_error)) + 0.2],
+        fig.update_yaxes(range=[min(MIN_INPUT, min(pred_error)) - 0.2,
+                                max(MAX_INPUT, max(pred_error)) + 0.2],
                          title_text="input & error",
                          row=2, col=1)
 
@@ -125,10 +125,6 @@ class Plotter():
 
         if save:
             with open(PROJECT_PATH+"dashboard/data/controller.pickle", "wb") as file:
-
-                print('saving figure to file {/')
-                print(PROJECT_PATH+"dashboard/data/controller.pickle")
-
                 pickle.dump(fig, file)
         else:
             fig.show()

@@ -4,8 +4,8 @@ CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = True
 
 # you could add a rotation constraints here as well
-MIN_INPUT = -1.0
-MAX_INPUT = 1.0
+MIN_INPUT = -3.0
+MAX_INPUT = 3.0
 
 
 # the number of time steps to plot for any controller

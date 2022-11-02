@@ -24,8 +24,8 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    # robot_type = "pointRobot-vel-v7"
-    robot_type = "pointRobot-acc-v7"
+    robot_type = "pointRobot-vel-v7"
+    # robot_type = "pointRobot-acc-v7"
     # robot_type = "boxerRobot-vel-v7"
     # robot_type = "boxerRobot-acc-v7"
     env = gym.make(robot_type, dt=DT, render=True)
@@ -69,7 +69,7 @@ def main(conn=None):
             ("robot", State(pos=np.array([-3.3212, 3, 0]))),
             ("robot", State(pos=np.array([3.3212, 2, 0]))),
             ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            ("robot", State(pos=np.array([-1.3212, -1, 0]))),
+            # ("robot", State(pos=np.array([-1.3212, -1, 0]))),
             ],
         "obstacles": obstacles
     }, ob)

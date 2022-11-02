@@ -68,11 +68,10 @@ def register_callbacks(app):
     def update_controller_graph_live(n):
 
         file_path = PROJECT_PATH+"dashboard/data/controller.pickle"
-        print(f' searching for controller file in {file_path}')
         
         # read in controller data if it exists
         if not Path(file_path).is_file():
-            print("conclusion: therew awas no data foudn!")
+            print("conclusion: therew NO CONTROL DATA!")
             return no_data_found_dict
 
         else:

@@ -15,8 +15,8 @@ class Mppi4thOrder(Mppi):
         cost drives the system to it's desired state. """
         return torch.subtract(x[:,0], self.target_state.pos[0])**2 +\
                 torch.subtract(x[:,1], self.target_state.pos[1])**2 +\
-                torch.subtract(x[:,2], self.target_state.vel[0])**2 +\
-                torch.subtract(x[:,3], self.target_state.vel[1])**2 +\
+                0.3*torch.subtract(x[:,2], self.target_state.vel[0])**2 +\
+                0.3*torch.subtract(x[:,3], self.target_state.vel[1])**2 +\
                 1e-4*(u[:,0]**4 + u[:,1]**4)
 
     def _find_input(self, current_state: State) -> np.ndarray:

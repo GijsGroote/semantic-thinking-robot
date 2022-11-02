@@ -12,6 +12,8 @@ class Mpc(Controller):
     the system toward the target state by minimizing an objective function.
     """
     def __init__(self, order):
+        # TODO: this class, and child classes use the simulator for estimating the next state, 
+        # an improvement would be to use the estimator. 
         Controller.__init__(self, order)
         self.name = "MPC"
         self.mpc = None
@@ -75,7 +77,6 @@ class Mpc(Controller):
         system_input = np.reshape(system_input, (system_input.shape[0], 1))
         self.pred_error.append(self.calculate_prediction_error(current_state))
         self.simulator.x0 = self.create_initial_state(current_state)
-
         self.y_predicted = self.simulate(system_input)
 
     @abstractmethod
