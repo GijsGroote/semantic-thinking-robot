@@ -1,18 +1,23 @@
 import os
+import glob
 import multiprocessing
 from dash import Dash, html, dcc
 from dashboard.callback import register_callbacks
 from dashboard.figures import no_data_found_dict
 # from IPython.display import display, HTML, Image
-from robot_brain.global_variables import FIG_BG_COLOR
+from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
 class Dashboard:
     """
     Dashboard class creates and updates a local site.
     """
     def __init__(self, app):
-        app.controller_graph_ready = False
-        # todo: other graphs
+
+        # remove all old files
+        files = glob.glob(PROJECT_PATH+"dashboard/data/*")
+        for f in files:
+            os.remove(f)
+
         self.app = app
 
         self.loading_html = """
@@ -63,12 +68,6 @@ class Dashboard:
         </body>
         </html>
         """
-
-        # THIS LOADING IFRAME COULD BE USEFULL
-        # html.Iframe(
-        #     srcDoc=self.loading_html,
-        #     className="graph"
-        # )
 
         self.app.layout = html.Div(children=[
             dcc.Interval(
@@ -135,7 +134,7 @@ class Dashboard:
 
 def start_dash_server():
     # change working directory
-    os.chdir("/home/gijs/Documents/semantic-thinking-robot/environments/")
+    os.chdir(PROJECT_PATH+"environments/")
 
     # create app
     app = Dash(__name__,

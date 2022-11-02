@@ -15,25 +15,24 @@ class State:
         self.ang_p = ang_p
         self.ang_v = ang_v
 
-    def euclidean(self, state):
+    def euclidean(self, state) -> float:
         """
         Calculate the euclidean distance between two states.
         """
         return (np.linalg.norm(self.pos - state.pos) + np.linalg.norm(self.ang_p - state.ang_p)
-            + np.linalg.norm(self.vel- state.vel) + np.linalg.norm(self.ang_v- state.ang_v))
+            + np.linalg.norm(self.vel- state.vel) + np.linalg.norm(self.ang_v- state.ang_v)).item()
 
-    def position_euclidean(self, state):
+    def pose_euclidean(self, state) -> float:
         """
         Calculate the euclidean distance between the position of two states.
         """
-        return (np.linalg.norm(self.pos - state.pos) + np.linalg.norm(self.ang_p - state.ang_p))
-
+        return np.linalg.norm(self.get_2d_pose() - state.get_2d_pose()).item()
 
     def to_string(self, decimals=2):
-        return f"pos:({np.round(self.pos, decimals)}), vel:(\
-                {np.round(self.vel, decimals)}), ang_p:(\
-                {np.round(self.ang_p, decimals)}), ang_v:(\
-                {np.round(self.ang_v, decimals)})."
+        return "pos:("+np.array2string(self.pos, precision=decimals)+"), vel:("\
+                +np.array2string(self.vel, precision=decimals)+"), ang_p:("\
+                +np.array2string(self.ang_p, precision=decimals)+"), ang_v:("\
+                +np.array2string(self.ang_v, precision=decimals)+")."
 
     def get_2d_pose(self):
         return np.array([self.pos[0], self.pos[1], self.ang_p[2]])

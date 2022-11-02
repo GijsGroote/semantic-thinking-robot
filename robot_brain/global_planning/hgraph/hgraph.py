@@ -214,7 +214,7 @@ class HGraph(Graph):
         
         controller = random.choice(possible_controllers)()
 
-        # controller = self._create_mppi_driving_controller()
+        controller = self._create_mpc_driving_controller()
         # you should do a check to see if the order of the robot matches the controller order
         return controller
 
@@ -293,7 +293,7 @@ class HGraph(Graph):
                     title = f"Target Node: {node.iden}<br>{node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
-                    label = node.name,
+                    # label = node.name,
                     color= {
                         'border': '#009900', # green
                         'background': '#00ff00',

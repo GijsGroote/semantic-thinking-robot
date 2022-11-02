@@ -2,7 +2,7 @@ import os
 import time
 import pickle
 from pathlib import Path
-from pyarrow import feather
+from robot_brain.global_variables import PROJECT_PATH
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 import pandas as pd
@@ -23,12 +23,11 @@ def register_callbacks(app):
     no_data_found_html = create_no_data_found_html(app)
 
     @app.callback(
-        Output("hGraph", "srcDoc"), Input("controller-interval-component", "n_intervals"))
+        Output("hGraph", "srcDoc"), Input("hgraph-interval-component", "n_intervals"))
     def update_hgraph_live(n):
 
 
-        # TODO: do not go for a hardcoded line!
-        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/hypothesis_graph.html"
+        path = PROJECT_PATH+"dashboard/data/hypothesis_graph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -45,10 +44,10 @@ def register_callbacks(app):
             return data
 
     @app.callback(
-        Output("kGraph", "srcDoc"), Input("controller-interval-component", "n_intervals"))
+        Output("kGraph", "srcDoc"), Input("kgraph-interval-component", "n_intervals"))
     def update_kgraph_live(n):
 
-        path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
+        path = PROJECT_PATH+"dashboard/data/knowledge_graph.html"
 
         # read in controller data if it exists
         if not Path(path).is_file():
@@ -68,9 +67,12 @@ def register_callbacks(app):
                        Input("controller-interval-component", "n_intervals"))
     def update_controller_graph_live(n):
 
-        file_path = "../dashboard/data/controller.pickle"
+        file_path = PROJECT_PATH+"dashboard/data/controller.pickle"
+        print(f' searching for controller file in {file_path}')
+        
         # read in controller data if it exists
         if not Path(file_path).is_file():
+            print("conclusion: therew awas no data foudn!")
             return no_data_found_dict
 
         else:
@@ -84,48 +86,12 @@ def register_callbacks(app):
                                        
                 return fig
 
-        # # read in controller data if it exists
-        # if not Path("../dashboard/data/mpc_data.feather").is_file():
-        #     return no_data_found_dict
-        #
-        # else:
-        #     # only update up-to-date files, exception for n = 0
-        #     if n > 0:
-        #         check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
-        #
-        #     df = feather.read_feather("../dashboard/data/mpc_data.feather")
-        #
-        #     # todo: this can be done better, send metadata with the dataframe
-        #
-        #     if df.type[0] == "mpc":
-        #         return create_mpc_plot(df)
-        #
-    # @app.callback(Output("live-update-controller-graph", "figure"),
-    #                    Input("controller-interval-component", "n_intervals"))
-    # def update_controller_graph_live(n):
-    #
-    #     # read in controller data if it exists
-    #     if not Path("../dashboard/data/mpc_data.feather").is_file():
-    #         return no_data_found_dict
-    #
-    #     else:
-    #         # only update up-to-date files, exception for n = 0
-    #         if n > 0:
-    #             check_file_is_up_to_date("../dashboard/data/mpc_data.feather")
-    #
-    #         df = feather.read_feather("../dashboard/data/mpc_data.feather")
-    #
-    #         # todo: this can be done better, send metadata with the dataframe
-    #
-    #         if df.type[0] == "mpc":
-    #             return create_mpc_plot(df)
-    #
     @app.callback(Output("live-update-configuration-map", "figure"),
             Input("configuration-map-interval-component", "n_intervals"))
 
     def update_configuration_map(n):
 
-        file_path = "../dashboard/data/configuration_grid.pickle"
+        file_path = PROJECT_PATH+"dashboard/data/configuration_grid.pickle"
         # read in controller data if it exists
         if not Path(file_path).is_file():
             return no_data_found_dict

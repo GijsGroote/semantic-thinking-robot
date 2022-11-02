@@ -1,8 +1,8 @@
+from abc import abstractmethod
 import do_mpc
+from robot_brain.state import State
 import numpy as np
-from robot_brain.controller.mpc.template_model import template_model
-from robot_brain.controller.mpc.template_mpc import template_mpc
-from robot_brain.controller.mpc.template_plotter import Plotter
+
 from robot_brain.global_variables import PLOT_CONTROLLER, CREATE_SERVER_DASHBOARD, DT
 from robot_brain.controller.controller import Controller
 
@@ -20,86 +20,71 @@ class Mpc(Controller):
         self.plotter = None
         self.n_horizon = 15
         self.y_predicted = None
-        self.pred_error = []
-
 
     def _setup(self, dyn_model, current_state):
 
         # fully define model
-        self.model = template_model(dyn_model)
+        self.model = self.template_model(dyn_model)
 
         # set all mpc parameters
-        self.mpc = template_mpc(model=self.model,
+        self.mpc = self.template_mpc(model=self.model,
                 n_horizon=self.n_horizon,
                 target_state=self.target_state)
 
-        initial_state = np.array([
-            current_state.pos[0],
-            current_state.pos[0],
-            current_state.ang_p[2]])
-        self.mpc.x0 = initial_state
-
+        initial_state = self.create_initial_state(current_state)
+        self.mpc.x0 = initial_state 
         self.mpc.set_initial_guess()
 
         if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD:
 
-            simulator = do_mpc.simulator.Simulator(self.model)
-            tvp_template = simulator.get_tvp_template()
-
-            def tvp_fun(t_now): # pylint: disable=unused-argument
-                tvp_template['pos_x_target'] = self.target_state.pos[0]
-                tvp_template['pos_y_target'] = self.target_state.pos[1]
-                tvp_template['ang_p_target'] = self.target_state.ang_p[2]
-
-                return tvp_template
-
-            simulator.set_tvp_fun(tvp_fun)
+            self.simulator = do_mpc.simulator.Simulator(self.model)
+            self.simulator.set_tvp_fun(self.create_tvp_sim())
 
             # Set parameter(s):
-            simulator.set_param(t_step=DT)
-            simulator.setup()
+            self.simulator.set_param(t_step=DT)
+            self.simulator.setup()
 
-            simulator.x0 = initial_state
+            self.simulator.x0 = initial_state
 
-            self.simulator = simulator
-            self.plotter = Plotter()
-            self.plotter.setup(self.mpc, self.simulator)
-
-            self.y_predicted = current_state.get_2d_pose()
+            self.plotter = self.create_plotter()
+            
+            self.y_predicted = current_state
 
         self.mpc.reset_history()
 
-    def _find_input(self, current_state):
-        initial_state = current_state.get_2d_pose()
-        self.mpc.x0 = initial_state
-        system_input = self.mpc.make_step(initial_state) # solves minimisation problem
 
-        if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD:
-            # calculate one step ahead prediction error
-            self.pred_error.append(np.linalg.norm(self.y_predicted - initial_state))
+    @abstractmethod
+    def template_model(self, dyn_model):
+        pass
 
-            self.simulator.x0 = initial_state
-            self.y_predicted = np.reshape(
-                    self.simulator.make_step(system_input), initial_state.shape)
+    @abstractmethod
+    def template_mpc(self):
+        pass
 
-        return np.reshape(system_input, (len(system_input),))
+    @abstractmethod
+    def create_plotter(self):
+        pass
 
-    def _set_target_state(self):
+    @abstractmethod
+    def create_tvp_sim(self):
+        pass
 
-        tvp_template = self.mpc.get_tvp_template()
+    def _update_prediction_error_sequence(self, current_state: State, system_input: np.ndarray):
+        """ update the prediction error and calculate the one step ahead prediction. """
 
-        def tvp_fun(t_now): # pylint: disable=unused-argument
-            for k in range(self.n_horizon+1):
-                tvp_template['_tvp',k,'pos_x_target'] = self.target_state.pos[0]
-                tvp_template['_tvp',k,'pos_y_target'] = self.target_state.pos[1]
-                tvp_template['_tvp',k,'ang_p_target'] = self.target_state.ang_p[2]
+        system_input = np.reshape(system_input, (system_input.shape[0], 1))
+        self.pred_error.append(self.calculate_prediction_error(current_state))
+        self.simulator.x0 = self.create_initial_state(current_state)
 
-            return tvp_template
+        self.y_predicted = self.simulate(system_input)
 
-        self.mpc.set_tvp_fun(tvp_fun)
+    @abstractmethod
+    def simulate(self, system_input: np.ndarray) -> State:
+        pass
 
-    def visualise(self):
-        self.plotter.visualise(self.target_state, self.pred_error)
+    @abstractmethod
+    def calculate_prediction_error(self, current_state: State) -> float:
+        pass
 
-    def _update_db(self):
-        self.plotter.update_db(self.target_state, self.pred_error)
+    def visualise(self, save=True):
+        self.plotter.visualise(self.target_state, self.pred_error, save=save)

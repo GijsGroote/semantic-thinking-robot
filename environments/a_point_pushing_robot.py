@@ -24,8 +24,8 @@ def main(conn=None):
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
-    robot_type = "pointRobot-vel-v7"
-    # robot_type = "pointRobot-acc-v7"
+    # robot_type = "pointRobot-vel-v7"
+    robot_type = "pointRobot-acc-v7"
     # robot_type = "boxerRobot-vel-v7"
     # robot_type = "boxerRobot-acc-v7"
     env = gym.make(robot_type, dt=DT, render=True)

@@ -8,7 +8,7 @@ import pickle
 
 from helper_functions.geometrics import minimal_distance_point_to_line
 from robot_brain.obstacle import Obstacle
-from robot_brain.global_variables import FIG_BG_COLOR
+from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
 class CircleRobotConfigurationGridMap(ConfigurationGridMap):
     """ 2-dimensional configuration grid map representing the environment
@@ -319,7 +319,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         fig.update_yaxes(autorange="reversed")
         if save:
-            with open("/home/gijs/Documents/semantic-thinking-robot/dashboard/data/configuration_grid.pickle", "wb") as file:
+            with open(PROJECT_PATH+"dashboard/data/configuration_grid.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

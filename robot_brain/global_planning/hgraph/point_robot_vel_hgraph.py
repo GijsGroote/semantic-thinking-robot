@@ -2,8 +2,8 @@ import torch
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from casadi import vertcat
-from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.controller.mppi.mppi import Mppi
+from robot_brain.controller.mpc.mpc_2th_order import Mpc2thOrder
+from robot_brain.controller.mppi.mppi_2th_order import Mppi2thOrder
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
     CircleRobotConfigurationGridMap,
 )
@@ -48,7 +48,7 @@ class PointRobotVelHGraph(HGraph):
     def _create_mppi_driving_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
 
-        controller = Mppi(order=self.robot_order)
+        controller = Mppi2thOrder()
 
         def dyn_model(x, u):
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
@@ -66,13 +66,12 @@ class PointRobotVelHGraph(HGraph):
 
 
     def _create_mpc_driving_controller(self):
-        controller = Mpc(order=self.robot_order)
+        controller = Mpc2thOrder()
 
         def dyn_model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
-                x[1] + 0.05 *  u[1],
-                x[2],
+                x[1] + 0.05 *  u[1]
             )
             return dx_next
 

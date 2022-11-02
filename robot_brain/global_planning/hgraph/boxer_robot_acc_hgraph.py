@@ -7,8 +7,8 @@ from robot_brain.global_variables import (
         )
 
 from casadi import vertcat
-from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.controller.mppi.mppi import Mppi
+from robot_brain.controller.mpc.mpc_6th_order import Mpc6thOrder
+from robot_brain.controller.mppi.mppi_6th_order import Mppi6thOrder
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import (
     RectangularRobotConfigurationGridMap,
 )
@@ -56,14 +56,13 @@ class BoxerRobotAccHGraph(HGraph):
     def _create_mppi_driving_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
 
-        controller = Mppi(order=self.robot_order)
+        controller = Mppi6thOrder()
 
         def dyn_model(x, u):
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
 
             x_next[:,0] = torch.add(x[:,0], x[:,3], alpha=DT*math.cos(x[:,2])) # x_next[0] = x_pos + DT * cos(orient) * x_vel
             x_next[:,1] = torch.add(x[:,1], x[:,3], alpha=DT*math.sin(x[:,2])) # x_next[0] = x_pos + DT * cos(orient) * x_vel
-
             x_next[:,1] = torch.add(x[:,1], x[:,4], alpha=DT) # x_next[1] = x[1] + DT*u[1]
             x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
             x_next[:,3] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
@@ -80,15 +79,30 @@ class BoxerRobotAccHGraph(HGraph):
 
     def _create_mpc_driving_controller(self):
 
-        controller = Mpc(order=self.robot_order)
-        # dyn_model = Dynamics()
-        # dyn_model.set_boxer_model()
-        # TODO: MPC should have an accelaration input robot
+        controller = Mpc6thOrder()
+
         def dyn_model(x, u):
+            # dx_next = vertcat(
+            #     # you could make DT a bit larger, used to be 0.05
+            #
+            #     x[0] + DT * np.cos(x[2]) * u[0],
+            #     x[1] + DT * np.sin(x[2]) * u[0],
+            #     x[2] + DT * u[1],
+            #     x[3],# + DT*np.cos(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
+            #     x[4] ,#+ DT*np.sin(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
+            #     x[5] ,#+ DT*u[1], # x_next[1] = x[1] + DT*u[1]
+            # )
+            # return dx_next
+
+
+             
             dx_next = vertcat(
-                x[0] + 0.025 * np.cos(x[2]) * u[0],
-                x[1] + 0.025 * np.sin(x[2]) * u[0],
-                x[2] + 0.025 * u[1],
+                x[0] + DT*x[3] + 0.5*DT*DT*np.cos(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
+                x[1] + DT*x[4] + 0.5*DT*DT*np.sin(x[2])*u[0], # x_next[0] = x_pos + DT * cos(orient) * x_vel
+                x[2] + DT*x[5] + 0.5*DT*DT*u[1], # x_next[1] = x[1] + DT*u[1]
+                x[3] + DT*np.cos(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
+                x[4] + DT*np.sin(x[2])*u[0], # x_next[0] = x[0] + DT*u[0]
+                x[5] + DT*u[1], # x_next[1] = x[1] + DT*u[1]
             )
             return dx_next
 

@@ -3,8 +3,8 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_variables import FIG_BG_COLOR, DT
 
 from casadi import vertcat
-from robot_brain.controller.mpc.mpc import Mpc
-from robot_brain.controller.mppi.mppi import Mppi
+from robot_brain.controller.mpc.mpc_3th_order import Mpc3thOrder
+from robot_brain.controller.mppi.mppi_3th_order import Mppi3thOrder
 import torch
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import (
     RectangularRobotConfigurationGridMap,
@@ -53,7 +53,7 @@ class BoxerRobotVelHGraph(HGraph):
     def _create_mppi_driving_controller(self):
         """ create MPPI controller for driving an boxerc robot velocity. """
 
-        controller = Mppi(order=self.robot_order)
+        controller = Mppi3thOrder()
 
         def dyn_model(x, u):
             
@@ -72,7 +72,7 @@ class BoxerRobotVelHGraph(HGraph):
         return controller
     def _create_mpc_driving_controller(self):
 
-        controller = Mpc(order=self.robot_order)
+        controller = Mpc3thOrder()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
         def dyn_model(x, u):

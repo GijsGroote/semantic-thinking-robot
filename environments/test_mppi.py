@@ -1,7 +1,10 @@
 import numpy as np
 import torch
-from pytorch_mppi import mppi
 from robot_brain.state import State
+from robot_brain.controller.mppi.mppi_2th_order import Mppi2thOrder
+from robot_brain.controller.mppi.mppi_3th_order import Mppi3thOrder
+from robot_brain.controller.mppi.mppi_4th_order import Mppi4thOrder
+from robot_brain.controller.mppi.mppi_6th_order import Mppi6thOrder
 
 import numpy as np
 import gym
@@ -10,16 +13,15 @@ import urdfenvs.boxer_robot # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.state import State
 from robot_brain.global_variables import DT
-from robot_brain.controller.mppi.mppi import Mppi
 
 
 def main():
     """ MPPI test for the gym environment. """
 
-    robot_type = "pointRobot-vel-v7"
+    # robot_type = "pointRobot-vel-v7"
     # robot_type = "pointRobot-acc-v7"
     # robot_type = "boxerRobot-vel-v7"
-    # robot_type = "boxerRobot-acc-v7"
+    robot_type = "boxerRobot-acc-v7"
     env = gym.make(robot_type, dt=DT, render=True)
 
     action = np.zeros(env.n())
@@ -30,62 +32,58 @@ def main():
 
     n_steps = 10000
 
-    #
-    # d = torch.device("cpu")
-    #
+
+    # mppi_controller = Mppi4thOrder()
     # def dynamics(x, u):
     #
-    #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=d)
+    #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
     #
     #     x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
     #     x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
     #
     #     return x_next
-    #
-    # targetState = State(pos=np.array([1,1,0]), ang_p=np.array([0,0,0]))
-    # 
-    # def running_cost(x, u):
-    #     """ running_cost is euclidean distance toward target. """
-    #     return torch.subtract(x[:,0], targetState.pos[0])**2 +\
-    #             torch.subtract(x[:,1], targetState.pos[1])**2 +\
-    #             1e-4*(u[:,0]**2 + u[:,0]**2)
-    # 
-    # def set_target_state(target_state):
-    #     # new running cost function
-    #     def running_cost(x, u):
-    #         return torch.subtract(x[:,0], target_state.pos[0])**2 +\
-    #                 torch.subtract(x[:,1], target_state.pos[1])**2 +\
-    #                 1e-130*(u[:,0]**4 + u[:,1]**4)
-    #     # set the new running cost
-    #     ctrl.running_cost = running_cost
-    #
-    # # create controller with chosen parameters
-    # ctrl = mppi.MPPI(dynamics=dynamics,
-    #         running_cost=running_cost,
-    #         nx=2,
-    #         noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
-    #         num_samples=1000, # number of rolouts
-    #         horizon=5,
-    #         lambda_=1e-2,
-    #         # device=d, 
-    #         u_min=torch.tensor([-2, -2], dtype=torch.double, device=d),
-    #         u_max=torch.tensor([2, 2], dtype=torch.double, device=d)
-    #         )
 
+    # mppi_controller = Mppi3thOrder()
+    # def dynamics(x, u):
+    #         
+    #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+    #
+    #     x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
+    #     x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
+    #     x_next[:,2] = x[:,2] + DT*u[:,1]
+    #
+    #     return x_next
+
+    # mppi_controller = Mppi4thOrder()
+    # def dynamics(x, u):
+    #         
+    #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+    #
+    #     x_next[:,0] = x[:,0] + 1*DT*x[:,2] #+ 0.05*DT*u[:,0]*u[:,0] # x_pos_next = x_pos + DT * x_vel
+    #     x_next[:,1] = x[:,1] + 1*DT*x[:,3] #+ 0.05*DT*u[:,0]*u[:,1] # y_pos_next = y_pos + DT * y_vel
+    #     x_next[:,2] = x[:,2] + 1*DT*u[:,0] # x_vel_next = x_vel + DT * acc_x
+    #     x_next[:,3] = x[:,3] + 1*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
+    #
+    #     return x_next
+    
+    mppi_controller = Mppi6thOrder()
     def dynamics(x, u):
-
+            
         x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
 
-        x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
-        x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+        x_next[:,0] = x[:,0] + 1*DT*x[:,3] #+ 0.05*DT*u[:,0]*u[:,0] # x_pos_next = x_pos + DT * x_vel
+        x_next[:,1] = x[:,1] + 1*DT*x[:,4] #+ 0.05*DT*u[:,0]*u[:,1] # y_pos_next = y_pos + DT * y_vel
+        x_next[:,2] = x[:,2] + 1*DT*x[:,5] # x_vel_next = x_vel + DT * acc_x
+        x_next[:,3] = x[:,3] + 1*DT*torch.cos(u[:,0]) # y_vel_next = y_vel + DT * acc_y
+        x_next[:,4] = x[:,4] + 1*DT*torch.sin(u[:,0]) # x_vel_next = x_vel + DT * acc_x
+        x_next[:,5] = x[:,5] + 1*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
 
         return x_next
 
-    mppi_controller = Mppi(order=2)
 
     mppi_controller.setup(dyn_model=dynamics,
            current_state=State(),
-           target_state=State(pos=np.array([1,1,0])))
+           target_state=State(pos=np.array([1,0,0])))
 
     # add sensors
     sensor = ObstacleSensor()
