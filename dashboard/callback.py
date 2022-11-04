@@ -69,9 +69,10 @@ def register_callbacks(app):
 
         file_path = PROJECT_PATH+"dashboard/data/controller.pickle"
         
+        print("returning no data foudn dict")
+        return no_data_found_dict
         # read in controller data if it exists
         if not Path(file_path).is_file():
-            print("conclusion: therew NO CONTROL DATA!")
             return no_data_found_dict
 
         else:

@@ -95,7 +95,7 @@ class Mppi(Controller):
         fig.update_xaxes(range=[time[0], max(time[-1], PLOT_N_TIMESTEPS)],
                          title_text="Time [steps]")
 
-        fig.update_yaxes(range=[0, max(pred_error) * 1.2],
+        fig.update_yaxes(range=[0, max(max(pred_error), 0.1) * 1.2],
                          title_text="error")
 
 

@@ -14,9 +14,9 @@ class Dashboard:
     def __init__(self, app):
 
         # remove all old files
-        # files = glob.glob(PROJECT_PATH+"dashboard/data/*")
-        # for f in files:
-        #     os.remove(f)
+        files = glob.glob(PROJECT_PATH+"dashboard/data/*")
+        for f in files:
+            os.remove(f)
 
         self.app = app
 

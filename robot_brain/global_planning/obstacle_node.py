@@ -16,7 +16,7 @@ class ObstacleNode(Node):
         self.obstacle = obstacle
 
     def to_string(self):
-        return f"ObstacleNode: {self.iden}"
+        return f"ObstacleNode: {self.iden}, with obstacle {self.obstacle.name}, {self.obstacle.properties.name}"
 
     @property
     def obstacle(self):
@@ -24,5 +24,5 @@ class ObstacleNode(Node):
 
     @obstacle.setter
     def obstacle(self, val):
-        assert isinstance(val, Obstacle)
+        assert isinstance(val, Obstacle), f"obstacle should be an Obstacle and is {type(val)}"
         self._obstacle = val

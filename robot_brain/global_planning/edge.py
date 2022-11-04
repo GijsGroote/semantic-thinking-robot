@@ -1,7 +1,8 @@
 import numpy as np
+from abc import ABC, abstractmethod
 from robot_brain.state import State
 
-class Edge:
+class Edge(ABC):
     """
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
@@ -17,11 +18,10 @@ class Edge:
         self.path_pointer = 0
         self.alpha = None
 
+    @abstractmethod
     def to_string(self):
-        """
-        Creates readable format of an Edge
-        :return: String
-        """
+        """ Creates readable format of an Edge. """
+        pass
         return f"iden: {self.iden}, controller: {self.controller.name}"
 
     def completed(self) -> bool:
@@ -102,6 +102,14 @@ class Edge:
     def controller(self, contr):
         # TODO: check contr is a Controller object
         self._controller = contr
+
+    @property
+    def dyn_model(self):
+        return self._dyn_model
+
+    @dyn_model.setter
+    def dyn_model(self, dyn_model):
+        self._dyn_model = dyn_model
 
     @property
     def path(self):

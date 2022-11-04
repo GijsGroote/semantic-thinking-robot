@@ -12,6 +12,7 @@ class Controller(ABC):
     def __init__(self, order: int):
         self.order = order
         self.dt_counter = 0
+
         def emptyfunction():
             pass
         self.dyn_model = emptyfunction
@@ -21,6 +22,7 @@ class Controller(ABC):
     def setup(self, dyn_model, current_state: State, target_state: State):
         """ setup the controller, this is seperated from __init__
         because dynamic models could not yet exist. """
+        self.dyn_model = dyn_model
         self.target_state = target_state
         self._setup(dyn_model, current_state)
 

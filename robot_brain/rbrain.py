@@ -10,7 +10,7 @@ from robot_brain.global_planning.hgraph.point_robot_acc_hgraph import PointRobot
 from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 from robot_brain.global_planning.hgraph.boxer_robot_acc_hgraph import BoxerRobotAccHGraph
 
-
+from motion_planning_env.box_obstacle import BoxObstacle
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
@@ -50,13 +50,25 @@ class RBrain:
             # robot some dimensions with robot.obstacle = obstacle..
             # that way I could access the robot's dimensions more easily
 
+            
+            # TODO: do you want this false info about the robot, only the dimensions should be a thing here
+            box_dict = {
+                "movable": True,
+                "orientation": [0, 0, 0],
+                "mass": 3,
+                "type": "box",
+                "color": [0/255, 255/255, 0/255, 3],
+                "position": [3.0, 0.0, 0.1],
+                "geometry": {"length": 2, "width": 2, "height": 0.1},
+            }
+
             self.robot = Obstacle(
                 name=stat_world_info["robot_type"],
                 state=State(
                     pos=ob["joint_state"]["position"],
                     vel=ob["joint_state"]["velocity"],
                 ),
-                properties="empty",
+                properties=BoxObstacle(name=stat_world_info["robot_type"], content_dict=box_dict),
             )
         else:
             warnings.warn("robot type is not set")

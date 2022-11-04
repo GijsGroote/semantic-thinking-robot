@@ -41,6 +41,7 @@ class Obstacle:
     # property setter
     @properties.setter
     def properties(self, val: FreeCollisionObstacle):
+        assert isinstance(val, FreeCollisionObstacle), f"properties should be an FreeCollisionObstacle and is {type(val)}"
         self._properties = val
 
     # type getter
