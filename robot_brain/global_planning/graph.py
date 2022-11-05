@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from pyvis.network import Network
+from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.edge import Edge
 
 
@@ -47,3 +48,49 @@ class Graph(ABC):
             raise IndexError(f"edge.to identifyer: {edge.to} does not exist")
 
         self._edges.append(edge)
+
+    def get_node(self, iden) -> Node:
+        """ return  node by id, raises error if the identifyer does not exist. """
+        node_list = [node for node in self.nodes if node.iden == iden]
+        if len(node_list) == 0:
+            raise IndexError(f"a node with identifyer {iden} does not exist.")
+        else:
+            return node_list[0]
+
+    def unique_iden(self) -> int:
+        """ return a unique identifyer. """
+        iden = 0
+        existing_idens = []
+
+        for node in self.nodes:
+            existing_idens.append(node.iden)
+
+        while iden in existing_idens:
+            iden += 1
+
+        return iden
+
+    def point_toward_nodes(self, node_iden) -> list:
+        """ returns a list with node identifiers where an edge
+        points from node_id to these nodes. """
+        assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist" 
+        point_toward_list = []
+        for edge in self.edges:
+            if node_iden == edge.source:
+                point_toward_list.append(edge.to)
+
+        return point_toward_list
+        
+    def find_source_node(self, node_iden) -> Node:
+        """ find the source node which points to this node via 0 or more edges.
+        if a T junction is found (2 edges pointing to a node) an error is raised."""
+
+        edge_to_list = [edge for edge in self.edges if edge.to == node_iden]
+
+        if len(edge_to_list) == 0:
+            return self.get_node(node_iden)
+        else:
+            assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
+            return self.find_source_node(edge_to_list[0].source)
+
+     

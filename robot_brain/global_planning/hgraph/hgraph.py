@@ -20,6 +20,7 @@ from robot_brain.state import State
 
 IN_EXECUTION_LOOP = "executing"
 IN_SEARCH_HYPOTHESIS_LOOP = "searching"
+ROBOT_IDEN = 0
 
 class HGraph(Graph):
     """
@@ -28,24 +29,57 @@ class HGraph(Graph):
     def __init__(self):
         Graph.__init__(self)
         
-        self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
-        self.task = None
-        self.subtasks = []
-        self.initial_robot_node = None
-        self.obstacles = {}
-        self.start_nodes = []
-        self.target_nodes = []
-        self.start_to_target_iden = []
-        self.current_node = None
-        self.current_edge = DriveEdge(iden="tempEdge", 
-                        source=1,
-                        to=2,
-                        verb="This edge should not be displayed",
-                        controller=None,
-                        path=[(1, 0)])
+        self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP    # hgraph can be in 2 loops
+        self.task = None                            # task in form [(obst_name, target_state),..]
+        self.robot_node = None                      # node containing the robot itself
+        self.obstacles = {}                         # dictionary with all obstacles
+        self.start_nodes = []                       # starting nodes one for every subtask and one for the robot
+        self.target_nodes = []                      # target nodes one for every subtask
+        self.start_to_target_iden = []              # identifier mapping from start to target node and vise versa
+        self.current_node = None                    # source node of the current edge being executed
+        self.current_edge = DriveEdge(              # current edge being executed
+                iden="emptyEdge", 
+                source=0,
+                to=0,
+                verb="emptyEdge",
+                controller=None,
+                path=[(1, 0)])
+        self.current_subtask = None                 # subtask in spotlight, robot 'thinks' and executes to complete this
+        self.hypothesis = []                        # task sequence to complete a subtask in form [edge1, edge2, ...]
+        self.edge_pointer = 0                       # pointer for the current edge in hypothesis
 
-        self.hypothesis = []
-        self.edge_pointer = 0
+    def setup(self, task, obstacles):
+        """ create start and target nodes. """
+
+        self.task = task
+        self.obstacles = obstacles
+
+        #  add robot as start_state
+        self.robot_node = ObstacleNode(ROBOT_IDEN, self.robot.name, self.robot)
+        self.add_start_node(self.robot_node)
+        
+        # For every task create a start and target node
+        for (obst_temp, target) in task:
+            iden_start_node = 0 # robots unique id
+            if obst_temp != self.robot:
+                iden_start_node = self.unique_iden()
+                self.add_start_node(ObstacleNode(
+                    iden_start_node,
+                    obst_temp.name,
+                    obst_temp,
+                    ))
+            iden_target_node = self.unique_iden()
+            self.add_target_node(ObstacleNode(
+                iden_target_node,
+                obst_temp.name+"_target",
+                Obstacle(obst_temp.name, target, obst_temp.properties),
+                ))
+            print(f"addign {iden_start_node} and {iden_target_node}")
+            self.start_to_target_iden.append((iden_start_node, iden_target_node))
+
+
+        self.visualise()
+        self.search_hypothesis()
 
     def respond(self, current_state) -> np.ndarray:
         """ eventually responds with input for the robot. """
@@ -111,22 +145,21 @@ class HGraph(Graph):
 
         hypothesis = []
 
-        # this start node exist to compile the upcoming while loop 
-        # TODO: write function which randomly selects a target node
-        start_node = ObstacleNode(1000, "this_node_should_not_exist", Obstacle("This node should not exist", State(), "empty"))
-
+        # (start robot, target robot) or (start obstacle, target obstacle)
+        (subtask_start_node, subtask_target_node) = self.find_subtask()
+        self.current_subtask = (subtask_start_node, subtask_target_node)
+        start_node = subtask_start_node
+        target_node = subtask_target_node
         next_edge = None
 
         # search for unfinished target node and connect to starting node
-        while start_node.name != self.robot.name:
-
-
-            # find_subtask is not forced to find the same final_target_node
-            (start_node, target_node) = self.find_subtask()
+        while not self.is_reachable(ROBOT_IDEN, subtask_target_node.iden):
+        
+            # this target node is not a final target node. 
             
             # check for driving or pushing transition
-
-            if start_node.name == self.robot.name and target_node.name == self.robot.name + "_target":
+            print(f'start node {subtask_start_node.name} target {subtask_target_node.name}')
+            if start_node.iden == ROBOT_IDEN and target_node.iden in self.get_target_idens_from_start_iden(start_node.iden):
             
                 # TODO: the knowledge graph should come into play here
                 controller = self.create_driving_controller()
@@ -147,7 +180,7 @@ class HGraph(Graph):
                 hypothesis.insert(0, edge)
 
                 # temp fix so the while loop keeps on looping
-                start_node = ObstacleNode(1000, "this_node_should_not_exist", Obstacle("This node should not exist", State(), "empty"))
+                # start_node = ObstacleNode(1000, "this_node_should_not_exist", Obstacle("This node should not exist", State(), "empty"))
 
             elif start_node.name == self.robot.name and target_node.name == self.robot.name + "_model":
 
@@ -188,6 +221,11 @@ class HGraph(Graph):
             else:
                 raise ValueError("start and target nodes should be both the robot or both an obstacle")
 
+            # find_subtask is not forced to find the same final_target_node
+            (start_node, target_node) = self.find_subtask()
+
+            print(self.start_to_target_iden)
+            print(f'checking strat {start_node.iden} with taget {target_node.iden}')
         
         self.hypothesis = hypothesis
         self.current_node = self.get_start_node(self.hypothesis[0].source)
@@ -202,7 +240,7 @@ class HGraph(Graph):
 
 
     def search_path(self, edge):
-        """ Search path for the edge """
+        """ Search for a path in simulation environment. """
         # TODO: is there a controller and a dynamic model 
         # TODO: this path existence check is a motion planner, create an actual motion planner
         target_node = self.get_node(edge.to)
@@ -219,40 +257,8 @@ class HGraph(Graph):
         self.current_node = self.get_node(self.hypothesis[self.edge_pointer].source)
         
 
-
-    def setup(self, task, obstacles):
-        """ create start and target nodes. """
-
-        self.task = task
-        self.obstacles = obstacles
-
-        #  add robot as start_state
-        self.initial_robot_node = ObstacleNode(0, self.robot.name, self.robot)
-        self.add_start_node(self.initial_robot_node)
-        
-        # For every task create a start and target node
-        for (obst_temp, target) in task:
-            iden_start_node = 0 # robots unique id
-            if obst_temp != self.robot:
-                iden_start_node = self.unique_iden()
-                self.add_start_node(ObstacleNode(
-                    iden_start_node,
-                    obst_temp.name,
-                    obst_temp,
-                    ))
-            iden_target_node = self.unique_iden()
-            self.add_target_node(ObstacleNode(
-                iden_target_node,
-                obst_temp.name+"_target",
-                Obstacle(obst_temp.name, target, obst_temp.properties),
-                ))
-            self.start_to_target_iden.append((iden_start_node, iden_target_node))
-
-
-        self.visualise()
-        self.search_hypothesis()
-        
     def find_subtask(self) -> (Node, Node):
+        # TODO: this function could return start position of the robot twice!, fix that
         """ returns 2 nodes in the hgraph to connect if these exist. """
         
         unfinished_target_nodes = [target_node for target_node in self.target_nodes if not target_node.completed]
@@ -277,23 +283,29 @@ class HGraph(Graph):
             start_node = self.get_start_node(self.get_start_iden_from_target_iden(obstacle_target_node.iden))
             final_target_node = obstacle_target_node
 
-
-        edge_to_target_list = [edge for edge in self.edges if edge.to == final_target_node.iden]
-        
-        target_node = final_target_node
-
-        # find iden of node point toward target, but nothing pointing toward itself
-        while len(edge_to_target_list) != 0:
-            # target_node = self.get_target_node(edge_to_target_list[0].to)
-            target_node = self.get_node(edge_to_target_list[0].source)
-            if start_node.iden == target_node.iden:
-                start_node = self.initial_robot_node
-                break
-            edge_to_target_list = [edge for edge in self.edges if edge.to == edge_to_target_list[0].source]
+        target_node = self.find_source_node(final_target_node.iden)
 
         return (start_node, target_node)
 
-    
+
+    def is_reachable(self, start_node_iden, target_node_iden) -> bool:
+        """ return true if there is a list of edges going from the start node
+        identifier to target node identifier, otherwise return false. """
+        assert isinstance(start_node_iden, int), f"start_node_iden should be an interger and is {type(start_node_iden)}" 
+        assert isinstance(target_node_iden, int), f"target_node_iden should be an interger and is {type(target_node_iden)}." 
+
+        reachable_from_start = [start_node_iden]
+        
+        while len(reachable_from_start) > 0:
+            current_node_iden = reachable_from_start.pop(0)
+
+            for outgoing_node_iden in self.point_toward_nodes(current_node_iden):
+                if outgoing_node_iden == target_node_iden:
+                    return True
+                reachable_from_start.append(outgoing_node_iden)
+
+        return False
+
     def create_driving_controller(self):
         """for now: randomly select a driving controller. """
         # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
@@ -313,7 +325,6 @@ class HGraph(Graph):
     def create_driving_model(self, controller_name: str):
         """ create a dynamic model for driving. """
         pass
-
    
     def create_pushing_controller(self) -> Controller:
         # TODO: not implemented
@@ -332,19 +343,6 @@ class HGraph(Graph):
     @abstractmethod
     def estimate_robot_path_existance(self, target_state, obstacles):
         pass
-
-    def unique_iden(self) -> int:
-        """ return a unique identifyer. """
-        iden = 0
-        existing_idens = []
-
-        for node in self.nodes:
-            existing_idens.append(node.iden)
-
-        while iden in existing_idens:
-            iden += 1
-
-        return iden
 
     def visualise(self, save=True):
         """"
@@ -464,14 +462,6 @@ class HGraph(Graph):
         else:
             net.show("delete.html")
 
-    def get_node(self, iden) -> Node:
-        """ return  node by id, raises error if the identifyer does not exist. """
-        node_list = [node for node in self.nodes if node.iden == iden]
-        if len(node_list) == 0:
-            raise IndexError(f"a node with identifyer {iden} does not exist.")
-        else:
-            return node_list[0]
-
     def get_start_node(self, iden) -> Node:
         """ return start node by id, raises error if the identifyer does not exist. """
         start_node_list = [node for node in self.start_nodes if node.iden == iden]
@@ -491,10 +481,27 @@ class HGraph(Graph):
             return target_node_list[0]
 
     def get_start_iden_from_target_iden(self, target_iden):
-        start_iden_list = [start_node[0] for start_node in self.start_to_target_iden if start_node[1] == target_iden]
+        assert isinstance(target_iden, int), f"target_iden should be an int and it {type(target_iden)}"
+        start_iden_list = []
+        for start_2_target in self.start_to_target_iden:
+            if start_2_target[1] == target_iden:
+                start_iden_list.append(start_2_target[0])
+
         if len(start_iden_list) > 1:
             raise ValueError(f"there are {len(start_iden_list)} start node identifiers from target node iden {target_iden}")
-        return start_iden_list[0]
+        else: 
+            return start_iden_list.pop(0)
+
+    def get_target_idens_from_start_iden(self, start_iden) -> list:
+        """ return list of target node identifiers. """
+        
+        assert isinstance(start_iden, int), f"start_iden should be an int and it {type(start_iden)}"
+        target_idens_list = []
+        for start_2_target in self.start_to_target_iden:
+            if start_2_target[0] == start_iden:
+                target_idens_list.append(start_2_target[1])
+
+        return target_idens_list
 
     def add_node(self, node):
         if isinstance(node, ChangeOfStateNode):
