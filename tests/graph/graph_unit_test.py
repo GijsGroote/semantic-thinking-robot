@@ -5,11 +5,12 @@ from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
-from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
+from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
+from motion_planning_env.box_obstacle import BoxObstacle
 
 
 @pytest.fixture
@@ -17,14 +18,28 @@ def hgraph():
     robot = Obstacle(
             "point_robot",
             State(),
-            "urdf",
+            "empty",
         )
-    return BoxerRobotVelHGraph(robot)
+    return PointRobotVelHGraph(robot)
+
+box_dict = {
+                "movable": False,
+                "type": "box",
+                "color": [0/255, 255/255, 0/255, 1],
+                "position": [0, 0, 0],
+                "geometry": {"length": 1, "width": 1, "height": 1},
+            }
+prop = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
+
+
 
 def test_is_instance(hgraph):
+    print('hey!')
+    print(type(prop))
+
     obst = Obstacle(name="obst",
             state=State(),
-            properties=None)
+            properties=prop)
 
     obst_node = ObstacleNode(iden=2,
             name="P",
@@ -41,9 +56,9 @@ def test_is_instance(hgraph):
     assert isinstance(kgraph, Graph)
 
 def test_adding_nodes(hgraph):
-    node1 = ObstacleNode(1, "P", Obstacle("node1", State(), None))
-    node2 = ObstacleNode(2, "P", Obstacle("node1", State(), None))
-    node3 = ObstacleNode(3, "P", Obstacle("node1", State(), None))
+    node1 = ObstacleNode(1, "P", Obstacle("node1", State(), prop))
+    node2 = ObstacleNode(2, "P", Obstacle("node1", State(), prop))
+    node3 = ObstacleNode(3, "P", Obstacle("node1", State(), prop))
 
     kgraph = KGraph()
 
@@ -63,7 +78,7 @@ def test_allowed_node_types(hgraph):
 
     obst = Obstacle(name="obst",
             state=State(),
-            properties=None)
+            properties=prop)
 
     obst_node = ObstacleNode(iden=2,
             name="P",
