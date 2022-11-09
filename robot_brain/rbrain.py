@@ -1,7 +1,8 @@
 import warnings
+import time
 import numpy as np
 import pandas as pd
-from dashboard.app import start_dash_server
+from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
@@ -38,7 +39,7 @@ class RBrain:
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            start_dash_server()
+            self.dash_app = start_dash_server()
 
     def visualise_grid(self):
         self.hgraph.plot_occupancy_graph()
@@ -216,9 +217,13 @@ class RBrain:
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 
-                    print(f"Stop with executing, because {exc}")
-
                     self.hgraph.visualise()
+                    time.sleep(2)
+                    print(f"Stop with executing, because {exc}")
+                    
+                    if CREATE_SERVER_DASHBOARD:
+                        stop_dash_server(self.dash_app)
+
                     return self.default_action
             else:
                 warnings.warn("returning default action")

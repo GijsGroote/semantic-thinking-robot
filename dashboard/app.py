@@ -7,6 +7,8 @@ from dashboard.figures import no_data_found_dict
 # from IPython.display import display, HTML, Image
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
+DASH_PORT_PID = 8042
+
 class Dashboard:
     """
     Dashboard class creates and updates a local site.
@@ -148,7 +150,7 @@ def start_dash_server():
     def run():
         app.scripts.config.serve_locally = True
         app.run_server(
-            port=8052,
+            port=DASH_PORT_PID,
             debug=False,
             processes=4,
             threaded=False
@@ -157,3 +159,14 @@ def start_dash_server():
     # Run on a separate process so that it doesn"t block
     app.server_process = multiprocessing.Process(target=run)
     app.server_process.start()
+    return app.server_process 
+
+def stop_dash_server(dash_app):
+    """ kills the process, thereby terminating the dash server. """
+
+    # todo: check if it exists first
+    print(f'killling dash yo port {DASH_PORT_PID}')
+    dash_app.kill()
+    # os.kill(DASH_PORT_PID, 0)
+    # os.kill(DASH_PORT_PID) 
+

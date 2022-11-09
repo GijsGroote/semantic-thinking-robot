@@ -4,7 +4,7 @@ import numpy as np
 import random
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
-from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
+from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
 from casadi import vertcat
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
@@ -17,6 +17,7 @@ from robot_brain.global_planning.drive_edge import DriveEdge
 from robot_brain.controller.controller import Controller 
 import math
 from robot_brain.state import State
+from logger.hlogger import HLogger
 
 IN_EXECUTION_LOOP = "executing"
 IN_SEARCH_HYPOTHESIS_LOOP = "searching"
@@ -47,6 +48,8 @@ class HGraph(Graph):
         self.current_subtask = None                 # subtask in spotlight, robot 'thinks' and executes to complete this
         self.hypothesis = []                        # task sequence to complete a subtask in form [edge1, edge2, ...]
         self.edge_pointer = 0                       # pointer for the current edge in hypothesis
+        if LOG_METRICS:
+            self.logger = HLogger()
 
     def setup(self, task, obstacles):
         """ create start and target nodes. """
@@ -74,11 +77,13 @@ class HGraph(Graph):
                 obst_temp.name+"_target",
                 Obstacle(obst_temp.name, target, obst_temp.properties),
                 ))
-            print(f"addign {iden_start_node} and {iden_target_node}")
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+        if LOG_METRICS:
+            self.logger.setup(task)
 
-        self.visualise()
         self.search_hypothesis()
 
     def respond(self, current_state) -> np.ndarray:
@@ -104,18 +109,26 @@ class HGraph(Graph):
 
                     if self.hypothesis_completed():
 
-                        print("a hypothesis was completed!")
+                        # set all variables for completed hypothesis
                         self.get_target_node(self.current_edge.to).completed = True
                         self.current_node = None
                         self.hypothesis = []
                         self.in_loop = IN_SEARCH_HYPOTHESIS_LOOP
                         self.edge_pointer = 0
-                        self.search_hypothesis()
 
-                        return self.respond(current_state)
 
-                        # TODO: check if all subtasks are completed
-                        # raise StopIteration("The path has been completed!")
+                        # if all subtask are completed, conclude the task is completed, otherwise search new hypothesis
+                        if any(not target_node.completed for target_node in self.target_nodes):
+                            self.search_hypothesis()
+                            return self.respond(current_state)
+                        else:
+                            print('the task is completed')
+                            if LOG_METRICS:
+                                self.logger.print_logs()
+                            if SAVE_LOG_METRICS:
+                                self.logger.save_logs()
+
+                            raise StopIteration("The task is successfully completed!")
 
                     else:
                         self.increment_edge_pointer()
