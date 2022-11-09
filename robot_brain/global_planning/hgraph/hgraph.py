@@ -147,10 +147,12 @@ class HGraph(Graph):
 
         # (start robot, target robot) or (start obstacle, target obstacle)
         (subtask_start_node, subtask_target_node) = self.find_subtask()
-        self.current_subtask = (subtask_start_node, subtask_target_node)
+        if self.current_subtask is None or self.current_subtask[0].completed == False:
+            self.current_subtask = (subtask_start_node, subtask_target_node)
+
         start_node = subtask_start_node
         target_node = subtask_target_node
-        next_edge = None
+        next_edge = None # temporarily to set the model after system identification
 
         # search for unfinished target node and connect to starting node
         while not self.is_reachable(ROBOT_IDEN, subtask_target_node.iden):
@@ -172,7 +174,6 @@ class HGraph(Graph):
                         to=target_node.iden,
                         verb="driving",
                         controller=controller)
-
 
                 # add edge to hgraph and hypothesis
                 next_edge = edge

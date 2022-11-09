@@ -1,7 +1,9 @@
 DT = 0.02
 # dashboard global variables
 CREATE_SERVER_DASHBOARD = True
-PLOT_CONTROLLER = False #True
+PLOT_CONTROLLER = False
+LOG_METRICS = True
+SAVE_LOG_METRICS = False
 
 # you could add a rotation constraints here as well
 MIN_INPUT = -2.0
