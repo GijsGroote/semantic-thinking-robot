@@ -93,7 +93,7 @@ class RBrain:
             )
 
         if "task" in stat_world_info:
-            self.setup_task(stat_world_info)
+            self.setup_hgraph(stat_world_info)
         else:
             warnings.warn("no task was set")
 
@@ -132,7 +132,7 @@ class RBrain:
             self.obstacles[key].type = "unmovable"
 
 
-    def setup_task(self, stat_world_info):
+    def setup_hgraph(self, stat_world_info):
         """ 
         Setup Hypothesis graph initialised with the task.
 
@@ -157,8 +157,8 @@ class RBrain:
         else:
             raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
-        task = []
-        for (obstacle_key, target) in stat_world_info["task"]:
+        task = {}
+        for (task_nmr, (obstacle_key, target)) in enumerate(stat_world_info["task"]):
 
             if obstacle_key == "robot":
                 obstacle = self.robot
@@ -171,7 +171,8 @@ class RBrain:
             assert isinstance(obstacle, Obstacle), \
                     f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
-            task.append((obstacle, target))
+            
+            task["subtask_"+str(task_nmr)] = (obstacle, target)
 
         self.hgraph.setup(
                 task=task,

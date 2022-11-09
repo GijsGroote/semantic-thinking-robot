@@ -15,7 +15,7 @@ class Mppi2thOrder(Mppi):
         cost drives the system to it's desired state. """
         return (x[:,0] - self.target_state.pos[0])**2 +\
                 (x[:,1] - self.target_state.pos[1])**2 +\
-                1e-5*(u[:,0]**4 + u[:,1]**4)
+                1e-4*(u[:,0]**4 + u[:,1]**4)
 
     def _find_input(self, current_state: State) -> np.ndarray:
         return self.controller.command(current_state.get_xy_position()).cpu().numpy()

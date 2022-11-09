@@ -1,6 +1,11 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from robot_brain.global_variables import PLOT_CONTROLLER, CREATE_SERVER_DASHBOARD, DT
+from robot_brain.global_variables import (
+        PLOT_CONTROLLER,
+        CREATE_SERVER_DASHBOARD,
+        DT,
+        LOG_METRICS,
+        )
 from robot_brain.state import State
 
 class Controller(ABC):
@@ -34,9 +39,11 @@ class Controller(ABC):
     def respond(self, current_state: State) -> np.ndarray:
         """ respond with input for the robot and update dashboard every second. """
 
+        assert isinstance(current_state, State), f"current_state should be type State in type {type(current_state)}"
+
         system_input = self._find_input(current_state)
 
-        if CREATE_SERVER_DASHBOARD and PLOT_CONTROLLER:
+        if CREATE_SERVER_DASHBOARD or PLOT_CONTROLLER or LOG_METRICS:
             
             self._update_prediction_error_sequence(current_state, system_input)
 

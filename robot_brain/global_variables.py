@@ -1,8 +1,10 @@
 DT = 0.02
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = True
+CREATE_SERVER_DASHBOARD = False
 PLOT_CONTROLLER = False
 LOG_METRICS = True
+
+# plot_controller should be True for SAVE_LOG_METRICS
 SAVE_LOG_METRICS = False
 
 # you could add a rotation constraints here as well
@@ -23,4 +25,4 @@ FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)
 # TODO: set this path automatically
 PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"
 
-MPC_CONTROLLER = "mpc controller"
+# MPC_CONTROLLER = "mpc controller"

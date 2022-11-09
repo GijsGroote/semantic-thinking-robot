@@ -3,7 +3,12 @@ import do_mpc
 from robot_brain.state import State
 import numpy as np
 
-from robot_brain.global_variables import PLOT_CONTROLLER, CREATE_SERVER_DASHBOARD, DT
+from robot_brain.global_variables import (
+        PLOT_CONTROLLER,
+        CREATE_SERVER_DASHBOARD,
+        DT,
+        LOG_METRICS,
+        )
 from robot_brain.controller.controller import Controller
 
 class Mpc(Controller):
@@ -21,9 +26,10 @@ class Mpc(Controller):
         self.simulator = None
         self.plotter = None
         self.n_horizon = 15
-        self.y_predicted = None
 
     def _setup(self, dyn_model, current_state):
+
+        self.y_predicted = current_state
 
         # fully define model
         self.model = self.template_model(dyn_model)
@@ -37,7 +43,7 @@ class Mpc(Controller):
         self.mpc.x0 = initial_state 
         self.mpc.set_initial_guess()
 
-        if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD:
+        if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD or LOG_METRICS:
 
             self.simulator = do_mpc.simulator.Simulator(self.model)
             self.simulator.set_tvp_fun(self.create_tvp_sim())

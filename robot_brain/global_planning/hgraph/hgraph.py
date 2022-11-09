@@ -62,20 +62,23 @@ class HGraph(Graph):
         self.add_start_node(self.robot_node)
         
         # For every task create a start and target node
-        for (obst_temp, target) in task:
+        for (subtask_name, (obst_temp, target)) in task.items():
             iden_start_node = 0 # robots unique id
+            print(f" subtask name here: {subtask_name}")
             if obst_temp != self.robot:
                 iden_start_node = self.unique_iden()
                 self.add_start_node(ObstacleNode(
                     iden_start_node,
                     obst_temp.name,
                     obst_temp,
+                    subtask_name
                     ))
             iden_target_node = self.unique_iden()
             self.add_target_node(ObstacleNode(
                 iden_target_node,
                 obst_temp.name+"_target",
                 Obstacle(obst_temp.name, target, obst_temp.properties),
+                subtask_name
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
@@ -108,6 +111,8 @@ class HGraph(Graph):
                     # if self.get_node(edge.source) ==
 
                     if self.hypothesis_completed():
+
+                        self.logger.update_succesfull_hypothesis(self.hypothesis, self.current_subtask)
 
                         # set all variables for completed hypothesis
                         self.get_target_node(self.current_edge.to).completed = True
@@ -145,7 +150,6 @@ class HGraph(Graph):
             
             return self.current_edge.respond(current_state)
 
-        elif self.in_loop == IN_SEARCH_HYPOTHESIS_LOOP:
 
             self.search_hypothesis()
             return self.respond(current_state)
@@ -296,7 +300,7 @@ class HGraph(Graph):
         else:
             start_node = self.get_start_node(self.get_start_iden_from_target_iden(obstacle_target_node.iden))
             final_target_node = obstacle_target_node
-
+        
         target_node = self.find_source_node(final_target_node.iden)
 
         return (start_node, target_node)

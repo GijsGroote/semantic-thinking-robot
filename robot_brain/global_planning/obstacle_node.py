@@ -6,7 +6,7 @@ class ObstacleNode(Node):
     Object node.
     """
 
-    def __init__(self, iden, name, obstacle):
+    def __init__(self, iden, name, obstacle, subtask_name=None):
         Node.__init__(self, iden)
         self.name = name
 
@@ -14,6 +14,7 @@ class ObstacleNode(Node):
         # uncompleted/completed target nodes, Gijs, 15 okt 2022
         self.completed = False
         self.obstacle = obstacle
+        self.subtask_name = subtask_name
 
     def to_string(self):
         return f"ObstacleNode: {self.iden}, with obstacle {self.obstacle.name}, {self.obstacle.properties.name}"
