@@ -163,10 +163,5 @@ def start_dash_server():
 
 def stop_dash_server(dash_app):
     """ kills the process, thereby terminating the dash server. """
-
-    # todo: check if it exists first
-    print(f'killling dash yo port {DASH_PORT_PID}')
     dash_app.kill()
-    # os.kill(DASH_PORT_PID, 0)
-    # os.kill(DASH_PORT_PID) 
 

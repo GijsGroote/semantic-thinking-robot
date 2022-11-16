@@ -7,7 +7,7 @@ class Edge(ABC):
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-    def __init__(self, iden, source, to, verb, controller, path=False):
+    def __init__(self, iden, source, to, verb, controller, path):
         self.iden = iden
         self.source = source
         self.to = to
@@ -22,7 +22,11 @@ class Edge(ABC):
     def to_string(self):
         """ Creates readable format of an Edge. """
         pass
-        return f"iden: {self.iden}, controller: {self.controller.name}"
+
+    @abstractmethod
+    def ready_for_execution(self) -> bool:
+        """ checks if all parameters are set to execute this transition. """
+        pass
 
     def completed(self) -> bool:
         """ returns true if the path is completed, otherwise false. """
@@ -61,12 +65,17 @@ class Edge(ABC):
         """ respond to the current state. """
         return self.controller.respond(state)
 
+    def create_log(self) -> dict:
+        """ return a dictionary with metrics. """
+        pass
+
     @property
     def iden(self):
         return self._iden
 
     @iden.setter
     def iden(self, val):
+        assert isinstance(val, int), f"iden should be of type int and is of type {type(val)}"
         self._iden = val
 
     @property

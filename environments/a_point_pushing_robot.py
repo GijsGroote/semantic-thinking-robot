@@ -69,7 +69,10 @@ def main(conn=None):
             ("robot", State(pos=np.array([-3.3212, 3, 0]))),
             ("robot", State(pos=np.array([3.3212, 2, 0]))),
             ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            # ("robot", State(pos=np.array([-1.3212, -1, 0]))),
+            ("robot", State(pos=np.array([-2.3212, -1, 0]))),
+            ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
+            ("robot", State(pos=np.array([3,0,0]))),
+            ("robot", State(pos=np.array([1, 2.2, 0]))),
             ],
         "obstacles": obstacles
     }, ob)

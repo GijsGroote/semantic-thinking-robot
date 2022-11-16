@@ -48,7 +48,7 @@ class Controller(ABC):
             self._update_prediction_error_sequence(current_state, system_input)
 
             # plot the controller every x seconds
-            if self.dt_counter % (1/DT) == 0:# and self.dt_counter != 0:
+            if self.dt_counter % (1/DT) == 0 and PLOT_CONTROLLER:# and self.dt_counter != 0:
                 self._update_db()
             self.dt_counter += 1
 

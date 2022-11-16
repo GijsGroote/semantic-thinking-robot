@@ -57,13 +57,35 @@ class Graph(ABC):
         else:
             return node_list[0]
 
-    def unique_iden(self) -> int:
-        """ return a unique identifyer. """
+    def get_edge(self, iden) -> Edge:
+        """ return  edge by id, raises error if the identifyer does not exist. """
+        edge_list = [edge for edge in self.edges if edge.iden == iden]
+        if len(edge_list) == 0:
+            raise IndexError(f"a edge with identifyer {iden} does not exist.")
+        else:
+            return edge_list[0]
+
+
+    def unique_node_iden(self) -> int:
+        """ return a unique identifyer for a node. """
         iden = 0
         existing_idens = []
 
         for node in self.nodes:
             existing_idens.append(node.iden)
+
+        while iden in existing_idens:
+            iden += 1
+
+        return iden
+
+    def unique_edge_iden(self) -> int:
+        """ return a unique identifyer for an edge. """
+        iden = 0
+        existing_idens = []
+
+        for edge in self.edges:
+            existing_idens.append(edge.iden)
 
         while iden in existing_idens:
             iden += 1
