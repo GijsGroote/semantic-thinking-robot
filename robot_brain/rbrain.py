@@ -12,6 +12,7 @@ from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobot
 from robot_brain.global_planning.hgraph.boxer_robot_acc_hgraph import BoxerRobotAccHGraph
 
 from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle 
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
@@ -45,23 +46,29 @@ class RBrain:
         self.hgraph.plot_occupancy_graph()
 
     def setup(self, stat_world_info, ob):
+
         # create robot
         if "robot_type" in stat_world_info:
-            # TODO: detect which robot we are dealing with and give the 
-            # robot some dimensions with robot.obstacle = obstacle..
-            # that way I could access the robot's dimensions more easily
+            # create shape of the robot
+            if stat_world_info["robot_type"] == "pointRobot-vel-v7" or stat_world_info["robot_type"] == "pointRobot-acc-v7":
+                cylinder_dict = {
+                    "type": "box",
+                    "position": [0, 0, 0],
+                    "geometry": {"radius": 0.22, "height": 0.25},
+                }
+                robot_properties = CylinderObstacle(name="cylinder_robot", content_dict=cylinder_dict)
 
-            
-            # TODO: do you want this false info about the robot, only the dimensions should be a thing here
-            box_dict = {
-                "movable": True,
-                "orientation": [0, 0, 0],
-                "mass": 3,
-                "type": "box",
-                "color": [0/255, 255/255, 0/255, 3],
-                "position": [3.0, 0.0, 0.1],
-                "geometry": {"length": 2, "width": 2, "height": 0.1},
-            }
+            elif stat_world_info["robot_type"] == "boxerRobot-vel-v7" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
+
+                box_dict = {
+                    "type": "box",
+                    "position": [0, 0, 0],
+                    "geometry": {"length": 0.85, "width": 0.6, "height": 0.2},
+                }
+                robot_properties = CylinderObstacle(name="box_robot", content_dict=box_dict)
+
+            else:
+                raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
             self.robot = Obstacle(
                 name=stat_world_info["robot_type"],
@@ -69,7 +76,7 @@ class RBrain:
                     pos=ob["joint_state"]["position"],
                     vel=ob["joint_state"]["velocity"],
                 ),
-                properties=BoxObstacle(name=stat_world_info["robot_type"], content_dict=box_dict),
+                properties=robot_properties,
             )
         else:
             warnings.warn("robot type is not set")
@@ -130,7 +137,6 @@ class RBrain:
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
             self.obstacles[key].type = "unmovable"
-
 
     def setup_hgraph(self, stat_world_info):
         """ 
