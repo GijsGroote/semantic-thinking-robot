@@ -53,7 +53,6 @@ class RBrain:
             if stat_world_info["robot_type"] == "pointRobot-vel-v7" or stat_world_info["robot_type"] == "pointRobot-acc-v7":
                 cylinder_dict = {
                     "type": "box",
-                    "position": [0, 0, 0],
                     "geometry": {"radius": 0.22, "height": 0.25},
                 }
                 robot_properties = CylinderObstacle(name="cylinder_robot", content_dict=cylinder_dict)
@@ -65,7 +64,7 @@ class RBrain:
                     "position": [0, 0, 0],
                     "geometry": {"length": 0.85, "width": 0.6, "height": 0.2},
                 }
-                robot_properties = CylinderObstacle(name="box_robot", content_dict=box_dict)
+                robot_properties = BoxObstacle(name="box_robot", content_dict=box_dict)
 
             else:
                 raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")

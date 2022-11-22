@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import warnings
 import pickle
 
-from helper_functions.geometrics import minimal_distance_point_to_line
+from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
@@ -52,11 +52,11 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
     def setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ set the rectangular obstect overlapping with grid cells (representing the robot) to a integer value. """ 
 
-        # cos_ol = cos_obstect_length
-        cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
-        sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
-        cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
-        sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+        cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+        sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+        cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+        sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
+        
         # corner points of the obstacle
         obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
         obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
@@ -65,7 +65,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         max_robot_to_obst_x_distance = self.robot_radius + abs(sin_ol) + abs(cos_ow)
         max_robot_to_obst_y_distance = self.robot_radius + abs(cos_ol) + abs(sin_ow)
-        
+
         obst_cart_2d = obst.state.get_xy_position()
 
         # only search around obstacle
@@ -78,10 +78,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
 
-                #  closeby (<= robot_radius + smallest dimension obstacle) cells are always in collision with the obstacle 
-                if (np.linalg.norm(self.c_idx_to_cart_2d(x_idx, y_idx)-obst_cart_2d) <= self.robot_radius
-                    + min(obst.properties.width(), obst.properties.length()) / 2):
-
+                if point_in_rectangle(self.c_idx_to_cart_2d(x_idx, y_idx), obst_a, obst_b, obst_c):
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
@@ -101,7 +98,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
                     continue
 
                 elif minimal_distance_point_to_line(r_cart_2d, obst_d, obst_a) <= self.robot_radius:
-                    self.grid_map[x_idx, y_idx] = val
+                    self.grid_map[x_idx, y_idx] = val 
                     continue
 
     def occupancy(self, cart_2d: np.ndarray) -> int:

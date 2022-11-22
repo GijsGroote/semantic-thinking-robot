@@ -10,7 +10,7 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
 
-from environments.objects.boxes import box
+from environments.objects.boxes import box, box2
 from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
@@ -39,11 +39,13 @@ def main(conn=None):
     n_steps = 10000
 
     obstacles = {box.name(): box,
+            box2.name(): box2,
             sphere.name(): sphere,
             cylinder.name(): cylinder}
 
     # add obstacles
     env.add_obstacle(box)
+    env.add_obstacle(box2)
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
@@ -65,14 +67,14 @@ def main(conn=None):
         #     ("robot", State(pos=np.array([3,0,0]))),
         #     ("robot", State(pos=np.array([1, 2.2, 0]))),
         #     ],
-        "task": [("robot", State(pos=np.array([-1.12, -2, 0]))),
-            ("robot", State(pos=np.array([-3.3212, 3, 0]))),
-            ("robot", State(pos=np.array([3.3212, 2, 0]))),
-            ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            ("robot", State(pos=np.array([-2.3212, -1, 0]))),
-            ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
-            ("robot", State(pos=np.array([3,0,0]))),
-            ("robot", State(pos=np.array([1, 2.2, 0]))),
+        "task": [("robot", State(pos=np.array([-2.12, -4.5, 0]))),
+            # ("robot", State(pos=np.array([-3.3212, 3, 0]))),
+            # ("robot", State(pos=np.array([3.3212, 2, 0]))),
+            # ("robot", State(pos=np.array([3.3212, -2, 0]))),
+            # ("robot", State(pos=np.array([-2.3212, -1, 0]))),
+            # ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
+            # ("robot", State(pos=np.array([3,0,0]))),
+            # ("robot", State(pos=np.array([1, 2.2, 0]))),
             ],
         "obstacles": obstacles
     }, ob)

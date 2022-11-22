@@ -1034,7 +1034,7 @@ torch = "*"
 type = "git"
 url = "git@github.com:UM-ARM-Lab/pytorch_mppi.git"
 reference = "master"
-resolved_reference = "537cf431d8128a66d522df9fe9596d18ce19ae35"
+resolved_reference = "bd4b8c0e057f4e9a40a1cfe07f942d4692a27991"
 
 [[package]]
 name = "pytz"
@@ -1126,6 +1126,14 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "soupsieve"
 version = "2.3.2.post1"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -1135,7 +1143,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "stack-data"
-version = "0.6.0"
+version = "0.6.1"
 description = "Extract data from python stack frames and tracebacks for informative displays"
 category = "main"
 optional = false
@@ -1208,7 +1216,7 @@ test = ["pre-commit", "pytest"]
 
 [[package]]
 name = "trimesh"
-version = "3.16.1"
+version = "3.16.3"
 description = "Import, export, process, analyze and view triangular meshes."
 category = "main"
 optional = false
@@ -1218,9 +1226,9 @@ python-versions = "*"
 numpy = "*"
 
 [package.extras]
-all = ["xatlas", "svg.path", "python-fcl", "shapely", "requests", "xxhash", "jsonschema", "rtree", "setuptools", "chardet", "scikit-image", "sympy", "colorlog", "scipy", "meshio", "pillow", "mapbox-earcut", "msgpack", "pycollada", "pyglet", "lxml", "glooey", "psutil", "networkx"]
-easy = ["sympy", "colorlog", "scipy", "svg.path", "pillow", "mapbox-earcut", "shapely", "requests", "xxhash", "msgpack", "pycollada", "jsonschema", "pyglet", "rtree", "setuptools", "lxml", "chardet", "networkx"]
-test = ["pytest-cov", "ezdxf", "pyinstrument", "pytest", "coveralls"]
+all = ["mapbox-earcut", "networkx", "colorlog", "chardet", "meshio", "msgpack", "glooey", "shapely", "svg.path", "setuptools", "xxhash", "pyglet (<2)", "python-fcl", "rtree", "requests", "xatlas", "jsonschema", "psutil", "lxml", "scipy", "pycollada", "sympy", "pillow", "scikit-image"]
+easy = ["mapbox-earcut", "pyglet (<2)", "networkx", "rtree", "requests", "chardet", "colorlog", "setuptools", "msgpack", "jsonschema", "lxml", "shapely", "svg.path", "xxhash", "scipy", "pycollada", "sympy", "pillow"]
+test = ["ezdxf", "pytest-cov", "coveralls", "pytest", "pyinstrument"]
 
 [[package]]
 name = "typing-extensions"
@@ -1325,7 +1333,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10, <3.12"
-content-hash = "9563c9f049e479cadd3dd1330bf104a8f6ec5dafc948aa51dfff2476bc6f3477"
+content-hash = "aa21b49c99220c22dd071f590288de51dc2f62dc4da7b07bcd2c0268b1a2dd73"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -2216,13 +2224,17 @@ six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
+sortedcontainers = [
+    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
+    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
+]
 soupsieve = [
     {file = "soupsieve-2.3.2.post1-py3-none-any.whl", hash = "sha256:3b2503d3c7084a42b1ebd08116e5f81aadfaea95863628c80a3b774a11b7c759"},
     {file = "soupsieve-2.3.2.post1.tar.gz", hash = "sha256:fc53893b3da2c33de295667a0e19f078c14bf86544af307354de5fcf12a3f30d"},
 ]
 stack-data = [
-    {file = "stack_data-0.6.0-py3-none-any.whl", hash = "sha256:b92d206ef355a367d14316b786ab41cb99eb453a21f2cb216a4204625ff7bc07"},
-    {file = "stack_data-0.6.0.tar.gz", hash = "sha256:8e515439f818efaa251036af72d89e4026e2b03993f3453c000b200fb4f2d6aa"},
+    {file = "stack_data-0.6.1-py3-none-any.whl", hash = "sha256:960cb054d6a1b2fdd9cbd529e365b3c163e8dabf1272e02cfe36b58403cff5c6"},
+    {file = "stack_data-0.6.1.tar.gz", hash = "sha256:6c9a10eb5f342415fe085db551d673955611afb821551f554d91772415464315"},
 ]
 tenacity = [
     {file = "tenacity-8.1.0-py3-none-any.whl", hash = "sha256:35525cd47f82830069f0d6b73f7eb83bc5b73ee2fff0437952cedf98b27653ac"},
@@ -2264,8 +2276,8 @@ traitlets = [
     {file = "traitlets-5.5.0.tar.gz", hash = "sha256:b122f9ff2f2f6c1709dab289a05555be011c87828e911c0cf4074b85cb780a79"},
 ]
 trimesh = [
-    {file = "trimesh-3.16.1-py3-none-any.whl", hash = "sha256:0b9ef7ef6989658322a4e41e638cf3b365756e27851334f4497c495f15af5936"},
-    {file = "trimesh-3.16.1.tar.gz", hash = "sha256:cbf2320fd8a2ed116b84ae55094a883ec3ddc02f2c4a2d3ca6ca9ae9fc22d358"},
+    {file = "trimesh-3.16.3-py3-none-any.whl", hash = "sha256:a817e7dc6cfeecd392c37b2f78ea387621d5ed678b8e4249bfb1772140ffc14b"},
+    {file = "trimesh-3.16.3.tar.gz", hash = "sha256:cd6b6bb4dfe26dd8194567cb51c8f5ed62e6ca8a8dc098fcccfdf999487f3452"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},

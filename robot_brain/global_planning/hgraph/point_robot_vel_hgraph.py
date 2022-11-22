@@ -8,6 +8,7 @@ from robot_brain.controller.mppi.mppi_2th_order import Mppi2thOrder
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
     CircleRobotConfigurationGridMap,
 )
+from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
 
 from robot_brain.global_variables import DT
 
@@ -35,6 +36,30 @@ class PointRobotVelHGraph(HGraph):
         return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
     def estimate_obstacle_path_existance(self, target_state, obstacles):
+        raise NotImplementedError()
+
+    def search_drive_path(self, target_state, obstacles):
+        """ perform motion planning for driving action. """
+        print("MOTION PLANNER BEING INITIALISED")
+        print(f'motion planning from {self.robot.state.get_xy_position()} to {target_state.get_xy_position()}')
+
+        dmp = DriveMotionPlanner(grid_x_length=10,
+                grid_y_length=10,
+                obstacles=obstacles,
+                obstacle=self.robot,
+                step_size=0.3,
+                search_size=1.5)
+        path = dmp.search(self.robot.state, target_state)
+
+        print("MOTION PLANNER DONE!")
+
+        if isinstance(path, list):
+            return path
+        else:
+            raise RuntimeError("could not find a path to the target state")
+
+    def search_push_path(self, push_obstacle, target_state, obstacles):
+        """ perform motion planning for pushing action. """
         raise NotImplementedError()
 
     def get_driving_controllers(self) -> list:

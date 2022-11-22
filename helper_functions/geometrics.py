@@ -27,6 +27,8 @@ def point_in_rectangle(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray, lp3:np.n
     """ returns true if the point p is inside the rectangle
     which has edges lp1 to lp2 and lp2 to lp3.
     """
+    if isinstance(p, tuple):
+        p = np.array(p)
     assert p.shape == (2,), "points has an incorrect shape"
     assert (lp1.shape == (2,) and
     lp2.shape == (2,) and lp3.shape == (2,)), "line points have incorrect shape"

@@ -13,6 +13,7 @@ from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.drive_act_edge import DriveActionEdge
+from robot_brain.global_planning.push_act_edge import PushActionEdge
 from robot_brain.global_planning.action_edge import ActionEdge, PATH_IS_PLANNED, HAS_SYSTEM_MODEL
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
 
@@ -354,10 +355,24 @@ class HGraph(Graph):
 
         # TODO: this path existence check is a motion planner, create an actual motion planner
         assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
-        target_node = self.get_node(edge.to)
-        edge.path = self.estimate_robot_path_existance(target_node.obstacle.state, self.obstacles)
+        # motion planning
+
+        target_state = self.get_node(edge.to).obstacle.state
+        if isinstance(edge, DriveActionEdge):
+            edge.path = self.search_drive_path(target_state, self.obstacles)
+        elif isinstance(edge, PushActionEdge):
+            edge.path = self.search_push_path(edge.obtacles.get(0), target_state, self.obstacles)
+
+        # edge.path = self.estimate_robot_path_existance(target_node.obstacle.state, self.obstacles)
         edge.set_path_is_planned_status()
 
+    @abstractmethod
+    def search_drive_path(self, target_state, obstacles):
+        pass
+
+    @abstractmethod
+    def search_push_path(self, push_obstacle, target_state, obstacles):
+        pass
 
 #######################################################
 ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###

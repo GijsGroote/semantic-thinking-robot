@@ -112,6 +112,13 @@ class ConfigurationGridMap(ABC):
     def setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         pass
 
+    def update(self):
+        """ re-initialises the obstacle grid. """
+        self._grid_map = np.zeros((
+            int(self.grid_x_length/self.cell_size),
+            int(self.grid_y_length/self.cell_size)))
+        self.setup()
+
     @abstractmethod
     def occupancy(self, y_position, x_position, *args):
         pass

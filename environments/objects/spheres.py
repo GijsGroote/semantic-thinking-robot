@@ -5,7 +5,7 @@ sphere_dict = {
     "mass": 1,
     "type": "sphere",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [1.0, 1.0, 1.0],
+    "position": [1.0, 2.0, 1.0],
     "geometry": {"radius": 0.6},
 }
 
