@@ -40,15 +40,13 @@ class PointRobotVelHGraph(HGraph):
 
     def search_drive_path(self, target_state, obstacles):
         """ perform motion planning for driving action. """
-        print("MOTION PLANNER BEING INITIALISED")
-        print(f'motion planning from {self.robot.state.get_xy_position()} to {target_state.get_xy_position()}')
 
         dmp = DriveMotionPlanner(grid_x_length=10,
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=self.robot,
-                step_size=0.3,
-                search_size=1.5)
+                step_size=0.5,
+                search_size=.8)
         path = dmp.search(self.robot.state, target_state)
 
         print("MOTION PLANNER DONE!")

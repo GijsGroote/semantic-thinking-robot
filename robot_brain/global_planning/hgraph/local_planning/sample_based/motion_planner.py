@@ -34,7 +34,18 @@ class MotionPlanner(ABC):
         self.step_size = step_size
         self.search_size = search_size
 
-        self.connectivity_graph = ConnectivityGraph()
+        self.source_tree_key = 0
+        self.target_tree_key = 1
+
+        self.samples = {}
+        self.connect_trees = {}
+        self.x_sorted = SortedDict({})
+        self.y_sorted = SortedDict({})
+
+    @abstractmethod
+    def setup(self, start_sample, target_sample):
+        """ initialise the connectivity graphs with the start and target samples. """
+        pass
 
     @abstractmethod
     def search(self, start: State, target: State) -> list:
@@ -42,133 +53,35 @@ class MotionPlanner(ABC):
         pass
 
     @abstractmethod
+    def create_random_sample(self):
+        """ Randomly generates a sample in free space. """
+        pass
+
+    @abstractmethod
     def check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
         """ check if 2 samples can be connected using a local planner. """
         pass
 
-    def create_random_sample(self):
-        """ Randomly generates a sample in free space. """
-        raise NotImplementedError
-        # TODO: randomly generate a sample, if it is in obstacle space, try again
-
-    def project_to_connectivity_graph(self, sample: tuple):
-        """ Finds closest sample in connectivity graph and moves sample toward that sample. """
-        raise NotImplementedError
-
-    @property
-    def grid_x_length(self):
-        return self._grid_x_length
-
-    @property
-    def grid_y_length(self):
-        return self._grid_y_length
-
-    @property
-    def obstacles(self):
-        return self._obstacles
-
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles 
-
-    @property
-    def connectivity_graph(self):
-        return self._connectivity_graph
-
-    @connectivity_graph.setter
-    def connectivity_graph(self, conn_graph):
-        self._connectivity_graph = conn_graph
-
-
-########################################
-### CONNECTIVITY GRAPH FUNCTIONALITY ###
-########################################
-class ConnectivityGraph:
-    """ Keeping track of all samples which are connected in 2 graphs, the start and target graph. """
-
-    def __init__(self):
-        
-        self.source_tree_key = 0
-        self.target_tree_key = 1
-
-        self.samples = {}
-        self.x_sorted = SortedDict({})
-        self.y_sorted = SortedDict({})
-        
-
-    def setup(self, start_sample, target_sample):
-
-        assert isinstance(start_sample, (np.ndarray, tuple, list)) and isinstance(target_sample, (np.ndarray, tuple, list)), \
-            "start- or target sample is not a type tuple, list or np.array which it should be."
-        assert len(start_sample) == 2 and len(target_sample) == 2, \
-                f"start- and target sample should have length 2 and have lengths {len(start_sample)} and {len(target_sample)}"
-
-
-        self.samples.clear()
-        self.x_sorted.clear()
-        self.y_sorted.clear()
-
-        # self.samples has structure {(key: (x_pos, y_pos, cost_to_source, prev_sample_key, in_tree), ...} 
-        self.samples[self.source_tree_key] = {
-                "pos": [start_sample[0], start_sample[1]],
-                "cost_to_source": 0,
-                "prev_sample_key": self.source_tree_key,
-                "in_tree": self.source_tree_key}
-
-        self.samples[self.target_tree_key] = {
-                "pos": [target_sample[0], target_sample[1]],
-                "cost_to_source": 0,
-                "prev_sample_key": self.target_tree_key,
-                "in_tree": self.target_tree_key}
-
-
-        self.n_samples = 2
-        self.x_sorted = SortedDict({start_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
-        self.y_sorted = SortedDict({start_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
-
-
-    def add_sample(self, sample: list, prev_key, cost_to_source):
+    def add_sample(self, sample: list, prev_key: int, cost_to_source) -> int:
         """ adds sample to all existing samples. """
-
-        # check if the x and y positions already exist
-        assert not self.x_sorted.__contains__(sample[0]), f"x position {sample[0]} already exist in sorted x positions"
-        # TODO: this error might occur, handle it, it now halts the program, gijs 22 nov 2022
-        assert not self.y_sorted.__contains__(sample[1]), f"y position {sample[1]} already exist in sorted y positions"
-
-        key = self.create_unique_id()
-
-        self.samples[key] = {
-                "pos": [sample[0], sample[1]],
-                "cost_to_source": cost_to_source,
-                "prev_sample_key": prev_key,
-                "in_tree": self.samples[prev_key]["in_tree"]}
-
-        self.x_sorted[sample[0]] = key
-        self.y_sorted[sample[1]]= key
-
-        self.n_samples += 1
+        pass
 
     def get_closest_sample_key(self, sample: list) -> int:
         """ Search for closest points in x and y """
 
         test_closest_keys = self.get_closeby_sample_keys(sample, 0.1)
         if len(test_closest_keys) > 0:
-            print('closest key 0.1;')
             closest_keys = test_closest_keys
         else:
             test_closest_keys = self.get_closeby_sample_keys(sample, 1)
             if len(test_closest_keys) > 0:
-                print('closest key 1;')
                 closest_keys = test_closest_keys
             else:
                 test_closest_keys = self.get_closeby_sample_keys(sample, 4)
 
                 if len(test_closest_keys) > 0:
-                    print('closest key 4;')
                     closest_keys = test_closest_keys
                 else:
-                    print('closest key all')
                     closest_keys = self.samples.keys()
 
         closest_sample_key = None
@@ -210,8 +123,6 @@ class ConnectivityGraph:
         high_idx = val_idx+1
         low_idx = val_idx-1
 
-        # print(f'type of high iddx {type(high_idx)}')
-        # print(f'attemt to get key {sorted_list[high_idx]} from inddex {high_idx}')
         close_keys = []
         
         for _ in range(n):
@@ -237,17 +148,14 @@ class ConnectivityGraph:
 
         return unique_id
 
-    def print_sample(self, sample: dict):
-        """ prints the sample is human readable format. """
-        print(f"Sample x: {sample[0]}, y: {sample[1]}, cost_to_source: {sample[2]}, previous key: {sample[3]} in tree {sample[4]}")
-
-    def visualise(self, save=False):
+    def visualise(self, save=False, shortest_path=None):
         """ Visualise the connectivity graph. """
 
         fig = go.Figure()
 
         source_style = dict(showlegend = True, name="Source Tree", legendgroup="Source Tree", line=dict(color="blue"))
         target_style = dict(showlegend = True, name="Target Tree", legendgroup="Target Tree", line=dict(color="green"))
+        connect_style = dict(showlegend = True, name="Connect Trees", legendgroup="Connect Trees", line=dict(color="orange"))
 
         # loop through samples
         for sample in self.samples.values():
@@ -264,6 +172,18 @@ class ConnectivityGraph:
                 target_style["showlegend"] = False
             else:
                 raise ValueError(f"in_tree in unknown and is {sample['in_tree']}")
+
+        for (key, value) in self.connect_trees.items():
+            sample1 = self.samples[key]
+            sample2 = self.samples[value["connected_to"]]
+            fig.add_scatter(y=[sample1["pos"][0], sample2["pos"][0]], x=[sample1["pos"][1], sample2["pos"][1]], **connect_style)
+            connect_style["showlegend"] = False
+
+        if shortest_path is not None:
+            x_points = [sample[0] for sample in shortest_path]
+            y_points = [sample[1] for sample in shortest_path]
+                
+            fig.add_scatter(y=x_points, x=y_points, **dict(showlegend = True, name="Connect Trees", line=dict(color="red", width=20)))
         
         fig.update_xaxes({"autorange": True})
         fig.update_yaxes({"autorange": "reversed"})
@@ -276,4 +196,33 @@ class ConnectivityGraph:
                 pickle.dump(fig, file)
         else:
             fig.show()
+
+    def project_to_connectivity_graph(self, sample: tuple):
+        """ Finds closest sample in connectivity graph and moves sample toward that sample. """
+        raise NotImplementedError
+
+    @property
+    def grid_x_length(self):
+        return self._grid_x_length
+
+    @property
+    def grid_y_length(self):
+        return self._grid_y_length
+
+    @property
+    def obstacles(self):
+        return self._obstacles
+
+    @obstacles.setter
+    def obstacles(self, obstacles):
+        assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
+        self._obstacles = obstacles 
+
+    @property
+    def connectivity_graph(self):
+        return self._connectivity_graph
+
+    @connectivity_graph.setter
+    def connectivity_graph(self, conn_graph):
+        self._connectivity_graph = conn_graph
 

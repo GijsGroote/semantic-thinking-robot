@@ -363,7 +363,6 @@ class HGraph(Graph):
         elif isinstance(edge, PushActionEdge):
             edge.path = self.search_push_path(edge.obtacles.get(0), target_state, self.obstacles)
 
-        # edge.path = self.estimate_robot_path_existance(target_node.obstacle.state, self.obstacles)
         edge.set_path_is_planned_status()
 
     @abstractmethod

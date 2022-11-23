@@ -136,6 +136,9 @@ class RBrain:
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
             self.obstacles[key].type = "unmovable"
+            # if key == "simple_cilinder":
+            #     print('detected the simple cylinder, that is now set to movable')
+            #     self.obstacles[key].type = "movable"
 
     def setup_hgraph(self, stat_world_info):
         """ 

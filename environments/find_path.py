@@ -10,14 +10,11 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
 
-from environments.objects.boxes import box, box2
+from environments.objects.boxes import box, box2, box3
 from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
-
-user_input_mode = False
-
-def main(conn=None):
+def main():
     """
     Point robot and obstacles which can interact with each other in the environment.
 
@@ -40,12 +37,14 @@ def main(conn=None):
 
     obstacles = {box.name(): box,
             box2.name(): box2,
+            box3.name(): box3,
             sphere.name(): sphere,
             cylinder.name(): cylinder}
 
     # add obstacles
     env.add_obstacle(box)
     env.add_obstacle(box2)
+    env.add_obstacle(box3)
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
 
@@ -68,9 +67,9 @@ def main(conn=None):
         #     ("robot", State(pos=np.array([1, 2.2, 0]))),
         #     ],
         "task": [("robot", State(pos=np.array([-2.12, -4.5, 0]))),
-            ("robot", State(pos=np.array([-3.3212, 3, 0]))),
-            ("robot", State(pos=np.array([3.3212, 2, 0]))),
-            ("robot", State(pos=np.array([3.3212, -2, 0]))),
+            # ("robot", State(pos=np.array([-3.3212, 3, 0]))),
+            # ("robot", State(pos=np.array([3.3212, 2, 0]))),
+            # ("robot", State(pos=np.array([3.3212, -2, 0]))),
             # ("robot", State(pos=np.array([-2.3212, -1, 0]))),
             # ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
             # ("robot", State(pos=np.array([3,0,0]))),
@@ -82,53 +81,13 @@ def main(conn=None):
     brain.update(ob)
 
     for i in range(n_steps):
-        if user_input_mode:
-            conn.send({"request_action": True, "kill_child": False, "ob": ob})
-            keyboard_data = conn.recv()
-            action[0:2] = keyboard_data["action"]
-        else:
-            action[0:2] = brain.respond()
 
+        action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)
-        
-        # if i == 1000 or i == 400 or i == 800 or i == 1200:
-        #     print(i)
-        #  3print(ob["obstacleSensor"]["simple_box"]["pose"]["orientation"])
-
 
         brain.update(ob)
 
 
-    conn.send({"request_action": False, "kill_child": True})
 
 if __name__ == "__main__":
-
-    if not user_input_mode:
         main()
-
-    else:
-        # setup multi threading with a pipe connection
-        parent_conn, child_conn = Pipe()
-
-        # create parent process
-        p = Process(target=main, args=(parent_conn,))
-        # start parent process
-        p.start()
-
-        # create Responder object
-        responder = Responder(child_conn)
-
-        # unlogical key bindings
-        custom_on_press = {Key.left: np.array([-1.0, 0.0]),
-                           Key.space: np.array([1.0, 0.0]),
-                           Key.page_down: np.array([1.0, 1.0]),
-                           Key.page_up: np.array([-1.0, -1.0])}
-
-        responder.setup()
-        # responder.setup(custom_on_press=custom_on_press)
-
-        # start child process which keeps responding/looping
-        responder.start(p)
-
-        # kill parent process
-        p.kill()
