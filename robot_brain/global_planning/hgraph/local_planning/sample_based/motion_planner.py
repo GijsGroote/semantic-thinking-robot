@@ -1,36 +1,26 @@
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 import pickle
 import sys
-from sortedcontainers import SortedDict
-from bisect import bisect
+from sortedcontainers import SortedDict, SortedList
 from abc import ABC, abstractmethod
 from robot_brain.obstacle import Obstacle
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
-
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap 
-from motion_planning_env.box_obstacle import BoxObstacle
-from motion_planning_env.cylinder_obstacle import CylinderObstacle 
 
 from robot_brain.state import State
 
 
 class MotionPlanner(ABC):
     """
-    Doubly Rapid Random Tree star (RRT*) motion planner.
+    Motion planner that finds a start to target position for pushing and driving tasks.
     """
     def __init__(self, grid_x_length: float, grid_y_length: float, obstacle: Obstacle, step_size: float, search_size: float):
 
-        assert isinstance(grid_x_length, (float, int)), f"grid_x_length must be type float or int and is type {type(grid_x_length)}"
-        assert isinstance(grid_y_length, (float, int)), f"grid_y_length must be type float or int and is type {type(grid_y_length)}"
-        assert grid_x_length > 0 and grid_y_length > 0, f"both grid_x_length and grid_y_length must be positive they are {grid_x_length} and {grid_y_length}"
-
-        self._grid_x_length = grid_x_length
-        self._grid_y_length = grid_y_length
-
+        self.grid_x_length = grid_x_length
+        self.grid_y_length = grid_y_length
         self.obstacle = obstacle
+        
+        assert step_size < search_size, f"step size must be smaller than search size, step_size={step_size}, search_size={search_size}"
         self.step_size = step_size
         self.search_size = search_size
 
@@ -38,13 +28,13 @@ class MotionPlanner(ABC):
         self.target_tree_key = 1
 
         self.samples = {}
-        self.connect_trees = {}
+        self.shortest_paths = SortedDict({})
         self.x_sorted = SortedDict({})
         self.y_sorted = SortedDict({})
 
     @abstractmethod
     def setup(self, start_sample, target_sample):
-        """ initialise the connectivity graphs with the start and target samples. """
+        """ initialise the start and target samples. """
         pass
 
     @abstractmethod
@@ -54,7 +44,16 @@ class MotionPlanner(ABC):
 
     @abstractmethod
     def create_random_sample(self):
-        """ Randomly generates a sample in free space. """
+        """ Randomly generates a sample in free, movable or unknown space. """
+        pass
+
+    def add_sample(self, sample: list, prev_key: int, cost_to_source: float) -> int:
+        """ adds sample to all existing samples. """
+        pass
+
+    @abstractmethod
+    def project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
+        """ projects the sample closer to the closest existing sample in the connectivity graphs. """
         pass
 
     @abstractmethod
@@ -62,27 +61,19 @@ class MotionPlanner(ABC):
         """ check if 2 samples can be connected using a local planner. """
         pass
 
-    def add_sample(self, sample: list, prev_key: int, cost_to_source) -> int:
-        """ adds sample to all existing samples. """
-        pass
-
     def get_closest_sample_key(self, sample: list) -> int:
         """ Search for closest points in x and y """
 
-        test_closest_keys = self.get_closeby_sample_keys(sample, 0.1)
+        # only compare closeby samples before comparing to all existing samples
+        test_closest_keys = self.get_closeby_sample_keys(sample, 10*self.grid_x_length/self.n_samples)
         if len(test_closest_keys) > 0:
             closest_keys = test_closest_keys
         else:
-            test_closest_keys = self.get_closeby_sample_keys(sample, 1)
+            test_closest_keys = self.get_closeby_sample_keys(sample, 100*self.grid_x_length/self.n_samples)
             if len(test_closest_keys) > 0:
                 closest_keys = test_closest_keys
             else:
-                test_closest_keys = self.get_closeby_sample_keys(sample, 4)
-
-                if len(test_closest_keys) > 0:
-                    closest_keys = test_closest_keys
-                else:
-                    closest_keys = self.samples.keys()
+                closest_keys = self.samples.keys()
 
         closest_sample_key = None
         closest_distance = sys.float_info.max
@@ -97,7 +88,7 @@ class MotionPlanner(ABC):
 
     def distance(self, sample1: list, sample2: list) -> float:
         """ returns euclidean distance between 2 samples. """
-        return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])
+        pass
 
     def get_closeby_sample_keys(self, sample: list, radius: float) -> set:
         """ return the keys of samples which are less than 2*radius manhattan distance to sample. """
@@ -112,32 +103,15 @@ class MotionPlanner(ABC):
 
         return x_keys.intersection(y_keys)
 
-    def get_closest_samples(self, sorted_list: SortedDict, val: float, n: int) -> list:
-        """ return a list with n sample keys closest to val in list. """
-
-        assert sorted_list.__contains__(val), f"value {val} does not exist in the sorted list"
-
-        # TODO: Check for index out of range 
-        val_idx = sorted_list.index(val)
-
-        high_idx = val_idx+1
-        low_idx = val_idx-1
-
-        close_keys = []
-        
-        for _ in range(n):
-
-            high = sorted_list.peekitem(high_idx)[0]
-            low = sorted_list.peekitem(low_idx)[0]
-
-            if abs(high-val) < abs(low-val):
-                close_keys.append(high)
-                high_idx += 1
-            else:
-                close_keys.append(low)
-                low_idx -= 1
-
-        return close_keys
+    def paths_converged_test(self) -> bool:
+        """ test is the shortest path converged toward an optimal. """
+        if len(self.shortest_paths) < 15: 
+            return False
+        elif self.shortest_paths.peekitem(0)[0] * 1.1 < self.shortest_paths.peekitem(4)[0]:
+            # return True 5th shortest path is at most 20% longer than the shortest path
+            return True
+        else:
+            return False
 
     def create_unique_id(self) -> int:
         """ creates and returns a unique id. """
@@ -148,24 +122,24 @@ class MotionPlanner(ABC):
 
         return unique_id
 
-    def visualise(self, save=False, shortest_path=None):
+    def visualise(self, save=True, shortest_path=None):
         """ Visualise the connectivity graph. """
 
         fig = go.Figure()
 
-        source_style = dict(showlegend = True, name="Source Tree", legendgroup="Source Tree", line=dict(color="blue"))
-        target_style = dict(showlegend = True, name="Target Tree", legendgroup="Target Tree", line=dict(color="green"))
-        connect_style = dict(showlegend = True, name="Connect Trees", legendgroup="Connect Trees", line=dict(color="orange"))
+        source_style = dict(showlegend = True, name="Source Tree", legendgroup=1, line=dict(color="blue"))
+        target_style = dict(showlegend = True, name="Target Tree", legendgroup=2, line=dict(color="green"))
+        connect_style = dict(showlegend = True, name="Connect Trees", legendgroup=3, line=dict(color="orange"))
 
         # loop through samples
+        # for sample in self.samples.values():
         for sample in self.samples.values():
 
             prev_sample = self.samples[sample["prev_sample_key"]]["pos"]
 
             if sample["in_tree"] == self.source_tree_key:
                 fig.add_scatter(y=[prev_sample[0], sample["pos"][0]], x=[prev_sample[1], sample["pos"][1]], **source_style)
-                
-                source_style["showlegend"] = False # this could be done better, remove this part. 
+                source_style["showlegend"] = False
 
             elif sample["in_tree"] == self.target_tree_key:
                 fig.add_scatter(y=[prev_sample[0], sample["pos"][0]], x=[prev_sample[1], sample["pos"][1]], **target_style)
@@ -173,9 +147,9 @@ class MotionPlanner(ABC):
             else:
                 raise ValueError(f"in_tree in unknown and is {sample['in_tree']}")
 
-        for (key, value) in self.connect_trees.items():
-            sample1 = self.samples[key]
-            sample2 = self.samples[value["connected_to"]]
+        for value in self.shortest_paths.values():
+            sample1 = self.samples[value["sample1_key"]]
+            sample2 = self.samples[value["sample2_key"]]
             fig.add_scatter(y=[sample1["pos"][0], sample2["pos"][0]], x=[sample1["pos"][1], sample2["pos"][1]], **connect_style)
             connect_style["showlegend"] = False
 
@@ -183,7 +157,7 @@ class MotionPlanner(ABC):
             x_points = [sample[0] for sample in shortest_path]
             y_points = [sample[1] for sample in shortest_path]
                 
-            fig.add_scatter(y=x_points, x=y_points, **dict(showlegend = True, name="Connect Trees", line=dict(color="red", width=20)))
+            fig.add_scatter(y=x_points, x=y_points, showlegend = True, name="Path Found", line=dict(color="red", width=5))
         
         fig.update_xaxes({"autorange": True})
         fig.update_yaxes({"autorange": "reversed"})
@@ -192,37 +166,62 @@ class MotionPlanner(ABC):
                 paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
         if save:
-            with open(PROJECT_PATH+"dashboard/data/controller.pickle", "wb") as file:
+            with open(PROJECT_PATH+"dashboard/data/motion_planner.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()
 
-    def project_to_connectivity_graph(self, sample: tuple):
-        """ Finds closest sample in connectivity graph and moves sample toward that sample. """
-        raise NotImplementedError
-
+########################### SETTERS AND GETTERS BELOW THIS POINT ###########################
     @property
     def grid_x_length(self):
         return self._grid_x_length
+
+    @grid_x_length.setter
+    def grid_x_length(self, val):
+        assert isinstance(val, (float, int)), f"grid_x_length must be type float or int and is type {type(val)}"
+        assert val > 0, f"grid_x_length  must be positive they is {val}"
+        self._grid_x_length = val
 
     @property
     def grid_y_length(self):
         return self._grid_y_length
 
-    @property
-    def obstacles(self):
-        return self._obstacles
-
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles 
+    @grid_y_length.setter
+    def grid_y_length(self, val):
+        assert isinstance(val, (float, int)), f"grid_y_length must be type float or int and is type {type(val)}"
+        assert val > 0, f"grid_y_length  must be positive they is {val}"
+        self._grid_y_length = val
 
     @property
-    def connectivity_graph(self):
-        return self._connectivity_graph
+    def obstacle(self):
+        return self._obstacle
 
-    @connectivity_graph.setter
-    def connectivity_graph(self, conn_graph):
-        self._connectivity_graph = conn_graph
+    @obstacle.setter
+    def obstacle(self, obstacle):
+        assert isinstance(obstacle, Obstacle), f"obstacle must be of type Obstacle and is {type(obstacle)}"
+        self._obstacle = obstacle 
 
+    @property
+    def step_size(self):
+        return self._step_size
+
+    @step_size.setter
+    def step_size(self, val):
+        assert isinstance(val, (float, int)), f"step_size must be type float or int and is type {type(val)}"
+        assert val > 0, f"step_size must be positive they is {val}"
+        self._step_size = val
+
+    @property
+    def search_size(self):
+        return self._search_size
+
+    @search_size.setter
+    def search_size(self, val):
+        assert isinstance(val, (float, int)), f"search_size must be type float or int and is type {type(val)}"
+        assert val > 0, f"search_size must be positive they is {val}"
+        self._search_size = val
+
+        self.samples = {}
+        self.connect_trees = {}
+        self.x_sorted = SortedDict({})
+        self.y_sorted = SortedDict({})

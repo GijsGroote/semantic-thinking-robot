@@ -38,23 +38,15 @@ class PointRobotVelHGraph(HGraph):
     def estimate_obstacle_path_existance(self, target_state, obstacles):
         raise NotImplementedError()
 
-    def search_drive_path(self, target_state, obstacles):
+    def set_motion_planner(self, obstacles):
         """ perform motion planning for driving action. """
 
-        dmp = DriveMotionPlanner(grid_x_length=10,
+        return DriveMotionPlanner(grid_x_length=10,
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=self.robot,
                 step_size=0.5,
-                search_size=.8)
-        path = dmp.search(self.robot.state, target_state)
-
-        print("MOTION PLANNER DONE!")
-
-        if isinstance(path, list):
-            return path
-        else:
-            raise RuntimeError("could not find a path to the target state")
+                search_size=0.7)
 
     def search_push_path(self, push_obstacle, target_state, obstacles):
         """ perform motion planning for pushing action. """

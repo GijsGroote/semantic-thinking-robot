@@ -91,6 +91,7 @@ class Dashboard:
                         n_intervals=0
                     )
                 ], className="item"),
+
                 html.Div([
                     html.H4("Controller Live Feed"),
                     dcc.Graph(id="live-update-controller-graph", animate=True),
@@ -100,6 +101,7 @@ class Dashboard:
                         n_intervals=0
                         )
                     ], className="item"),
+
                 html.Div([
                     html.H4("Knowledge Graph"),
                     html.Iframe(
@@ -113,6 +115,7 @@ class Dashboard:
                         n_intervals=0
                         )
                     ], className="item"),
+
                 html.Div([
                     html.H4("Configuration Map"),
                     dcc.Graph(id="live-update-configuration-map"),
@@ -122,8 +125,19 @@ class Dashboard:
                         n_intervals=0
                         )
                     ], className="item"),
+
                 html.Div([
-                    html.H4("open space "),
+                    html.H4("Motion Planning"),
+                    dcc.Graph(id="live-update-motion-planner"),
+                    dcc.Interval(
+                        id="motion-planner-interval-component",
+                        interval=1 * 1000,
+                        n_intervals=0
+                        )
+                    ], className="item"),
+
+                html.Div([
+                    html.H4("open spacsssse "),
                     html.Iframe(
                         srcDoc=self.loading_html,
                         className="graph"

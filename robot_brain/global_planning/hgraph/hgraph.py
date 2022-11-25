@@ -349,6 +349,7 @@ class HGraph(Graph):
     def search_path(self, edge):
         """ Search for a path from start to target. """
 
+        self.go_to_loop(SEARCHING_LOOP)
         # if a new edge is added (moving a obstacle to clear a path), a replanning of the hypothesis 
         # happened. Copy the old hypothesis, add new edges an that is the new hypothesis. Store
         # the failed hypothesis in the logs
@@ -357,16 +358,18 @@ class HGraph(Graph):
         assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
         # motion planning
 
-        target_state = self.get_node(edge.to).obstacle.state
         if isinstance(edge, DriveActionEdge):
-            edge.path = self.search_drive_path(target_state, self.obstacles)
+            edge.motion_planner = self.set_motion_planner(self.obstacles)
+            edge.path = edge.motion_planner.search(self.robot.state, self.get_node(edge.to).obstacle.state)
+
         elif isinstance(edge, PushActionEdge):
+            # TODO: set planner as argument of edge
             edge.path = self.search_push_path(edge.obtacles.get(0), target_state, self.obstacles)
 
         edge.set_path_is_planned_status()
 
     @abstractmethod
-    def search_drive_path(self, target_state, obstacles):
+    def set_motion_planner(self, obstacles):
         pass
 
     @abstractmethod
@@ -384,6 +387,7 @@ class HGraph(Graph):
         next_current_edge = self.hypothesis[self.edge_pointer]
         # check if the next edge is ready
         if next_current_edge.ready_for_execution():
+
             print('this edge is ready for execution')
         else:
             print('this edge is not yet ready for exectuion')
@@ -391,10 +395,12 @@ class HGraph(Graph):
                 self.search_path(next_current_edge)
             self.search_hypothesis()
 
+        # move this plotting toward the edge itself
         next_current_edge.set_executing_status()
         self.current_edge = next_current_edge
         self.current_node = self.get_node(self.hypothesis[self.edge_pointer].source)
         if CREATE_SERVER_DASHBOARD:
+            self.current_edge.motion_planner.visualise(shortest_path=self.current_edge.path)
             self.visualise()
 
     def update_system_model(self, ident_edge):

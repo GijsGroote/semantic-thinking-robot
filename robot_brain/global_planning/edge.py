@@ -17,6 +17,9 @@ class Edge(ABC):
         self.path = path
         self.path_pointer = 0
         self.alpha = None
+        # create setter and getter for estimator and motion planner
+        self.motion_planner = None
+        self.path_estimator = None
 
     @abstractmethod
     def to_string(self):

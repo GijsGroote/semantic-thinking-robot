@@ -107,3 +107,25 @@ def register_callbacks(app):
                         plot_bgcolor=FIG_BG_COLOR)
                         
                 return fig
+
+    @app.callback(Output("live-update-motion-planner", "figure"),
+            Input("motion-planner-interval-component", "n_intervals"))
+
+    def update_motion_planner(n):
+
+        file_path = PROJECT_PATH+"dashboard/data/motion_planner.pickle"
+        # read in controller data if it exists
+        if not Path(file_path).is_file():
+            return no_data_found_dict
+
+        else:
+            # only update up-to-date files, exception for n = 0
+            if n > 0:
+                check_file_is_up_to_date(file_path)
+
+            with open(file_path, "rb") as file:
+
+                fig = pickle.load(file)
+                        
+            return fig
+
