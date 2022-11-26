@@ -97,14 +97,7 @@ class DriveMotionPlanner(MotionPlanner):
         # while keep_searching:
         while not self.paths_converged_test():
 
-            if time.time() - start_time_search > 5:
-                if len(self.shortest_paths) > 0:
-                    return self.extract_shortest_path()
-                else:
-                    print('hey that has not pasth yet')
-
-
-
+            self.stop_criteria_test(start_time_search)
 
             # TODO: terminate if it takes to long and no path has been found
 
@@ -290,10 +283,18 @@ class DriveMotionPlanner(MotionPlanner):
 
 
         # if the new samples deletes a shortest path?
+    
+    def stop_criteria_test(self, start_time) -> bool:
+        """ if path finding takes to long, return the current best path, if that does not 
+        extist after an even longer time, error. """
 
+        planning_time = time.time() - start_time
 
-
-
+        if planning_time > 0.1:
+            if len(self.shortest_paths) > 0:
+                return self.extract_shortest_path()
+            elif planning_time > 0.2:
+                raise StopIteration("It takes to long to find a path, halt.") 
 
     def distance(self, sample1: list, sample2: list) -> float:
         return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])

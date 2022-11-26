@@ -6,9 +6,11 @@ import plotly.graph_objects as go
 import warnings
 import pickle
 
+
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
+from robot_brain.state import State
 
 class CircleRobotConfigurationGridMap(ConfigurationGridMap):
     """ 2-dimensional configuration grid map representing the environment
@@ -120,6 +122,11 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
     
     def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
         """ Dijkstra shortest path algorithm. """
+        if isinstance(cart_2d_start, State):
+            cart_2d_start = cart_2d_start.get_xy_position()
+
+        if isinstance(cart_2d_target, State):
+            cart_2d_target= cart_2d_target.get_xy_position()
 
         if self.occupancy(cart_2d_start) != 1:
             warnings.warn("the start position is in obstacle space")

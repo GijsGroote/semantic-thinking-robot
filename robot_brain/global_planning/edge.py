@@ -7,70 +7,59 @@ class Edge(ABC):
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-    def __init__(self, iden, source, to, verb, controller, path):
+    def __init__(self, iden, source, to, verb, controller):
         self.iden = iden
         self.source = source
         self.to = to
         self.verb = verb
         self.controller = controller
-        self.dyn_model = "use a al dynamical model please"
-        self.path = path
+        self._dyn_model = None 
+
+        self._path_estimation = None
+        self._path = None
+
         self.path_pointer = 0
         self.alpha = None
-        # create setter and getter for estimator and motion planner
-        self.motion_planner = None
-        self.path_estimator = None
+
+    @abstractmethod
+    def ready_for_execution(self) -> bool:
+        """ checks if all parameters are set to execute this transition. """
+        pass
+    
+    @abstractmethod
+    def view_completed(self) -> bool:
+        """ check if the view (smallest target, the controller tries to reach) in reached. """
+        pass
+
+    @abstractmethod
+    def completed(self) -> bool:
+        """ returns true if the edge is completed, otherwise false. """
+        pass
+
+    @abstractmethod
+    def increment_current_target(self):
+        """ updates toward the next current target from path. """
+        pass
+
+    @abstractmethod
+    def get_current_target(self) -> State:
+        """ returns the current target the controller tries to steer toward. """
+        pass
+
+    @abstractmethod
+    def respond(self, state) -> np.ndarray:
+        """ respond to the current state. """
+        pass
+
+    def create_log(self) -> dict:
+        """ return a dictionary with metrics. """
+        pass
 
     @abstractmethod
     def to_string(self):
         """ Creates readable format of an Edge. """
         pass
 
-    @abstractmethod
-    def ready_for_execution(self) -> bool:
-        """ checks if all parameters are set to execute this transition. """
-        pass
-
-    def completed(self) -> bool:
-        """ returns true if the path is completed, otherwise false. """
-        return self.path_pointer >= len(self.path)-1
-
-    def increment_current_target(self):
-        """ updates toward the next current target from path. """
-
-        if self.path_pointer < len(self.path)-1:
-            self.path_pointer += 1
-
-        if  len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
-        else:
-            orien = 0
-
-        next_target = State(
-                pos=np.array([self.path[self.path_pointer][0], self.path[self.path_pointer][1], 0]),
-                ang_p=np.array([0, 0, orien])
-                )
-
-        self.controller.set_target_state(next_target)
-
-        print(f"target reached, now setting {self.path[self.path_pointer]} as goal")
-
-    def get_current_target(self) -> State:
-        """ returns the current target the controller tries to steer toward. """
-        if len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
-        else:
-            orien = 0
-        return State(pos=np.append(self.path[self.path_pointer][0:2], [[0]]),
-                ang_p=np.array([0, 0, orien]))
-
-    def respond(self, state) -> np.ndarray:
-        """ respond to the current state. """
-        return self.controller.respond(state)
-
-    def create_log(self) -> dict:
-        """ return a dictionary with metrics. """
-        pass
 
     @property
     def iden(self):
@@ -120,8 +109,18 @@ class Edge(ABC):
         return self._dyn_model
 
     @dyn_model.setter
-    def dyn_model(self, dyn_model):
-        self._dyn_model = dyn_model
+    def dyn_model(self, func):
+        assert callable(func), f"dyn_model must be a callable function and is {type(func)}"
+        self._dyn_model = func
+
+    @property
+    def path_estimation(self):
+        return self._path_estimation
+
+    @path_estimation.setter
+    def path_estimation(self, path_estimation):
+        # TODO: check plan is a plan
+        self._path_estimation = path_estimation
 
     @property
     def path(self):

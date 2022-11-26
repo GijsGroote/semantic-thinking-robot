@@ -25,7 +25,7 @@ FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)
 # TODO: set this path automatically
 PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"
 
-UNKNOWN_OBSTACLE_COST = 15
-KNOWN_OBSTACLE_COST = 10
+UNKNOWN_OBSTACLE_COST = 150
+KNOWN_OBSTACLE_COST = 100
 
 # MPC_CONTROLLER = "mpc controller"

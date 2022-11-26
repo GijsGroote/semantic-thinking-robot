@@ -15,7 +15,9 @@ from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.drive_act_edge import DriveActionEdge
 from robot_brain.global_planning.push_act_edge import PushActionEdge
 from robot_brain.global_planning.action_edge import ActionEdge, PATH_IS_PLANNED, HAS_SYSTEM_MODEL
+from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
+
 
 
 from robot_brain.controller.controller import Controller 
@@ -112,7 +114,8 @@ class HGraph(Graph):
             # self.current_edge = self.hypothesis[self.edge_pointer]
 
             # TODO: fault detection could be done here
-            if np.linalg.norm(current_state.get_xy_position() - self.current_edge.get_current_target().get_xy_position()) < 0.5:
+
+            if self.current_edge.view_completed(current_state):
 
                 if self.current_edge.completed():
                     self.current_edge.set_completed_status()
@@ -292,7 +295,8 @@ class HGraph(Graph):
                     verb="driving",
                     controller=controller)
 
-            edge.set_path_exist_status() # TODO: check if path actually exists
+            self.estimate_path(edge) # boolean check if the path exists, then set path status to exists
+            edge.set_path_exist_status()
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
             self.create_drive_ident_edge(start_node_iden, model_node.iden, edge.iden)
@@ -301,6 +305,7 @@ class HGraph(Graph):
         """ create a system identification edge. """
         # temporarily create a controller which drives closeby
         model_for_node_controller_type = self.get_edge(model_for_edge_iden).controller.name
+
         if model_for_node_controller_type == "MPC":
             controller = self._create_mpc_driving_controller()
         elif model_for_node_controller_type == "MPPI":
@@ -308,18 +313,16 @@ class HGraph(Graph):
         else:
             raise ValueError("somethign goes terebly wrong")
 
-        dyn_model = self.create_driving_model(controller.name)
-        self._setup_driving_controller(controller, dyn_model)
 
-        # do something random for now, later collecting data to create an driving system model
-        path = self.estimate_robot_path_existance(State(pos=np.array([-2.5, 0, 0])), self.obstacles)
         edge = DriveIdentificationEdge(iden=self.unique_edge_iden(), 
                 source=start_node_iden,
                 to=target_node_iden,
                 verb="identify",
                 controller=controller,
-                path=path,
                 model_for_edge_iden=model_for_edge_iden)
+
+        dyn_model = self.create_driving_model(controller.name) # todo, system iden
+        edge.dyn_model = dyn_model
 
         self.add_edge(edge)
         self.hypothesis.insert(0, edge)
@@ -338,43 +341,71 @@ class HGraph(Graph):
 ### PATH ESTIMATION AND MOTION PLANNING ###
 ###########################################
 
+    # @abstractmethod
+    # def estimate_robot_path_existance(self, target_state, obstacles):
+    #     pass
+    #
+    # def estimate_path_existance(self, edge: ActionEdge) -> bool: 
+    #     """ todo graph based path existence """
+    #     pass
+    #
+
+    def estimate_path(self, edge):
+        """ Estimate path existance for from start to target for an edge. """
+
+        self.go_to_loop(SEARCHING_LOOP)
+
+        assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
+
+        # path estimation
+        if isinstance(edge, DriveActionEdge):
+            edge.path_estimator = self.create_drive_path_estimator(self.obstacles)
+
+        elif isinstance(edge, PushActionEdge):
+            edge.path_estimator = self.create_push_path_estimator(self.obstacles)
+
+        edge.path_estimation = edge.path_estimator.shortest_path(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+
     @abstractmethod
-    def estimate_robot_path_existance(self, target_state, obstacles):
+    def create_drive_path_estimator(self, obstacles) -> ConfigurationGridMap:
         pass
 
-    def estimate_path_existance(self, edge: ActionEdge) -> bool: 
-        """ todo graph based path existence """
+    @abstractmethod
+    def create_push_path_estimator(self, obstacles):
         pass
 
     def search_path(self, edge):
-        """ Search for a path from start to target. """
+        """ Search for a path from start to target for an edge. """
 
         self.go_to_loop(SEARCHING_LOOP)
         # if a new edge is added (moving a obstacle to clear a path), a replanning of the hypothesis 
         # happened. Copy the old hypothesis, add new edges an that is the new hypothesis. Store
         # the failed hypothesis in the logs
 
-        # TODO: this path existence check is a motion planner, create an actual motion planner
         assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
-        # motion planning
 
+        # motion planning
         if isinstance(edge, DriveActionEdge):
-            edge.motion_planner = self.set_motion_planner(self.obstacles)
+            print(self.create_drive_motion_planner(self.obstacles))
+
+            edge.motion_planner = self.create_drive_motion_planner(self.obstacles)
             edge.path = edge.motion_planner.search(self.robot.state, self.get_node(edge.to).obstacle.state)
 
         elif isinstance(edge, PushActionEdge):
-            # TODO: set planner as argument of edge
-            edge.path = self.search_push_path(edge.obtacles.get(0), target_state, self.obstacles)
+
+            edge.motion_planner = self.create_push_motion_planner(self.obstacles)
+            edge.path = edge.motion_planner.search(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
 
         edge.set_path_is_planned_status()
 
     @abstractmethod
-    def set_motion_planner(self, obstacles):
+    def create_drive_motion_planner(self, obstacles):
         pass
 
     @abstractmethod
-    def search_push_path(self, push_obstacle, target_state, obstacles):
+    def create_push_motion_planner(self, obstacles):
         pass
+
 
 #######################################################
 ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###
@@ -407,7 +438,7 @@ class HGraph(Graph):
         """ update system model of the next edge. """
 
         for_edge = self.get_edge(ident_edge.model_for_edge_iden)
-        dyn_model = ident_edge.controller.dyn_model
+        dyn_model = ident_edge.dyn_model
         for_edge.set_has_system_model_status()
 
         self._setup_driving_controller(for_edge.controller, dyn_model)        
