@@ -25,7 +25,7 @@ class ConfigurationGridMap(ABC):
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
-            obstacles: {},
+            obstacles: dict,
             robot_cart_2d: np.ndarray,
             n_orientations: int
             ):
@@ -44,6 +44,10 @@ class ConfigurationGridMap(ABC):
         self._robot_cart_2d = robot_cart_2d
 
         self._n_orientations = n_orientations
+
+    @abstractmethod
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> (list, bool):
+        """ return shortest path and boolean indicating if a shortest path can be found. """
 
     def setup(self):
         """

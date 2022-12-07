@@ -124,7 +124,7 @@ class Plotter():
         fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
         if save:
-            with open(PROJECT_PATH+"dashboard/data/controller.pickle", "wb") as file:
+            with open(PROJECT_PATH+"dashboard/data/cntrl.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

@@ -120,7 +120,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         return self.grid_map[x_idx, y_idx]
     
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> (list, bool):
         """ Dijkstra shortest path algorithm. """
         if isinstance(cart_2d_start, State):
             cart_2d_start = cart_2d_start.get_xy_position()
@@ -129,10 +129,10 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
             cart_2d_target= cart_2d_target.get_xy_position()
 
         if self.occupancy(cart_2d_start) != 1:
-            warnings.warn("the start position is in obstacle space")
+            warnings.warn(f"the start position {cart_2d_start} is in obstacle space")
 
         if self.occupancy(cart_2d_target) != 1:
-            warnings.warn("the target position is in obstacle space")
+            warnings.warn(f"the target position {cart_2d_target} is in obstacle space")
 
         # convert position to indices on the grid
         c_idx_start =  self.cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
@@ -186,6 +186,11 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
                                     cost[c_idx] = temp_cost
                                     previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
 
+        print(f'the cost to the final place = {cost[c_idx_target]}')
+        # no shortest path was found
+        if cost[c_idx_target] == sys.maxsize:
+            return ([], False)
+
         shortest_path_reversed = []
         c_idx_temp = c_idx_target
        
@@ -206,9 +211,9 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         shortest_path.append(tuple(cart_2d_target))
 
-        return shortest_path
+        return (shortest_path, True)
 
-    def visualise(self, save:bool=True):
+    def visualise(self, save: bool=True):
         """ Display the occupancy map for a specific orientation of the robot. """
         
         trace = go.Heatmap(
@@ -323,7 +328,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         fig.update_yaxes(autorange="reversed")
         if save:
-            with open(PROJECT_PATH+"dashboard/data/configuration_grid.pickle", "wb") as file:
+            with open(PROJECT_PATH+"dashboard/data/cgrid.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()

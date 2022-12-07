@@ -1,8 +1,8 @@
-import numpy as np
 import plotly.graph_objects as go
 import pickle
 import sys
-from sortedcontainers import SortedDict, SortedList
+import time
+from sortedcontainers import SortedDict
 from abc import ABC, abstractmethod
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH 
@@ -23,6 +23,7 @@ class MotionPlanner(ABC):
         assert step_size < search_size, f"step size must be smaller than search size, step_size={step_size}, search_size={search_size}"
         self.step_size = step_size
         self.search_size = search_size
+        self.start_time_search = 0
 
         self.source_tree_key = 0
         self.target_tree_key = 1
@@ -31,6 +32,7 @@ class MotionPlanner(ABC):
         self.shortest_paths = SortedDict({})
         self.x_sorted = SortedDict({})
         self.y_sorted = SortedDict({})
+        self.n_samples = 0
 
     @abstractmethod
     def setup(self, start_sample, target_sample):
@@ -38,7 +40,7 @@ class MotionPlanner(ABC):
         pass
 
     @abstractmethod
-    def search(self, start: State, target: State) -> list:
+    def search(self, start: State, target: State) -> tuple:
         """ search for a path between start and target state, raises error if no path can be found. """
         pass
 
@@ -47,6 +49,7 @@ class MotionPlanner(ABC):
         """ Randomly generates a sample in free, movable or unknown space. """
         pass
 
+    @abstractmethod
     def add_sample(self, sample: list, prev_key: int, cost_to_source: float) -> int:
         """ adds sample to all existing samples. """
         pass
@@ -64,7 +67,7 @@ class MotionPlanner(ABC):
     def get_closest_sample_key(self, sample: list) -> int:
         """ Search for closest points in x and y """
 
-        # only compare closeby samples before comparing to all existing samples
+        # speed up, only compare closeby samples before comparing to all existing samples
         test_closest_keys = self.get_closeby_sample_keys(sample, 10*self.grid_x_length/self.n_samples)
         if len(test_closest_keys) > 0:
             closest_keys = test_closest_keys
@@ -84,12 +87,14 @@ class MotionPlanner(ABC):
                 closest_sample_key = key
                 closest_distance = temp_dist
 
-        return closest_sample_key
+        if closest_sample_key is None:
+            raise ValueError("could not found a closest sample, which should be impossible")
+        else:
+            return closest_sample_key
 
+    @abstractmethod
     def distance(self, sample1: list, sample2: list) -> float:
-        """ returns euclidean distance between 2 samples. """
-        pass
-
+        """ returns distance measurement between 2 samples. """
     def get_closeby_sample_keys(self, sample: list, radius: float) -> set:
         """ return the keys of samples which are less than 2*radius manhattan distance to sample. """
         
@@ -104,14 +109,20 @@ class MotionPlanner(ABC):
         return x_keys.intersection(y_keys)
 
     def paths_converged_test(self) -> bool:
-        """ test is the shortest path converged toward an optimal. """
-        if len(self.shortest_paths) < 15: 
-            return False
-        elif self.shortest_paths.peekitem(0)[0] * 1.1 < self.shortest_paths.peekitem(4)[0]:
-            # return True 5th shortest path is at most 20% longer than the shortest path
-            return True
+        """ test is the shortest path converged. """
+
+        planning_time = time.time() - self.start_time_search
+
+        if planning_time > 0.5:
+            raise StopIteration("It takes to long to find a path, halt.") 
         else:
-            return False
+            if len(self.shortest_paths) < 10: 
+                return False
+            elif self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0]:
+                # return True when the 5th shortest path is at most 10% longer than the shortest path
+                return True
+            else:
+                return False
 
     def create_unique_id(self) -> int:
         """ creates and returns a unique id. """
@@ -132,7 +143,6 @@ class MotionPlanner(ABC):
         connect_style = dict(showlegend = True, name="Connect Trees", legendgroup=3, line=dict(color="orange"))
 
         # loop through samples
-        # for sample in self.samples.values():
         for sample in self.samples.values():
 
             prev_sample = self.samples[sample["prev_sample_key"]]["pos"]
@@ -166,7 +176,7 @@ class MotionPlanner(ABC):
                 paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
         if save:
-            with open(PROJECT_PATH+"dashboard/data/motion_planner.pickle", "wb") as file:
+            with open(PROJECT_PATH+"dashboard/data/mp.pickle", "wb") as file:
                 pickle.dump(fig, file)
         else:
             fig.show()
@@ -225,3 +235,13 @@ class MotionPlanner(ABC):
         self.connect_trees = {}
         self.x_sorted = SortedDict({})
         self.y_sorted = SortedDict({})
+
+    @property
+    def n_samples(self):
+        return self._n_samples
+
+    @n_samples.setter
+    def n_samples(self, val):
+        self._n_samples = val
+
+

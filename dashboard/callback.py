@@ -67,7 +67,7 @@ def register_callbacks(app):
                        Input("controller-interval-component", "n_intervals"))
     def update_controller_graph_live(n):
 
-        file_path = PROJECT_PATH+"dashboard/data/controller.pickle"
+        file_path = PROJECT_PATH+"dashboard/data/cntrl.pickle"
         
         # read in controller data if it exists
         if not Path(file_path).is_file():
@@ -89,7 +89,7 @@ def register_callbacks(app):
 
     def update_configuration_map(n):
 
-        file_path = PROJECT_PATH+"dashboard/data/configuration_grid.pickle"
+        file_path = PROJECT_PATH+"dashboard/data/cgrid.pickle"
         # read in controller data if it exists
         if not Path(file_path).is_file():
             return no_data_found_dict
@@ -113,7 +113,7 @@ def register_callbacks(app):
 
     def update_motion_planner(n):
 
-        file_path = PROJECT_PATH+"dashboard/data/motion_planner.pickle"
+        file_path = PROJECT_PATH+"dashboard/data/mp.pickle"
         # read in controller data if it exists
         if not Path(file_path).is_file():
             return no_data_found_dict

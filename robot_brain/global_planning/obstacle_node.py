@@ -1,6 +1,10 @@
 from robot_brain.global_planning.node import Node
 from robot_brain.obstacle import Obstacle
 
+INITIALISED = "initialised"
+COMPLETED = "completed"
+UNFEASIBLE = "unfeasible"
+
 class ObstacleNode(Node):
     """
     Object node.
@@ -13,6 +17,7 @@ class ObstacleNode(Node):
         # TODO: find a better name/method to keep track of 
         # uncompleted/completed target nodes, Gijs, 15 okt 2022
         self.completed = False
+        self.status = INITIALISED
         self.obstacle = obstacle
         self.subtask_name = subtask_name
 

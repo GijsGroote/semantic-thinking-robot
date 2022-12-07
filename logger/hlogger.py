@@ -65,7 +65,35 @@ class HLogger:
 
     def add_failed_hypothesis(self, hypothesis, subtask):
         """ add hypothesis which failed to logs. """
-        pass
+
+        assert isinstance(hypothesis, list), f"hypothesis should be a list and is a {type(hypothesis)}"
+        assert all(isinstance(edge, Edge) for edge in hypothesis), "hypothesis should only contain Edges"
+        assert isinstance(subtask, dict), f"subtask should be a typle and is {type(subtask)}"
+
+        if subtask["target_node"].subtask_name is None:
+            raise ValueError("subtask_name was not set.")
+        else:
+            subtask_name = subtask["target_node"].subtask_name
+
+        self.data["subtasks"][subtask_name]["completed"] = False
+        self.data["subtasks"][subtask_name]["num_hypotheses"] += 1 
+        
+        # TODO: final position of the drive/push 
+        hypothesis_log = {
+                "edges": {},
+                "num_edges":  len(hypothesis),
+                "completed" : False,
+                "search_time" : subtask["search_time"],
+                "execute_time" : subtask["execute_time"],
+                "total_time" : subtask["search_time"] + subtask["execute_time"],
+                }
+
+        for (edge_nmr, edge) in enumerate(hypothesis):
+            hypothesis_log["edges"]["edge_"+str(edge_nmr)] = edge.create_log()
+
+        hypothesis_key = "hypothesis_"+str(len(self.data["subtasks"][subtask_name]["hypotheses"])+1)
+
+        self.data["subtasks"][subtask_name]["hypotheses"][hypothesis_key] = hypothesis_log
 
     def complete_log_succes(self):
         """ finish up log after succesfully finishing task. """
@@ -76,7 +104,6 @@ class HLogger:
     def complete_log_failed(self):
         """ finish up log after a failing to complete a task. """
         self.compute_total_time()
-
 
     def compute_total_time(self):
         """ sum up the time spend in the execution/searching loop for every hypothesis. """

@@ -1,12 +1,11 @@
 import numpy as np    
 import random
 import sys
+from typing import Tuple
 import time
 from sortedcontainers import SortedDict
 import warnings
 
-import plotly.express as px
-from abc import abstractmethod
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap 
@@ -15,7 +14,6 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_plann
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle 
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
-
 
 class DriveMotionPlanner(MotionPlanner):
     """ Motion planner, using a double rapid randomly tree star (RRT*) to search a path for the obstacle to track. """
@@ -52,7 +50,9 @@ class DriveMotionPlanner(MotionPlanner):
         else:
             raise ValueError("The robot has an unknown obstacle")
 
-    def setup(self, start_sample, target_sample):
+        self.start_time = None
+
+    def setup(self, start_sample: np.ndarray | tuple | list, target_sample: np.ndarray | tuple | list):
 
         assert isinstance(start_sample, (np.ndarray, tuple, list)) and isinstance(target_sample, (np.ndarray, tuple, list)), \
             "start- or target sample is not a type tuple, list or np.array which it should be."
@@ -62,6 +62,10 @@ class DriveMotionPlanner(MotionPlanner):
         self.samples.clear()
         self.x_sorted.clear()
         self.y_sorted.clear()
+
+        # add negligleble amount to make positions hashable
+        start_sample[0] = float(start_sample[0]+1e-8)
+        start_sample[1] = float(start_sample[1]+1e-8)
 
         # add start and target samples
         self.samples[self.source_tree_key] = {
@@ -82,9 +86,8 @@ class DriveMotionPlanner(MotionPlanner):
         self.x_sorted = SortedDict({start_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
         self.y_sorted = SortedDict({start_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
-    def search(self, start: State, target: State) -> list:
+    def search(self, start: State, target: State) -> Tuple[list, bool]:
         """ search for a path between start and target state, raises error if no path can be found. """
-        # TODO: this does not raise an error and it should after a number of iterations
 
         self.configuration_space_grid_map.update()
         # TODO:self.configuration_space_grid_map.shortest_path() # TODO: add samples to the RRT* planning algorithm 
@@ -92,14 +95,10 @@ class DriveMotionPlanner(MotionPlanner):
 
         self.setup(start.get_xy_position(), target.get_xy_position())
 
-        start_time_search = time.time()
+        self.start_time_search = time.time()
 
         # while keep_searching:
         while not self.paths_converged_test():
-
-            self.stop_criteria_test(start_time_search)
-
-            # TODO: terminate if it takes to long and no path has been found
 
             # generate random sample
             sample_rand = self.create_random_sample()
@@ -128,7 +127,8 @@ class DriveMotionPlanner(MotionPlanner):
 
         # visualisation could be removed
         path = self.extract_shortest_path()
-        return path
+
+        return (path, True)
 
     def create_random_sample(self) -> list:
         """ randomly generate sample inside grid boundaries. """
@@ -168,9 +168,11 @@ class DriveMotionPlanner(MotionPlanner):
                 closest_sample_total_cost = temp_total_cost
                 closest_sample_key = close_sample_key
 
-            # add new sample
-            return self.add_sample(sample, closest_sample_key, closest_sample_total_cost)
-
+            if close_sample_key is None:
+                raise ValueError("closest sample key is None which should be impossible")
+            else:
+                # add new sample
+                return self.add_sample(sample, closest_sample_key, closest_sample_total_cost)
 
     def rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample, 
@@ -216,7 +218,7 @@ class DriveMotionPlanner(MotionPlanner):
 
 
     def add_sample(self, sample: list, prev_key: int, cost_to_source) -> int:
-        """ adds sample to all existing samples. """
+        """ adds sample to all existing samples and return unique key generated. """
 
         # check if the x and y positions already exist
         assert not self.x_sorted.__contains__(sample[0]), f"x position {sample[0]} already exist in sorted x positions"
@@ -260,9 +262,7 @@ class DriveMotionPlanner(MotionPlanner):
         """ update sample cost for sample and next samples, including cost for shortest paths. """
 
         # update cost for this sample, 
-
         for next_sample_key in sample["next_sample_keys"]:
-            
             
             next_sample = self.samples[next_sample_key]
             next_sample_new_cost = new_cost + self.distance(next_sample["pos"], sample["pos"])
@@ -273,7 +273,6 @@ class DriveMotionPlanner(MotionPlanner):
                 self.update_cost_sample(next_sample_key, next_sample, next_sample_new_cost)
 
             else:
-
                 # update the existing shortest path found shortest path
                 shortest_path_key = sample["cost_to_source"] + self.distance(sample["pos"], next_sample["pos"]) + next_sample["cost_to_source"]
                 self.shortest_paths.pop(shortest_path_key)
@@ -281,10 +280,9 @@ class DriveMotionPlanner(MotionPlanner):
                 new_shortest_path_key = next_sample_new_cost + next_sample["cost_to_source"]
                 self.shortest_paths[new_shortest_path_key] = {"sample1_key": next_sample_key, "sample2_key": sample_key}
 
-
         # if the new samples deletes a shortest path?
     
-    def stop_criteria_test(self, start_time) -> bool:
+    def stop_criteria_test(self, start_time):
         """ if path finding takes to long, return the current best path, if that does not 
         extist after an even longer time, error. """
 
@@ -293,7 +291,7 @@ class DriveMotionPlanner(MotionPlanner):
         if planning_time > 0.1:
             if len(self.shortest_paths) > 0:
                 return self.extract_shortest_path()
-            elif planning_time > 0.2:
+            elif planning_time > 0.5:
                 raise StopIteration("It takes to long to find a path, halt.") 
 
     def distance(self, sample1: list, sample2: list) -> float:
@@ -331,6 +329,4 @@ class DriveMotionPlanner(MotionPlanner):
         path.append(self.samples[self.target_tree_key]["pos"])
 
         return path
-
-
 
