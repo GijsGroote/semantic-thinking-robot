@@ -86,7 +86,7 @@ class DriveMotionPlanner(MotionPlanner):
         self.x_sorted = SortedDict({start_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
         self.y_sorted = SortedDict({start_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
-    def search(self, start: State, target: State) -> Tuple[list, bool]:
+    def search(self, start: State, target: State) -> list:
         """ search for a path between start and target state, raises error if no path can be found. """
 
         self.configuration_space_grid_map.update()
@@ -128,7 +128,7 @@ class DriveMotionPlanner(MotionPlanner):
         # visualisation could be removed
         path = self.extract_shortest_path()
 
-        return (path, True)
+        return path
 
     def create_random_sample(self) -> list:
         """ randomly generate sample inside grid boundaries. """

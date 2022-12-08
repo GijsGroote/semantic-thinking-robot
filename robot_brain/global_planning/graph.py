@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pyvis.network import Network
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.edge import Edge
+from robot_brain.global_planning.action_edge import FAILED
 
 
 class Graph(ABC):
@@ -98,7 +99,7 @@ class Graph(ABC):
         assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist" 
         point_toward_list = []
         for edge in self.edges:
-            if node_iden == edge.source:
+            if edge.status != FAILED and node_iden == edge.source:
                 point_toward_list.append(edge.to)
 
         return point_toward_list
@@ -107,7 +108,7 @@ class Graph(ABC):
         """ find the source node which points to this node via 0 or more edges.
         if a T junction is found (2 edges pointing to a node) an error is raised."""
 
-        edge_to_list = [edge for edge in self.edges if edge.to == node_iden]
+        edge_to_list = [edge for edge in self.edges if edge.to == node_iden and edge.status != FAILED]
 
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)

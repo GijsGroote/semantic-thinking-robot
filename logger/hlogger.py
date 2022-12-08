@@ -63,7 +63,7 @@ class HLogger:
 
         self.data["subtasks"][subtask_name]["hypotheses"][hypothesis_key] = hypothesis_log
 
-    def add_failed_hypothesis(self, hypothesis, subtask):
+    def add_failed_hypothesis(self, hypothesis, subtask, fail_reason):
         """ add hypothesis which failed to logs. """
 
         assert isinstance(hypothesis, list), f"hypothesis should be a list and is a {type(hypothesis)}"
@@ -83,6 +83,7 @@ class HLogger:
                 "edges": {},
                 "num_edges":  len(hypothesis),
                 "completed" : False,
+                "fail_reason": fail_reason,
                 "search_time" : subtask["search_time"],
                 "execute_time" : subtask["execute_time"],
                 "total_time" : subtask["search_time"] + subtask["execute_time"],
@@ -95,9 +96,10 @@ class HLogger:
 
         self.data["subtasks"][subtask_name]["hypotheses"][hypothesis_key] = hypothesis_log
 
-    def complete_log_succes(self):
+    def complete_log_succes(self, success_ratio: float):
         """ finish up log after succesfully finishing task. """
 
+        self.data["hypothesis_success_ratio"] = success_ratio
         self.data["completed"] = True
         self.compute_total_time()
 
@@ -136,7 +138,6 @@ class HLogger:
 
     def print_logs(self):
         """ prints the logs in JSON format. """
-
         formatted_json = json.dumps(self.data, sort_keys=False, indent=2)
         colorful_json = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
         print(colorful_json)

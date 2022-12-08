@@ -1,8 +1,10 @@
-# import pandas as pd
-from abc import ABC, abstractmethod
+# import pandas as pCOMPLETED d
+
+from abc import abstractmethod
 import numpy as np
 import random
 from pyvis.network import Network
+from typing import Tuple
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
 
@@ -17,7 +19,6 @@ from robot_brain.global_planning.push_act_edge import PushActionEdge
 from robot_brain.global_planning.action_edge import ActionEdge, PATH_IS_PLANNED, HAS_SYSTEM_MODEL, FAILED
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
-
 
 
 from robot_brain.controller.controller import Controller 
@@ -53,13 +54,6 @@ class HGraph(Graph):
         self.edge_pointer = 0                       # pointer for the current edge in hypothesis
         if LOG_METRICS:
             self.logger = HLogger()
-
-###############################################################################################
-# TODO for Gijs
-# - look at the correct place, to the correct edge and nodes to connect when search_hypothesis is called. 
-# - make methods private, only visualise and respond should be accessible
-# - input sanitisation, test type and value. Only if called many many times it is okey to not thoroughly do input sanitisation
-###############################################################################################
 
 ##########################################
 ### FUNCTIONS CREATING NODES AND EDGES ###
@@ -114,6 +108,7 @@ class HGraph(Graph):
             # self.current_edge = self.hypothesis[self.edge_pointer]
 
             # TODO: fault detection could be done here
+            # TODO: when a fault is detected, abandon edge, move to blacklist and go to search loop
 
             if self.current_edge.view_completed(current_state):
 
@@ -133,17 +128,9 @@ class HGraph(Graph):
                         # set all variables for completed hypothesis
                         # self.get_target_node(self.current_edge.to).completed = True
                         self.get_target_node(self.current_edge.to).status = COMPLETED
-                        self.current_node = None
-                        self.hypothesis = []
-                        self.edge_pointer = 0
 
-                        # if all subtask are completed, conclude the task is completed, otherwise search new hypothesis
-                        if any(not target_node.status == INITIALISED for target_node in self.target_nodes):
-                            self.search_hypothesis()
-                            return self.respond(current_state)
-                        else:
-                            self.end_completed_task()
-                            raise StopIteration("The task is successfully completed!")
+                        # go back to search loop
+                        self.search_hypothesis()
 
                     else:
                         self.increment_edge()
@@ -175,7 +162,6 @@ class HGraph(Graph):
 
         self.go_to_loop(SEARCHING_LOOP)
         
-
         # search for unfinished target node and connect to starting node
         # TODO: hypothesis should be reachable, but also the first edge in hypothesis (or the first after the current edge) should be 
         # executable ( is planning, system ident and evertyhign done)
@@ -228,6 +214,35 @@ class HGraph(Graph):
 
         if self.current_subtask is None or self.current_subtask["target_node"].status != INITIALISED:
 
+            # check if all tasks are completed
+            # if all subtask are completed, conclude the task is completed, otherwise search new hypothesis
+            if all(target_node.status != INITIALISED for target_node in self.target_nodes):
+
+                n_completed_subtasks = 0
+                n_failed_subtasks = 0
+
+                for target_node in self.target_nodes:
+                    if target_node.status == COMPLETED:
+                        n_completed_subtasks += 1
+                    elif target_node.status == FAILED:
+                        n_failed_subtasks += 1
+                    else:
+                        raise ValueError(f"target node status should be {FAILED} or {COMPLETED} and is {target_node.status}")
+
+                task_success_ratio = n_completed_subtasks/(n_failed_subtasks+n_completed_subtasks)
+                self.end_completed_task(task_success_ratio)
+
+                raise StopIteration(f"The task is successfully completed with a success/fail ration of {task_success_ratio}!")
+
+
+
+            # with a new subtask, emtpy the current hypothesis and current node
+            self.hypothesis = []
+            self.current_node = None
+            self.edge_pointer = 0
+            self.current_edge = None
+            self.current_subtask = None
+
             # find a new subtask
             unfinished_target_nodes = [target_node for target_node in self.target_nodes if target_node.status == INITIALISED]
             
@@ -252,8 +267,6 @@ class HGraph(Graph):
                 subtask_start_node = self.get_start_node(self.get_start_iden_from_target_iden(obstacle_target_node.iden))
                 subtask_target_node = obstacle_target_node
 
-            # with a new subtask, emtpy the current hypothesis
-            self.hypothesis = []
 
             self.current_subtask = {
                     "start_node": subtask_start_node,
@@ -269,11 +282,15 @@ class HGraph(Graph):
             # focus on current subtask
             return self.find_nodes_to_connect_in_subtask()
 
-    def find_nodes_to_connect_in_subtask(self) -> (Node, Node):
+    def find_nodes_to_connect_in_subtask(self) -> Tuple[Node, Node]:
         # TODO: this function could return start position of the robot twice!, fix that
         """ returns 2 nodes to connect in current subtask. """
         
-        start_node = self.current_subtask["start_node"]
+        if self.current_node is None:
+            start_node = self.current_subtask["start_node"]
+        else:
+            start_node = self.current_node # make sure every new subtask sets the current node to None
+
         target_node = self.find_source_node(self.current_subtask["target_node"].iden)
 
         return (start_node, target_node)
@@ -300,26 +317,37 @@ class HGraph(Graph):
                     controller=controller)
 
             try:
-                self.estimate_path(edge) # boolean check if the path exists, then set path status to exists
+                self.estimate_path(edge)
             except ValueError as exc:
-
-                # abort target node and fail
-                print("path was not found")
+                # path estimation fails
                 self.get_target_node(edge.to).status = UNFEASIBLE
                 edge.status = FAILED
-                self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask)
+                print(f'reason for failing hypothesis, no path between start and target was found, reason {exc}') # <--- delete that please
+
+                if LOG_METRICS:
+                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+
                 return self.search_hypothesis()
-                # what is the path does not exist
 
             edge.set_path_exist_status()
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
-            self.create_drive_ident_edge(start_node_iden, model_node.iden, edge.iden)
+
+            # TODO: if creation of the drive edge fails, it tries again, but can eventually throw an error. Then 
+            # go back to the drawing board
+            try:
+                self.create_drive_ident_edge(start_node_iden, model_node.iden, edge.iden)
+            except ValueError as exc:
+                raise exc
+                # TODO: fail this edge, add to blacklist and try again
+                # TODO: define behavioru when all sys iden methods fail.
 
     def create_drive_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int):
         """ create a system identification edge. """
-        # temporarily create a controller which drives closeby
-        model_for_node_controller_type = self.get_edge(model_for_edge_iden).controller.name
+
+        model_for_node_controller_type = self.get_edge(model_for_edge_iden).controller.name # temp fix
+
+        # TODO: check for blacklist which sys iden methods are available
 
         if model_for_node_controller_type == "MPC":
             controller = self._create_mpc_driving_controller()
@@ -328,7 +356,6 @@ class HGraph(Graph):
         else:
             raise ValueError("somethign goes terebly wrong")
 
-
         edge = DriveIdentificationEdge(iden=self.unique_edge_iden(), 
                 source=start_node_iden,
                 to=target_node_iden,
@@ -336,11 +363,21 @@ class HGraph(Graph):
                 controller=controller,
                 model_for_edge_iden=model_for_edge_iden)
 
-        dyn_model = self.create_driving_model(controller.name) # todo, system iden
-        edge.dyn_model = dyn_model
+        try:
+            dyn_model = self.create_driving_model(controller.name) # todo, system iden
+            edge.dyn_model = dyn_model
+            self.add_edge(edge)
+            self.hypothesis.insert(0, edge)
 
-        self.add_edge(edge)
-        self.hypothesis.insert(0, edge)
+        except ValueError as exc:
+            # system identification failed
+
+            # TODO: this iden method should be excluded for this obstacle, add to blacklist
+            edge.status = FAILED
+            if LOG_METRICS:
+                self.logger.add_failed_hypothesis(self.hypothesis, self.subtask, str(exc))
+                self.create_drive_ident_edge(start_node_iden, target_node_iden, model_for_edge_iden)
+
 
     def create_push_edge(self) -> ActionEdge:
         pass
@@ -416,19 +453,17 @@ class HGraph(Graph):
 
             edge.motion_planner = self.create_drive_motion_planner(self.obstacles)
             try:
-                (path, does_path_exist) = edge.motion_planner.search(self.robot.state, self.get_node(edge.to).obstacle.state)
+                # TODO: no behavior is defined for an obstacle in the way
+                edge.path = edge.motion_planner.search(self.robot.state, self.get_node(edge.to).obstacle.state)
             except StopIteration as exc:
-                # TODO: this hypothesis has faillisted, create a new one
-                print(f"path could not be found because: {exc}")
 
-                # temp solution abandon this subtask
-                self.get_target_node(edge.to).status = UNFEASIBLE
+                print(f"motion planning failed because: {exc}")
+
+                # TODO: add this edge to blacklist for this obstacle
                 edge.status = FAILED
-                self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask)
+                if LOG_METRICS:
+                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
                 return self.search_hypothesis()
-
-                # todo there should be a new hypothesis, not abandon this subtask completely
-                
 
         elif isinstance(edge, PushActionEdge):
             edge.motion_planner = self.create_push_motion_planner(self.obstacles)
@@ -625,10 +660,10 @@ class HGraph(Graph):
 
         return target_idens_list
 
-    def end_completed_task(self):
+    def end_completed_task(self, success_ratio):
         """ finalise logs when a task completed. """
         if LOG_METRICS:
-            self.logger.complete_log_succes()
+            self.logger.complete_log_succes(success_ratio)
             self.logger.print_logs()
         if SAVE_LOG_METRICS:
             self.logger.save_logs()

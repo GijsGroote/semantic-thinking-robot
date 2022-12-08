@@ -120,7 +120,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         return self.grid_map[x_idx, y_idx]
     
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> (list, bool):
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> tuple:
         """ Dijkstra shortest path algorithm. """
         if isinstance(cart_2d_start, State):
             cart_2d_start = cart_2d_start.get_xy_position()
