@@ -50,6 +50,7 @@ class HGraph(Graph):
         # self.current_node is the source node of the current edge being executed for plotting purposes
 
         self.current_subtask = None                 # subtask in spotlight, robot 'thinks' and executes to complete this subtask
+        self.current_node = None
         self.hypothesis = []                        # task sequence to complete a subtask in form [edge1, edge2, ...]
         self.edge_pointer = 0                       # pointer for the current edge in hypothesis
         if LOG_METRICS:
@@ -94,7 +95,7 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger.setup(task)
 
-        self.search_hypothesis()
+        # self.search_hypothesis()
 
     def respond(self, current_state) -> np.ndarray:
         """ interface toward the robot simulation, eventually input for the robot is returned. """
@@ -229,7 +230,11 @@ class HGraph(Graph):
                     else:
                         raise ValueError(f"target node status should be {FAILED} or {COMPLETED} and is {target_node.status}")
 
-                task_success_ratio = n_completed_subtasks/(n_failed_subtasks+n_completed_subtasks)
+                if n_failed_subtasks+n_completed_subtasks == 0:
+                    task_success_ratio = None
+                else:
+                    task_success_ratio = n_completed_subtasks/(n_failed_subtasks+n_completed_subtasks)
+
                 self.end_completed_task(task_success_ratio)
 
                 raise StopIteration(f"The task is successfully completed with a success/fail ration of {task_success_ratio}!")

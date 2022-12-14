@@ -1,6 +1,6 @@
 import warnings
-import time
-import numpy as np
+import time 
+import numpy as np 
 import pandas as pd
 from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
@@ -18,6 +18,7 @@ pd.options.plotting.backend = "plotly"
 # is_doing states
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
+# TASK_IS_COMPLETED = "completed"
 
 class RBrain:
     """
@@ -154,17 +155,28 @@ class RBrain:
         if stat_world_info["robot_type"] == "pointRobot-vel-v7":
             self.hgraph = PointRobotVelHGraph(self.robot)
 
-        elif stat_world_info["robot_type"] == "pointRobot-acc-v7":
-            self.hgraph = PointRobotAccHGraph(self.robot)
+        # elif stat_world_info["robot_type"] == "pointRobot-acc-v7":
+        #     self.hgraph = PointRobotAccHGraph(self.robot)
 
         elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
             self.hgraph = BoxerRobotVelHGraph(self.robot)
 
-        elif stat_world_info["robot_type"] == "boxerRobot-acc-v7":
-            self.hgraph = BoxerRobotAccHGraph(self.robot)
+        # elif stat_world_info["robot_type"] == "boxerRobot-acc-v7":
+        #     self.hgraph = BoxerRobotAccHGraph(self.robot)
 
         else:
-            raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
+            raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
+
+        
+        self.is_doing = IS_EXECUTING
+
+        # halt if there are no subtask
+        if len(stat_world_info["task"]) == 0:
+            self.is_doing = IS_DOING_NOTHING
+            
+            if CREATE_SERVER_DASHBOARD:
+                self.hgraph.visualise()
+                stop_dash_server(self.dash_app)
 
         task = {}
         for (task_nmr, (obstacle_key, target)) in enumerate(stat_world_info["task"]):
@@ -187,7 +199,6 @@ class RBrain:
                 task=task,
                 obstacles=self.obstacles)
 
-        self.is_doing = IS_EXECUTING
 
     def update(self, ob):
         """
@@ -238,10 +249,9 @@ class RBrain:
             else:
                 warnings.warn("returning default action")
                 return self.default_action
-        elif self.is_doing is IS_DOING_NOTHING:
+        elif self.is_doing is IS_DOING_NOTHING or self.is_doing is TASK_IS_COMPLETED:
 
             return self.default_action
-
         else:
             raise Exception("Unable to respond")
 
