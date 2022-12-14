@@ -60,13 +60,13 @@ def test_shortest_path_circ():
     targets = []
 
     # from middle to south east corner
-    expected_paths.append([(-0.1,-0.1), (0.5,0.5), (1.5,1.5), (2.5,2.5), (3.3,3.2)])
+    expected_paths.append(([(-0.1,-0.1), (0.5,0.5), (1.5,1.5), (2.5,2.5), (3.3,3.2)], True))
     starts.append((-0.1,-0.1))
     targets.append((3.3, 3.2))
 
      # from north west corner to north east corner
-    expected_paths.append([(-4.1,-4.1), (-4.5,-3.5), (-4.5,-2.5), (-4.5,-1.5),
-        (-4.5,-0.5),(-4.5, 0.5),(-4.5,1.5),(-4.5,2.5), (-4.5,3.5), (-4.3, 4.2)])
+    expected_paths.append(([(-4.1,-4.1), (-4.5,-3.5), (-4.5,-2.5), (-4.5,-1.5),
+        (-4.5,-0.5),(-4.5, 0.5),(-4.5,1.5),(-4.5,2.5), (-4.5,3.5), (-4.3, 4.2)], True))
     starts.append((-4.1,-4.1))
     targets.append((-4.3, 4.2 ))
     
@@ -113,10 +113,7 @@ def test_shortest_path_with_obstacles():
     targets.append((3, 2, 0))
 
     for (expected_path, start, target) in zip(expected_paths, starts, targets):
-        print(expected_path)
         path = occ_map.shortest_path(np.array(start), np.array(target))
-        print(path)
-        print()
         assert path == expected_path
 
 
