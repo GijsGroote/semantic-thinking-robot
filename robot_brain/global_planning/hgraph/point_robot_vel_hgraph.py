@@ -50,63 +50,32 @@ class PointRobotVelHGraph(HGraph):
     def create_push_motion_planner(self, obstacles):
         pass
 
-
-    # def estimate_robot_path_existance(self, target_state, obstacles):
-    #
-    #     occ_graph = CircleRobotConfigurationGridMap(cell_size=0.1,
-    #             grid_x_length= 10,
-    #             grid_y_length= 12,
-    #             obstacles= obstacles,
-    #             robot_cart_2d= self.robot.state.get_xy_position(),
-    #             robot_radius= 0.4)
-    #
-    #     occ_graph.setup()
-    #     occ_graph.visualise()
-    #     return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
-
-    # def estimate_obstacle_path_existance(self, target_state, obstacles):
-    #     raise NotImplementedError()
-
-    # def create_motion_planner(self, obstacles):
-    #     """ perform motion planning for driving action. """
-    #
-    #     return DriveMotionPlanner(grid_x_length=10,
-    #             grid_y_length=10,
-    #             obstacles=obstacles,
-    #             obstacle=self.robot,
-    #             step_size=0.5,
-    #             search_size=0.7)
-    #
-    # def search_push_path(self, push_obstacle, target_state, obstacles):
-    #     """ perform motion planning for pushing action. """
-    #     raise NotImplementedError()
-
-    def get_driving_controllers(self) -> list:
+    def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
 
-        return [self._create_mppi_driving_controller,
-                self._create_mpc_driving_controller]
+        return [self._create_mppi_drive_controller,
+                self._create_mpc_drive_controller]
 
-    def create_driving_model(self, controller_name: str):
+    def create_drive_model(self, controller_name: str):
         match controller_name:
             case "MPC":
-                return self._create_mpc_driving_model()
+                return self._create_mpc_drive_model()
             case "MPPI":
-                return self._create_mppi_driving_model()
+                return self._create_mppi_drive_model()
             case _:
                 raise ValueError(f"controller name unknown: {controller_name}")
 
-    def get_pushing_controllers(self) -> list:
+    def get_push_controllers(self) -> list:
         raise NotImplementedError()
 
-    def create_pushing_model(self, controller_name: str):
+    def create_push_model(self, controller_name: str):
         raise NotImplementedError()
     
-    def _create_mppi_driving_controller(self):
+    def _create_mppi_drive_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
         return Mppi2thOrder()
 
-    def _create_mppi_driving_model(self):
+    def _create_mppi_drive_model(self):
         def dyn_model(x, u):
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
             x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
@@ -114,10 +83,10 @@ class PointRobotVelHGraph(HGraph):
             return x_next
         return dyn_model
 
-    def _create_mpc_driving_controller(self):
+    def _create_mpc_drive_controller(self):
         return Mpc2thOrder()
 
-    def _create_mpc_driving_model(self):
+    def _create_mpc_drive_model(self):
         def dyn_model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
@@ -126,7 +95,7 @@ class PointRobotVelHGraph(HGraph):
             return dx_next
         return dyn_model
 
-    def _setup_driving_controller(self, controller, dyn_model):
+    def _setup_drive_controller(self, controller, dyn_model):
         # TODO: should the target state not also be passed insead of the robot state?
 
         print("setup the drivnig controller")

@@ -18,7 +18,6 @@ pd.options.plotting.backend = "plotly"
 # is_doing states
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
-# TASK_IS_COMPLETED = "completed"
 
 class RBrain:
     """
@@ -184,7 +183,7 @@ class RBrain:
             if obstacle_key == "robot":
                 obstacle = self.robot
             else:
-                obstacle = self.obstacles[obstacle_key.name()]
+                obstacle = self.obstacles[obstacle_key]
 
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
@@ -249,7 +248,7 @@ class RBrain:
             else:
                 warnings.warn("returning default action")
                 return self.default_action
-        elif self.is_doing is IS_DOING_NOTHING or self.is_doing is TASK_IS_COMPLETED:
+        elif self.is_doing is IS_DOING_NOTHING: 
 
             return self.default_action
         else:
