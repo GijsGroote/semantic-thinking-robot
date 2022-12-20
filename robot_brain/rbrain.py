@@ -7,9 +7,7 @@ from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-from robot_brain.global_planning.hgraph.point_robot_acc_hgraph import PointRobotAccHGraph
 from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
-from robot_brain.global_planning.hgraph.boxer_robot_acc_hgraph import BoxerRobotAccHGraph
 
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle 
@@ -154,14 +152,8 @@ class RBrain:
         if stat_world_info["robot_type"] == "pointRobot-vel-v7":
             self.hgraph = PointRobotVelHGraph(self.robot)
 
-        # elif stat_world_info["robot_type"] == "pointRobot-acc-v7":
-        #     self.hgraph = PointRobotAccHGraph(self.robot)
-
         elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
             self.hgraph = BoxerRobotVelHGraph(self.robot)
-
-        # elif stat_world_info["robot_type"] == "boxerRobot-acc-v7":
-        #     self.hgraph = BoxerRobotAccHGraph(self.robot)
 
         else:
             raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")

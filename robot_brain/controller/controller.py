@@ -36,29 +36,6 @@ class Controller(ABC):
         """ use abstraction for different setup methods. """
         pass
 
-    def respond(self, current_state: State) -> np.ndarray:
-        """ respond with input for the robot and update dashboard every second. """
-
-        assert isinstance(current_state, State), f"current_state should be type State in type {type(current_state)}"
-
-        system_input = self._find_input(current_state)
-
-        if CREATE_SERVER_DASHBOARD or PLOT_CONTROLLER or LOG_METRICS:
-            
-            self._update_prediction_error_sequence(current_state, system_input)
-
-            # plot the controller every x seconds
-            if self.dt_counter % (1/DT) == 0 and PLOT_CONTROLLER:# and self.dt_counter != 0:
-                self._update_db()
-            self.dt_counter += 1
-
-        return system_input 
-
-    @abstractmethod
-    def _update_prediction_error_sequence(self, current_state: State, system_input: State):
-        """ updates the sequence with the one-step-ahead prediction error. """
-        pass
-
     def set_target_state(self, target_state: State):
         """ update controller to steer toward a new target state. """
         self.target_state = target_state
@@ -68,11 +45,7 @@ class Controller(ABC):
     def _set_target_state(self):
         pass
 
-    @abstractmethod
-    def _find_input(self, current_state: State):
-        pass
-
-    def _update_db(self):
+    def update_db(self):
         self.visualise(save=True)
     
     @abstractmethod

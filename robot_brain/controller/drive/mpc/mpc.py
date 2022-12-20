@@ -9,9 +9,9 @@ from robot_brain.global_variables import (
         DT,
         LOG_METRICS,
         )
-from robot_brain.controller.controller import Controller
+from robot_brain.controller.drive.drive_controller import DriveController
 
-class Mpc(Controller):
+class Mpc(DriveController):
     """
     Model Predictive Control controller, finds the optimal input that steers
     the system toward the target state by minimizing an objective function.
@@ -19,7 +19,7 @@ class Mpc(Controller):
     def __init__(self, order):
         # TODO: this class, and child classes use the simulator for estimating the next state, 
         # an improvement would be to use the estimator. 
-        Controller.__init__(self, order)
+        DriveController.__init__(self, order)
         self.name = "MPC"
         self.mpc = None
         self.model = None

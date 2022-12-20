@@ -3,8 +3,8 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from casadi import vertcat
 from robot_brain.controller.controller import Controller
-from robot_brain.controller.mpc.mpc_2th_order import Mpc2thOrder
-from robot_brain.controller.mppi.mppi_2th_order import Mppi2thOrder
+from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
+from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 
@@ -52,7 +52,6 @@ class PointRobotVelHGraph(HGraph):
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
-
         return [self._create_mppi_drive_controller,
                 self._create_mpc_drive_controller]
 
@@ -73,7 +72,7 @@ class PointRobotVelHGraph(HGraph):
     
     def _create_mppi_drive_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
-        return Mppi2thOrder()
+        return DriveMppi2thOrder()
 
     def _create_mppi_drive_model(self):
         def dyn_model(x, u):
@@ -84,7 +83,7 @@ class PointRobotVelHGraph(HGraph):
         return dyn_model
 
     def _create_mpc_drive_controller(self):
-        return Mpc2thOrder()
+        return DriveMpc2thOrder()
 
     def _create_mpc_drive_model(self):
         def dyn_model(x, u):

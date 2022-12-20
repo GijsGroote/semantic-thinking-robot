@@ -3,7 +3,7 @@ import torch
 import pickle
 import plotly.express as px
 from pytorch_mppi import mppi
-from robot_brain.controller.controller import Controller
+from robot_brain.controller.drive.drive_controller import DriveController
 from robot_brain.state import State
 from robot_brain.global_variables import (
         MIN_INPUT,
@@ -15,12 +15,12 @@ from robot_brain.global_variables import (
 
 from abc import abstractmethod
 
-class Mppi(Controller):
+class Mppi(DriveController):
     """
     Model Predictive Path Intergral (MPPI) controller.
     """
     def __init__(self, order: int):
-        Controller.__init__(self, order)
+        DriveController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
         self.n_horizon = 30
