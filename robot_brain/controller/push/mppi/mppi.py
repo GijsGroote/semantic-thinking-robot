@@ -23,7 +23,7 @@ class PushMppi(PushController):
         PushController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 30
+        self.n_horizon = 45 
         self.plot_data = {}
 
     def _setup(self, dyn_model, robot_state: State, obstacle_state: State):
@@ -38,7 +38,7 @@ class PushMppi(PushController):
                     running_cost=self._running_cost,
                     nx=self.order, # number of states in the system
                     noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
-                    num_samples=1000, # number of rollouts
+                    num_samples=100, # number of rollouts
                     horizon=self.n_horizon,
                     lambda_=1e-2,
                     device=d, 

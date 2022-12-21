@@ -11,7 +11,7 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
-from robot_brain.controller.push.mppi.mppi_3th_order import PushMppi3thOrder 
+from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder 
 from environments.mppi_push.obstacles import box
 
 
@@ -47,7 +47,7 @@ def main(conn=None):
 
     ob, reward, done, info = env.step(action)
 
-    controller = PushMppi3thOrder()
+    controller = PushMppi5thOrder()
 
     def dyn_model(x, u):
         x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
