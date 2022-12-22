@@ -108,6 +108,7 @@ def main(conn=None):
         conn.send({"request_action": False, "kill_child": True})
 
         brain.update(ob)
+
 if __name__ == '__main__':
 
     if not user_input_mode:
