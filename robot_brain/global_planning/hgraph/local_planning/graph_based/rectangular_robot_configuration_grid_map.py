@@ -5,6 +5,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration
 import math
 import plotly.graph_objects as go
 import warnings
+from typing import Tuple
 
 from helper_functions.geometrics import (
         minimal_distance_point_to_line,
@@ -15,6 +16,7 @@ from helper_functions.geometrics import (
 
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
+from robot_brain.state import State
 
 class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
     """ Configuration grid map represents the environment in obstacle space
@@ -27,11 +29,12 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
         grid_y_length: float,
         obstacles: dict,
         robot_cart_2d: np.ndarray,
+        obst_name: str,
         n_orientations: int,
         robot_x_length: float,
         robot_y_length: float):
 
-        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, n_orientations)
+        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, obst_name, n_orientations)
         self._robot_x_length = robot_x_length
         self._robot_y_length = robot_y_length
 
@@ -100,7 +103,6 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
         
         # TODO: project a box obstect toward the ground plane, find the edge points and convert that area to 
         # obstacle space or some other space, Gijs Groote 4 oct 2022.
-
         cos_rl = math.cos(r_orien)*self.robot_y_length/2
         sin_rl = math.sin(r_orien)*self.robot_y_length/2
         cos_rw = math.cos(r_orien)*self.robot_x_length/2
@@ -205,10 +207,16 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
         return self.p_idx_to_occupancy(*idx)
 
 
-    def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
+    def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> Tuple[list, bool]:
         # TODO for this method: additionally plan around unknown obstacles with a default flag
         # detect if planning goes through a movable obstacle.
         """ use the Dijkstra algorithm to find the shortest path. """ 
+
+        if isinstance(pose_2d_start, State):
+            pose_2d_start = pose_2d_start.get_2d_pose()
+
+        if isinstance(pose_2d_target, State):
+            pose_2d_target = pose_2d_target.get_2d_pose()
         
         # convert angles to inteval [0, 2*pi) 
         pose_2d_start[2] = to_interval_zero_to_two_pi(pose_2d_start[2])
@@ -277,8 +285,12 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
                                     cost[p_idx] = temp_cost
                                     previous_cell[x_idx, y_idx, orien_idx, :] = cell_pose_temp
 
+        if cost[p_idx_target] == sys.maxsize:
+            return ([], False)
+
         shortest_path_reversed = []
         cell_pose_temp = p_idx_target
+
         
         # find path from target to start
         while not all(x == y for x, y in zip(cell_pose_temp, p_idx_start)):
@@ -297,9 +309,9 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
 
         shortest_path.append(tuple(pose_2d_target))
 
-        return shortest_path
+        return (shortest_path, True)
 
-    def pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> (int, int, int):
+    def pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> Tuple[int, int, int]:
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation)
         raises an error if the 2D pose is outside of the grid.
         """
@@ -318,7 +330,7 @@ class RectangularRobotConfigurationGridMap(ConfigurationGridMap):
 
         return (x_idx, y_idx, orien_idx)
     
-    def p_idx_to_pose_2d(self, x_idx: int, y_idx: int, orien_idx: int) -> (float, float, float):
+    def p_idx_to_pose_2d(self, x_idx: int, y_idx: int, orien_idx: int) -> Tuple[float, float, float]:
         """ returns the center position that the cell represents. """
 
         if (x_idx >= self.grid_x_length/self.cell_size or

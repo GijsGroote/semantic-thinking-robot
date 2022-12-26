@@ -1243,7 +1243,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "urdfenvs"
-version = "0.2.9"
+version = "0.2.1"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "main"
 optional = false

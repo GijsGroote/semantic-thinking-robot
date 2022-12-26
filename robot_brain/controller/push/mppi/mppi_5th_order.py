@@ -1,10 +1,9 @@
 from robot_brain.controller.push.mppi.mppi import PushMppi
+from robot_brain.global_variables import TORCH_DEVICE
 import numpy as np
 from robot_brain.state import State
 import torch
 
-# TODO: this is not pushging yet?
-# TODO: is this second or a larger order system? name it correctly
 class PushMppi5thOrder(PushMppi):
     """ Mppi push controller specific for 2th order systems
     it corresponds to the point robot which is driven by velocity input. """
@@ -15,10 +14,29 @@ class PushMppi5thOrder(PushMppi):
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         """ penalty function for input when the system is in a state, the running 
         cost drives the system to it's desired state. """
-        return (x[:,2] - self.target_state.pos[0])**2 +\
-                (x[:,3] - self.target_state.pos[1])**2 +\
-                (x[:,4] - self.target_state.ang_p[2])**2 +\
-                1e-4*(u[:,0]**4 + u[:,1]**4)
+
+        H = 2
+        W = 0.5
+        xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
+        ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
+
+        bools = ((x[:, 0] - xa)**2 + (x[:,1] - ya)**2 > 0.5*W**2*torch.ones(x.size(dim=0), device=TORCH_DEVICE)).type(torch.uint8)
+        # penalise:
+         # - going away from push position against the obstacle
+        robot_pose_cost = 100*bools*((x[:, 0] - xa)**2 + (x[:,1] - ya)**2)
+
+        # - the obstacle not being on the target position
+        obst_to_target_cost = torch.sqrt((x[:,2] - self.target_state.pos[0])**2 + (x[:,3] - self.target_state.pos[1])**2)
+
+        # - obstacle orientation to target position
+        obst_rotation_cost = 1.0*torch.abs(x[:,4] - self.target_state.ang_p[2])
+
+        cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost 
+
+        print(f'robot pose {torch.round(robot_pose_cost[0]/cost[0], decimals=1)}, obst to target {torch.round(obst_to_target_cost[0]/cost[0], decimals=1)}, obst_rotation {torch.round(obst_rotation_cost[0]/cost[0], decimals=1)}')
+
+        return cost
+
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
 

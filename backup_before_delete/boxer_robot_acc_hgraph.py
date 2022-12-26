@@ -61,7 +61,7 @@
 #         controller = Mppi6thOrder()
 #
 #         def dyn_model(x, u):
-#             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+#             x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
 #
 #             x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2]) * x[:,3] # x_next[0] = x_pos + DT * cos(orient) * x_vel
 #             x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2]) * x[:,3] # x_next[0] = x_pos + DT * cos(orient) * x_vel

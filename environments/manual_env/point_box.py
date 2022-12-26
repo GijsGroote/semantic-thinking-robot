@@ -10,7 +10,7 @@ from multiprocessing import Process, Pipe
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
-from robot_brain.global_variables import DT
+from robot_brain.global_variables import DT, TORCH_DEVICE
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder 
 from environments.mppi_push.obstacles import box
 
@@ -50,7 +50,7 @@ def main(conn=None):
     controller = PushMppi5thOrder()
 
     def dyn_model(x, u):
-        x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+        x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
         x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
         x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
         return x_next

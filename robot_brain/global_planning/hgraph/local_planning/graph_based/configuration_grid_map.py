@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import math
 import warnings
+from typing import Tuple
 
 from robot_brain.obstacle import Obstacle 
 
@@ -27,6 +28,7 @@ class ConfigurationGridMap(ABC):
             grid_y_length: float,
             obstacles: dict,
             robot_cart_2d: np.ndarray,
+            obst_name: str, 
             n_orientations: int
             ):
 
@@ -42,11 +44,11 @@ class ConfigurationGridMap(ABC):
         assert robot_cart_2d.shape == (2,), \
                 f"robot position should be of shape (2,), it's: {robot_cart_2d.shape}"
         self._robot_cart_2d = robot_cart_2d
-
+        self.obst_name = obst_name
         self._n_orientations = n_orientations
 
     @abstractmethod
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> (list, bool):
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
         """ return shortest path and boolean indicating if a shortest path can be found. """
 
     def setup(self):
@@ -61,6 +63,10 @@ class ConfigurationGridMap(ABC):
         """
         for r_orien_idx in range(self.n_orientations):
             for obst in self.obstacles.values():
+
+                # checking for an obstacle, exclude itself from the list
+                if obst.name == self.obst_name:
+                    continue
                 
                 match obst.type:
                     case "unmovable":
@@ -127,7 +133,7 @@ class ConfigurationGridMap(ABC):
     def occupancy(self, y_position, x_position, *args):
         pass
 
-    def c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> (float, float):
+    def c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> Tuple[float, float]:
         """ returns the center position that the cell represents. """
 
         if (x_idx >= self.grid_x_length/self.cell_size or
@@ -142,7 +148,7 @@ class ConfigurationGridMap(ABC):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2)
 
-    def cart_2d_to_c_idx_or_grid_edge(self, x_position: float, y_position: float) -> (int, int):
+    def cart_2d_to_c_idx_or_grid_edge(self, x_position: float, y_position: float) -> Tuple[int, int]:
         """ returns the index of the cell a position is in,
         if the position is outside the boundary of the grid map the edges
         will be returned.
@@ -171,7 +177,7 @@ class ConfigurationGridMap(ABC):
 
         return (x_idx, y_idx)
 
-    def cart_2d_to_c_idx(self, x_position: float, y_position: float) -> (int, int):
+    def cart_2d_to_c_idx(self, x_position: float, y_position: float) -> Tuple[int, int]:
         """ returns the index of the cell a position is in. """
         if abs(x_position) > self.grid_x_length/2:
             raise IndexError(f"x_position: {x_position} is larger than the grid"\

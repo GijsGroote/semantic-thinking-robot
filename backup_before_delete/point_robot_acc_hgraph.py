@@ -64,7 +64,7 @@
 #
 #         def dyn_model(x, u):
 #             
-#             x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+#             x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
 #
 #             x_next[:,0] = x[:,0] + 1*DT*x[:,2] + 0.5*DT*u[:,0] # x_pos_next = x_pos + DT * x_vel
 #             x_next[:,1] = x[:,1] + 1*DT*x[:,3] + 0.5*DT*u[:,1] # y_pos_next = y_pos + DT * y_vel

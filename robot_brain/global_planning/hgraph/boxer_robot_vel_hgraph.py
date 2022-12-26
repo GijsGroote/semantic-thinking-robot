@@ -1,6 +1,6 @@
 import numpy as np
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import FIG_BG_COLOR, DT
+from robot_brain.global_variables import FIG_BG_COLOR, DT, TORCH_DEVICE
 
 from casadi import vertcat
 from robot_brain.controller.drive.mpc.mpc_3th_order import DriveMpc3thOrder
@@ -57,7 +57,7 @@ class BoxerRobotVelHGraph(HGraph):
 
         def dyn_model(x, u):
             
-            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
 
             x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
             x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 

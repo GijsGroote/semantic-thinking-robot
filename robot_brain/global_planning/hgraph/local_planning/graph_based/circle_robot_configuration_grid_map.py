@@ -5,6 +5,7 @@ import math
 import plotly.graph_objects as go 
 import warnings
 import pickle
+from typing import Tuple
 
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
@@ -23,9 +24,10 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
             grid_y_length: float,
             obstacles: dict,
             robot_cart_2d: np.ndarray,
+            obst_name: str,
             robot_radius: float):
 
-        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, 1)
+        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, robot_cart_2d, obst_name, 1)
         self._robot_radius = robot_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
@@ -120,7 +122,7 @@ class CircleRobotConfigurationGridMap(ConfigurationGridMap):
 
         return self.grid_map[x_idx, y_idx]
     
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> tuple:
+    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
         """ Dijkstra shortest path algorithm. """
         if isinstance(cart_2d_start, State):
             cart_2d_start = cart_2d_start.get_xy_position()

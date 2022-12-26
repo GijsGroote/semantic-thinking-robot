@@ -1,13 +1,15 @@
 import numpy as np
+
 from abc import ABC, abstractmethod
 from robot_brain.state import State
+from robot_brain.controller.controller import Controller
 
 class Edge(ABC):
     """
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-    def __init__(self, iden, source, to, verb, controller):
+    def __init__(self, iden: int, source: int, to: int, verb: str, controller):
         self.iden = iden
         self.source = source
         self.to = to

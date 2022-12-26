@@ -1,5 +1,7 @@
 import numpy as np
+import torch
 import math
+from robot_brain.global_variables import TORCH_DEVICE
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
     """ returns the minimal distance from a point to a line.
@@ -117,3 +119,11 @@ def to_interval_zero_to_two_pi(val: float) -> float:
         val += 2*math.pi
     return val
 
+def which_side_point_to_line(a: torch.Tensor, b: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
+    """ find if point p is on right (True) or left (False) side of line from a to b. """
+    
+    right_or_left_bool = ((b[:,0]-a[:,0])*(p[:,1]-a[:,1])-(b[:,1]-a[:,1])*(p[:,0]-a[:,0]) < 0)
+    right_or_left = torch.ones(a.size(dim=0), device=TORCH_DEVICE)
+    right_or_left[right_or_left_bool] = -1
+
+    return right_or_left

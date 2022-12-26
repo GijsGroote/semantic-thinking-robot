@@ -18,6 +18,8 @@ from robot_brain.global_planning.push_act_edge import PushActionEdge
 from robot_brain.global_planning.action_edge import ActionEdge, PATH_IS_PLANNED, HAS_SYSTEM_MODEL, FAILED
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
+from robot_brain.global_planning.empty_edge import EmptyEdge
+
 
 
 from robot_brain.controller.controller import Controller 
@@ -87,6 +89,7 @@ class HGraph(Graph):
                 Obstacle(obst_temp.name, target, obst_temp.properties),
                 subtask_name
                 ))
+            print(f'adding start to target {iden_start_node} to target {iden_target_node}')
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
         if CREATE_SERVER_DASHBOARD:
@@ -152,6 +155,7 @@ class HGraph(Graph):
 
         # find nodes in new subtask or current unfinished subtask
         (start_node, target_node) = self.update_subtask()
+        print(f'start node name {start_node.name} target anem {target_node.name}')
 
         # TODO: find if start node and target node are: (start robot, target robot) or (start obstacle, target obstacle)
 
@@ -159,13 +163,14 @@ class HGraph(Graph):
         
         # search for unfinished target node and connect to starting node
         # TODO: hypothesis should be reachable, but also the first edge in hypothesis (or the first after the current edge) should be 
-        # executable ( is planning, system ident and evertyhign done)
         while not self.is_reachable(ROBOT_IDEN, self.current_subtask["target_node"].iden):
 
-
+            print(f'start node {start_node.iden}, target {target_node.iden}')
             # the obstacles should be the same between an edge
-            assert start_node.obstacle.name == target_node.obstacle.name, f"obstacle: {start_node.name} in start_node should be equal to obstacle: {target_node.name} in target_node"
-            assert target_node.iden in self.get_target_idens_from_start_iden(start_node.iden), "there exist no edge from start_node pointing to target_node"
+            assert start_node.obstacle.name == target_node.obstacle.name,\
+            f"obstacle: {start_node.name} in start_node should be equal to obstacle: {target_node.name} in target_node"
+            assert target_node.iden in self.get_target_idens_from_start_iden(start_node.iden),\
+            "there exist no edge from start_node pointing to target_node"
 
             # driving action
             if start_node.iden == ROBOT_IDEN:
@@ -228,8 +233,6 @@ class HGraph(Graph):
 
                 raise StopIteration(f"The task is successfully completed with a success/fail ration of {task_success_ratio}!")
 
-
-
             # with a new subtask, emtpy the current hypothesis and current node
             self.hypothesis = []
             self.current_node = None
@@ -254,6 +257,7 @@ class HGraph(Graph):
                 if robot_target_node is None:
                     self.end_failed_task()
                     raise StopIteration("No more subtasks, No Solution Found!")
+
                 else:
                     subtask_start_node = self.get_start_node(self.get_start_iden_from_target_iden(robot_target_node.iden))
                     subtask_target_node = robot_target_node
@@ -279,13 +283,17 @@ class HGraph(Graph):
     def find_nodes_to_connect_in_subtask(self) -> Tuple[Node, Node]:
         # TODO: this function could return start position of the robot twice!, fix that
         """ returns 2 nodes to connect in current subtask. """
+
+        # TODO: focus on driving toward obstacle, when a push task is the subtask
+        target_node = self.find_source_node(self.current_subtask["target_node"].iden)
+        
+
         
         if self.current_node is None:
             start_node = self.current_subtask["start_node"]
         else:
             start_node = self.current_node # make sure every new subtask sets the current node to None
 
-        target_node = self.find_source_node(self.current_subtask["target_node"].iden)
 
         return (start_node, target_node)
 
@@ -425,6 +433,23 @@ class HGraph(Graph):
                 # TODO: fail this edge, add to blacklist and try again
                 # TODO: define behavioru when all sys iden methods fail.
 
+            # create a node to drive the robot toward the box.
+            target = self.get_node(start_node_iden).obstacle.state
+            robot_to_box_id = self.unique_node_iden()
+            robot_target_node = ObstacleNode
+            self.add_node(ObstacleNode(
+                robot_to_box_id,
+                self.robot.name+"_to_"+self.get_node(start_node_iden).name,
+                Obstacle(self.robot.name, target, self.robot.properties),
+                self.get_node(target_node_iden).subtask_name
+                ))
+
+            self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
+
+            self.visualise(save=False)
+           
+
+
     def create_push_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int):
         """ create a system identification edge for pushing. """
 
@@ -484,12 +509,14 @@ class HGraph(Graph):
 
         # path estimation
         if isinstance(edge, DriveActionEdge):
-            edge.path_estimator = self.create_drive_path_estimator(self.obstacles)
+            edge.path_estimator = self.create_drive_path_estimator(self.robot(), self.obstacles)
 
         elif isinstance(edge, PushActionEdge):
-            edge.path_estimator = self.create_push_path_estimator(self.obstacles)
+            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.obstacles)
 
+        print(f'searchign fior a path from {self.get_node(edge.source).obstacle.state.get_xy_position()}, to {self.get_node(edge.to).obstacle.state.get_xy_position()}')
         (path_estimation, does_path_exist) = edge.path_estimator.shortest_path(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+        print(f'does the path exist? {does_path_exist}, path is {path_estimation}')
 
         if CREATE_SERVER_DASHBOARD:
             edge.path_estimator.visualise()
@@ -505,7 +532,7 @@ class HGraph(Graph):
         pass
 
     @abstractmethod
-    def create_push_path_estimator(self, obstacles):
+    def create_push_path_estimator(self, push_obstacle, obstacles) -> ConfigurationGridMap:
         pass
 
     def search_path(self, edge):
@@ -646,7 +673,6 @@ class HGraph(Graph):
         pass
    
     def create_push_controller(self) -> Controller:
-        # TODO: not implemented
         possible_controllers = self.get_push_controllers()
         return random.choice(possible_controllers)()
 
@@ -717,7 +743,7 @@ class HGraph(Graph):
     def get_target_idens_from_start_iden(self, start_iden) -> list:
         """ return list of target node identifiers. """
         
-        assert isinstance(start_iden, int), f"start_iden should be an int and it {type(start_iden)}"
+        assert isinstance(start_iden, int), f"start_iden should be an int and it is type {type(start_iden)}"
         target_idens_list = []
         for start_2_target in self.start_to_target_iden:
             if start_2_target[0] == start_iden:

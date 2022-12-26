@@ -10,9 +10,9 @@ from robot_brain.global_variables import (
         MAX_INPUT,
         FIG_BG_COLOR,
         PROJECT_PATH,
-        PLOT_N_TIMESTEPS
+        PLOT_N_TIMESTEPS,
+        TORCH_DEVICE
         )
-
 from abc import abstractmethod
 
 class PushMppi(PushController):
@@ -23,27 +23,26 @@ class PushMppi(PushController):
         PushController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 45 
+        self.n_horizon = 50 
         self.plot_data = {}
 
     def _setup(self, dyn_model, robot_state: State, obstacle_state: State):
         """ setup the mppi controller. """
 
         self.y_predicted = obstacle_state 
-        d = torch.device("cpu")
         self.dyn_model = dyn_model
 
         # create controller with chosen parameters
         self.controller = mppi.MPPI(dynamics=dyn_model,
                     running_cost=self._running_cost,
                     nx=self.order, # number of states in the system
-                    noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
-                    num_samples=100, # number of rollouts
+                    noise_sigma=torch.tensor([[1,0],[0,1]], device=TORCH_DEVICE, dtype=torch.double),
+                    num_samples=5000, # number of rollouts
                     horizon=self.n_horizon,
                     lambda_=1e-2,
-                    device=d, 
-                    u_min=torch.tensor([MIN_INPUT, MIN_INPUT], dtype=torch.double, device=d),
-                    u_max=torch.tensor([MAX_INPUT, MAX_INPUT], dtype=torch.double, device=d)
+                    device=TORCH_DEVICE, 
+                    u_min=torch.tensor([MIN_INPUT, MIN_INPUT], dtype=torch.double, device=TORCH_DEVICE),
+                    u_max=torch.tensor([MAX_INPUT, MAX_INPUT], dtype=torch.double, device=TORCH_DEVICE)
                 )
 
     def _update_prediction_error_sequence(self, robot_state: State, obstacle_state:State, system_input: State):

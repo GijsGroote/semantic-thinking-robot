@@ -13,10 +13,6 @@ class ObstacleNode(Node):
     def __init__(self, iden, name, obstacle, subtask_name=None):
         Node.__init__(self, iden)
         self.name = name
-
-        # TODO: find a better name/method to keep track of 
-        # uncompleted/completed target nodes, Gijs, 15 okt 2022
-        # self.completed = False
         self.status = INITIALISED
         self.obstacle = obstacle
         self.subtask_name = subtask_name

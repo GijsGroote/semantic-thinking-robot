@@ -6,7 +6,7 @@ box_dict = {
     "mass": 3,
     "type": "box",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [-1.8, -1.2, 0.5],
+    "position": [-1.3, 0, 0.5],
     "geometry": {"length": 2, "width": 2, "height": 0.3},
 }
 

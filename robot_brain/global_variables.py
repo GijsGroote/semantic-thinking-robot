@@ -1,4 +1,5 @@
-DT = 0.02
+DT = 0.05
+
 # dashboard global variables
 CREATE_SERVER_DASHBOARD = False
 PLOT_CONTROLLER = False
@@ -29,3 +30,8 @@ UNKNOWN_OBSTACLE_COST = 150
 KNOWN_OBSTACLE_COST = 100
 
 # MPC_CONTROLLER = "mpc controller"
+
+import torch
+TORCH_DEVICE = torch.device("cpu")
+if torch.cuda.is_available():
+    TORCH_DEVICE = torch.device("cuda:0")

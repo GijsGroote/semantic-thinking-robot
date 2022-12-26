@@ -1,5 +1,3 @@
-import numpy as np
-from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.action_edge import ActionEdge
 
 class DriveActionEdge(ActionEdge):
