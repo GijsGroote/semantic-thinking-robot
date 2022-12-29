@@ -7,7 +7,7 @@ box_dict = {
     "type": "box",
     "color": [0/255, 255/255, 0/255, 1],
     "position": [-2, -1.2, 0.5],
-    "geometry": {"length": 1.4, "width": 1.8, "height": 0.3},
+    "geometry": {"length": 1.4, "width": 1.4, "height": 0.3},
 }
 
 box = BoxObstacle(name="simple_box", content_dict=box_dict)

@@ -5,7 +5,6 @@ from pyvis.network import Network
 from typing import Tuple
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
-
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.obstacle_node import ObstacleNode, COMPLETED, UNFEASIBLE, INITIALISED
@@ -20,11 +19,8 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
 from robot_brain.global_planning.empty_edge import EmptyEdge
 
-
-
 from robot_brain.controller.controller import Controller 
 import time
-from robot_brain.state import State
 from logger.hlogger import HLogger
 
 EXECUTION_LOOP = "executing"
@@ -165,12 +161,9 @@ class HGraph(Graph):
         # TODO: hypothesis should be reachable, but also the first edge in hypothesis (or the first after the current edge) should be 
         while not self.is_reachable(ROBOT_IDEN, self.current_subtask["target_node"].iden):
 
-            print(f'start node {start_node.iden}, target {target_node.iden}')
             # the obstacles should be the same between an edge
             assert start_node.obstacle.name == target_node.obstacle.name,\
             f"obstacle: {start_node.name} in start_node should be equal to obstacle: {target_node.name} in target_node"
-            assert target_node.iden in self.get_target_idens_from_start_iden(start_node.iden),\
-            "there exist no edge from start_node pointing to target_node"
 
             # driving action
             if start_node.iden == ROBOT_IDEN:
@@ -284,18 +277,32 @@ class HGraph(Graph):
         # TODO: this function could return start position of the robot twice!, fix that
         """ returns 2 nodes to connect in current subtask. """
 
-        # TODO: focus on driving toward obstacle, when a push task is the subtask
         target_node = self.find_source_node(self.current_subtask["target_node"].iden)
-        
-
-        
-        if self.current_node is None:
-            start_node = self.current_subtask["start_node"]
-        else:
-            start_node = self.current_node # make sure every new subtask sets the current node to None
-
-
+        start_node = self.find_corresponding_start_node(target_node)
+            
         return (start_node, target_node)
+
+    def find_corresponding_start_node(self, target_node):
+        """ find the obstacle node that should directly be connected to this node. """
+
+        # check target obstacle, find the equivalent start node obstacle
+        if target_node.obstacle.properties==self.robot.properties:
+            return self.robot_node
+        else:
+
+            print('LOOK HERE!":')
+            for temp_node in self.nodes:
+                print(f'looking at node {temp_node.name}')
+                if temp_node.properties == target_node.properties and temp_node.iden != target_node.iden:
+                    print(f'found start node {start_node.name} with target node {target_node.name}')
+                    return temp_node
+
+
+        print('LOOK ABOVE HERE!":')
+        # TODO: acceptional error if the start node is not yet created, future work mister, gijs groote 28 dec 2022
+        raise ValueError(f'for target node {target_node.name} no start node was found')
+
+
 
     def create_drive_edge(self, start_node_iden: int, target_node_iden: int):
         """ returns create drive edge and adds created model node to hgraph. """
@@ -322,13 +329,15 @@ class HGraph(Graph):
                 self.estimate_path(edge)
             except ValueError as exc:
                 # path estimation fails
-                self.get_target_node(edge.to).status = UNFEASIBLE
+                # TODO: unfeasible status does not prevent the node, or edge from occuring
+                self.get_node(edge.to).status = UNFEASIBLE
                 edge.status = FAILED
                 print(f'reason for failing hypothesis, no path between start and target was found, reason {exc}') # <--- delete that please
 
                 if LOG_METRICS:
                     self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
 
+                # TODO: is it okey to loop into this all the time
                 return self.search_hypothesis()
 
             edge.set_path_exist_status()
@@ -446,7 +455,7 @@ class HGraph(Graph):
 
             self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
 
-            self.visualise(save=False)
+            # self.visualise(save=False)
            
 
 
@@ -509,10 +518,12 @@ class HGraph(Graph):
 
         # path estimation
         if isinstance(edge, DriveActionEdge):
-            edge.path_estimator = self.create_drive_path_estimator(self.robot(), self.obstacles)
+            edge.path_estimator = self.create_drive_path_estimator(self.obstacles)
 
         elif isinstance(edge, PushActionEdge):
             edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.obstacles)
+
+        edge.path_estimator.visualise(save=False)
 
         print(f'searchign fior a path from {self.get_node(edge.source).obstacle.state.get_xy_position()}, to {self.get_node(edge.to).obstacle.state.get_xy_position()}')
         (path_estimation, does_path_exist) = edge.path_estimator.shortest_path(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
@@ -792,8 +803,7 @@ class HGraph(Graph):
         net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
 
         # set a custom style sheet
-        net.path = "/home/gijs/Documents/semantic-thinking-robot"\
-                "/dashboard/assets/graph_template.html"
+        net.path = PROJECT_PATH+"/dashboard/assets/graph_template.html"
 
         net.set_edge_smooth('dynamic')
 

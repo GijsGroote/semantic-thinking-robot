@@ -2,7 +2,6 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from robot_brain.state import State
-from robot_brain.controller.controller import Controller
 
 class Edge(ABC):
     """

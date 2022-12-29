@@ -1,0 +1,527 @@
+[m[1;34m~/Documents/semantic-thinking-robot[22;39m$ . /home/gijs/.cache/pypoetry/virtualenvs/robot-brain-xXy1ugOt-py3.10/bin/activate
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 183, in search_hypothesis
+[m    (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 284, in find_nodes_to_connect_in_subtask
+[m    start_node = self.find_corresponding_start_node(target_node)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 301, in find_corresponding_start_node
+[m    raise ValueError(f'for target node {target_node.name} no start node was found')
+[mValueError: for target node pointRobot-vel-v7_to_simple_box no start node was found
+[mOpening in existing browser session.
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 183, in search_hypothesis
+[m    (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 284, in find_nodes_to_connect_in_subtask
+[m    start_node = self.find_corresponding_start_node(target_node)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 302, in find_corresponding_start_node
+[m    raise ValueError(f'for target node {target_node.name} no start node was found')
+[mValueError: for target node pointRobot-vel-v7_to_simple_box no start node was found
+[mOpening in existing browser session.
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 183, in search_hypothesis
+[m    (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 284, in find_nodes_to_connect_in_subtask
+[m    start_node = self.find_corresponding_start_node(target_node)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 302, in find_corresponding_start_node
+[m    raise ValueError(f'for target node {target_node.name} no start node was found')
+[mValueError: for target node pointRobot-vel-v7_to_simple_box no start node was found
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mLOOK ABOVE HERE!":
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 183, in search_hypothesis
+[m    (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 284, in find_nodes_to_connect_in_subtask
+[m    start_node = self.find_corresponding_start_node(target_node)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 306, in find_corresponding_start_node
+[m    raise ValueError(f'for target node {target_node.name} no start node was found')
+[mValueError: for target node pointRobot-vel-v7_to_simple_box no start node was found
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mdestroy semaphore
+[msemaphore destroyed
+[mThread TERMINATED
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mstart node 0, target 6
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 168, in search_hypothesis
+[m    assert target_node.iden in self.get_target_idens_from_start_iden(start_node.iden),\
+[mAssertionError: there exist no edge from start_node pointing to target_node
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ p3 environments/a_point_pushing_robot.py 
+[mpybullet build time: Sep 19 2022 12:38:30
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[margc=2
+[margv[0] = --unused
+[margv[1] = --start_demo_name=Physics Server
+[mExampleBrowserThreadFunc started
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mX11 functions dynamically loaded using dlopen/dlsym OK!
+[mCreating context
+[mCreated GL 3.3 context
+[mDirect GLX rendering context obtained
+[mMaking context current
+[mGL_VENDOR=NVIDIA Corporation
+[mGL_RENDERER=Quadro P1000/PCIe/SSE2
+[mGL_VERSION=3.3.0 NVIDIA 510.85.02
+[mGL_SHADING_LANGUAGE_VERSION=3.30 NVIDIA via Cg compiler
+[mpthread_getconcurrency()=0
+[mVersion = 3.3.0 NVIDIA 510.85.02
+[mVendor = NVIDIA Corporation
+[mRenderer = Quadro P1000/PCIe/SSE2
+[mb3Printf: Selected demo: Physics Server
+[mstartThreads creating 1 threads.
+[mstarting thread 0
+[mstarted thread 0 
+[mMotionThreadFunc thread started
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[mven = NVIDIA Corporation
+[mven = NVIDIA Corporation
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: No inertial data for link, using mass=1, localinertiadiagonal = 1,1,1, identity local inertial frame
+[mb3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+
+[mb3Printf: lidar_sensor_link
+[madding start to target 1 to target 2
+[madding start to target 0 to target 3
+[madding start to target 0 to target 4
+[mstart node name simple_box target anem simple_box_target
+[mstart node 1, target 2
+[msearchign fior a path from [-2.  -1.2], to [-4  0]
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:226: UserWarning: the start position is 
+[min obstacle space
+[m  warnings.warn("the start position is in obstacle space")
+[m/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/local_planning/graph_based/rectangular_robot_configuration_grid_map.py:229: UserWarning: the target position is
+[m in obstacle space
+[m  warnings.warn("the target position is in obstacle space")
+[mdoes the path exist? True, path is [(-2.0, -1.2, 1.5707500000000003), (-2.25, -1.25, 1.2566370614359172), (-2.75, -0.75, 0.6283185307179586), (-3.25, -0.25, 0.0), (-4, 0, 0)]
+[mstart node 0, target 6
+[mTraceback (most recent call last):
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 86, in <module>
+[m    main()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/environments/a_point_pushing_robot.py", line 81, in main
+[m    action[0:2] = brain.respond()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/rbrain.py", line 228, in respond
+[m    return self.hgraph.respond(self.robot.state)
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 143, in respond
+[m    self.search_hypothesis()
+[m  File "/home/gijs/Documents/semantic-thinking-robot/robot_brain/global_planning/hgraph/hgraph.py", line 168, in search_hypothesis
+[m    assert target_node.iden in self.get_target_idens_from_start_iden(start_node.iden),\
+[mAssertionError: there exist no edge from start_node pointing to target_node
+[mnumActiveThreads = 0
+[mstopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[m[mdestroy main semaphore
+[mmain semaphore destroyed
+[mfinished
+[mnumActiveThreads = 0
+[mbtShutDownExampleBrowser stopping threads
+[mThread with taskId 0 exiting
+[mThread TERMINATED
+[mdestroy semaphore
+[msemaphore destroyed
+[mdestroy main semaphore
+[mmain semaphore destroyed
+[m(robot-brain-xXy1ugOt-py3.10) [1;34m~/Documents/semantic-thinking-robot[22;39m$ 
