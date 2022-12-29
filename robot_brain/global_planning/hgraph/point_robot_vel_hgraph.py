@@ -9,6 +9,8 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 
 from robot_brain.global_variables import DT, TORCH_DEVICE
 
+from robot_brain.state import State
+
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
 from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder

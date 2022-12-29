@@ -10,6 +10,7 @@ from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.obstacle_node import ObstacleNode, COMPLETED, UNFEASIBLE, INITIALISED
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
+from robot_brain.state import State
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.drive_act_edge import DriveActionEdge
 from robot_brain.global_planning.push_ident_edge import PushIdentificationEdge
@@ -18,6 +19,10 @@ from robot_brain.global_planning.action_edge import ActionEdge, PATH_IS_PLANNED,
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.global_planning.identification_edge import IdentificationEdge 
 from robot_brain.global_planning.empty_edge import EmptyEdge
+
+from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.sphere_obstacle import SphereObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.controller.controller import Controller 
 import time
@@ -443,7 +448,7 @@ class HGraph(Graph):
                 # TODO: define behavioru when all sys iden methods fail.
 
             # create a node to drive the robot toward the box.
-            target = self.get_node(start_node_iden).obstacle.state
+            target = self.find_push_state_against_obstacle(self.get_node(start_node_iden).obstacle)
             robot_to_box_id = self.unique_node_iden()
             robot_target_node = ObstacleNode
             self.add_node(ObstacleNode(
@@ -494,6 +499,20 @@ class HGraph(Graph):
                 self.logger.add_failed_hypothesis(self.hypothesis, self.nodes[target_node_iden].subtask_name , str(exc))
                 self.create_push_ident_edge(start_node_iden, target_node_iden, model_for_edge_iden)
 
+    def find_push_state_against_obstacle(self, obstacle) -> State:
+        """ find a push position (state) next to the obstacle. """
+        if isinstance(obstacle.properties, BoxObstacle):
+            pos = obstacle.state.pos
+
+            # TODO: this is not generic enough, working now ha
+            return State(pos=np.array([pos[0]-2, pos[1], pos[2]]),
+                    ang_p=obstacle.state.ang_p)
+
+            # TODO this for box 
+
+        if isinstance(obstacle.properties, (CylinderObstacle, SphereObstacle)):
+            print('you did not implement this mister mister;')
+            # TODO: this for cylinder and sphere
 
 
 ###########################################
@@ -523,7 +542,6 @@ class HGraph(Graph):
         elif isinstance(edge, PushActionEdge):
             edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.obstacles)
 
-        edge.path_estimator.visualise(save=False)
 
         print(f'searchign fior a path from {self.get_node(edge.source).obstacle.state.get_xy_position()}, to {self.get_node(edge.to).obstacle.state.get_xy_position()}')
         (path_estimation, does_path_exist) = edge.path_estimator.shortest_path(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
