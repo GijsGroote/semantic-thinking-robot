@@ -3,15 +3,9 @@ import numpy as np
 import math
 import warnings
 from typing import Tuple
+from helper_functions.geometrics import check_floats_divisible
 
-from robot_brain.obstacle import Obstacle 
-
-def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
-
-    scaled_x = int(x * scaling_factor)
-    scaled_y = int(y * scaling_factor)
-
-    return (scaled_x % scaled_y) == 0
+from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE, UNMOVABLE
 
 class ConfigurationGridMap(ABC):
     """ Configuration grid map represents the environment in obstacle space
@@ -27,10 +21,9 @@ class ConfigurationGridMap(ABC):
             grid_x_length: float,
             grid_y_length: float,
             obstacles: dict,
-            robot_cart_2d: np.ndarray,
+            obst_cart_2d: np.ndarray,
             obst_name: str, 
-            n_orientations: int
-            ):
+            n_orientations: int):
 
         # assert the grid can be descritized in square cells
         if (not check_floats_divisible(grid_x_length, cell_size)  or
@@ -41,11 +34,14 @@ class ConfigurationGridMap(ABC):
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
         self._obstacles = obstacles 
-        assert robot_cart_2d.shape == (2,), \
-                f"robot position should be of shape (2,), it's: {robot_cart_2d.shape}"
-        self._robot_cart_2d = robot_cart_2d
+        assert obst_cart_2d.shape == (2,), \
+                f"obstacle position should be of shape (2,), it's: {obst_cart_2d.shape}"
+        self._obst_cart_2d = obst_cart_2d
         self.obst_name = obst_name
         self._n_orientations = n_orientations
+
+        self.setup()
+
 
     @abstractmethod
     def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
@@ -68,20 +64,21 @@ class ConfigurationGridMap(ABC):
                 if obst.name == self.obst_name:
                     continue
                 
+                # TODO: why can I not use UNMOVABLE, UNKNOWN from the obstacle class? now it is stringss
                 match obst.type:
                     case "unmovable":
-                        self.setup_obstacle(obst, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                        self._setup_obstacle(obst, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case "movable":
-                        self.setup_obstacle(obst, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                        self._setup_obstacle(obst, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case "unknown":
-                        self.setup_obstacle(obst, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                        self._setup_obstacle(obst, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                     case _:
                         raise TypeError(f"unknown type: {obst.type}")
   
-    def setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """ 
 
         match obst.properties.type():
@@ -92,10 +89,10 @@ class ConfigurationGridMap(ABC):
                         math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
                     warnings.warn(f"obstacle {obst.name} is not in correct orientation (up/down is not up)")
 
-                self.setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
+                self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "sphere":
-                self.setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
+                self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "box":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
@@ -105,7 +102,7 @@ class ConfigurationGridMap(ABC):
                         math.isclose(obst.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
                     warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
 
-                self.setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
+                self._setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "urdf":
                 warnings.warn(f"the urdf type is not yet implemented")
@@ -115,11 +112,11 @@ class ConfigurationGridMap(ABC):
                 raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
     @abstractmethod
-    def setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod
-    def setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     def update(self):
@@ -133,7 +130,7 @@ class ConfigurationGridMap(ABC):
     def occupancy(self, y_position, x_position, *args):
         pass
 
-    def c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> Tuple[float, float]:
+    def _c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> Tuple[float, float]:
         """ returns the center position that the cell represents. """
 
         if (x_idx >= self.grid_x_length/self.cell_size or
@@ -148,13 +145,13 @@ class ConfigurationGridMap(ABC):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2)
 
-    def cart_2d_to_c_idx_or_grid_edge(self, x_position: float, y_position: float) -> Tuple[int, int]:
+    def _cart_2d_to_c_idx_or_grid_edge(self, x_position: float, y_position: float) -> Tuple[int, int]:
         """ returns the index of the cell a position is in,
         if the position is outside the boundary of the grid map the edges
         will be returned.
         """
         try:
-            x_idx = self.cart_2d_to_c_idx(x_position, 0)[0]
+            x_idx = self._cart_2d_to_c_idx(x_position, 0)[0]
         except IndexError as exc:
             if x_position > self.grid_x_length/2:
                 x_idx = int(self.grid_x_length/self.cell_size-1)
@@ -165,7 +162,7 @@ class ConfigurationGridMap(ABC):
                         "could not be converted to cell index.") from exc
 
         try:
-            y_idx = self.cart_2d_to_c_idx(0, y_position)[1]
+            y_idx = self._cart_2d_to_c_idx(0, y_position)[1]
         except IndexError as exc:
             if y_position > self.grid_y_length/2:
                 y_idx = int(self.grid_y_length/self.cell_size-1)
@@ -177,7 +174,7 @@ class ConfigurationGridMap(ABC):
 
         return (x_idx, y_idx)
 
-    def cart_2d_to_c_idx(self, x_position: float, y_position: float) -> Tuple[int, int]:
+    def _cart_2d_to_c_idx(self, x_position: float, y_position: float) -> Tuple[int, int]:
         """ returns the index of the cell a position is in. """
         if abs(x_position) > self.grid_x_length/2:
             raise IndexError(f"x_position: {x_position} is larger than the grid"\
@@ -220,8 +217,8 @@ class ConfigurationGridMap(ABC):
         self._obstacles = obstacles 
 
     @property
-    def robot_cart_2d(self):
-        return self._robot_cart_2d
+    def obst_cart_2d(self):
+        return self._obst_cart_2d
 
     @property
     def n_orientations(self):

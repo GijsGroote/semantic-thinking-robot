@@ -14,8 +14,8 @@ from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
 from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder 
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -24,6 +24,9 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
+from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_planner import PushMotionPlanner
+from robot_brain.controller.push.push_controller import PushController
+from robot_brain.controller.drive.drive_controller import DriveController
 
 
 
@@ -37,7 +40,7 @@ class PointRobotVelHGraph(HGraph):
         self.robot_order = 2 
     
     def create_drive_path_estimator(self, obstacles) -> ConfigurationGridMap:
-        occ_graph = CircleRobotConfigurationGridMap(cell_size=0.1,
+        occ_graph = CircleObstacleConfigurationGridMap(cell_size=0.1,
                 grid_x_length= 10,
                 grid_y_length= 12,
                 obstacles= obstacles,
@@ -53,7 +56,7 @@ class PointRobotVelHGraph(HGraph):
 
         if isinstance(push_obstacle.properties, BoxObstacle):
 
-            occ_graph = RectangularRobotConfigurationGridMap(cell_size=0.5,
+            occ_graph = RectangularObstacleConfigurationGridMap(cell_size=0.5,
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
@@ -65,7 +68,7 @@ class PointRobotVelHGraph(HGraph):
 
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
-            occ_graph = CircleRobotConfigurationGridMap(cell_size=0.5,
+            occ_graph = CircleObstacleConfigurationGridMap(cell_size=0.5,
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
@@ -79,19 +82,27 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_drive_motion_planner(self, obstacles) -> MotionPlanner:
+    def create_drive_motion_planner(self, obstacles, path_estimator=None) -> DriveMotionPlanner:
         return DriveMotionPlanner(grid_x_length=10,
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=self.robot,
                 step_size=0.5,
-                search_size=0.7)
+                search_size=0.7,
+                configuration_grid_map=path_estimator)
 
-    def create_push_motion_planner(self, obstacles):
-        pass
+    def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
+        return PushMotionPlanner(grid_x_length=10,
+                grid_y_length=10,
+                obstacles=obstacles,
+                obstacle=push_obstacle,
+                step_size=0.5,
+                search_size=0.7,
+                configuration_grid_map=path_estimator)
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
+
         return [self._create_mppi_drive_controller,
                 self._create_mpc_drive_controller]
 
@@ -114,14 +125,28 @@ class PointRobotVelHGraph(HGraph):
             case _:
                 raise ValueError(f"controller name unknown: {controller_name}")
 
+
     def _setup_drive_controller(self, controller, dyn_model):
         # TODO: should the target state not also be passed insead of the robot state?
 
-        print("setup the drivnig controller")
-        assert isinstance(controller, Controller), f"the controller should be an Controller and is {type(controller)}"
+        assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
         assert callable(dyn_model), "the dyn_model should be callable function"
 
         controller.setup(dyn_model, self.robot.state, self.robot.state)
+
+    def _setup_push_controller(self, controller, dyn_model, push_edge):
+        # TODO: should the target state not also be passed insead of the robot state?
+
+        assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
+        assert callable(dyn_model), "the dyn_model should be callable function"
+
+        source_state = self.get_node(push_edge.source).obstacle.state
+        to_state = self.get_node(push_edge.to).obstacle.state
+
+        print(f'hey source state {source_state} and target state {to_state}')
+
+        controller.setup(dyn_model, self.robot.state, source_state, to_state)
+
 
 
     ##### DRIVE MPPI #####

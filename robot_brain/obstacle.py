@@ -1,6 +1,9 @@
 from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
 
+UNKNOWN = "unknown"
+MOVABLE = "unmovable"
+UNMOVABLE = "movable"
 
 class Obstacle:
     """

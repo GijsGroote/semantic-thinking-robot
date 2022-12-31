@@ -32,6 +32,7 @@ KNOWN_OBSTACLE_COST = 100
 # MPC_CONTROLLER = "mpc controller"
 
 import torch
+# TODO: mppi can be a mess when it's want to calculate efficient on the gpu
 TORCH_DEVICE = torch.device("cpu")
-if torch.cuda.is_available():
-    TORCH_DEVICE = torch.device("cuda:0")
+# if torch.cuda.is_available():
+#     TORCH_DEVICE = torch.device("cuda:0")

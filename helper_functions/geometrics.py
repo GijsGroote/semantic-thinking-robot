@@ -127,3 +127,13 @@ def which_side_point_to_line(a: torch.Tensor, b: torch.Tensor, p: torch.Tensor) 
     right_or_left[right_or_left_bool] = -1
 
     return right_or_left
+
+def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
+    """ check if x / y == 0. """
+
+    scaled_x = int(x * scaling_factor)
+    scaled_y = int(y * scaling_factor)
+
+    return (scaled_x % scaled_y) == 0
+
+

@@ -7,8 +7,9 @@ from sortedcontainers import SortedDict
 import warnings
 
 from robot_brain.obstacle import Obstacle
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import RectangularRobotConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import CircleRobotConfigurationGridMap 
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap 
+from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -24,31 +25,37 @@ class DriveMotionPlanner(MotionPlanner):
         obstacles: dict,
         obstacle: Obstacle,
         step_size: float,
-        search_size: float):
+        search_size: float,
+        configuration_grid_map: ConfigurationGridMap):
 
         MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle, step_size, search_size)
 
-        if isinstance(obstacle.properties, CylinderObstacle):
-            self.configuration_space_grid_map = CircleRobotConfigurationGridMap(
-                cell_size=0.2,
-                grid_x_length=grid_x_length,
-                grid_y_length=grid_y_length,
-                obstacles=obstacles,
-                robot_cart_2d=obstacle.state.get_xy_position(),
-                robot_radius=obstacle.properties.radius()) # radius or radius()???
+        if isinstance(configuration_grid_map, ConfigurationGridMap): 
+            self.configuration_space_grid_map = configuration_space_grid_map
 
-        elif isinstance(obstacle.properties, BoxObstacle):
-            self.configuration_space_grid_map = RectangularRobotConfigurationGridMap(
-                cell_size=0.2,
-                grid_x_length=grid_x_length,
-                grid_y_length=grid_y_length,
-                obstacles=obstacles,
-                robot_cart_2d=obstacle.state.get_xy_position(),
-                n_orientations= 36,
-                robot_x_length=obstacle.properties.length(),
-                robot_y_length=obstacle.properties.width())
         else:
-            raise ValueError("The robot has an unknown obstacle")
+            if isinstance(obstacle.properties, CylinderObstacle):
+                self.configuration_space_grid_map = CircleObstacleConfigurationGridMap(
+                    cell_size=0.2,
+                    grid_x_length=grid_x_length,
+                    grid_y_length=grid_y_length,
+                    obstacles=obstacles,
+                    robot_cart_2d=obstacle.state.get_xy_position(),
+                    obst_name=obstacle.name,
+                    robot_radius=obstacle.properties.radius())
+
+            elif isinstance(obstacle.properties, BoxObstacle):
+                self.configuration_space_grid_map = RectangleObstacleConfigurationGridMap(
+                    cell_size=0.2,
+                    grid_x_length=grid_x_length,
+                    grid_y_length=grid_y_length,
+                    obstacles=obstacles,
+                    robot_cart_2d=obstacle.state.get_xy_position(),
+                    n_orientations= 36,
+                    robot_x_length=obstacle.properties.length(),
+                    robot_y_length=obstacle.properties.width())
+            else:
+                raise ValueError("The robot has an unknown obstacle")
 
         self.start_time = None
 
