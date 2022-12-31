@@ -1,24 +1,22 @@
-import numpy as np
 import sys
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap 
 import math
-import plotly.graph_objects as go 
 import warnings
 import pickle
 from typing import Tuple
-
+import numpy as np
+import plotly.graph_objects as go
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
 from helper_functions.figures import discrete_colorscale
+
+from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 
 class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
-    """ 2-dimensional configuration grid map representing the environment
-    in obstacle space, free space, movable obstacle space and
-    unknown obstacle space for a circular obstacle.
-    """
+    """ The configuration grid map for circular obstacles. """
+
     def __init__(self,
             cell_size: float,
             grid_x_length: float,
@@ -28,7 +26,8 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
             obst_name: str,
             obst_radius: float):
 
-        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length, obstacles, obst_cart_2d, obst_name, 1)
+        ConfigurationGridMap.__init__(self, cell_size, grid_x_length,
+                grid_y_length, obstacles, obst_cart_2d, obst_name, 1)
         self._obst_radius = obst_radius
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
@@ -37,13 +36,14 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         self.setup()
 
     def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
-        """ Set the circular obstacle overlapping with grid cells (representing the obst) to a integer value. """ 
-        
+        """ For a circular obstacle set all overlapping with grid cells
+        (representing the obstacle) to a integer value. """
+
         obst_cart_2d = obst.state.get_xy_position()
 
-        # only search around obstacle 
+        # only search around obstacle
         (obst_clearance_x_min, obst_clearance_y_min) = self._cart_2d_to_c_idx_or_grid_edge(
-                obst_cart_2d[0]-(self.obst_radius + obst.properties.radius()), 
+                obst_cart_2d[0]-(self.obst_radius + obst.properties.radius()),
                 obst_cart_2d[1]-(self.obst_radius + obst.properties.radius()))
 
         (obst_clearance_x_max, obst_clearance_y_max) = self._cart_2d_to_c_idx_or_grid_edge(
@@ -52,18 +52,19 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
-                #  closeby (<= radius + smallest dimension obst) cells are always in collision with the obstacle 
+                #  closeby cells are always in collision with the obstacle
                 if np.linalg.norm(self._c_idx_to__cart_2d(x_idx, y_idx)-obst_cart_2d) <= obst.properties.radius() + self.obst_radius:
                     self.grid_map[x_idx, y_idx] = val
 
     def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
-        """ set the rectangular obstect overlapping with grid cells (representing the obst) to a integer value. """ 
+        """ For a rectangular obstacle set all overlapping with grid cells
+        (representing the obstacle) to a integer value. """
 
         cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
         sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
         cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
         sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
-        
+
         # corner points of the obstacle
         obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
         obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
@@ -77,10 +78,12 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         # only search around obstacle
         (obst_clearance_x_min, obst_clearance_y_min) = self._cart_2d_to_c_idx_or_grid_edge(
-                obst_cart_2d[0]-max_obst_to_obst_x_distance, obst_cart_2d[1]-max_obst_to_obst_y_distance)
+                obst_cart_2d[0]-max_obst_to_obst_x_distance,
+                obst_cart_2d[1]-max_obst_to_obst_y_distance)
 
         (obst_clearance_x_max, obst_clearance_y_max) = self._cart_2d_to_c_idx_or_grid_edge(
-                obst_cart_2d[0]+max_obst_to_obst_x_distance, obst_cart_2d[1]+max_obst_to_obst_y_distance)
+                obst_cart_2d[0]+max_obst_to_obst_x_distance,
+                obst_cart_2d[1]+max_obst_to_obst_y_distance)
 
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
@@ -90,7 +93,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
                     continue
 
                 r_cart_2d = np.array(self._c_idx_to_cart_2d(x_idx, y_idx))
-                
+
                 # check if the edges of the obst overlap with the obstacle
                 if minimal_distance_point_to_line(r_cart_2d, obst_a, obst_b) <= self.obst_radius:
                     self.grid_map[x_idx, y_idx] = val
@@ -105,26 +108,26 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
                     continue
 
                 elif minimal_distance_point_to_line(r_cart_2d, obst_d, obst_a) <= self.obst_radius:
-                    self.grid_map[x_idx, y_idx] = val 
+                    self.grid_map[x_idx, y_idx] = val
                     continue
 
     def occupancy(self, cart_2d: np.ndarray) -> int:
         """ returns the occupancy of the grid cell """
         assert cart_2d.shape == (2,), f"cart_2d not of shape (2,) but {cart_2d.shape}"
-        idx = self._cart_2d_to_c_idx(cart_2d[0], cart_2d[1]) 
+        idx = self._cart_2d_to_c_idx(cart_2d[0], cart_2d[1])
         return self._c_idx_to_occupancy(*idx)
 
     def _c_idx_to_occupancy(self, x_idx: int, y_idx: int):
         if (x_idx > self.grid_map.shape[0] or
             x_idx < 0):
-            raise ValueError(f"x_idx should be in range [0, {self.grid_map.shape[0]}] and is {x_idx}")
+            raise ValueError(f"x_idx should be in [0, {self.grid_map.shape[0]}] and is {x_idx}")
 
         if (y_idx > self.grid_map.shape[1] or
             y_idx < 0):
-            raise ValueError(f"y_idx should be in range [0, {self.grid_map.shape[1]}] and is {y_idx}")
+            raise ValueError(f"y_idx should be in [0, {self.grid_map.shape[1]}] and is {y_idx}")
 
         return self.grid_map[x_idx, y_idx]
-    
+
     def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
         """ Dijkstra shortest path algorithm. """
         if isinstance(cart_2d_start, State):
@@ -149,16 +152,16 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
         visited = np.zeros(self.grid_map.shape).astype(int)
         previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], 2)).astype(int)
-        
+
         # set all cost to maximal size, except for the starting cell position
         cost = sys.maxsize*np.ones(self.grid_map.shape)
         cost[c_idx_start] = 0
-        
+
         queue = []
         queue.append(c_idx_start)
-    
+
         (x_max, y_max) = self.grid_map.shape
-        
+
         while len(queue) != 0:
             c_idx_temp = queue.pop(0)
             
@@ -173,35 +176,33 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
             # loop though neighboring indexes
             for x_idx in range(x_low, x_high+1):
                 for y_idx in range(y_low, y_high+1):
+                    c_idx = (x_idx, y_idx)
 
-                        c_idx = (x_idx, y_idx)
+                    # only compare unvisited cells
+                    if visited[c_idx] != 2:
 
-                        # only compare unvisited cells
-                        if visited[c_idx] != 2:
+                        # path cannot go through obstacles
+                        if self._c_idx_to_occupancy(*c_idx) != 1:
 
-                            # path cannot go through obstacles
-                            if self._c_idx_to_occupancy(*c_idx) != 1:
+                            # put cell in the queue if not already in there
+                            if visited[c_idx] == 0:
+                                visited[c_idx] = 1
+                                queue.append(c_idx)
 
-                                # put cell in the queue if not already in there
-                                if visited[c_idx] == 0:
-                                    visited[c_idx] = 1 
-                                    queue.append(c_idx)
-                               
-                                # update cost and previous cell if lower cost is found 
-                                temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
-                                if temp_cost < cost[c_idx]:
+                            # update cost and previous cell if lower cost is found
+                            temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
+                            if temp_cost < cost[c_idx]:
 
-                                    cost[c_idx] = temp_cost
-                                    previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
+                                cost[c_idx] = temp_cost
+                                previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
 
-        print(f'the cost to the final place = {cost[c_idx_target]}')
         # no shortest path was found
         if cost[c_idx_target] == sys.maxsize:
             return ([], False)
 
         shortest_path_reversed = []
         c_idx_temp = c_idx_target
-       
+
         # find shortest path from target to start
         while not all(x == y for x, y in zip(c_idx_temp, c_idx_start)):
 
@@ -222,15 +223,16 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         return (shortest_path, True)
 
     def visualise(self, save: bool=True):
-        """ Display the occupancy map for a specific orientation of the obst. """
+        """ Display the configuration grid map. """
 
         bvals = [0, 1, 2, 3, 4]
         colors = ['#09ffff', '#19d3f3', '#e763fa' , '#ab63fa']
-        dcolorsc = discrete_colorscale(bvals, colors)        
+        dcolorsc = discrete_colorscale(bvals, colors)
         tickvals = [3/8, 9/8, 15/8, 21/8]
         ticktext = ["free", "obstacle", "movable", "unknown"]
 
-        extended_grid_map = np.zeros((int(self.grid_x_length/self.cell_size+2.0), int(self.grid_y_length/self.cell_size+2.0)))
+        extended_grid_map = np.zeros((int(self.grid_x_length/self.cell_size+2.0),
+            int(self.grid_y_length/self.cell_size+2.0)))
         extended_grid_map[:,0] = 0
         extended_grid_map[:,-1] = 1
         extended_grid_map[0,:] = 2
@@ -238,13 +240,15 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         extended_grid_map[1:-1,1:-1] = self.grid_map
 
         trace = go.Heatmap(
-               x=list(np.arange((-(self.grid_y_length))/2, (2*self.cell_size+(self.grid_y_length))/2, self.cell_size)),
-                y=list(np.arange((-(self.grid_x_length))/2, (2*self.cell_size+(self.grid_x_length))/2, self.cell_size)),
+               x=list(np.arange((-(self.grid_y_length))/2,
+                   (2*self.cell_size+(self.grid_y_length))/2, self.cell_size)),
+                y=list(np.arange((-(self.grid_x_length))/2,
+                    (2*self.cell_size+(self.grid_x_length))/2, self.cell_size)),
                 z=extended_grid_map,
                 type = "heatmap",
-                colorscale = dcolorsc, 
-                colorbar = dict(thickness=25, 
-                                tickvals=tickvals, 
+                colorscale = dcolorsc,
+                colorbar = dict(thickness=25,
+                                tickvals=tickvals,
                                 ticktext=ticktext))
 
         fig = go.Figure(data=trace)
@@ -278,7 +282,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
                 y1=(-self.grid_x_length+self.cell_size)/2,
                 line_color="black",
                 )
-        
+
         # add the obstacles over the gridmap
         for obst in self.obstacles.values():
 
