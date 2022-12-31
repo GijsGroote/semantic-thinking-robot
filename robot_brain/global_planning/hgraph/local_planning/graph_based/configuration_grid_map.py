@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-import numpy as np
 import math
 import warnings
 from typing import Tuple
-from helper_functions.geometrics import check_floats_divisible
+import numpy as np
 
 from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE, UNMOVABLE
+from helper_functions.geometrics import check_floats_divisible
 
 class ConfigurationGridMap(ABC):
     """ Configuration grid map represents the environment in obstacle space
@@ -22,7 +22,7 @@ class ConfigurationGridMap(ABC):
             grid_y_length: float,
             obstacles: dict,
             obst_cart_2d: np.ndarray,
-            obst_name: str, 
+            obst_name: str,
             n_orientations: int):
 
         # assert the grid can be descritized in square cells
@@ -33,7 +33,7 @@ class ConfigurationGridMap(ABC):
         self._cell_size = cell_size
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
-        self._obstacles = obstacles 
+        self._obstacles = obstacles
         assert obst_cart_2d.shape == (2,), \
                 f"obstacle position should be of shape (2,), it's: {obst_cart_2d.shape}"
         self._obst_cart_2d = obst_cart_2d
@@ -62,28 +62,30 @@ class ConfigurationGridMap(ABC):
                 # checking for an obstacle, exclude itself from the list
                 if obst.name == self.obst_name:
                     continue
-                
+
                 if obst.type==UNMOVABLE:
-                    self._setup_obstacle(obst, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 1,
+                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                 elif obst.type==MOVABLE:
-                    self._setup_obstacle(obst, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 2,
+                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
                 elif obst.type==UNKNOWN:
-                    self._setup_obstacle(obst, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 3,
+                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
                 else:
                     raise TypeError(f"unknown type: {obst.type}")
-  
+
     def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
-        """ Set the obstect overlapping with grid cells to a integer value. """ 
+        """ Set the obstect overlapping with grid cells to a integer value. """
 
         match obst.properties.type():
-            # TODO: create a shadow function, which removes the need for warnings when unusual orienatations occur
             case "cylinder":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
-                if not (math.isclose(math.sin(obst.state.ang_p[0]), 0, abs_tol=0.01) and 
+                if not (math.isclose(math.sin(obst.state.ang_p[0]), 0, abs_tol=0.01) and
                         math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
-                    warnings.warn(f"obstacle {obst.name} is not in correct orientation (up/down is not up)")
+                    warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
 
                 self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
@@ -92,7 +94,7 @@ class ConfigurationGridMap(ABC):
 
             case "box":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
-                if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or 
+                if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or
                         math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
                         math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
                         math.isclose(obst.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
@@ -101,10 +103,10 @@ class ConfigurationGridMap(ABC):
                 self._setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
 
             case "urdf":
-                warnings.warn(f"the urdf type is not yet implemented")
+                warnings.warn("the urdf type is not yet implemented")
 
             case _:
-                
+
                 raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
     @abstractmethod
@@ -117,7 +119,7 @@ class ConfigurationGridMap(ABC):
 
     def update(self):
         """ re-initialises the obstacle grid. """
-        self._grid_map = np.zeros((
+        self.grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
         self.setup()
@@ -209,8 +211,9 @@ class ConfigurationGridMap(ABC):
 
     @obstacles.setter
     def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles 
+        assert isinstance(obstacles, dict), \
+        f"obstacles should be a dictionary and is {type(obstacles)}"
+        self._obstacles = obstacles
 
     @property
     def obst_cart_2d(self):
