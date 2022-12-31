@@ -40,7 +40,6 @@ class ConfigurationGridMap(ABC):
         self.obst_name = obst_name
         self._n_orientations = n_orientations
 
-        self.setup()
 
 
     @abstractmethod
@@ -64,19 +63,16 @@ class ConfigurationGridMap(ABC):
                 if obst.name == self.obst_name:
                     continue
                 
-                # TODO: why can I not use UNMOVABLE, UNKNOWN from the obstacle class? now it is stringss
-                match obst.type:
-                    case "unmovable":
-                        self._setup_obstacle(obst, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                if obst.type==UNMOVABLE:
+                    self._setup_obstacle(obst, 1, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
-                    case "movable":
-                        self._setup_obstacle(obst, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                elif obst.type==MOVABLE:
+                    self._setup_obstacle(obst, 2, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
 
-                    case "unknown":
-                        self._setup_obstacle(obst, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
-
-                    case _:
-                        raise TypeError(f"unknown type: {obst.type}")
+                elif obst.type==UNKNOWN:
+                    self._setup_obstacle(obst, 3, 2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                else:
+                    raise TypeError(f"unknown type: {obst.type}")
   
     def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """ 

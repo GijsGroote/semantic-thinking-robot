@@ -8,7 +8,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstac
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
 from tests.graph_based.obstacle_data.cylinders import cylinder
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, UNMOVABLE
 from robot_brain.state import State
 
 
@@ -81,11 +81,12 @@ def test_shortest_path_with_obstacles():
     obstacles = {}
 
     obstacles[box.name()] = Obstacle(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
-    obstacles[box.name()].type = "unmovable"
+    obstacles[box.name()].type = UNMOVABLE
     obstacles[sphere.name()] = Obstacle(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), sphere)
-    obstacles[sphere.name()].type = "unmovable"
+
+    obstacles[sphere.name()].type = UNMOVABLE
     obstacles[cylinder.name()] = Obstacle(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
-    obstacles[cylinder.name()].type = "unmovable"
+    obstacles[cylinder.name()].type = UNMOVABLE
 
     occ_map = RectangleObstacleConfigurationGridMap(
             cell_size=2,
@@ -105,7 +106,7 @@ def test_shortest_path_with_obstacles():
     targets = []
 
     # from north west corner to north east corner
-    expected_paths.append([(3, -2, 0),
+    expected_paths.append(([(3, -2, 0),
         (2.0, -2.0, 0.0),
         (0.0, 0.0, 0.0),
         (2.0, 2.0, 0.0),

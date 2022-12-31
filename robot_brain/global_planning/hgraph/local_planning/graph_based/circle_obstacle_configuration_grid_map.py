@@ -33,6 +33,8 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size)))
 
+        self.setup()
+
     def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular obstacle overlapping with grid cells (representing the obst) to a integer value. """ 
         
@@ -50,7 +52,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
                 #  closeby (<= radius + smallest dimension obst) cells are always in collision with the obstacle 
-                if np.linalg.norm(self.c_idx_to__cart_2d(x_idx, y_idx)-obst_cart_2d) <= obst.properties.radius() + self.obst_radius:
+                if np.linalg.norm(self._c_idx_to__cart_2d(x_idx, y_idx)-obst_cart_2d) <= obst.properties.radius() + self.obst_radius:
                     self.grid_map[x_idx, y_idx] = val
 
     def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
@@ -82,11 +84,11 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
 
-                if point_in_rectangle(self.c_idx_to_cart_2d(x_idx, y_idx), obst_a, obst_b, obst_c):
+                if point_in_rectangle(self._c_idx_to_cart_2d(x_idx, y_idx), obst_a, obst_b, obst_c):
                     self.grid_map[x_idx, y_idx] = val
                     continue
 
-                r_cart_2d = np.array(self.c_idx_to_cart_2d(x_idx, y_idx))
+                r_cart_2d = np.array(self._c_idx_to_cart_2d(x_idx, y_idx))
                 
                 # check if the edges of the obst overlap with the obstacle
                 if minimal_distance_point_to_line(r_cart_2d, obst_a, obst_b) <= self.obst_radius:

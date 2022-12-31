@@ -1,9 +1,9 @@
 from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
 
-UNKNOWN = "unknown"
-MOVABLE = "unmovable"
-UNMOVABLE = "movable"
+MOVABLE = 1
+UNMOVABLE = 2
+UNKNOWN = 3
 
 class Obstacle:
     """
@@ -24,7 +24,7 @@ class Obstacle:
             properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
 
         self.properties = properties
-        self.type = "unknown"
+        self.type = UNKNOWN
 
     # name getter
     @property
@@ -55,7 +55,7 @@ class Obstacle:
     # type setter
     @type.setter
     def type(self, val):
-        if val in {"unmovable", "movable", "unknown"}:
+        if val in {UNKNOWN, MOVABLE, UNMOVABLE}:
             self._type = val
         else:
             raise ValueError(f"the type {val} is not allowed")

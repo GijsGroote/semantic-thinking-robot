@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
-from robot_brain.obstacle import Obstacle, UNMOVABLE
+from robot_brain.obstacle import Obstacle, UNMOVABLE, UNKNOWN, MOVABLE
 from tests.graph_based.obstacle_data.boxes import box
 from robot_brain.state import State
 
@@ -44,7 +44,8 @@ def test_target_warning_raised():
    
     # box on target pose
     box_obst = Obstacle(box.name(), State(pos=np.array([-3.0, 4.0, 0.1])), box)
-    box_obst.type = "unknown"
+    box_obst.type = UNKNOWN
+
 
     rect_conf_grid_map = RectangleObstacleConfigurationGridMap(
             cell_size=1,
@@ -76,7 +77,7 @@ def test_target_warning_raised():
 
     # box on start pose
     box_obst = Obstacle(box.name(), State(pos=np.array([.0, 0, 0.1])), box)
-    box_obst.type = "movable" 
+    box_obst.type = MOVABLE 
 
     rect_conf_grid_map = RectangleObstacleConfigurationGridMap(
             cell_size=1,
@@ -104,8 +105,6 @@ def test_target_warning_raised():
 
     with pytest.warns(Warning):
         circle_conf_grid_map.shortest_path(np.array([0,0]), np.array([-3,4]))
-
-
 
 
 # from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotConfigurationGridMap

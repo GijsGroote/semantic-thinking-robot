@@ -42,6 +42,8 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size),
             n_orientations))
+
+        self.setup()
       
     def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the circular obstect overlapping with grid cells (representing the obstacle) to a integer value. """ 
@@ -224,10 +226,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         if self.occupancy(pose_2d_start) == 1 or self.occupancy(pose_2d_target) == 1:
             return ([], False)
-
-        self.visualise(save=False)
         
-        print(f'what are you then? {self.occupancy(pose_2d_start)}')
         if self.occupancy(pose_2d_start) != 0:
             warnings.warn("the start position is in movable or unkown space")
 
