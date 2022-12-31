@@ -31,29 +31,29 @@ class DriveMotionPlanner(MotionPlanner):
         MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle, step_size, search_size)
 
         if isinstance(configuration_grid_map, ConfigurationGridMap): 
-            self.configuration_space_grid_map = configuration_space_grid_map
+            self.configuration_grid_map = configuration_grid_map
 
         else:
             if isinstance(obstacle.properties, CylinderObstacle):
-                self.configuration_space_grid_map = CircleObstacleConfigurationGridMap(
+                self.configuration_grid_map = CircleObstacleConfigurationGridMap(
                     cell_size=0.2,
                     grid_x_length=grid_x_length,
                     grid_y_length=grid_y_length,
                     obstacles=obstacles,
-                    robot_cart_2d=obstacle.state.get_xy_position(),
+                    obst_cart_2d=obstacle.state.get_xy_position(),
                     obst_name=obstacle.name,
-                    robot_radius=obstacle.properties.radius())
+                    obst_radius=obstacle.properties.radius())
 
             elif isinstance(obstacle.properties, BoxObstacle):
-                self.configuration_space_grid_map = RectangleObstacleConfigurationGridMap(
+                self.configuration_grid_map = RectangleObstacleConfigurationGridMap(
                     cell_size=0.2,
                     grid_x_length=grid_x_length,
                     grid_y_length=grid_y_length,
                     obstacles=obstacles,
-                    robot_cart_2d=obstacle.state.get_xy_position(),
+                    obst_cart_2d=obstacle.state.get_xy_position(),
                     n_orientations= 36,
-                    robot_x_length=obstacle.properties.length(),
-                    robot_y_length=obstacle.properties.width())
+                    obst_x_length=obstacle.properties.length(),
+                    obst_y_length=obstacle.properties.width())
             else:
                 raise ValueError("The robot has an unknown obstacle")
 
@@ -96,8 +96,8 @@ class DriveMotionPlanner(MotionPlanner):
     def search(self, start: State, target: State) -> list:
         """ search for a path between start and target state, raises error if no path can be found. """
 
-        self.configuration_space_grid_map.update()
-        # TODO:self.configuration_space_grid_map.shortest_path() # TODO: add samples to the RRT* planning algorithm 
+        self.configuration_grid_map.update()
+        # TODO:self.configuration_grid_map.shortest_path() # TODO: add samples to the RRT* planning algorithm 
         # before searching for a path
 
         self.setup(start.get_xy_position(), target.get_xy_position())
@@ -116,7 +116,7 @@ class DriveMotionPlanner(MotionPlanner):
             # project it to existing samples
             sample_new = self.project_to_connectivity_graph(sample_rand, sample_closest_key)
 
-            in_space_id = self.configuration_space_grid_map.occupancy(np.array(sample_new))
+            in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
             if in_space_id == 1: # obstacle space, abort sample
                 continue
 
@@ -162,11 +162,11 @@ class DriveMotionPlanner(MotionPlanner):
             # add cost or an additional subtask
             add_subtask_cost = 0
             if in_space_id == 2: # movable space
-                if self.configuration_space_grid_map.occupancy(np.array(close_sample["pos"])) != 2:
+                if self.configuration_grid_map.occupancy(np.array(close_sample["pos"])) != 2:
                     add_subtask_cost = KNOWN_OBSTACLE_COST 
 
             elif in_space_id == 3: # unkown space
-                if self.configuration_space_grid_map.occupancy(np.array(close_sample["pos"])) != 3:
+                if self.configuration_grid_map.occupancy(np.array(close_sample["pos"])) != 3:
                     add_subtask_cost = UNKNOWN_OBSTACLE_COST
 
             temp_total_cost = close_sample["cost_to_source"] + self.distance(close_sample["pos"], sample) + add_subtask_cost

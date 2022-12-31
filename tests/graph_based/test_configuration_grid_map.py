@@ -46,7 +46,6 @@ def test_target_warning_raised():
     box_obst = Obstacle(box.name(), State(pos=np.array([-3.0, 4.0, 0.1])), box)
     box_obst.type = UNKNOWN
 
-
     rect_conf_grid_map = RectangleObstacleConfigurationGridMap(
             cell_size=1,
             grid_x_length=10,
@@ -57,7 +56,6 @@ def test_target_warning_raised():
             n_orientations=8,
             obst_x_length=1,
             obst_y_length=1)
-
 
     with pytest.warns(Warning):
        rect_conf_grid_map.shortest_path(np.array([0,0,0]), np.array([-3,4,0]))
@@ -93,6 +91,7 @@ def test_target_warning_raised():
     with pytest.warns(Warning):
        rect_conf_grid_map.shortest_path(np.array([0,0,0]), np.array([-3,4,0]))
 
+
     # box on start pose 
     circle_conf_grid_map = CircleObstacleConfigurationGridMap(
             cell_size=1,
@@ -105,6 +104,7 @@ def test_target_warning_raised():
 
     with pytest.warns(Warning):
         circle_conf_grid_map.shortest_path(np.array([0,0]), np.array([-3,4]))
+
 
 
 # from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotConfigurationGridMap

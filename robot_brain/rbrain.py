@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, MOVABLE, UNMOVABLE, UNKNOWN
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
@@ -134,7 +134,7 @@ class RBrain:
 
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
-            self.obstacles[key].type = "unmovable"
+            self.obstacles[key].type = UNMOVABLE
             # if key == "simple_cilinder":
             #     print('detected the simple cylinder, that is now set to movable')
             #     self.obstacles[key].type = "movable"

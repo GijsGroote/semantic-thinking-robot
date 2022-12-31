@@ -109,6 +109,7 @@ class PushMotionPlanner(MotionPlanner):
         while not self.paths_converged_test():
 
             # generate random sample
+            #TODO: this should be a 3 dim sample here 
             sample_rand = self.create_random_sample()
 
             # find closest sample

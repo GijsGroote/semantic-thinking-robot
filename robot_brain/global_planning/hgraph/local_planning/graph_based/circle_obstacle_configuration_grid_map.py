@@ -9,6 +9,7 @@ from typing import Tuple
 
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
+from helper_functions.figures import discrete_colorscale
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
@@ -222,21 +223,29 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
     def visualise(self, save: bool=True):
         """ Display the occupancy map for a specific orientation of the obst. """
-        
+
+        bvals = [0, 1, 2, 3, 4]
+        colors = ['#09ffff', '#19d3f3', '#e763fa' , '#ab63fa']
+        dcolorsc = discrete_colorscale(bvals, colors)        
+        tickvals = [3/8, 9/8, 15/8, 21/8]
+        ticktext = ["free", "obstacle", "movable", "unknown"]
+
+        extended_grid_map = np.zeros((int(self.grid_x_length/self.cell_size+2.0), int(self.grid_y_length/self.cell_size+2.0)))
+        extended_grid_map[:,0] = 0
+        extended_grid_map[:,-1] = 1
+        extended_grid_map[0,:] = 2
+        extended_grid_map[-1,:] = 3
+        extended_grid_map[1:-1,1:-1] = self.grid_map
+
         trace = go.Heatmap(
-                x=list(np.arange((self.cell_size-(self.grid_y_length))/2, (self.cell_size+(self.grid_y_length))/2, self.cell_size)),
-                y=list(np.arange((self.cell_size-(self.grid_x_length))/2, (self.cell_size+(self.grid_x_length))/2, self.cell_size)),
-                z=self.grid_map,
+               x=list(np.arange((-(self.grid_y_length))/2, (2*self.cell_size+(self.grid_y_length))/2, self.cell_size)),
+                y=list(np.arange((-(self.grid_x_length))/2, (2*self.cell_size+(self.grid_x_length))/2, self.cell_size)),
+                z=extended_grid_map,
                 type = "heatmap",
-                colorscale = [[0.0, "rgba(11,156,49,0.1)"], [0.25, "rgba(11,156,49,0.1)"], [0.25, "#b2b2ff"], [0.5, "#b2b2ff"],
-                    [0.5, "#e763fa"], [0.75, "#e763fa"], [0.75, "#ab63fa"], [1.0, "#ab63fa"]], 
-                colorbar=dict(title="Space Legend",
-                    tickvals=[0.3, 1.05, 1.8, 2.55, 3.3],
-                    ticktext=["Free", "Obstacle", "Movable", "Unknown"],
-                    y=.6,
-                    len=.2,
-                    ),
-                )
+                colorscale = dcolorsc, 
+                colorbar = dict(thickness=25, 
+                                tickvals=tickvals, 
+                                ticktext=ticktext))
 
         fig = go.Figure(data=trace)
 
@@ -263,14 +272,10 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         # add the boundaries of the map
         fig.add_shape(type="rect",
-                x0=self.grid_y_length/2, y0=self.grid_x_length/2, x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
-                line_color="black",
-                )
-        
-
-        # add the boundaries of the map
-        fig.add_shape(type="rect",
-                x0=self.grid_y_length/2, y0=self.grid_x_length/2, x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
+                x0=(self.grid_y_length+self.cell_size)/2,
+                y0=(self.grid_x_length+self.cell_size)/2,
+                x1=(-self.grid_y_length+self.cell_size)/2,
+                y1=(-self.grid_x_length+self.cell_size)/2,
                 line_color="black",
                 )
         

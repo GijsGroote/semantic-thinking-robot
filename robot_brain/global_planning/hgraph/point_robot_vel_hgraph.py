@@ -44,9 +44,9 @@ class PointRobotVelHGraph(HGraph):
                 grid_x_length= 10,
                 grid_y_length= 12,
                 obstacles= obstacles,
-                robot_cart_2d= self.robot.state.get_xy_position(),
+                obst_cart_2d= self.robot.state.get_xy_position(),
                 obst_name = self.robot.name,
-                robot_radius= 0.4)
+                obst_radius= 0.4)
 
         occ_graph.setup()
 
@@ -56,15 +56,15 @@ class PointRobotVelHGraph(HGraph):
 
         if isinstance(push_obstacle.properties, BoxObstacle):
 
-            occ_graph = RectangularObstacleConfigurationGridMap(cell_size=0.5,
+            occ_graph = RectangleObstacleConfigurationGridMap(cell_size=0.5,
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
-                    robot_cart_2d= push_obstacle.state.get_xy_position(),
+                    obst_cart_2d= push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,
                     n_orientations= 10,
-                    robot_x_length= push_obstacle.properties.length(),
-                    robot_y_length= push_obstacle.properties.width())
+                    obst_x_length= push_obstacle.properties.length(),
+                    obst_y_length= push_obstacle.properties.width())
 
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
@@ -72,9 +72,9 @@ class PointRobotVelHGraph(HGraph):
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
-                    robot_cart_2d= self.robot.state.get_xy_position(),
+                    obst_cart_2d= self.robot.state.get_xy_position(),
                     obst_name = push_obstacle.name,
-                    robot_radius= 0.4)
+                    obst_radius= 0.4)
         else: 
             raise ValueError(f"Unknown obstacle encountered during estimating a path")
 
