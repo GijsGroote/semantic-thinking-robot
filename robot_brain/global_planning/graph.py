@@ -15,7 +15,7 @@ class Graph(ABC):
         self._edges = []
 
     @abstractmethod
-    def visualise(self):
+    def visualise(self, save=True):
         pass
 
     @property
@@ -115,5 +115,3 @@ class Graph(ABC):
         else:
             assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
             return self.find_source_node(edge_to_list[0].source)
-
-     

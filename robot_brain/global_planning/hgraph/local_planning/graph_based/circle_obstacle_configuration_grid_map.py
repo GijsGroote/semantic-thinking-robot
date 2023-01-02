@@ -128,7 +128,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         return self.grid_map[x_idx, y_idx]
 
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
         """ Dijkstra shortest path algorithm. """
         if isinstance(cart_2d_start, State):
             cart_2d_start = cart_2d_start.get_xy_position()
@@ -138,7 +138,6 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         if self.occupancy(cart_2d_start) == 1 or self.occupancy(cart_2d_target) == 1:
             return ([], False)
-
         if self.occupancy(cart_2d_start) != 0:
             warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
 
@@ -221,6 +220,12 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
         shortest_path.append(tuple(cart_2d_target))
 
         return (shortest_path, True)
+
+    def update(self):
+        self.grid_map = np.zeros((
+            int(self.grid_x_length/self.cell_size),
+            int(self.grid_y_length/self.cell_size)))
+        self.setup()
 
     def visualise(self, save: bool=True):
         """ Display the configuration grid map. """
@@ -348,10 +353,6 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
                 pickle.dump(fig, file)
         else:
             fig.show()
-
-    @property
-    def grid_map(self):
-        return self._grid_map
 
     @property
     def obst_radius(self):

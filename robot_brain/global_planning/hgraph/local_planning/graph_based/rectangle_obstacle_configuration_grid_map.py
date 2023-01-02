@@ -41,7 +41,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size),
-            n_orientations))
+            int(n_orientations)))
 
         self.setup()
       
@@ -212,7 +212,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         return self._p_idx_to_occupancy(*idx)
 
 
-    def shortest_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> Tuple[list, bool]:
         """ use the Dijkstra algorithm to find the shortest path. """
 
         if isinstance(pose_2d_start, State):
@@ -353,6 +353,14 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         return (self.cell_size*(0.5+x_idx) - self.grid_x_length/2,
                 self.cell_size*(0.5+y_idx) - self.grid_y_length/2,
                 2*math.pi*orien_idx/self.n_orientations)
+
+    def update(self):
+        """ refresh grid map. """
+        self.grid_map = np.zeros((
+            int(self.grid_x_length/self.cell_size),
+            int(self.grid_y_length/self.cell_size),
+            int(self.n_orientations)))
+        self.setup()
 
     def visualise(self, orien_idx:int=0, save:bool=True):
         """ Display the configuration grid map. """
@@ -496,10 +504,6 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
                 pickle.dump(fig, file)
         else:
             fig.show()
-
-    @property
-    def grid_map(self):
-        return self._grid_map
 
     @property
     def obst_x_length(self):

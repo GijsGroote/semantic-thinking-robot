@@ -1,6 +1,6 @@
 import numpy as np
 from robot_brain.controller.controller import Controller
-from robot_brain.global_planning.edge import Edge 
+from robot_brain.global_planning.edge import Edge
 from robot_brain.state import State
 
 INITIALISED = "initialised"
@@ -30,34 +30,28 @@ class IdentificationEdge(Edge):
 
         self.counter += 1
         # how does the system identifier respond?
-        return np.array([0, 0]) 
+        return np.array([0, 0])
 
     def view_completed(self, current_state: State) -> bool:
         """ view is completed if the test push time is over. """
         if self.counter >= 50:
-            print('drive identification edge is completed, yay')
             return True
         else:
             return False
 
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
-        # wait 50 time steps 
-
-        if self.counter >= 50:
-            print('drive identification edge is completed, yay')
-            return True
-        else:
-            return False
+        # wait 50 time steps
+        return self.counter >= 50
 
     def increment_current_target(self):
         """"""
-        # TODO: implement this 
+        # TODO: implement this
         return
 
     def get_current_target(self):
         """"""
-        # TODO: implement this 
+        # TODO: implement this
         return
 
     def create_log(self) -> dict:
@@ -76,7 +70,7 @@ class IdentificationEdge(Edge):
         return True
 
     def to_string(self):
-        return f"iden: {self.iden}, controller: {self.controller.name}"
+        return f"iden: {self.iden}<br>status: {self.status}<br>controller: {self.controller.name}"
 
     def set_completed_status(self):
         self.status = COMPLETED

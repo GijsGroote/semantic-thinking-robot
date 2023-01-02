@@ -17,7 +17,7 @@ from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
-from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder 
+from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
@@ -75,8 +75,8 @@ class PointRobotVelHGraph(HGraph):
                     obst_cart_2d= self.robot.state.get_xy_position(),
                     obst_name = push_obstacle.name,
                     obst_radius= 0.4)
-        else: 
-            raise ValueError(f"Unknown obstacle encountered during estimating a path")
+        else:
+            raise ValueError("Unknown obstacle encountered during estimating a path")
 
         occ_graph.setup()
 
@@ -92,12 +92,20 @@ class PointRobotVelHGraph(HGraph):
                 configuration_grid_map=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
+        if isinstance(push_obstacle.properties, BoxObstacle):
+            include_orien = True
+        elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
+            include_orien = False
+        else:
+            raise ValueError("Unknown obstacle encountered during estimating a path")
+
         return PushMotionPlanner(grid_x_length=10,
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=push_obstacle,
                 step_size=0.5,
                 search_size=0.7,
+                include_orien=include_orien,
                 configuration_grid_map=path_estimator)
 
     def get_drive_controllers(self) -> list:

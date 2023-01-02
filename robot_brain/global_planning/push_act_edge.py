@@ -5,5 +5,3 @@ class PushActionEdge(ActionEdge):
 
     def __init__(self, iden, source, to, verb, controller):
         ActionEdge.__init__(self, iden, source, to, verb, controller)
-
-

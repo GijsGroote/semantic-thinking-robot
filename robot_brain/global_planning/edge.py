@@ -14,7 +14,7 @@ class Edge(ABC):
         self.to = to
         self.verb = verb
         self.controller = controller
-        self._dyn_model = None 
+        self._dyn_model = None
 
         self._path_estimation = None
         self._path = None
@@ -25,42 +25,33 @@ class Edge(ABC):
     @abstractmethod
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
-        pass
-    
+
     @abstractmethod
     def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
-        pass
 
     @abstractmethod
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
-        pass
 
     @abstractmethod
     def increment_current_target(self):
         """ updates toward the next current target from path. """
-        pass
 
     @abstractmethod
     def get_current_target(self) -> State:
         """ returns the current target the controller tries to steer toward. """
-        pass
 
     @abstractmethod
     def respond(self, state) -> np.ndarray:
         """ respond to the current state. """
-        pass
 
     def create_log(self) -> dict:
         """ return a dictionary with metrics. """
-        pass
 
     @abstractmethod
     def to_string(self):
         """ Creates readable format of an Edge. """
-        pass
-
 
     @property
     def iden(self):

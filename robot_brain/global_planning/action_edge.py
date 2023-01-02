@@ -25,9 +25,12 @@ class ActionEdge(Edge):
         self._motion_planner = None
         self._path_estimator = None
 
-    def respond(self, state) -> np.ndarray:
+    def respond(self, state, obst_state= None) -> np.ndarray:
         """ respond to the current state. """
-        return self.controller.respond(state)
+        if obst_state is None:
+            return self.controller.respond(state)
+        else:
+            return self.controller.respond(state, obst_state=obst_state)
 
     def view_completed(self, current_state: State) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
@@ -91,7 +94,6 @@ class ActionEdge(Edge):
 
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
-        
         if self.status == PATH_IS_PLANNED:
             assert isinstance(self.controller, Controller), f"controller is not of type Controller but {type(self.controller)}"
             assert self.path != False, f"path is False"
@@ -101,7 +103,7 @@ class ActionEdge(Edge):
             return False
 
     def to_string(self):
-        return f"iden: {self.iden}, controller: {self.controller.name}"
+        return f"iden: {self.iden}<br>status:{self.status}, controller: {self.controller.name}"
 
     def set_path_exist_status(self):
         assert isinstance(self.path_estimator, ConfigurationGridMap), f"path_estimator should be ConfigurationGridMap and is {type(self.path_estimator)}"

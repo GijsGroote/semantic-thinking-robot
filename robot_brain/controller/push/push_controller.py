@@ -23,7 +23,7 @@ class PushController(Controller):
         self.dyn_model = emptyfunction
         self.target_state = State()
         self.pred_error = []
-    
+
     def setup(self, dyn_model, robot_state: State, obstacle_state: State, target_state: State):
         """ setup the controller, this is seperated from __init__
         because dynamic models could not yet exist. """
@@ -36,24 +36,24 @@ class PushController(Controller):
         """ use abstraction for different setup methods. """
         pass
 
-    def respond(self, robot_state: State, obstacle_state: State) -> np.ndarray:
+    def respond(self, robot_state: State, obst_state: State) -> np.ndarray:
         """ respond with input for the robot and update dashboard every second. """
 
-        assert isinstance(robot_state, State), f"robot_state should be type State in type {type(current_state)}"
-        assert isinstance(obstacle_state, State), f"obstacle_state should be type State in type {type(current_state)}"
+        assert isinstance(robot_state, State), f"robot_state should be type State in type {type(robot_state)}"
+        assert isinstance(obst_state, State), f"obstacle_state should be type State in type {type(obst_state)}"
 
-        system_input = self._find_input(robot_state, obstacle_state)
+        system_input = self._find_input(robot_state, obst_state)
 
         if CREATE_SERVER_DASHBOARD or PLOT_CONTROLLER or LOG_METRICS:
             
-            self._update_prediction_error_sequence(robot_state, obstacle_state, system_input)
+            self._update_prediction_error_sequence(robot_state, obst_state, system_input)
 
             # plot the controller every x seconds
             if self.dt_counter % (1/DT) == 0 and PLOT_CONTROLLER:# and self.dt_counter != 0:
                 self.update_db()
             self.dt_counter += 1
 
-        return system_input 
+        return system_input
 
     @abstractmethod
     def _update_prediction_error_sequence(self, robot_state: State, obstacle_state: State, system_input: State):

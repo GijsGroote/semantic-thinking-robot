@@ -17,8 +17,8 @@ class Mpc(DriveController):
     the system toward the target state by minimizing an objective function.
     """
     def __init__(self, order):
-        # TODO: this class, and child classes use the simulator for estimating the next state, 
-        # an improvement would be to use the estimator. 
+        # TODO: this class, and child classes use the simulator for estimating the next state,
+        # an improvement would be to use the estimator.
         DriveController.__init__(self, order)
         self.name = "MPC"
         self.mpc = None
@@ -60,26 +60,24 @@ class Mpc(DriveController):
 
         self.mpc.reset_history()
 
-
     @abstractmethod
     def template_model(self, dyn_model):
-        pass
+        "todo"
 
     @abstractmethod
     def template_mpc(self):
-        pass
+        "todo"
 
     @abstractmethod
     def create_plotter(self):
-        pass
+        "todo"
 
     @abstractmethod
     def create_tvp_sim(self):
-        pass
+        "todo"
 
     def _update_prediction_error_sequence(self, current_state: State, system_input: np.ndarray):
         """ update the prediction error and calculate the one step ahead prediction. """
-
         system_input = np.reshape(system_input, (system_input.shape[0], 1))
         self.pred_error.append(self.calculate_prediction_error(current_state))
         self.simulator.x0 = self.create_initial_state(current_state)
@@ -87,11 +85,11 @@ class Mpc(DriveController):
 
     @abstractmethod
     def simulate(self, system_input: np.ndarray) -> State:
-        pass
+        """TODO"""
 
     @abstractmethod
     def calculate_prediction_error(self, current_state: State) -> float:
-        pass
+        """TODO"""
 
     def visualise(self, save=True):
         self.plotter.visualise(self.target_state, self.pred_error, save=save)

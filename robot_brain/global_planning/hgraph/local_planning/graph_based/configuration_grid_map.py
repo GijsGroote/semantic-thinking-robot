@@ -40,10 +40,8 @@ class ConfigurationGridMap(ABC):
         self.obst_name = obst_name
         self._n_orientations = n_orientations
 
-
-
     @abstractmethod
-    def shortest_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
         """ return shortest path and boolean indicating if a shortest path can be found. """
 
     def setup(self):
@@ -117,12 +115,9 @@ class ConfigurationGridMap(ABC):
     def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         pass
 
+    @abstractmethod
     def update(self):
-        """ re-initialises the obstacle grid. """
-        self.grid_map = np.zeros((
-            int(self.grid_x_length/self.cell_size),
-            int(self.grid_y_length/self.cell_size)))
-        self.setup()
+        pass
 
     @abstractmethod
     def occupancy(self, y_position, x_position, *args):
@@ -204,6 +199,14 @@ class ConfigurationGridMap(ABC):
     @property
     def grid_y_length(self):
         return self._grid_y_length
+
+    @property
+    def grid_map(self):
+        return self._grid_map
+
+    @grid_map.setter
+    def grid_map(self, val):
+        self._grid_map = val
 
     @property
     def obstacles(self):
