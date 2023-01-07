@@ -1,7 +1,7 @@
 DT = 0.05
 
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = False
+CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = False
 LOG_METRICS = False
 
@@ -14,9 +14,11 @@ MAX_INPUT = 2.0
 
 
 # the number of time steps to plot for any controller
-PLOT_N_TIMESTEPS = 200 
+PLOT_N_TIMESTEPS = 200
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
+
+COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 
 # "rgb(178, 178, 255)" # #b2b2ff myDarkColor
 # "rgb(204, 204, 255)" # #ccccff myLightColor

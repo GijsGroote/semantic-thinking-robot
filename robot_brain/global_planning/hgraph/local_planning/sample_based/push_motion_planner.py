@@ -135,6 +135,7 @@ class PushMotionPlanner(MotionPlanner):
             self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
 
         path = self.extract_shortest_path()
+        self.shortest_path = path
 
         return path
 

@@ -94,24 +94,13 @@ class Graph(ABC):
         return iden
 
     def point_toward_nodes(self, node_iden) -> list:
-        """ returns a list with node identifiers where an edge
-        points from node_id to these nodes. """
-        assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist" 
+        """ returns a list with node identifiers where an
+        non-failed edge points from node_id to these nodes. """
+
+        assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist"
         point_toward_list = []
         for edge in self.edges:
             if edge.status != FAILED and node_iden == edge.source:
                 point_toward_list.append(edge.to)
 
         return point_toward_list
-        
-    def find_source_node(self, node_iden) -> Node:
-        """ find the source node which points to this node via 0 or more edges.
-        if a T junction is found (2 edges pointing to a node) an error is raised."""
-
-        edge_to_list = [edge for edge in self.edges if edge.to == node_iden and edge.status != FAILED]
-
-        if len(edge_to_list) == 0:
-            return self.get_node(node_iden)
-        else:
-            assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
-            return self.find_source_node(edge_to_list[0].source)

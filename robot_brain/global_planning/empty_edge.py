@@ -1,6 +1,5 @@
 import numpy as np
-from robot_brain.controller.controller import Controller
-from robot_brain.global_planning.edge import Edge 
+from robot_brain.global_planning.edge import Edge
 from robot_brain.state import State
 
 INITIALISED = "initialised"
@@ -44,4 +43,4 @@ class EmptyEdge(Edge):
         pass
 
     def to_string(self):
-        return f"iden: {self.iden}"
+        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}"

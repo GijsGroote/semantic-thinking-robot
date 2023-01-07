@@ -1,0 +1,503 @@
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ lsusb
+[m]133;C\Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+[mBus 001 Device 003: ID 138a:00ab Validity Sensors, Inc. 
+[mBus 001 Device 002: ID 0408:5411 Quanta Computer, Inc. HP HD Camera
+[mBus 001 Device 004: ID 8087:0aaa Intel Corp. Bluetooth 9460/9560 Jefferson Peak (JfP)
+[mBus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ sudo service fprintd status
+
+[m]133;C\[sudo] password for gijs: 
+[mWARNING: terminal is not fully functional
+[mPress RETURN to continue 
+[m[1;32m●[22;39m fprintd.service - Fingerprint Authentication Daemon
+[m     Loaded: loaded (/lib/systemd/system/fprintd.service; static)
+[m     Active: [1;32mactive (running)[22;39m since Sat 2023-01-07 08:49:25 CET; 4s ago
+[m       Docs: man:fprintd(1)
+[m   Main PID: 16101 (fprintd)
+[m      Tasks: 5 (limit: 18932)
+[m     Memory: 1.5M
+[m        CPU: 88ms
+[m     CGroup: /system.slice/fprintd.service
+[m             └─16101 /usr/libexec/fprintd
+
+[mJan 07 08:49:25 gijs-HP-ZBook-Studio-x360-G5 systemd[1]: Starting Fingerprint Authentication Daemon...
+[mJan 07 08:49:25 gijs-HP-ZBook-Studio-x360-G5 systemd[1]: Started Fingerprint Authentication Daemon.
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb
+
+[m]133;C\[1mdpkg:[22m [1;31merror:[22;39m cannot access archive 'libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb': No such file or directory
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ neofetch
+[m]133;C\[1;31m            .-/+oossssoo+/-.[22;39m               [1;31mgijs[22;39m@[1;31mgijs-HP-ZBook-Studio-x360-G5[22;39m 
+[m[1;31m        `:+ssssssssssssssssss+:`[22;39m           --------------------------------- 
+[m[1;31m      -+ssssssssssssssssssyyssss+-[22;39m         [1;31mOS[22;39m: Ubuntu 22.04.1 LTS x86_64 
+[m[1;31m    .ossssssssssssssssss[39mdMMMNy[31msssso.[22;39m       [1;31mHost[22;39m: HP ZBook Studio x360 G5 
+[m[1;31m   /sssssssssss[39mhdmmNNmmyNMMMMh[31mssssss/[22;39m      [1;31mKernel[22;39m: 5.15.0-57-generic 
+[m[1;31m  +sssssssss[39mhm[31myd[39mMMMMMMMNddddy[31mssssssss+[22;39m     [1;31mUptime[22;39m: 5 mins 
+[m[1;31m /ssssssss[39mhNMMM[31myh[39mhyyyyhmNMMMNh[31mssssssss/[22;39m    [1;31mPackages[22;39m: 3583 (dpkg), 3 (brew), 17 (snap) 
+[m[1;31m.ssssssss[39mdMMMNh[31mssssssssss[39mhNMMMd[31mssssssss.[22;39m   [1;31mShell[22;39m: bash 5.1.16 
+[m[1;31m+ssss[39mhhhyNMMNy[31mssssssssssss[39myNMMMy[31msssssss+[22;39m   [1;31mResolution[22;39m: 1920x1080 
+[m[1;31moss[39myNMMMNyMMh[31mssssssssssssss[39mhmmmh[31mssssssso[22;39m   [1;31mDE[22;39m: GNOME 42.5 
+[m[1;31moss[39myNMMMNyMMh[31msssssssssssssshmmmhssssssso[22;39m   [1;31mWM[22;39m: Mutter 
+[m[1;31m+ssss[39mhhhyNMMNy[31mssssssssssss[39myNMMMy[31msssssss+[22;39m   [1;31mWM Theme[22;39m: Adwaita 
+[m[1;31m.ssssssss[39mdMMMNh[31mssssssssss[39mhNMMMd[31mssssssss.[22;39m   [1;31mTheme[22;39m: Yaru-blue-dark [GTK2/3] 
+[m[1;31m /ssssssss[39mhNMMM[31myh[39mhyyyyhdNMMMNh[31mssssssss/[22;39m    [1;31mIcons[22;39m: Yaru-blue [GTK2/3] 
+[m[1;31m  +sssssssss[39mdm[31myd[39mMMMMMMMMddddy[31mssssssss+[22;39m     [1;31mTerminal[22;39m: kitty 
+[m[1;31m   /sssssssssss[39mhdmNNNNmyNMMMMh[31mssssss/[22;39m      [1;31mCPU[22;39m: Intel i7-8750H (12) @ 4.100GHz 
+[m[1;31m    .ossssssssssssssssss[39mdMMMNy[31msssso.[22;39m       [1;31mGPU[22;39m: NVIDIA Quadro P1000 Mobile 
+[m[1;31m      -+sssssssssssssssss[39myyy[31mssss+-[22;39m         [1;31mMemory[22;39m: 2382MiB / 15846MiB 
+[m[1;31m        `:+ssssssssssssssssss+:`
+[m[1;31m            .-/+oossssoo+/-.[22;39m               [30;40m   [31;41m   [32;42m   [33;43m   [34;44m   [35;45m   [36;46m   [37;47m   
+[m                                           [90;100m   [91;101m   [92;102m   [93;103m   [94;104m   [95;105m   [96;106m   [97;107m   
+
+
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ dmidecode
+[m]133;C\# dmidecode 3.3
+[m/sys/firmware/dmi/tables/smbios_entry_point: Permission denied
+[mScanning /dev/mem for entry point.
+[m/dev/mem: Permission denied
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ sudo dmidecode
+[m]133;C\# dmidecode 3.3
+[mGetting SMBIOS data from sysfs.
+[mSMBIOS 3.1 present.
+[m34 structures occupying 2398 bytes.
+[mTable at 0x9AEB1000.
+
+[mHandle 0x0000, DMI type 43, 31 bytes
+[mTPM Device
+[m	Vendor ID: IFX
+[m	Specification Version: 2.0
+[m	Firmware Revision: 7.63
+[m	Description: SLB9670
+[m	Characteristics:
+[m		Family configurable via firmware update
+[m		Family configurable via platform software support
+[m	OEM-specific Information: 0x00000000
+
+[mHandle 0x0001, DMI type 0, 26 bytes
+[mBIOS Information
+[m	Vendor: HP
+[m	Version: Q71 Ver. 01.21.02
+[m	Release Date: 08/01/2022
+[m	Address: 0xF0000
+[m	Runtime Size: 64 kB
+[m	ROM Size: 32 MB
+[m	Characteristics:
+[m		PCI is supported
+[m		PC Card (PCMCIA) is supported
+[m		BIOS is upgradeable
+[m		BIOS shadowing is allowed
+[m		Boot from CD is supported
+[m		Selectable boot is supported
+[m		EDD is supported
+[m		Print screen service is supported (int 5h)
+[m		8042 keyboard services are supported (int 9h)
+[m		Serial services are supported (int 14h)
+[m		Printer services are supported (int 17h)
+[m		ACPI is supported
+[m		USB legacy is supported
+[m		Smart battery is supported
+[m		BIOS boot specification is supported
+[m		Function key-initiated network boot is supported
+[m		Targeted content distribution is supported
+[m		UEFI is supported
+[m	BIOS Revision: 21.2
+[m	Firmware Revision: 22.78
+
+[mHandle 0x0002, DMI type 1, 27 bytes
+[mSystem Information
+[m	Manufacturer: HP
+[m	Product Name: HP ZBook Studio x360 G5
+[m	Version:  
+[m	Serial Number: 5CD9285Y1F
+[m	UUID: e55b0912-f003-d4d3-85b0-d36ae647e666
+[m	Wake-up Type: Power Switch
+[m	SKU Number: 2YS50AV
+[m	Family: 103C_5336AN HP ZBook Studio x360
+
+[mHandle 0x0003, DMI type 2, 17 bytes
+[mBase Board Information
+[m	Manufacturer: HP
+[m	Product Name: 844F
+[m	Version: KBC Version 16.4E.00
+[m	Serial Number: PHMZK018JCF0V7
+[m	Asset Tag:  
+[m	Features:
+[m		Board is a hosting board
+[m	Location In Chassis:  
+[m	Chassis Handle: 0x0000
+[m	Type: Motherboard
+[m	Contained Object Handles: 0
+
+[mHandle 0x0004, DMI type 3, 24 bytes
+[mChassis Information
+[m	Manufacturer: HP
+[m	Type: Convertible
+[m	Lock: Not Present
+[m	Version:  
+[m	Serial Number: 5CD9285Y1F
+[m	Asset Tag: 5CD9285Y1F
+[m	Boot-up State: Safe
+[m	Power Supply State: Safe
+[m	Thermal State: Safe
+[m	Security Status: None
+[m	OEM Information: 0x00000000
+[m	Height: Unspecified
+[m	Number Of Power Cords: Unspecified
+[m	Contained Elements: 0
+[m	SKU Number: Not Specified
+
+[mHandle 0x0006, DMI type 13, 22 bytes
+[mBIOS Language Information
+[m	Language Description Format: Abbreviated
+[m	Installable Languages: 15
+[m		enUS
+[m		deDE
+[m		esES
+[m		itIT
+[m		frFR
+[m		jaJP
+[m		ptPT
+[m		daDK
+[m		svSE
+[m		nlBE
+[m		noNO
+[m		fiFI
+[m		zhCN
+[m		zhTW
+[m		ruRU
+[m	Currently Installed Language: enUS
+
+[mHandle 0x0007, DMI type 16, 23 bytes
+[mPhysical Memory Array
+[m	Location: System Board Or Motherboard
+[m	Use: System Memory
+[m	Error Correction Type: None
+[m	Maximum Capacity: 32 GB
+[m	Error Information Handle: Not Provided
+[m	Number Of Devices: 2
+
+[mHandle 0x000C, DMI type 19, 31 bytes
+[mMemory Array Mapped Address
+[m	Starting Address: 0x00000000000
+[m	Ending Address: 0x003FFFFFFFF
+[m	Range Size: 16 GB
+[m	Physical Array Handle: 0x0007
+[m	Partition Width: 1
+
+[mHandle 0x000D, DMI type 221, 26 bytes
+[mHP BIOS iSCSI NIC PCI and MAC Information
+[m	NIC 1: PCI device 01:00.3, MAC address 00:07:00:76:30:00
+[m	NIC 2: PCI device 00:00.2, MAC address 00:00:00:F0:00:03
+
+[mHandle 0x000E, DMI type 221, 26 bytes
+[mHP BIOS iSCSI NIC PCI and MAC Information
+[m	NIC 1: PCI device 01:00.3, MAC address 00:07:00:76:30:00
+[m	NIC 2: PCI device 00:00.2, MAC address 0C:00:00:0B:00:03
+
+[mHandle 0x000F, DMI type 221, 82 bytes
+[mHP BIOS iSCSI NIC PCI and MAC Information
+[m	NIC 1: PCI device 01:01.3, MAC address 00:07:00:76:30:00
+[m	NIC 2: PCI device 03:00.2, MAC address FF:FF:FF:FF:FF:04
+[m	NIC 3: PCI device ff:00.0, MAC address FF:FF:10:00:05:00
+[m	NIC 4: Not Installed
+[m	NIC 5: PCI device 00:01.2, MAC address 00:00:07:00:02:00
+[m	NIC 6: Disabled
+[m	NIC 7: Disabled
+[m	NIC 8: PCI device 0a:00.0, MAC address 00:07:00:00:00:00
+[m	NIC 9: PCI device 00:01.3, MAC address 06:00:00:00:00:0C
+
+[mHandle 0x0010, DMI type 221, 54 bytes
+[mHP BIOS iSCSI NIC PCI and MAC Information
+[m	NIC 1: PCI device 01:00.7, MAC address 00:07:00:76:30:00
+[m	NIC 2: PCI device 00:00.2, MAC address 00:07:01:79:00:03
+[m	NIC 3: PCI device 07:00.0, MAC address 00:76:30:00:04:05
+[m	NIC 4: Not Installed
+[m	NIC 5: Disabled
+[m	NIC 6: PCI device 07:00.0, MAC address 00:08:00:FF:FF:FF
+
+[mHandle 0x0011, DMI type 221, 12 bytes
+[mHP BIOS iSCSI NIC PCI and MAC Information
+[m	NIC 1: PCI device 01:00.1, MAC address 00:04:00:00:00:00
+
+[mHandle 0x0012, DMI type 7, 27 bytes
+[mCache Information
+[m	Socket Designation: L1 Cache
+[m	Configuration: Enabled, Not Socketed, Level 1
+[m	Operational Mode: Write Back
+[m	Location: Internal
+[m	Installed Size: 384 kB
+[m	Maximum Size: 384 kB
+[m	Supported SRAM Types:
+[m		Synchronous
+[m	Installed SRAM Type: Synchronous
+[m	Speed: Unknown
+[m	Error Correction Type: Parity
+[m	System Type: Unified
+[m	Associativity: 8-way Set-associative
+
+[mHandle 0x0013, DMI type 7, 27 bytes
+[mCache Information
+[m	Socket Designation: L2 Cache
+[m	Configuration: Enabled, Not Socketed, Level 2
+[m	Operational Mode: Write Back
+[m	Location: Internal
+[m	Installed Size: 1536 kB
+[m	Maximum Size: 1536 kB
+[m	Supported SRAM Types:
+[m		Synchronous
+[m	Installed SRAM Type: Synchronous
+[m	Speed: Unknown
+[m	Error Correction Type: Single-bit ECC
+[m	System Type: Unified
+[m	Associativity: 4-way Set-associative
+
+[mHandle 0x0014, DMI type 7, 27 bytes
+[mCache Information
+[m	Socket Designation: L3 Cache
+[m	Configuration: Enabled, Not Socketed, Level 3
+[m	Operational Mode: Write Back
+[m	Location: Internal
+[m	Installed Size: 9 MB
+[m	Maximum Size: 9 MB
+[m	Supported SRAM Types:
+[m		Synchronous
+[m	Installed SRAM Type: Synchronous
+[m	Speed: Unknown
+[m	Error Correction Type: Multi-bit ECC
+[m	System Type: Unified
+[m	Associativity: 12-way Set-associative
+
+[mHandle 0x0015, DMI type 4, 48 bytes
+[mProcessor Information
+[m	Socket Designation: U3E1
+[m	Type: Central Processor
+[m	Family: Core i7
+[m	Manufacturer: Intel(R) Corporation
+[m	ID: EA 06 09 00 FF FB EB BF
+[m	Signature: Type 0, Family 6, Model 158, Stepping 10
+[m	Flags:
+[m		FPU (Floating-point unit on-chip)
+[m		VME (Virtual mode extension)
+[m		DE (Debugging extension)
+[m		PSE (Page size extension)
+[m		TSC (Time stamp counter)
+[m		MSR (Model specific registers)
+[m		PAE (Physical address extension)
+[m		MCE (Machine check exception)
+[m		CX8 (CMPXCHG8 instruction supported)
+[m		APIC (On-chip APIC hardware supported)
+[m		SEP (Fast system call)
+[m		MTRR (Memory type range registers)
+[m		PGE (Page global enable)
+[m		MCA (Machine check architecture)
+[m		CMOV (Conditional move instruction supported)
+[m		PAT (Page attribute table)
+[m		PSE-36 (36-bit page size extension)
+[m		CLFSH (CLFLUSH instruction supported)
+[m		DS (Debug store)
+[m		ACPI (ACPI supported)
+[m		MMX (MMX technology supported)
+[m		FXSR (FXSAVE and FXSTOR instructions supported)
+[m		SSE (Streaming SIMD extensions)
+[m		SSE2 (Streaming SIMD extensions 2)
+[m		SS (Self-snoop)
+[m		HTT (Multi-threading)
+[m		TM (Thermal monitor supported)
+[m		PBE (Pending break enabled)
+[m	Version: Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
+[m	Voltage: 0.8 V
+[m	External Clock: 100 MHz
+[m	Max Speed: 4100 MHz
+[m	Current Speed: 2079 MHz
+[m	Status: Populated, Enabled
+[m	Upgrade: Socket BGA1440
+[m	L1 Cache Handle: 0x0012
+[m	L2 Cache Handle: 0x0013
+[m	L3 Cache Handle: 0x0014
+[m	Serial Number: To Be Filled By O.E.M.
+[m	Asset Tag: To Be Filled By O.E.M.
+[m	Part Number: To Be Filled By O.E.M.
+[m	Core Count: 6
+[m	Core Enabled: 6
+[m	Thread Count: 12
+[m	Characteristics:
+[m		64-bit capable
+[m		Multi-Core
+[m		Hardware Thread
+[m		Execute Protection
+[m		Enhanced Virtualization
+[m		Power/Performance Control
+
+[mHandle 0x0016, DMI type 8, 9 bytes
+[mPort Connector Information
+[m	Internal Reference Designator: Ctrl0Port0
+[m	Internal Connector Type: SAS/SATA Plug Receptacle
+[m	External Reference Designator: SSD1
+[m	External Connector Type: SAS/SATA Plug Receptacle
+[m	Port Type: SATA
+
+[mHandle 0x0017, DMI type 8, 9 bytes
+[mPort Connector Information
+[m	Internal Reference Designator: Ctrl0Port1
+[m	Internal Connector Type: SAS/SATA Plug Receptacle
+[m	External Reference Designator: HDD1
+[m	External Connector Type: SAS/SATA Plug Receptacle
+[m	Port Type: SATA
+
+[mHandle 0x0018, DMI type 8, 9 bytes
+[mPort Connector Information
+[m	Internal Reference Designator: Ctrl0Port4
+[m	Internal Connector Type: SAS/SATA Plug Receptacle
+[m	External Reference Designator: SSD2
+[m	External Connector Type: SAS/SATA Plug Receptacle
+[m	Port Type: SATA
+
+[mHandle 0x0019, DMI type 9, 17 bytes
+[mSystem Slot Information
+[m	Designation: M2 WLAN/BT
+[m	Type: x1 PCI Express 3 x1
+[m	Current Usage: Available
+[m	Length: Long
+[m	ID: 1
+[m	Characteristics:
+[m		3.3 V is provided
+[m		PME signal is supported
+[m		SMBus signal is supported
+[m	Bus Address: 0000:00:1c.3
+
+[mHandle 0x001A, DMI type 9, 17 bytes
+[mSystem Slot Information
+[m	Designation: M2 SSD
+[m	Type: x4 PCI Express 3 x4
+[m	Current Usage: In Use
+[m	Length: Long
+[m	ID: 2
+[m	Characteristics:
+[m		3.3 V is provided
+[m		PME signal is supported
+[m		SMBus signal is supported
+[m	Bus Address: 0000:00:1d.0
+
+[mHandle 0x001B, DMI type 41, 11 bytes
+[mOnboard Device
+[m	Reference Designation: Onboard IGD
+[m	Type: Video
+[m	Status: Enabled
+[m	Type Instance: 1
+[m	Bus Address: 0000:00:02.0
+
+[mHandle 0x001C, DMI type 131, 64 bytes
+[mOEM-specific Type
+[m	Header and Data:
+[m		83 40 1C 00 31 00 00 00 0C 00 00 00 00 00 0B 00
+[m		F8 00 0E A3 00 00 00 00 01 00 00 00 00 00 0C 00
+[m		18 08 5A 00 00 00 00 00 FE 00 FF FF 00 00 00 00
+[m		00 00 00 00 22 00 00 00 76 50 72 6F 00 00 00 00
+
+[mHandle 0x001D, DMI type 17, 40 bytes
+[mMemory Device
+[m	Array Handle: 0x0007
+[m	Error Information Handle: Not Provided
+[m	Total Width: 64 bits
+[m	Data Width: 64 bits
+[m	Size: 16 GB
+[m	Form Factor: SODIMM
+[m	Set: None
+[m	Locator: Bottom-Slot 1(left)
+[m	Bank Locator: ChannelA
+[m	Type: DDR4
+[m	Type Detail: Synchronous
+[m	Speed: 2667 MT/s
+[m	Manufacturer: Hynix/Hyundai
+[m	Serial Number: 53116F56
+[m	Asset Tag:  
+[m	Part Number: HMA82GS6JJR8N-VK    
+[m	Rank: 2
+[m	Configured Memory Speed: 2667 MT/s
+[m	Minimum Voltage: Unknown
+[m	Maximum Voltage: Unknown
+[m	Configured Voltage: 1.2 V
+
+[mHandle 0x0008, DMI type 17, 40 bytes
+[mMemory Device
+[m	Array Handle: 0x0007
+[m	Error Information Handle: Not Provided
+[m	Total Width: Unknown
+[m	Data Width: Unknown
+[m	Size: No Module Installed
+[m	Form Factor: Other
+[m	Set: None
+[m	Locator: Bottom-Slot 2(right)
+[m	Bank Locator: ChannelB
+[m	Type: Unknown
+[m	Type Detail: None
+[m	Speed: Unknown
+[m	Manufacturer: Not Specified
+[m	Serial Number: Not Specified
+[m	Asset Tag: Not Specified
+[m	Part Number: Not Specified
+[m	Rank: Unknown
+[m	Configured Memory Speed: Unknown
+[m	Minimum Voltage: Unknown
+[m	Maximum Voltage: Unknown
+[m	Configured Voltage: Unknown
+
+[mHandle 0x0009, DMI type 20, 35 bytes
+[mMemory Device Mapped Address
+[m	Starting Address: 0x00000000000
+[m	Ending Address: 0x003FFFFFFFF
+[m	Range Size: 16 GB
+[m	Physical Device Handle: 0x001D
+[m	Memory Array Mapped Address Handle: 0x000C
+[m	Partition Row Position: 1
+
+[mHandle 0x000A, DMI type 22, 26 bytes
+[mPortable Battery
+[m	Location: Primary
+[m	Manufacturer: 333-1C-26-A
+[m	Name: ZG06095XL
+[m	Design Capacity: 95980 mWh
+[m	Design Voltage: 11550 mV
+[m	SBDS Version: 1.1
+[m	Maximum Error: Unknown
+[m	SBDS Serial Number: 0655
+[m	SBDS Manufacture Date: 2019-05-20
+[m[m	SBDS Chemistry: LION
+[m	OEM-specific Information: 0x00000000
+
+[mHandle 0x000B, DMI type 24, 5 bytes
+[mHardware Security
+[m	Power-On Password Status: Disabled
+[m	Keyboard Password Status: Disabled
+[m	Administrator Password Status: Disabled
+[m	Front Panel Reset Status: Disabled
+
+[mHandle 0x001E, DMI type 32, 11 bytes
+[mSystem Boot Information
+[m	Status: No errors detected
+
+[mHandle 0x001F, DMI type 11, 5 bytes
+[mOEM Strings
+[m	String 1: FBYTE#6J6S6b7B7M7R7U7W7m7saBaEapaqasauawbVbhcAd6dUdpdqfAhKhZj6jhkx.Ae;
+[m	String 2: BUILDID#18WWZIDT601#SABH#DABH;
+[m	String 3: EDK2_1
+[m	String 4: Buff=2
+[m	String 5: HRDWFEATS=VTX:1;VTD:1;SGX:0;NONHPBATDET:1
+
+[mHandle 0x0005, DMI type 14, 8 bytes
+[mGroup Associations
+[m	Name: $MEI
+[m	Items: 1
+[m		0x0000 (OEM-specific)
+
+[mHandle 0x0020, DMI type 219, 106 bytes
+[mHP ProLiant Information
+[m	Power Features: 0x45010401
+[m	Omega Features: 0x06a00002
+[m	Misc. Features: 0x00000000
+[m		iCRU: No
+[m		UEFI: No
+
+[mHandle 0xFEFF, DMI type 127, 4 bytes
+[mEnd Of Table
+
+[m]133;A\[1;34m~/Documents/semantic-thinking-robot[22;39m$ 

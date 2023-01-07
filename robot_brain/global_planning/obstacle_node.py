@@ -18,7 +18,12 @@ class ObstacleNode(Node):
         self.subtask_name = subtask_name
 
     def to_string(self):
-        return f"ObstacleNode: {self.iden}, with obstacle {self.obstacle.name}, {self.obstacle.properties.name}"
+        return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
+                f"<br>With Obstacle: {self.obstacle.name}"
+
+    def ready_for_execution(self) -> bool:
+        """ returns true if the node is ready for execution. """
+        return self.status == INITIALISED
 
     @property
     def obstacle(self):

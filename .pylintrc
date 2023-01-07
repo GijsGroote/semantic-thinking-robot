@@ -13,4 +13,5 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 max-attributes=10
 
 [FORMAT]
-good-names=n,i,j,k,x,y,to,v,u1,u2,u,TODO,iden,dt,df,ob,_A,_B,_C,_D,a,b,c,d
+good-names=n,i,j,k,x,y,to,v,u1,u2,u,TODO,iden,dt,df,ob,_A,_B,_C,_D,W,H,a,b,c,d
+max-line-length=130

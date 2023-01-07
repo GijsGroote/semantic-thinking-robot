@@ -130,6 +130,7 @@ class DriveMotionPlanner(MotionPlanner):
 
         # visualisation could be removed
         path = self.extract_shortest_path()
+        self.shortest_path = path
 
         return path
 

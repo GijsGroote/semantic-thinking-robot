@@ -3,6 +3,13 @@ import numpy as np
 from abc import ABC, abstractmethod
 from robot_brain.state import State
 
+
+INITIALISED = "initialised"
+COMPLETED = "completed"
+EXECUTING = "executing"
+FAILED = "failed"
+
+
 class Edge(ABC):
     """
     Edge or transition, describes the way/method of transitioning from
@@ -27,7 +34,7 @@ class Edge(ABC):
         """ checks if all parameters are set to execute this transition. """
 
     @abstractmethod
-    def view_completed(self) -> bool:
+    def view_completed(self, current_state: State) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
     @abstractmethod
@@ -43,7 +50,7 @@ class Edge(ABC):
         """ returns the current target the controller tries to steer toward. """
 
     @abstractmethod
-    def respond(self, state) -> np.ndarray:
+    def respond(self, state, obst_state= None) -> np.ndarray:
         """ respond to the current state. """
 
     def create_log(self) -> dict:

@@ -45,7 +45,7 @@ class PushController(Controller):
         system_input = self._find_input(robot_state, obst_state)
 
         if CREATE_SERVER_DASHBOARD or PLOT_CONTROLLER or LOG_METRICS:
-            
+
             self._update_prediction_error_sequence(robot_state, obst_state, system_input)
 
             # plot the controller every x seconds
@@ -58,8 +58,7 @@ class PushController(Controller):
     @abstractmethod
     def _update_prediction_error_sequence(self, robot_state: State, obstacle_state: State, system_input: State):
         """ updates the sequence with the one-step-ahead prediction error. """
-        pass
 
     @abstractmethod
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
-        pass
+        """ find input """

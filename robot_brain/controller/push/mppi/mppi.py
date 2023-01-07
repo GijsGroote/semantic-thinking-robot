@@ -40,7 +40,7 @@ class PushMppi(PushController):
                     num_samples=5000, # number of rollouts
                     horizon=self.n_horizon,
                     lambda_=1e-2,
-                    device=TORCH_DEVICE, 
+                    device=TORCH_DEVICE,
                     u_min=torch.tensor([MIN_INPUT, MIN_INPUT], dtype=torch.double, device=TORCH_DEVICE),
                     u_max=torch.tensor([MAX_INPUT, MAX_INPUT], dtype=torch.double, device=TORCH_DEVICE)
                 )
@@ -51,7 +51,7 @@ class PushMppi(PushController):
         self.y_predicted = self._simulate(robot_state, obstacle_state, system_input)
 
     @abstractmethod
-    def _calculate_prediction_error(self, obstacle_state: State) -> float:
+    def _calculate_prediction_error(self, obst_state: State) -> float:
         pass
 
     @abstractmethod

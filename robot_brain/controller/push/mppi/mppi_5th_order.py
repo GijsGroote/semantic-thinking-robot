@@ -1,18 +1,18 @@
+import torch
+import numpy as np
 from robot_brain.controller.push.mppi.mppi import PushMppi
 from robot_brain.global_variables import TORCH_DEVICE
-import numpy as np
 from robot_brain.state import State
-import torch
 
 class PushMppi5thOrder(PushMppi):
     """ Mppi push controller specific for 2th order systems
     it corresponds to the point robot which is driven by velocity input. """
-    
+
     def __init__(self):
         PushMppi.__init__(self, order=5)
 
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
-        """ penalty function for input when the system is in a state, the running 
+        """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
         H = 2
@@ -31,9 +31,8 @@ class PushMppi5thOrder(PushMppi):
         # - obstacle orientation to target position
         obst_rotation_cost = 1.0*torch.abs(x[:,4] - self.target_state.ang_p[2])
 
-        cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost 
+        cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
 
-        print(f'robot pose {torch.round(robot_pose_cost[0]/cost[0], decimals=1)}, obst to target {torch.round(obst_to_target_cost[0]/cost[0], decimals=1)}, obst_rotation {torch.round(obst_rotation_cost[0]/cost[0], decimals=1)}')
 
         return cost
 
@@ -43,8 +42,8 @@ class PushMppi5thOrder(PushMppi):
         return self.controller.command(
                 np.append(robot_state.get_xy_position(),
                 obstacle_state.get_2d_pose(), axis=0)).cpu().numpy()
-        
-    def _simulate(self, robot_state: State, obstacle_state: State, system_input: np.ndarray) -> State: 
+
+    def _simulate(self, robot_state: State, obstacle_state: State, system_input: np.ndarray) -> State:
         """ simulate one time step into the future. """
 
         # TODO: simulate forward using both robot and obstacle state
@@ -55,8 +54,6 @@ class PushMppi5thOrder(PushMppi):
 
         return State(pos=np.array([pose_2d[0], pose_2d[1], 0]), ang_p=np.array([0,0,pose_2d[2]]))
 
-    def _calculate_prediction_error(self, robot_state: State, obstacle_state: State) -> float:
+    def _calculate_prediction_error(self, obst_state: State) -> float:
         """ return calculated prediction error. """
-
-        # robot and obstacle state please
-        return self.y_predicted.pose_euclidean(robot_state)
+        return self.y_predicted.pose_euclidean(obst_state)

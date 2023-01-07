@@ -1,6 +1,6 @@
 import warnings
-import time 
-import numpy as np 
+import time
+import numpy as np
 import pandas as pd
 from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
@@ -10,7 +10,7 @@ from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobot
 from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 
 from motion_planning_env.box_obstacle import BoxObstacle
-from motion_planning_env.cylinder_obstacle import CylinderObstacle 
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
 pd.options.plotting.backend = "plotly"
 
 # is_doing states
@@ -40,9 +40,6 @@ class RBrain:
         if CREATE_SERVER_DASHBOARD:
             self.dash_app = start_dash_server()
 
-    def visualise_grid(self):
-        self.hgraph.plot_occupancy_graph()
-
     def setup(self, stat_world_info, ob):
 
         # create robot
@@ -54,9 +51,9 @@ class RBrain:
                     # "geometry": {"radius": 0.22, "height": 0.25},
                     "geometry": {"radius": 0.28, "height": 0.25},
                 }
-                robot_properties = CylinderObstacle(name="cylinder_robot", content_dict=cylinder_dict)
+                robot_properties = CylinderObstacle(name="pointRobot-vel-v7-obst", content_dict=cylinder_dict)
 
-            elif stat_world_info["robot_type"] == "boxerRobot-vel-v7" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
+            elif stat_world_info["robot_type"] == "boxerRobot-vel-v7-obst" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
 
                 box_dict = {
                     "type": "box",
@@ -140,20 +137,20 @@ class RBrain:
             #     self.obstacles[key].type = "movable"
 
     def setup_hgraph(self, stat_world_info):
-        """ 
+        """
         Setup Hypothesis graph initialised with the task.
 
-        4 types pointRobot-vel-v7, pointRobot-acc-v7, 
-                boxerRobot-vel-v7, boxerRobot-acc-v7
+        2 types pointRobot-vel-v7
+                boxerRobot-vel-v7
 
-        are of robot are allowed.
+        of robots are allowed.
         """
 
         if stat_world_info["robot_type"] == "pointRobot-vel-v7":
-            self.hgraph = PointRobotVelHGraph(self.robot)
+            self.hgraph = PointRobotVelHGraph(self.robot, stat_world_info["env"])
 
         elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
-            self.hgraph = BoxerRobotVelHGraph(self.robot)
+            self.hgraph = BoxerRobotVelHGraph(self.robot, env, stat_world_info["env"])
 
         else:
             raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
@@ -164,7 +161,7 @@ class RBrain:
         # halt if there are no subtask
         if len(stat_world_info["task"]) == 0:
             self.is_doing = IS_DOING_NOTHING
-            
+
             if CREATE_SERVER_DASHBOARD:
                 self.hgraph.visualise()
                 stop_dash_server(self.dash_app)

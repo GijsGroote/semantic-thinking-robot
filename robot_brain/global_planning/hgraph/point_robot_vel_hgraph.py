@@ -34,10 +34,10 @@ class PointRobotVelHGraph(HGraph):
     """
     Hypothesis graph for a Point Robot accepting velocity input.
     """
-    def __init__(self, robot):
-        HGraph.__init__(self)
+    def __init__(self, robot, env):
+        HGraph.__init__(self, env)
         self.robot = robot
-        self.robot_order = 2 
+        self.robot_order = 2
     
     def create_drive_path_estimator(self, obstacles) -> ConfigurationGridMap:
         occ_graph = CircleObstacleConfigurationGridMap(cell_size=0.1,
@@ -135,7 +135,6 @@ class PointRobotVelHGraph(HGraph):
 
 
     def _setup_drive_controller(self, controller, dyn_model):
-        # TODO: should the target state not also be passed insead of the robot state?
 
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
         assert callable(dyn_model), "the dyn_model should be callable function"
@@ -149,11 +148,8 @@ class PointRobotVelHGraph(HGraph):
         assert callable(dyn_model), "the dyn_model should be callable function"
 
         source_state = self.get_node(push_edge.source).obstacle.state
-        to_state = self.get_node(push_edge.to).obstacle.state
 
-        print(f'hey source state {source_state} and target state {to_state}')
-
-        controller.setup(dyn_model, self.robot.state, source_state, to_state)
+        controller.setup(dyn_model, self.robot.state, source_state, source_state)
 
 
 

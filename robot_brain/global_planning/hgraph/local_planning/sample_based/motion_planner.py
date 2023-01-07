@@ -48,6 +48,7 @@ class MotionPlanner(ABC):
 
         self.samples = {}
         self.shortest_paths = SortedDict({})
+        self.shortest_path = None
         self.x_sorted = SortedDict({})
         self.y_sorted = SortedDict({})
         self.n_samples = 0
@@ -217,7 +218,7 @@ class MotionPlanner(ABC):
 
         return unique_id
 
-    def visualise(self, save=True, shortest_path=None):
+    def visualise(self, save=True):
         """ Visualise the connectivity graph. """
 
         fig = go.Figure()
@@ -251,10 +252,10 @@ class MotionPlanner(ABC):
             fig.add_scatter(y=[sample1["pose"][0], sample2["pose"][0]], x=[sample1["pose"][1], sample2["pose"][1]], **connect_style)
             connect_style["showlegend"] = False
 
-        if shortest_path is not None:
-            x_points = [sample[0] for sample in shortest_path]
-            y_points = [sample[1] for sample in shortest_path]
-                
+        if self.shortest_path is not None:
+            x_points = [sample[0] for sample in self.shortest_path]
+            y_points = [sample[1] for sample in self.shortest_path]
+
             fig.add_scatter(y=x_points, x=y_points, showlegend = True, name="Path Found", line=dict(color="red", width=5))
         
         fig.update_xaxes({"autorange": True})

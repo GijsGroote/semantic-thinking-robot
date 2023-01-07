@@ -33,4 +33,3 @@ def test_init():
     pmp.shortest_path(State(), State(pos=np.array([4,5,10])))
 
     assert False
-

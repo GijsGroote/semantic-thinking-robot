@@ -1,4 +1,5 @@
 from multiprocessing import Process, Pipe
+import math
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
@@ -63,20 +64,21 @@ def main(conn=None):
         "obstacles_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [#(box.name(), State(pos=np.array([3.3212, 2, 0]))),
-            (box.name(), State(pos=np.array([-5, 1, 0]))),
-            # ("robot", State(pos=np.array([3.3212, 2, 0]))),
-            # ("robot", State(pos=np.array([3.3212, -2, 0]))),
-            # ("robot", State(pos=np.array([3.3212, 1, 0]))),
+            # (box.name(), State(pos=np.array([-5, -1, 0]))),
+            ("robot", State(pos=np.array([3.3212, 2, 0]))),
+            # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
+            ("robot", State(pos=np.array([3.3212, 1, 0]))),
             # ("robot", State(pos=np.array([3.3212, 2.80, 0]))),
             # ("robot", State(pos=np.array([4,-4,0]))),
             ("robot", State(pos=np.array([-4, -4, 0]))),
             ],
-        "obstacles": obstacles
+        "obstacles": obstacles,
+        "env": env
     }, ob)
 
     brain.update(ob)
 
-    for i in range(n_steps):
+    for _ in range(n_steps):
 
         action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)

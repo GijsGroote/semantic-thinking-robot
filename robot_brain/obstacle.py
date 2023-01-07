@@ -21,7 +21,7 @@ class Obstacle:
                 "position": [0, 0, 0],
                 "geometry": {"length": 1, "width": 1, "height": 1},
             }
-            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
+            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict)
 
         self.properties = properties
         self.type = UNKNOWN

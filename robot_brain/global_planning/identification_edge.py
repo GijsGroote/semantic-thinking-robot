@@ -3,12 +3,8 @@ from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.edge import Edge
 from robot_brain.state import State
 
-INITIALISED = "initialised"
-# TEST_INPUT_READY = "test_input_ready"
-EXECUTING = "executing"
-COMPLETED = "completed"
-# FAILED = "failed"
 
+from robot_brain.global_planning.edge import INITIALISED, COMPLETED, EXECUTING, FAILED
 
 class IdentificationEdge(Edge):
     """ parent class for every system identification edge. """
@@ -66,14 +62,17 @@ class IdentificationEdge(Edge):
 
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
-        # identification edge is alwasys ready
-        return True
+        return self.status == INITIALISED
 
     def to_string(self):
-        return f"iden: {self.iden}<br>status: {self.status}<br>controller: {self.controller.name}"
+        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
+                f"System model: todo system model here"
 
-    def set_completed_status(self):
-        self.status = COMPLETED
 
     def set_executing_status(self):
+        print(f'edge {self.iden} status is executing')
         self.status = EXECUTING
+
+    def set_completed_status(self):
+        print(f'edge {self.iden} status is completed')
+        self.status = COMPLETED

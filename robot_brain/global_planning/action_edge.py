@@ -1,19 +1,15 @@
 import numpy as np
+from abc import abstractmethod
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.edge import Edge
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
-from robot_brain.dynamics import Dynamics 
 from robot_brain.state import State
 
-INITIALISED = "initialised"
+from robot_brain.global_planning.edge import INITIALISED, COMPLETED, EXECUTING, FAILED
 PATH_EXISTS = "path_exists"
 HAS_SYSTEM_MODEL = "has_system_model"
 PATH_IS_PLANNED = "path_is_planned"
-EXECUTING = "executing"
-COMPLETED = "completed"
-FAILED = "failed"
-
 
 class ActionEdge(Edge):
     """ Parent class for all actions. """
@@ -21,23 +17,18 @@ class ActionEdge(Edge):
     def __init__(self, iden, source, to, verb, controller):
         Edge.__init__(self, iden, source, to, verb, controller)
         self.status = INITIALISED
+        print(f'edge {iden} is initialised')
 
         self._motion_planner = None
         self._path_estimator = None
 
-    def respond(self, state, obst_state= None) -> np.ndarray:
+    @abstractmethod
+    def respond(self, robot_state: State, obst_state=None) -> np.ndarray:
         """ respond to the current state. """
-        if obst_state is None:
-            return self.controller.respond(state)
-        else:
-            return self.controller.respond(state, obst_state=obst_state)
 
-    def view_completed(self, current_state: State) -> bool:
+    @abstractmethod
+    def view_completed(self, state: State) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
-        if np.linalg.norm(current_state.get_xy_position() - self.get_current_target().get_xy_position()) < 0.5:
-            return True
-        else:
-            return False
 
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
@@ -59,23 +50,22 @@ class ActionEdge(Edge):
                 ang_p=np.array([0, 0, orien])
                 )
 
+        print(f"increment target tp {next_target.get_2d_pose()}")
+
         self.controller.set_target_state(next_target)
 
     def get_current_target(self) -> State:
         """ returns the current target the controller tries to steer toward. """
-        if len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
-        else:
-            orien = 0
-        return State(pos=np.append(self.path[self.path_pointer][0:2], [[0]]),
-                ang_p=np.array([0, 0, orien]))
+        return self.controller.target_state
 
     def create_log(self) -> dict:
         """ return a dictionary with metrics. """
         # TODO: maybe you want to be less strict here on that prediction error, gijs 11 nov 2022
         pred_error = self.controller.pred_error
-        assert isinstance(pred_error, list), f"pred_error should be a list and is {type(pred_error)}"
-        assert all(isinstance(err, float) for err in pred_error), "pred_error should contain only floats but does not"
+        assert isinstance(pred_error, list),\
+                f"pred_error should be a list and is {type(pred_error)}"
+        assert all(isinstance(err, float) for err in pred_error),\
+                "pred_error should contain only floats but does not"
 
         log = {
             "status": self.status,
@@ -95,43 +85,68 @@ class ActionEdge(Edge):
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
         if self.status == PATH_IS_PLANNED:
-            assert isinstance(self.controller, Controller), f"controller is not of type Controller but {type(self.controller)}"
-            assert self.path != False, f"path is False"
-            # TODO: Are there additional assertions to check?
+            assert isinstance(self.controller, Controller),\
+                    f"controller is not of type Controller but {type(self.controller)}"
+            assert isinstance(self.path, list),\
+                    f"path should be a list and is {type(self.path)}"
+            assert len(self.path) >= 2,\
+                    f"path should contain more then 2 positions and contains {len(self.path)}"
+
             return True
         else:
             return False
 
     def to_string(self):
-        return f"iden: {self.iden}<br>status:{self.status}, controller: {self.controller.name}"
+        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
+                f"Controller: {self.controller.name}<br>System model: todo system model here"
 
     def set_path_exist_status(self):
-        assert isinstance(self.path_estimator, ConfigurationGridMap), f"path_estimator should be ConfigurationGridMap and is {type(self.path_estimator)}"
-        assert isinstance(self.path_estimation, list), f"path_estimation should be list and is {type(self.path_estimation)}"
-        assert self.status == INITIALISED, f"before setting status to {PATH_EXISTS} the status must be {INITIALISED} and it's {self.status}"
+        assert isinstance(self.path_estimator, ConfigurationGridMap),\
+                f"path_estimator should be ConfigurationGridMap and is {type(self.path_estimator)}"
+        assert isinstance(self.path_estimation, list),\
+                f"path_estimation should be list and is {type(self.path_estimation)}"
+        assert self.status == INITIALISED,\
+                f"before setting status to {PATH_EXISTS} the status must be {INITIALISED} and it's {self.status}"
+
+        print(f'status of edge {self.iden} is set to {PATH_EXISTS}')
         self.status = PATH_EXISTS
 
     def set_has_system_model_status(self):
-        # assert isinstance(self.dyn_model, Dynamics), "dyn_model should be of type Dynamics and is {type(self.dyn_model)}"
-        assert self.status == PATH_EXISTS, f"before setting status to {HAS_SYSTEM_MODEL} the status must be {PATH_EXISTS} and it's {self.status}"
-        self.status = HAS_SYSTEM_MODEL 
+        assert self.status == PATH_EXISTS,\
+                f"before setting status to {HAS_SYSTEM_MODEL} the status must be {PATH_EXISTS} and it's {self.status}"
+        self.status = HAS_SYSTEM_MODEL
+
+        print(f'status of edge {self.iden} is set to {HAS_SYSTEM_MODEL}')
 
     def set_path_is_planned_status(self):
-        assert isinstance(self.motion_planner, MotionPlanner), f"motion_planner should be MotionPlanner and is {type(self.motion_planner)}"
-        assert isinstance(self.path, list), f"motion_planner should be list and is {type(self.motion_planner)}"
-        assert self.status == HAS_SYSTEM_MODEL, f"before setting status to {PATH_IS_PLANNED} the status must be {HAS_SYSTEM_MODEL} and it's {self.status}"
+        assert isinstance(self.motion_planner, MotionPlanner),\
+        f"motion_planner should be MotionPlanner and is {type(self.motion_planner)}"
+        assert isinstance(self.path, list),\
+        f"motion_planner should be list and is {type(self.motion_planner)}"
+        assert self.status == HAS_SYSTEM_MODEL,\
+                f"before setting status to {PATH_IS_PLANNED} the status"\
+                f"must be {HAS_SYSTEM_MODEL} and it's {self.status}"
+
+        print(f'status of edge {self.iden} is set to {PATH_IS_PLANNED}')
+
         self.status = PATH_IS_PLANNED
 
     def set_executing_status(self):
-        assert self.status == PATH_IS_PLANNED, f"before setting status to {EXECUTING} the status must be {PATH_IS_PLANNED} and it's {self.status}"
+        assert self.status == PATH_IS_PLANNED,\
+        f"before setting status to {EXECUTING} the status must"\
+        f"be {PATH_IS_PLANNED} and it's {self.status}"
         self.status = EXECUTING
 
     def set_completed_status(self):
-        assert self.status == EXECUTING, f"before setting status to {COMPLETED} the status must be {EXECUTING} and it's {self.status}"
+        assert self.status == EXECUTING,\
+        f"before setting status to {COMPLETED} the status"\
+        f"must be {EXECUTING} and it's {self.status}"
+        print(f'status of edge {self.iden} is set to {COMPLETED}')
         self.status = COMPLETED
 
     def set_failed_status(self):
         """ from any status the status can be come FAILED. """
+        print(f'status of edge {self.iden} is set to {FAILED}')
         self.status = FAILED
 
     @property
@@ -139,15 +154,17 @@ class ActionEdge(Edge):
         return self._path_estimator
 
     @path_estimator.setter
-    def path_estimator(self, pe):
-        assert isinstance(pe, ConfigurationGridMap), f"path estimator should be of type ConfigurationGridMap, but is {type(pe)}"
-        self._path_estimator = pe
+    def path_estimator(self, p_e):
+        assert isinstance(p_e, ConfigurationGridMap),\
+        f"path estimator should be of type ConfigurationGridMap, but is {type(p_e)}"
+        self._path_estimator = p_e
 
     @property
     def motion_planner(self):
         return self._motion_planner
 
     @motion_planner.setter
-    def motion_planner(self, mp):
-        assert isinstance(mp, MotionPlanner), f"path estimator should be of type MotionPlanner, but is {type(mp)}"
-        self._motion_planner = mp 
+    def motion_planner(self, m_p):
+        assert isinstance(m_p, MotionPlanner),\
+        f"path estimator should be of type MotionPlanner, but is {type(m_p)}"
+        self._motion_planner = m_p
