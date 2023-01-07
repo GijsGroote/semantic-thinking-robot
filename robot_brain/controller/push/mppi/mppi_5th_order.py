@@ -33,9 +33,7 @@ class PushMppi5thOrder(PushMppi):
 
         cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
 
-
         return cost
-
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
 
@@ -47,7 +45,7 @@ class PushMppi5thOrder(PushMppi):
         """ simulate one time step into the future. """
 
         # TODO: simulate forward using both robot and obstacle state
-        pose_2d = self.dyn_model(torch.reshape(
+        pose_2d = self.system_model.model(torch.reshape(
             torch.Tensor(np.append(robot_state.get_xy_position(),
                 obstacle_state.get_2d_pose(), axis=0)), (1,5)),
             torch.reshape(torch.Tensor(system_input), (1,2))).numpy()[0]

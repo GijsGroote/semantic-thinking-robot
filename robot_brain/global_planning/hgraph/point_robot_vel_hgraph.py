@@ -155,12 +155,13 @@ class PointRobotVelHGraph(HGraph):
         return DriveMppi2thOrder()
 
     def _create_mppi_drive_model(self):
-        def dyn_model(x, u):
+        def model(x, u):
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
             x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
             x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
             return x_next
-        return dyn_model
+
+        return SystemModel(model)
 
     ##### DRIVE MPC #####
     def _create_mpc_drive_controller(self):
@@ -168,18 +169,18 @@ class PointRobotVelHGraph(HGraph):
 
     def _create_mpc_drive_model(self):
 
-        def dyn_model(x, u):
+        def model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
                 x[1] + 0.05 *  u[1]
             )
             return dx_next
 
-        return SystemModel(dyn_model)
+        return SystemModel(model)
 
     def _create_mppi_drive_model(self):
 
-        def dyn_model(x, u):
+        def model(x, u):
 
             x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
             x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
@@ -187,7 +188,7 @@ class PointRobotVelHGraph(HGraph):
 
             return x_next
 
-        return SystemModel(dyn_model)
+        return SystemModel(model)
 
     ##### PUSH MPPI #####
     def _create_mppi_push_controller(self):
@@ -196,7 +197,7 @@ class PointRobotVelHGraph(HGraph):
 
     def _create_mppi_push_model(self):
         """ create push model for MPPI pointrobot. """
-        def dyn_model(x, u):
+        def model(x, u):
 
             # width square obstacle
             H = 2
@@ -239,4 +240,4 @@ class PointRobotVelHGraph(HGraph):
 
             return x_next
 
-        return SystemModel(dyn_model)
+        return SystemModel(model)

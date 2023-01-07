@@ -23,17 +23,16 @@ class PushMppi(PushController):
         PushController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 50 
+        self.n_horizon = 50
         self.plot_data = {}
 
-    def _setup(self, dyn_model, robot_state: State, obstacle_state: State):
+    def _setup(self, robot_state: State, obstacle_state: State):
         """ setup the mppi controller. """
 
-        self.y_predicted = obstacle_state 
-        self.dyn_model = dyn_model
+        self.y_predicted = obstacle_state
 
         # create controller with chosen parameters
-        self.controller = mppi.MPPI(dynamics=dyn_model,
+        self.controller = mppi.MPPI(dynamics=self.system_model.model,
                     running_cost=self._running_cost,
                     nx=self.order, # number of states in the system
                     noise_sigma=torch.tensor([[1,0],[0,1]], device=TORCH_DEVICE, dtype=torch.double),

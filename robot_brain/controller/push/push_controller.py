@@ -25,10 +25,10 @@ class PushController(Controller):
         because dynamic models could not yet exist. """
         self.system_model = system_model
         self.target_state = target_state
-        self._setup(system_model, robot_state, obstacle_state)
+        self._setup(robot_state, obstacle_state)
 
     @abstractmethod
-    def _setup(self, system_model: SystemModel, robot_state: State, obstacle_state: State):
+    def _setup(self, robot_state: State, obstacle_state: State):
         """ use abstraction for different setup methods. """
 
     def respond(self, robot_state: State, obst_state: State) -> np.ndarray:

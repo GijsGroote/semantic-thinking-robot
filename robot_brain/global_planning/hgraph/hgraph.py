@@ -206,16 +206,12 @@ class HGraph(Graph):
 
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
-
             # TODO: check why the edge is not ready for execution, then fix according to that
 
             # check if the first edge to execute is planned if it is an ActionEdge
             if isinstance(self.current_edge, ActionEdge):
                 if self.current_edge.status == HAS_SYSTEM_MODEL:
-                    self.search_path(self.current_edge)
-
-
-            self.search_path(self.current_edge)
+                    self.search_path(self.current_edge, False)
 
         self.current_edge.set_executing_status()
         self.go_to_loop(EXECUTION_LOOP)
@@ -421,8 +417,7 @@ class HGraph(Graph):
                 model_for_edge_iden=model_for_edge_iden)
 
         try:
-            dyn_model = self.create_drive_model(controller.name) # todo, system iden
-            edge.dyn_model = dyn_model
+            edge.system_model= self.create_drive_model(controller.name)
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
@@ -499,6 +494,7 @@ class HGraph(Graph):
                 self.get_node(target_node_iden).subtask_name
                 ))
 
+            
             self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
 
 
@@ -522,8 +518,8 @@ class HGraph(Graph):
                 model_for_edge_iden=model_for_edge_iden)
 
         try:
-            dyn_model = self.create_push_model(controller.name) # todo, system iden
-            edge.dyn_model = dyn_model
+            system_model = self.create_push_model(controller.name) # todo, system iden
+            edge.system_model = system_model
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
@@ -601,7 +597,7 @@ class HGraph(Graph):
     def create_push_path_estimator(self, push_obstacle, obstacles) -> ConfigurationGridMap:
         pass
 
-    def search_path(self, edge):
+    def search_path(self, edge, increment_edge: bool):
         """ Search for a path from start to target for an edge. """
 
         self.go_to_loop(SEARCHING_LOOP)
@@ -625,16 +621,35 @@ class HGraph(Graph):
             edge.path = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
         except StopIteration as exc:
 
-            print(f"Motion Planning failed: {exc} in subtask: {self.nodes[edge.to].subtask_name}")
-            self.add_to_blacklist(edge)
-
-            # TODO: add this edge to blacklist for this obstacle
-            edge.status = FAILED
             if LOG_METRICS:
                 self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+
+
+            for temp_edge in self.hypothesis:
+                print(f"edge name:{temp_edge.iden} and status {temp_edge.status}")
+
+            print(f"Motion Planning failed: {exc} in subtask: {self.nodes[edge.to].subtask_name}")
+            self.add_to_blacklist(edge)
+            edge.status = FAILED
+            self.current_edge = None
+            self.visualise()
+            # remove all edges up to the failed edge from the current hypothesis.
+            for temp_edge in self.hypothesis:
+                temp_edge = self.hypothesis.pop(0)
+                print(f"remove edge name:{temp_edge.iden} and status {temp_edge.status}")
+                if temp_edge.iden==edge.iden:
+                    break
+
+            self.edge_pointer = 0
+            for tedge in self.hypothesis:
+                print(f"edge name:{tedge.iden} and status {tedge.status}")
+
             return self._search_hypothesis()
 
         edge.set_path_is_planned_status()
+
+        if increment_edge:
+            self._force_increment_edge(edge)
 
         if CREATE_SERVER_DASHBOARD:
             edge.motion_planner.visualise()
@@ -655,14 +670,25 @@ class HGraph(Graph):
         """ updates toward the next edge in the hypothesis. """
 
         next_edge = self.hypothesis[self.edge_pointer+1]
-        next_node = self.get_node(next_edge.to)
+        print(f'next edge iden {next_edge.iden}')
 
         # plan path if not yet planned
         if isinstance(next_edge, ActionEdge):
             if next_edge.status == HAS_SYSTEM_MODEL:
-                self.search_path(next_edge)
+                self.search_path(next_edge, True)
+                print('go back to driving and stuff call incrment edge again!')
+                return
 
         # TODO: what if planning a path results in a subtask that should first be taken care of?
+
+        for temp_edge in self.hypothesis:
+            print(f"in increment edgee name:{temp_edge.iden} and status {temp_edge.status}")
+
+        self._force_increment_edge(next_edge)
+
+    def _force_increment_edge(self, next_edge):
+        """ forces incrementing to the next edge """
+        next_node = self.get_node(next_edge.to)
 
         # assert
         assert isinstance(next_edge, Edge),\
@@ -672,7 +698,6 @@ class HGraph(Graph):
                 "in hypothesis, edge is not ready"
         assert next_node.ready_for_execution(),\
                 "next node is not ready for execution"
-
         # add ghost pose
         if isinstance(next_edge, PushActionEdge):
             self.env.add_target_ghost(next_node.obstacle.properties.name(),
@@ -688,33 +713,30 @@ class HGraph(Graph):
             self.visualise()
         self.go_to_loop(EXECUTION_LOOP)
 
+
     def update_system_model(self, ident_edge):
         """ update system model of the next edge. """
 
-        for edge in self.hypothesis:
-            print(edge.iden)
-
-        # TODO why is path is planned here
         for_edge = self.get_edge(ident_edge.model_for_edge_iden)
         assert for_edge.status==PATH_EXISTS,\
                 f"edge status should be {PATH_EXISTS} but is {for_edge.status}"
-        dyn_model = ident_edge.dyn_model
-        
+        system_model = ident_edge.system_model
+
         for_edge.set_has_system_model_status()
 
         if isinstance(for_edge.controller, DriveController):
-            self._setup_drive_controller(for_edge.controller, dyn_model)
+            self._setup_drive_controller(for_edge.controller, system_model)
         elif isinstance(for_edge.controller, PushController):
-            self._setup_push_controller(for_edge.controller, dyn_model, for_edge)
+            self._setup_push_controller(for_edge.controller, system_model, for_edge)
         else:
             raise ValueError(f"unknown controller of type {type(for_edge.controller)}")
 
     @abstractmethod
-    def _setup_drive_controller(self, controller, dyn_model):
+    def _setup_drive_controller(self, controller, system_model):
         """ TODO: create this. """
 
     @abstractmethod
-    def _setup_push_controller(self, controller, dyn_model, push_edge):
+    def _setup_push_controller(self, controller, system_model, push_edge):
         """ TODO: create this. """
 
     def go_to_loop(self, loop: str):
