@@ -10,7 +10,8 @@ from robot_brain.global_variables import (
         MAX_INPUT,
         FIG_BG_COLOR,
         PROJECT_PATH,
-        PLOT_N_TIMESTEPS
+        PLOT_N_TIMESTEPS,
+        TORCH_DEVICE
         )
 
 from abc import abstractmethod
@@ -26,24 +27,22 @@ class Mppi(DriveController):
         self.n_horizon = 30
         self.plot_data = {}
 
-    def _setup(self, dyn_model, current_state: State):
+    def _setup(self, current_state: State):
         """ setup the mppi controller. """
 
         self.y_predicted = current_state
-        d = torch.device("cpu")
-        self.dyn_model = dyn_model
 
         # create controller with chosen parameters
-        self.controller = mppi.MPPI(dynamics=dyn_model,
+        self.controller = mppi.MPPI(dynamics=self.system_model.model,
                     running_cost=self._running_cost,
                     nx=self.order, # number of states in the system
-                    noise_sigma=torch.tensor([[1,0],[0,1]], device=d, dtype=torch.double),
+                    noise_sigma=torch.tensor([[1,0],[0,1]], device=TORCH_DEVICE, dtype=torch.double),
                     num_samples=1000, # number of rollouts
                     horizon=self.n_horizon,
                     lambda_=1e-2,
-                    device=d, 
-                    u_min=torch.tensor([MIN_INPUT, MIN_INPUT], dtype=torch.double, device=d),
-                    u_max=torch.tensor([MAX_INPUT, MAX_INPUT], dtype=torch.double, device=d)
+                    device=TORCH_DEVICE,
+                    u_min=torch.tensor([MIN_INPUT, MIN_INPUT], dtype=torch.double, device=TORCH_DEVICE),
+                    u_max=torch.tensor([MAX_INPUT, MAX_INPUT], dtype=torch.double, device=TORCH_DEVICE)
                 )
 
     def _update_prediction_error_sequence(self, current_state: State, system_input: State):
@@ -66,7 +65,7 @@ class Mppi(DriveController):
     def _set_target_state(self):
         self.controller.running_cost = self._running_cost 
 
-    @abstractmethod 
+    @abstractmethod
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         pass
     

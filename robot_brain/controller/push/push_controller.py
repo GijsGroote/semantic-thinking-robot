@@ -7,6 +7,7 @@ from robot_brain.global_variables import (
         LOG_METRICS,
         )
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
 
 class PushController(Controller):
@@ -15,26 +16,20 @@ class PushController(Controller):
     """
 
     def __init__(self, order: int):
+        Controller.__init__(self, order)
         self.order = order
         self.dt_counter = 0
 
-        def emptyfunction():
-            pass
-        self.dyn_model = emptyfunction
-        self.target_state = State()
-        self.pred_error = []
-
-    def setup(self, dyn_model, robot_state: State, obstacle_state: State, target_state: State):
+    def setup(self, system_model: SystemModel, robot_state: State, obstacle_state: State, target_state: State):
         """ setup the controller, this is seperated from __init__
         because dynamic models could not yet exist. """
-        self.dyn_model = dyn_model
+        self.system_model = system_model
         self.target_state = target_state
-        self._setup(dyn_model, robot_state, obstacle_state)
+        self._setup(system_model, robot_state, obstacle_state)
 
     @abstractmethod
-    def _setup(self, model, robot_state: State, obstacle_state: State):
+    def _setup(self, system_model: SystemModel, robot_state: State, obstacle_state: State):
         """ use abstraction for different setup methods. """
-        pass
 
     def respond(self, robot_state: State, obst_state: State) -> np.ndarray:
         """ respond with input for the robot and update dashboard every second. """

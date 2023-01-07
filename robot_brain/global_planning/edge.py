@@ -2,6 +2,7 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel, EMPTY_SYSTEM_MODEL
 
 
 INITIALISED = "initialised"
@@ -21,7 +22,7 @@ class Edge(ABC):
         self.to = to
         self.verb = verb
         self.controller = controller
-        self._dyn_model = None
+        self.system_model = EMPTY_SYSTEM_MODEL
 
         self._path_estimation = None
         self._path = None
@@ -104,13 +105,13 @@ class Edge(ABC):
         self._controller = contr
 
     @property
-    def dyn_model(self):
-        return self._dyn_model
+    def system_model(self):
+        return self._system_model
 
-    @dyn_model.setter
-    def dyn_model(self, func):
-        assert callable(func), f"dyn_model must be a callable function and is {type(func)}"
-        self._dyn_model = func
+    @system_model.setter
+    def system_model(self, val):
+        assert isinstance(val, SystemModel), f"system_model must be of type SystemModel and is {type(val)}"
+        self._system_model = val
 
     @property
     def path_estimation(self):

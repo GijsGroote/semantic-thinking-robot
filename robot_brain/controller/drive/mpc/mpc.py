@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import do_mpc
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel
 import numpy as np
 
 from robot_brain.global_variables import (
@@ -22,30 +23,30 @@ class Mpc(DriveController):
         DriveController.__init__(self, order)
         self.name = "MPC"
         self.mpc = None
-        self.model = None
+        self.mpc_model = None
         self.simulator = None
         self.plotter = None
         self.n_horizon = 15
 
-    def _setup(self, dyn_model, current_state):
+    def _setup(self, current_state: State):
 
         self.y_predicted = current_state
 
         # fully define model
-        self.model = self.template_model(dyn_model)
+        self.mpc_model = self.template_model(self.system_model.model)
 
         # set all mpc parameters
-        self.mpc = self.template_mpc(model=self.model,
+        self.mpc = self.template_mpc(model=self.mpc_model,
                 n_horizon=self.n_horizon,
                 target_state=self.target_state)
 
         initial_state = self.create_initial_state(current_state)
-        self.mpc.x0 = initial_state 
+        self.mpc.x0 = initial_state
         self.mpc.set_initial_guess()
 
         if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD or LOG_METRICS:
 
-            self.simulator = do_mpc.simulator.Simulator(self.model)
+            self.simulator = do_mpc.simulator.Simulator(self.mpc_model)
             self.simulator.set_tvp_fun(self.create_tvp_sim())
 
             # Set parameter(s):

@@ -22,6 +22,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
+from robot_brain.system_model import SystemModel
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
 from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_planner import PushMotionPlanner
@@ -134,23 +135,18 @@ class PointRobotVelHGraph(HGraph):
                 raise ValueError(f"controller name unknown: {controller_name}")
 
 
-    def _setup_drive_controller(self, controller, dyn_model):
+    def _setup_drive_controller(self, controller, system_model):
 
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
-        assert callable(dyn_model), "the dyn_model should be callable function"
+        controller.setup(system_model, self.robot.state, self.robot.state)
 
-        controller.setup(dyn_model, self.robot.state, self.robot.state)
-
-    def _setup_push_controller(self, controller, dyn_model, push_edge):
-        # TODO: should the target state not also be passed insead of the robot state?
+    def _setup_push_controller(self, controller, system_model, push_edge):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
-        assert callable(dyn_model), "the dyn_model should be callable function"
 
         source_state = self.get_node(push_edge.source).obstacle.state
 
-        controller.setup(dyn_model, self.robot.state, source_state, source_state)
-
+        controller.setup(system_model, self.robot.state, source_state, source_state)
 
 
     ##### DRIVE MPPI #####
@@ -171,14 +167,27 @@ class PointRobotVelHGraph(HGraph):
         return DriveMpc2thOrder()
 
     def _create_mpc_drive_model(self):
+
         def dyn_model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
                 x[1] + 0.05 *  u[1]
             )
             return dx_next
-        return dyn_model
 
+        return SystemModel(dyn_model)
+
+    def _create_mppi_drive_model(self):
+
+        def dyn_model(x, u):
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
+
+            return x_next
+
+        return SystemModel(dyn_model)
 
     ##### PUSH MPPI #####
     def _create_mppi_push_controller(self):
@@ -230,4 +239,4 @@ class PointRobotVelHGraph(HGraph):
 
             return x_next
 
-        return dyn_model
+        return SystemModel(dyn_model)

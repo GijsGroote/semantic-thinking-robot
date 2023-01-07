@@ -7,6 +7,7 @@ from robot_brain.global_variables import (
         LOG_METRICS,
         )
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
 
 class DriveController(Controller):
@@ -16,7 +17,18 @@ class DriveController(Controller):
 
     def __init__(self, order: int):
         Controller.__init__(self, order)
-    
+
+    def setup(self, system_model, current_state: State, target_state: State):
+        """ setup the controller, this is seperated from __init__
+        because dynamic models could not yet exist. """
+        self.system_model = system_model
+        self.target_state = target_state
+        self._setup(current_state)
+
+    @abstractmethod
+    def _setup(self, current_state: State):
+        """ use abstraction for different setup methods. """
+
     def respond(self, current_state: State) -> np.ndarray:
         """ respond with input for the robot and update dashboard every second. """
 
@@ -33,13 +45,12 @@ class DriveController(Controller):
                 self.update_db()
             self.dt_counter += 1
 
-        return system_input 
+        return system_input
 
     @abstractmethod
     def _update_prediction_error_sequence(self, current_state: State, system_input: State):
         """ updates the sequence with the one-step-ahead prediction error. """
-        pass
 
     @abstractmethod
     def _find_input(self, current_state: State) -> np.ndarray:
-        pass
+        """ find system input """

@@ -15,10 +15,8 @@ class DriveMppi2thOrder(Mppi):
         """ penalty function for input when the system is in a state, the running 
         cost drives the system to it's desired state. """
 
-        # force tensors to be stored on TORCH_DEVICE
         
-        # x_t = torch.tensor(x, device=TORCH_DEVICE)
-        # u_t = torch.tensor(u, device=TORCH_DEVICE)
+
 
         return (x[:,0] - torch.tensor([self.target_state.pos[0]], device=TORCH_DEVICE))**2 +\
                (x[:,1] - torch.tensor([self.target_state.pos[1]], device=TORCH_DEVICE))**2 +\
@@ -26,17 +24,11 @@ class DriveMppi2thOrder(Mppi):
 
     def _find_input(self, current_state: State) -> np.ndarray:
 
-        ret =  self.controller.command(torch.tensor(current_state.get_xy_position(), device=TORCH_DEVICE))
-        #
-        # print('ret and type(ret)')
-        # print(ret)
-        # print(type(ret))
+        return self.controller.command(torch.tensor(current_state.get_xy_position(), device=TORCH_DEVICE))
 
-        return ret
-        
-    def _simulate(self, current_state: State, system_input: np.ndarray) -> State: 
+    def _simulate(self, current_state: State, system_input: np.ndarray) -> State:
         """ simulate one time step into the future. """
-        xy_pos = self.dyn_model(torch.reshape(torch.tensor(current_state.get_xy_position(), device=TORCH_DEVICE), (1,2)),
+        xy_pos = self.system_model.model(torch.reshape(torch.tensor(current_state.get_xy_position(), device=TORCH_DEVICE), (1,2)),
                         torch.reshape(torch.tensor(system_input), (1,2))).numpy()[0]
 
         return State(pos=np.array([xy_pos[0], xy_pos[1], 0]))
