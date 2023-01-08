@@ -14,15 +14,39 @@ h4 {
     padding-left: 15px;
 }
 
+.item_title {
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+.item_title:hover {
+    opacity: 0.7;
+  }
+
 /* for all data items on the page */
-.item {
+.item {  
     background-color: #b2b2ff;
     flex: 48%;
     color: whitesmoke;
     max-width: 48%;
     height: auto;
     margin: 1%;
+  -webkit-animation-name: zoom;
+  -webkit-animation-duration: 0.6s;
+  animation-name: zoom;
+  animation-duration: 0.6s;
 }
+
+@-webkit-keyframes zoom {
+  from {-webkit-transform:scale(0)} 
+  to {-webkit-transform:scale(1)}
+}
+
+@keyframes zoom {
+  from {transform:scale(0)} 
+  to {transform:scale(1)}
+}
+
 
 .large-item {
     background-color: #b2b2ff;
@@ -38,9 +62,3 @@ h4 {
     height: 450px;
     width: 100%;
 }
-
-/*#my-output {*/
-/*    height: fit-content;*/
-/*}*/
-
-

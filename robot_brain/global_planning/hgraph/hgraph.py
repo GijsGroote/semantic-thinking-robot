@@ -634,15 +634,12 @@ class HGraph(Graph):
             self.current_edge = None
             self.visualise()
             # remove all edges up to the failed edge from the current hypothesis.
-            for temp_edge in self.hypothesis:
-                temp_edge = self.hypothesis.pop(0)
-                print(f"remove edge name:{temp_edge.iden} and status {temp_edge.status}")
-                if temp_edge.iden==edge.iden:
-                    break
+            self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
 
+            
             self.edge_pointer = 0
             for tedge in self.hypothesis:
-                print(f"edge name:{tedge.iden} and status {tedge.status}")
+                print(f"new hypoth:{tedge.iden} and status {tedge.status}")
 
             return self._search_hypothesis()
 

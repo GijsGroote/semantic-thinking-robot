@@ -20,8 +20,8 @@ do-mpc = "^4.3.2"
 pytorch_mppi = {git="git@github.com:UM-ARM-Lab/pytorch_mppi.git", rev="master"}
 pyvis = "^0.1.9"
 mpld3 = "^0.5.7"
-dash = "^2.3.0"
-plotly = "^5.6.0"
+dash = "^2.7.0"
+plotly = "^5.10.0"
 pandas = "^1.4.1"
 pyorbital = "^1.7.1"
 pyarrow = "^7.0.0"
@@ -31,7 +31,6 @@ beautifulsoup4 = "^4.10.0"
 torch = "^1.12.1"
 pygments = "^2.13.0"
 sortedcontainers = "^2.4.0"
-
 
 [tool.poetry.extras]
 

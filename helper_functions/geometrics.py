@@ -119,6 +119,14 @@ def to_interval_zero_to_two_pi(val: float) -> float:
         val += 2*math.pi
     return val
 
+def to_interval_min_pi_to_pi(val: float) -> float:
+    """ returns the angle in interval [-pi, pi). """
+    while val > math.pi:
+        val -= 2*math.pi
+    while val <= -math.pi:
+        val += 2*math.pi
+    return val
+
 def which_side_point_to_line(a: torch.Tensor, b: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
     """ find if point p is on right (True) or left (False) side of line from a to b. """
     

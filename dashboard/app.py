@@ -3,11 +3,10 @@ import glob
 import multiprocessing
 from dash import Dash, html, dcc
 from dashboard.callback import register_callbacks
-from dashboard.figures import no_data_found_dict
-# from IPython.display import display, HTML, Image
+
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
-DASH_PORT_PID = 8042
+DASH_PORT_PID = 8040
 
 class Dashboard:
     """
@@ -17,8 +16,8 @@ class Dashboard:
 
         # remove all old files
         files = glob.glob(PROJECT_PATH+"dashboard/data/*")
-        for f in files:
-            os.remove(f)
+        for file in files:
+            os.remove(file)
 
         self.app = app
 
@@ -47,8 +46,8 @@ class Dashboard:
                 top: calc(50% - 33px);
                 left: calc(50% - 33px);
                 transform: translate(-50%, -50%);
-                border: 16px solid #f3f3f3; /* Light grey */
-                border-top: 16px solid #3498db; /* Blue */
+                border: */
+                border-top: */
                 border-radius: 50%;
                 width: 50px;
                 height: 50px;
@@ -62,7 +61,7 @@ class Dashboard:
                 0% {
                     transform: rotate(0deg);
                 }
-                100% {
+                {
                     transform: rotate(360deg);
                 }
             }
@@ -70,16 +69,19 @@ class Dashboard:
         </body>
         </html>
         """
-
         self.app.layout = html.Div(children=[
-            dcc.Interval(
-                id="interval-input",
-                interval=1 * 1000,
-                n_intervals=0
-            ),
+
+            # html.Article(dji.Import(src=PROJECT_PATH+"popup.js")),
+            html.Div(id="modal_background", n_clicks_timestamp='0'),
+
+            # dcc.Interval(
+            #     id="interval-input",
+            #     interval=1000,
+            #     n_intervals=0
+            # ),
             html.Div([
                 html.Div([
-                    html.H4("Hypothesis Graph"),
+                    html.H4("Hypothesis Graph", className="item_title", id="hgraph_title", n_clicks_timestamp='0'),
                     html.Iframe(
                         id="hGraph",
                         srcDoc=self.loading_html,
@@ -87,23 +89,13 @@ class Dashboard:
                     ),
                     dcc.Interval(
                         id="hgraph-interval-component",
-                        interval=1 * 1000,
+                        interval=1000,
                         n_intervals=0
                     )
-                ], className="item"),
+                ], className="item", id="hgraph_div"),
 
                 html.Div([
-                    html.H4("Controller Live Feed"),
-                    dcc.Graph(id="live-update-controller-graph", animate=True),
-                    dcc.Interval(
-                        id="controller-interval-component",
-                        interval=1 * 1000,  # in milliseconds
-                        n_intervals=0
-                        )
-                    ], className="item"),
-
-                html.Div([
-                    html.H4("Knowledge Graph"),
+                    html.H4("Knowledge Graph", className="item_title", id="kgraph_title", n_clicks_timestamp='0'),
                     html.Iframe(
                         id="kGraph",
                         srcDoc=self.loading_html,
@@ -111,27 +103,38 @@ class Dashboard:
                         ),
                     dcc.Interval(
                         id="kgraph-interval-component",
-                        interval=1 * 1000,  # in milliseconds
+                        interval=1000,
                         n_intervals=0
                         )
                     ], className="item"),
 
                 html.Div([
-                    html.H4("Configuration Map"),
-                    dcc.Graph(id="live-update-configuration-map"),
+                    html.H4("Path Existence Estimator", className="item_title", id="pe_title", n_clicks_timestamp='0'),
+                    dcc.Graph(id="pe"),
                     dcc.Interval(
-                        id="configuration-map-interval-component",
-                        interval=1 * 1000,  # in milliseconds
+                        id="pe-interval-component",
+                        interval=1000,
                         n_intervals=0
                         )
                     ], className="item"),
 
                 html.Div([
-                    html.H4("Motion Planning"),
-                    dcc.Graph(id="live-update-motion-planner"),
+                    html.H4("Motion Planner", className="item_title", id="mp_title", n_clicks_timestamp='0'),
+                    dcc.Graph(id="mp"),
                     dcc.Interval(
-                        id="motion-planner-interval-component",
-                        interval=1 * 1000,
+                        id="mp-interval-component",
+                        interval=1000,
+                        n_intervals=0
+                        )
+                    ], className="item"),
+
+
+                html.Div([
+                    html.H4("Controller Live Feed", className="item_title", id="controller_title", n_clicks_timestamp='0'),
+                    dcc.Graph(id="controller", animate=True),
+                    dcc.Interval(
+                        id="controller-interval-component",
+                        interval=1000,
                         n_intervals=0
                         )
                     ], className="item"),
@@ -144,9 +147,10 @@ class Dashboard:
                         ),
                     ], className="item"),
 
-            ], className="container")
+            ], className="container"),
         ])
         register_callbacks(self.app)
+
 
 def start_dash_server():
     # change working directory
@@ -158,11 +162,12 @@ def start_dash_server():
             update_title=None,
             assets_folder="assets")
 
+
     # create dashboard
     Dashboard(app)
 
     def run():
-        app.scripts.config.serve_locally = True
+        app.scripts.config.serve_locally = False
         app.run_server(
             port=DASH_PORT_PID,
             debug=False,

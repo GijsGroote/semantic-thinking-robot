@@ -3,7 +3,7 @@ import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-from helper_functions.geometrics import to_interval_zero_to_two_pi
+from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 class State:
     """
     State describing the linear and angular position and velocity in the environment.
@@ -27,11 +27,7 @@ class State:
         """
         Calculate the euclidean distance between the poses of two states.
         """
-
-        # print(f'xy error {np.linalg.norm(self.get_xy_position() - state.get_xy_position())}')
-
-        orien_dist = to_interval_zero_to_two_pi(self.ang_p[2] - state.ang_p[2])
-        # print(f'orien error {orien_dist}')
+        orien_dist = to_interval_min_pi_to_pi(self.ang_p[2] - state.ang_p[2])
         return np.linalg.norm(self.get_xy_position() - state.get_xy_position()) + orien_dist
 
 

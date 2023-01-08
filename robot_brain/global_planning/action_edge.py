@@ -50,8 +50,6 @@ class ActionEdge(Edge):
                 ang_p=np.array([0, 0, orien])
                 )
 
-        print(f"increment target tp {next_target.get_2d_pose()}")
-
         self.controller.set_target_state(next_target)
 
     def get_current_target(self) -> State:
@@ -76,9 +74,9 @@ class ActionEdge(Edge):
 
         # TODO: this should be done differnetly, due to fist predition error begin 0 mostly
         if len(pred_error) > 1:
-            log["avg_pred_error"] = np.round(np.average(pred_error), decimals=5),
-            log["max_pred_error"] = np.round(max(pred_error), decimals=5),
-            log["min_pred_error"] = np.round(min(pred_error[0:-1]), decimals=5),
+            log["avg_pred_error"] = np.round(np.average(pred_error), decimals=5)
+            log["max_pred_error"] = np.round(max(pred_error), decimals=5)
+            log["min_pred_error"] = np.round(min(pred_error[0:-1]), decimals=5)
 
         return log
 

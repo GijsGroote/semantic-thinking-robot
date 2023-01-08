@@ -173,7 +173,7 @@ class DriveMpc2thOrder(Mpc):
         """ solves minimisation problem. """
         initial_state = current_state.get_xy_position()
         self.mpc.x0 = initial_state
-        system_input = self.mpc.make_step(initial_state) 
+        system_input = self.mpc.make_step(initial_state)
 
         return np.reshape(system_input, (len(system_input),))
 
