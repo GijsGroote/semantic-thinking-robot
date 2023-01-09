@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
+import math
 import pickle
 import sys
 import time
 import plotly.graph_objects as go
-import math
 from sortedcontainers import SortedDict
 import numpy as np
 
@@ -197,7 +197,7 @@ class MotionPlanner(ABC):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.35:
+        if planning_time > 0.15:
             raise StopIteration("It takes to long to find a path, halt.")
 
         if len(self.shortest_paths) < 5:
@@ -257,7 +257,7 @@ class MotionPlanner(ABC):
             y_points = [sample[1] for sample in self.shortest_path]
 
             fig.add_scatter(y=x_points, x=y_points, showlegend = True, name="Path Found", line=dict(color="red", width=5))
-        
+
         fig.update_xaxes({"autorange": True})
         fig.update_yaxes({"autorange": "reversed"})
 

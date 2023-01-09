@@ -189,7 +189,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
 
     def _p_idx_to_occupancy(self, x_idx: int, y_idx: int, orien_idx: int) -> int:
         """ returns the occupancy of a grid cell """
-        if not (isinstance(x_idx, int) and isinstance(y_idx, int) and isinstance(orien_idx, int)):
+        if not all(isinstance(x_idx, int) and isinstance(y_idx, int) and isinstance(orien_idx, int)):
             raise TypeError("all arguements should be intergers")
 
         if (x_idx >= self.grid_map.shape[0] or

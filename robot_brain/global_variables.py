@@ -2,7 +2,7 @@ DT = 0.05
 
 # dashboard global variables
 CREATE_SERVER_DASHBOARD = True
-PLOT_CONTROLLER = True
+PLOT_CONTROLLER = False
 LOG_METRICS = False
 
 # plot_controller should be True for SAVE_LOG_METRICS

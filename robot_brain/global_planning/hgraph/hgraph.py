@@ -50,6 +50,7 @@ class HGraph(Graph):
         self.start_nodes = []          # starting nodes one for every subtask and one for the robot
         self.target_nodes = []         # target nodes one for every subtask
         self.start_to_target_iden = [] # identifier mapping from start to target node and vise versa
+        self.blacklist = {}            # blacklist containing banned edges
 
         # self.current_edge is the current edge being executed or first in line to be executed.
         # self.current_node is the source node of the current edge being executed for plotting purposes
@@ -92,6 +93,11 @@ class HGraph(Graph):
                 ))
             print(f'adding start to target {iden_start_node} to target {iden_target_node}')
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
+
+        for obst in obstacles:
+            print('dkljfsdklf')
+            print(obst)
+            self.blacklist[obst] = []
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -494,7 +500,7 @@ class HGraph(Graph):
                 self.get_node(target_node_iden).subtask_name
                 ))
 
-            
+
             self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
 
 
@@ -547,9 +553,33 @@ class HGraph(Graph):
             print('you did not implement this mister mister;')
             # TODO: this for cylinder and sphere
 
+    def in_blacklist(self, edge) -> bool:
+        """ checks if the edge is already in the blacklist. """
+
+        # TODO: how to split the model present and not present in edge?
+        if edge.system_model is not None:
+            sys_model_name = edge.system_model.name
+        else:
+            sys_model_name = None
+
+        for edge_type in self.blacklist[self.get_node(edge.source).obstacle.name]:
+            # check if edge type is equal to the type of edge
+            if edge_type[0]==type(edge) and edge_type[1]==edge.controller.name and edge_type[2]==sys_model_name:
+                return True
+
+        return False
+
     def add_to_blacklist(self, edge):
-        # TODO: this function
-        print('todo implement this function')
+        """ add edge to the blacklist. """
+
+        if edge.system_model is not None:
+            sys_model_name = edge.system_model.name
+        else:
+            sys_model_name = None
+
+        edge_type = (type(edge), edge.controller.name, sys_model_name)
+
+        self.blacklist[self.get_node(edge.source).obstacle.name].append(edge_type)
 
 ###########################################
 ### PATH ESTIMATION AND MOTION PLANNING ###
@@ -586,6 +616,7 @@ class HGraph(Graph):
         if does_path_exist:
             edge.path_estimation = path_estimation
         else:
+            # self.add_to_blacklist(edge)
             raise ValueError("path does not exist")
 
 
@@ -629,14 +660,15 @@ class HGraph(Graph):
                 print(f"edge name:{temp_edge.iden} and status {temp_edge.status}")
 
             print(f"Motion Planning failed: {exc} in subtask: {self.nodes[edge.to].subtask_name}")
-            self.add_to_blacklist(edge)
+
+            # self.add_to_blacklist(edge)
             edge.status = FAILED
             self.current_edge = None
             self.visualise()
             # remove all edges up to the failed edge from the current hypothesis.
             self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
 
-            
+
             self.edge_pointer = 0
             for tedge in self.hypothesis:
                 print(f"new hypoth:{tedge.iden} and status {tedge.status}")
