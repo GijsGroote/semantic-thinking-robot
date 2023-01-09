@@ -197,7 +197,7 @@ class MotionPlanner(ABC):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.15:
+        if planning_time > 0.05:
             raise StopIteration("It takes to long to find a path, halt.")
 
         if len(self.shortest_paths) < 5:

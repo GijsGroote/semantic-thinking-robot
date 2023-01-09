@@ -159,7 +159,7 @@ def register_callbacks(app):
                 'position': 'fixed',
                 'z-index': '2',
                 'left': '7%',
-                'top': '5%',
+                'top': '15%',
                 'width': '86%',
                 '-webkit-animation-name': 'zoom',
                 '-webkit-animation-duration': '0.6s',

@@ -616,7 +616,7 @@ class HGraph(Graph):
         if does_path_exist:
             edge.path_estimation = path_estimation
         else:
-            # self.add_to_blacklist(edge)
+            self.add_to_blacklist(edge)
             raise ValueError("path does not exist")
 
 
@@ -661,7 +661,7 @@ class HGraph(Graph):
 
             print(f"Motion Planning failed: {exc} in subtask: {self.nodes[edge.to].subtask_name}")
 
-            # self.add_to_blacklist(edge)
+            self.add_to_blacklist(edge)
             edge.status = FAILED
             self.current_edge = None
             self.visualise()
