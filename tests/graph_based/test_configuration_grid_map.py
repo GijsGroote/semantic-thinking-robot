@@ -21,7 +21,7 @@ def test_start_warning_not_raised():
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        circle_conf_grid_map.shortest_path(np.array([0,0]), np.array([-3,4]))
+        circle_conf_grid_map.search_path(np.array([0,0]), np.array([-3,4]))
 
     rect_conf_grid_map = RectangleObstacleConfigurationGridMap(
             cell_size=1,
@@ -36,7 +36,7 @@ def test_start_warning_not_raised():
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        rect_conf_grid_map.shortest_path(np.array([0,0,0]), np.array([-3,4,0]))
+        rect_conf_grid_map.search_path(np.array([0,0,0]), np.array([-3,4,0]))
 
 
 def test_target_warning_raised():
@@ -58,7 +58,7 @@ def test_target_warning_raised():
             obst_y_length=1)
 
     with pytest.warns(Warning):
-       rect_conf_grid_map.shortest_path(np.array([0,0,0]), np.array([-3,4,0]))
+       rect_conf_grid_map.search_path(np.array([0,0,0]), np.array([-3,4,0]))
 
     circle_conf_grid_map = CircleObstacleConfigurationGridMap(
             cell_size=1,
@@ -71,7 +71,7 @@ def test_target_warning_raised():
 
 
     with pytest.warns(Warning):
-        circle_conf_grid_map.shortest_path(np.array([0,0]), np.array([-3,4]))
+        circle_conf_grid_map.search_path(np.array([0,0]), np.array([-3,4]))
 
     # box on start pose
     box_obst = Obstacle(box.name(), State(pos=np.array([.0, 0, 0.1])), box)
@@ -89,7 +89,7 @@ def test_target_warning_raised():
             obst_y_length=1)
 
     with pytest.warns(Warning):
-       rect_conf_grid_map.shortest_path(np.array([0,0,0]), np.array([-3,4,0]))
+       rect_conf_grid_map.search_path(np.array([0,0,0]), np.array([-3,4,0]))
 
 
     # box on start pose 
@@ -103,7 +103,7 @@ def test_target_warning_raised():
             obst_radius=1)
 
     with pytest.warns(Warning):
-        circle_conf_grid_map.shortest_path(np.array([0,0]), np.array([-3,4]))
+        circle_conf_grid_map.search_path(np.array([0,0]), np.array([-3,4]))
 
 
 

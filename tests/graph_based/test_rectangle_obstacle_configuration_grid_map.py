@@ -64,7 +64,9 @@ def test_occupancy_map_arguements():
     assert 360 == occ_map.n_orientations
 
 def test_occupancy_exceptions():
-    occ_map = RectangleObstacleConfigurationGridMap(1.0, 100, 200, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=360, obst_x_length=10, obst_y_length=6)
+    occ_map = RectangleObstacleConfigurationGridMap(1.0, 100, 200, {},
+            obst_cart_2d=np.array([1,2]), obst_name="robot",
+            n_orientations=360, obst_x_length=10, obst_y_length=6)
     # x_index to large
     with pytest.raises(ValueError):
         occ_map._p_idx_to_occupancy(101, 0, 0)
@@ -91,7 +93,7 @@ def test_occupancy_exceptions():
 
     # boolean instead of int
     with pytest.raises(TypeError):
-        occ_map._p_idx_to_occupancy(40, 80, True)
+        occ_map._p_idx_to_occupancy(40, 80, "string")
 
 def test_c_idx_to_cart_2d_even():
     # test even grid_x_length and grid_y_length

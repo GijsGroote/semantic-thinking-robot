@@ -28,8 +28,6 @@ def test_init():
         obstacle= box_obst,
         step_size= 0.4,
         search_size= 0.5,
-        configuration_grid_map=None)
+        include_orien=True)
 
-    pmp.shortest_path(State(), State(pos=np.array([4,5,10])))
-
-    assert False
+    pmp.search_path(State(), State(pos=np.array([4,5,10])))

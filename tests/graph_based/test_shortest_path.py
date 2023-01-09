@@ -1,16 +1,14 @@
-import pytest
-import numpy as np
 import math
+import numpy as np
 
+from robot_brain.obstacle import Obstacle, UNMOVABLE
+from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
 
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
 from tests.graph_based.obstacle_data.cylinders import cylinder
-from robot_brain.obstacle import Obstacle, UNMOVABLE
-from robot_brain.state import State
-
 
 def test_shortest_path_rect():
     occ_map = RectangleObstacleConfigurationGridMap(
@@ -23,7 +21,7 @@ def test_shortest_path_rect():
             n_orientations=8,
             obst_x_length=1,
             obst_y_length=1)
-    
+
     expected_paths = []
     starts = []
     targets = []
@@ -42,9 +40,9 @@ def test_shortest_path_rect():
     expected_paths.append(([(0, 0, 2*math.pi-0.2), (0.5, 0.5, math.pi/4), (0.5, 0.5, math.pi/2), (0, 0, 3*math.pi/4+0.03)], True))
     starts.append((0, 0, -0.2))
     targets.append((0, 0, 3*math.pi/4+0.03))
-    
+
     for (expected_path, start, target) in zip(expected_paths, starts, targets):
-        path = occ_map.shortest_path(np.array(start), np.array(target))
+        path = occ_map.search_path(np.array(start), np.array(target))
         assert path == expected_path
 
 def test_shortest_path_circ():
@@ -56,7 +54,7 @@ def test_shortest_path_circ():
             obst_cart_2d=np.array([0,0]),
             obst_name="robot",
             obst_radius=1)
-    
+
     expected_paths = []
     starts = []
     targets = []
@@ -71,9 +69,9 @@ def test_shortest_path_circ():
         (-4.5,-0.5),(-4.5, 0.5),(-4.5,1.5),(-4.5,2.5), (-4.5,3.5), (-4.3, 4.2)], True))
     starts.append((-4.1,-4.1))
     targets.append((-4.3, 4.2 ))
-    
+
     for (expected_path, start, target) in zip(expected_paths, starts, targets):
-        path = occ_map.shortest_path(np.array(start), np.array(target))
+        path = occ_map.search_path(np.array(start), np.array(target))
         assert path == expected_path
 
 
@@ -117,7 +115,7 @@ def test_shortest_path_with_obstacles():
     targets.append((3, 2, 0))
 
     for (expected_path, start, target) in zip(expected_paths, starts, targets):
-        path = occ_map.shortest_path(np.array(start), np.array(target))
+        path = occ_map.search_path(np.array(start), np.array(target))
         assert path == expected_path
 
 
