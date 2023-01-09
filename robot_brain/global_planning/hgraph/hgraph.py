@@ -94,11 +94,6 @@ class HGraph(Graph):
             print(f'adding start to target {iden_start_node} to target {iden_target_node}')
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
-        for obst in obstacles:
-            print('dkljfsdklf')
-            print(obst)
-            self.blacklist[obst] = []
-
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
         if LOG_METRICS:
@@ -562,9 +557,14 @@ class HGraph(Graph):
         else:
             sys_model_name = None
 
-        for edge_type in self.blacklist[self.get_node(edge.source).obstacle.name]:
+        for edge_type in self.blacklist[edge.to]:
+
             # check if edge type is equal to the type of edge
-            if edge_type[0]==type(edge) and edge_type[1]==edge.controller.name and edge_type[2]==sys_model_name:
+            if all(edge_type[0]==type(edge),
+                    edge_type[1]==edge.source,
+                    edge_type[2]==edge.to,
+                    edge_type[3]==edge.controller.name,
+                    edge_type[4]==sys_model_name):
                 return True
 
         return False
@@ -577,9 +577,18 @@ class HGraph(Graph):
         else:
             sys_model_name = None
 
-        edge_type = (type(edge), edge.controller.name, sys_model_name)
+        edge_type = (self.get_node(edge.source).obstacle.name,
+                type(edge),
+                edge.source,
+                edge.to,
+                edge.controller.name,
+                sys_model_name)
 
-        self.blacklist[self.get_node(edge.source).obstacle.name].append(edge_type)
+        # create blacklist on target node
+        if edge.to in self.blacklist:
+            self.blacklist[edge.to].append(edge_type)
+        else:
+            self.blacklist[edge.to] = [edge_type]
 
 ###########################################
 ### PATH ESTIMATION AND MOTION PLANNING ###

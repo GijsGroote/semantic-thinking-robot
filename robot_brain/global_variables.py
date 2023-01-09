@@ -1,7 +1,7 @@
 DT = 0.05
 
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = True
+CREATE_SERVER_DASHBOARD = False#True
 PLOT_CONTROLLER = False
 LOG_METRICS = False
 
