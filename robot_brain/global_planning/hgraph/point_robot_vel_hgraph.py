@@ -13,9 +13,9 @@ from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
 from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
 from robot_brain.system_model import SystemModel
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
@@ -27,6 +27,10 @@ from robot_brain.controller.drive.drive_controller import DriveController
 from helper_functions.geometrics import which_side_point_to_line
 
 
+DRIVE_MPC_MODEL= "drive_mpc_model"
+DRIVE_MPPI_MODEL= "drive_mppi_model"
+PUSH_MPPI_MODEL = "push_mppi_model"
+
 class PointRobotVelHGraph(HGraph):
     """
     Hypothesis graph for a Point Robot accepting velocity input.
@@ -36,8 +40,8 @@ class PointRobotVelHGraph(HGraph):
         self.robot = robot
         self.robot_order = 2
 
-    def create_drive_path_estimator(self, obstacles) -> ConfigurationGridMap:
-        occ_graph = CircleObstacleConfigurationGridMap(cell_size=0.1,
+    def create_drive_path_estimator(self, obstacles) -> PathEstimator:
+        occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
                 grid_x_length= 10,
                 grid_y_length= 12,
                 obstacles= obstacles,
@@ -53,7 +57,7 @@ class PointRobotVelHGraph(HGraph):
 
         if isinstance(push_obstacle.properties, BoxObstacle):
 
-            occ_graph = RectangleObstacleConfigurationGridMap(cell_size=0.5,
+            occ_graph = RectangleObstaclePathEstimator(cell_size=0.5,
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
@@ -65,7 +69,7 @@ class PointRobotVelHGraph(HGraph):
 
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
-            occ_graph = CircleObstacleConfigurationGridMap(cell_size=0.5,
+            occ_graph = CircleObstaclePathEstimator(cell_size=0.5,
                     grid_x_length= 10,
                     grid_y_length= 12,
                     obstacles= obstacles,
@@ -108,20 +112,45 @@ class PointRobotVelHGraph(HGraph):
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
 
-        return [self._create_mppi_drive_controller,
-                self._create_mpc_drive_controller]
+        return [self._create_mppi_drive_controller(),
+                self._create_mpc_drive_controller()]
 
-    def create_drive_model(self, controller_name: str):
-        match controller_name:
-            case "MPC":
-                return self._create_mpc_drive_model()
-            case "MPPI":
-                return self._create_mppi_drive_model()
-            case _:
-                raise ValueError(f"controller name unknown: {controller_name}")
+
+    def find_compatible_models(self, controllers: list) -> list:
+        """ find every compatible model for every drive controller. """
+
+        controllers_and_models = []
+
+        # find every compatible model
+        for controller in controllers:
+
+            models = []
+
+            if isinstance(controller, DriveMpc2thOrder):
+                models.append(DRIVE_MPC_MODEL)
+
+            if isinstance(controller, DriveMppi2thOrder):
+                models.append(DRIVE_MPPI_MODEL)
+
+            if isinstance(controller, PushMppi5thOrder):
+                models.append(PUSH_MPPI_MODEL)
+
+            controllers_and_models.append((controller, models))
+
+        return controllers_and_models
+
+    def _create_drive_model(self, model_name: str) -> SystemModel:
+        """ return the corresponding drive model. """
+
+        if model_name == DRIVE_MPC_MODEL:
+            return self._create_mpc_drive_model()
+        elif model_name == DRIVE_MPPI_MODEL:
+            return self._create_mppi_drive_model()
+        else:
+            raise ValueError(f"controller name unknown: {controller_name}")
 
     def get_push_controllers(self) -> list:
-        return [self._create_mppi_push_controller]
+        return [self._create_mppi_push_controller()]
 
     def create_push_model(self, controller_name: str):
         match controller_name:
@@ -150,14 +179,6 @@ class PointRobotVelHGraph(HGraph):
         """ create MPPI controller for driving an point robot velocity. """
         return DriveMppi2thOrder()
 
-    def _create_mppi_drive_model(self):
-        def model(x, u):
-            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
-            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
-            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
-            return x_next
-
-        return SystemModel(model)
 
     ##### DRIVE MPC #####
     def _create_mpc_drive_controller(self):
@@ -172,7 +193,7 @@ class PointRobotVelHGraph(HGraph):
             )
             return dx_next
 
-        return SystemModel(model)
+        return SystemModel(model, name=DRIVE_MPC_MODEL)
 
     def _create_mppi_drive_model(self):
 
@@ -184,7 +205,7 @@ class PointRobotVelHGraph(HGraph):
 
             return x_next
 
-        return SystemModel(model)
+        return SystemModel(model, name=DRIVE_MPPI_MODEL)
 
     ##### PUSH MPPI #####
     def _create_mppi_push_controller(self):
@@ -236,4 +257,4 @@ class PointRobotVelHGraph(HGraph):
 
             return x_next
 
-        return SystemModel(model)
+        return SystemModel(model, PUSH_MPPI_MODEL)

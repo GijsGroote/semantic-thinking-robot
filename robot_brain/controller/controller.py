@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 from robot_brain.state import State
-from robot_brain.system_model import SystemModel, EMPTY_SYSTEM_MODEL
+from robot_brain.system_model import SystemModel
+
 
 class Controller(ABC):
     """
@@ -13,7 +14,7 @@ class Controller(ABC):
         self.order = order
         self.dt_counter = 0
 
-        self.system_model = EMPTY_SYSTEM_MODEL
+        self._system_model = SystemModel(None)
         self.target_state = State()
         self.pred_error = []
 
@@ -60,6 +61,9 @@ class Controller(ABC):
 
     @system_model.setter
     def system_model(self, val):
+
+        assert val.name is not None,\
+                "system models name should not me None"
         assert isinstance(val, SystemModel),\
                 f"system model should be of type SystemModel and is {type(val)}"
         self._system_model = val

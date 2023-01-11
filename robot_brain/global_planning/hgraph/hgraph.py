@@ -11,8 +11,8 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
 # from robot_brain.global_planning.kgraph.kgraph import KGraph
-from robot_brain.global_planning.node import Node
-from robot_brain.global_planning.obstacle_node import ObstacleNode, COMPLETED, UNFEASIBLE, INITIALISED
+from robot_brain.global_planning.node import Node, COMPLETED, UNFEASIBLE, INITIALISED
+from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
 from robot_brain.state import State
@@ -22,13 +22,19 @@ from robot_brain.global_planning.drive_act_edge import DriveActionEdge
 from robot_brain.global_planning.push_ident_edge import PushIdentificationEdge
 from robot_brain.global_planning.push_act_edge import PushActionEdge
 from robot_brain.global_planning.action_edge import ActionEdge, PATH_EXISTS, PATH_IS_PLANNED, HAS_SYSTEM_MODEL
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.global_planning.identification_edge import IdentificationEdge
 from robot_brain.global_planning.empty_edge import EmptyEdge
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
-
+from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
+from robot_brain.exceptions import (
+        RunnoutOfControlMethodsException,
+        NoPathExistsException,
+        PlanningTimeElapsedException,
+        # FaultDetectedException
+        )
 from logger.hlogger import HLogger
 
 EXECUTION_LOOP = "executing"
@@ -107,11 +113,12 @@ class HGraph(Graph):
             if len(self.hypothesis) == 0:
                 raise ValueError("HGraph cannot respond without a hypothesis")
 
-            # TODO: create function to set current edge, only check ready_for_execution once
-            # self.current_edge = self.hypothesis[self.edge_pointer]
 
             # TODO: fault detection could be done here
             # TODO: when a fault is detected, abandon edge, move to blacklist and go to search loop
+            # if fault:
+            #     raise FaultDetectedException('tsting this ')
+
 
             if self.current_edge.view_completed(self.current_node.obstacle.state):
                 if self.current_edge.completed():
@@ -230,23 +237,26 @@ class HGraph(Graph):
 
                 n_completed_subtasks = 0
                 n_failed_subtasks = 0
+                n_unfeasible_subtasks = 0
 
                 for target_node in self.target_nodes:
                     if target_node.status == COMPLETED:
                         n_completed_subtasks += 1
                     elif target_node.status == FAILED:
                         n_failed_subtasks += 1
+                    elif target_node.status == UNFEASIBLE:
+                        n_unfeasible_subtasks += 1
                     else:
                         raise ValueError(f"target node status should be {FAILED} or {COMPLETED} and is {target_node.status}")
 
                 if n_failed_subtasks+n_completed_subtasks == 0:
                     task_success_ratio = None
                 else:
-                    task_success_ratio = n_completed_subtasks/(n_failed_subtasks+n_completed_subtasks)
+                    task_success_ratio = n_completed_subtasks/(n_unfeasible_subtasks+n_failed_subtasks+n_completed_subtasks)
 
                 self.end_completed_task(task_success_ratio)
 
-                raise StopIteration(f"The task is successfully completed with a success/fail ration of {task_success_ratio}!")
+                raise StopIteration(f"The task is completed with a success/fail ration of {task_success_ratio}!")
 
             # reset pointers
             self.reset_current_pointers()
@@ -339,7 +349,6 @@ class HGraph(Graph):
                         temp_node.iden != target_node.iden and\
                         target_node.subtask_name == self.current_subtask["name"]:
                     return temp_node
-
         # TODO: acceptional error if the start node is not yet created, future work mister, gijs groote 28 dec 2022
         # TODO: create new node here!, with the current position of the obstacle
         raise ValueError(f'for target node {target_node.name} no start node was found')
@@ -354,7 +363,24 @@ class HGraph(Graph):
             # TODO: the knowledge graph should come into play here
         else:
 
-            controller = self.create_drive_controller()
+            try:
+                error_trigger=False
+
+                (controller, model_name) = self.create_drive_controller(
+                        start_node_iden,
+                        target_node_iden)
+
+
+            except RunnoutOfControlMethodsException as exc:
+                error_trigger=True
+                self.get_node(target_node_iden).status = FAILED
+                if LOG_METRICS:
+                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+                if CREATE_SERVER_DASHBOARD:
+                    self.visualise()
+
+            if error_trigger:
+                return self._search_hypothesis()
 
             model_node = ObstacleNode(self.unique_node_iden(),
                     self.robot.name+"_model", self.robot,
@@ -368,69 +394,25 @@ class HGraph(Graph):
                     verb="driving",
                     controller=controller)
 
-            try:
-                self.estimate_path(edge)
-            except ValueError as exc:
-                # path estimation fails
-                # TODO: unfeasible status does not prevent the node, or edge from occuring
-                self.get_node(edge.to).status = UNFEASIBLE
-                edge.status = FAILED
-                print(f'reason for failing hypothesis, no path between start and target was found, reason {exc}') # <--- delete that please
-
-                if LOG_METRICS:
-                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
-
-                # TODO: is it okey to loop into this all the time
-                return self._search_hypothesis()
-
-            edge.set_path_exist_status()
+            self.estimate_path(edge)
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
-            # TODO: if creation of the drive edge fails, it tries again, but can eventually throw an error. Then
-            # go back to the drawing board
-            try:
-                self.create_drive_ident_edge(start_node_iden, model_node.iden, edge.iden)
-            except ValueError as exc:
-                raise exc
-                # TODO: fail this edge, add to blacklist and try again
-                # TODO: define behavioru when all sys iden methods fail.
+            self.create_drive_ident_edge(start_node_iden, model_node.iden, model_name, edge.iden)
 
-    def create_drive_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int):
+    def create_drive_ident_edge(self, start_node_iden: int, target_node_iden: int, model_name: str, model_for_edge_iden: int):
         """ create a system identification edge. """
-
-        model_for_node_controller_type = self.get_edge(model_for_edge_iden).controller.name # temp fix
-
-        # TODO: check for blacklist which sys iden methods are available
-
-        if model_for_node_controller_type == "MPC":
-            controller = self._create_mpc_drive_controller()
-        elif model_for_node_controller_type == "MPPI":
-            controller = self._create_mppi_drive_controller()
-        else:
-            raise ValueError("somethign goes terebly wrong")
 
         edge = DriveIdentificationEdge(iden=self.unique_edge_iden(),
                 source=start_node_iden,
                 to=target_node_iden,
                 verb="identify",
-                controller=controller,
+                controller="controller", # identify edge, does not really need controller
                 model_for_edge_iden=model_for_edge_iden)
 
-        try:
-            edge.system_model= self.create_drive_model(controller.name)
-            self.add_edge(edge)
-            self.hypothesis.insert(0, edge)
-
-        except ValueError as exc:
-            # system identification failed
-
-            # TODO: this iden method should be excluded for this obstacle, add to blacklist
-            edge.status = FAILED
-            if LOG_METRICS:
-                self.logger.add_failed_hypothesis(self.hypothesis, self.subtask, str(exc))
-                self.create_drive_ident_edge(start_node_iden, target_node_iden, model_for_edge_iden)
-
+        edge.system_model= self._create_drive_model(model_name)
+        self.add_edge(edge)
+        self.hypothesis.insert(0, edge)
 
     def create_push_edge(self, start_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
@@ -439,11 +421,27 @@ class HGraph(Graph):
 
         if knowledge_graph:
             print("knowledge graph has a proposition")
-            # TODO: the knowledge graph should come into play here
         else:
 
-            controller = self.create_push_controller()
+            # Create a PushActionEdge
+            try:
+                exception_trigger = False
+                (controller, model_name) = self.create_push_controller()
 
+            except RunnoutOfControlMethodsException as exc:
+                exception_trigger = True
+                self.get_node(target_node_iden).status = FAILED
+
+                if LOG_METRICS:
+                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+                if CREATE_SERVER_DASHBOARD:
+                    self.visualise()
+
+            if exception_trigger:
+                return self._search_hypothesis()
+
+            # TODO: give the controller and model name here
+            controller = self.create_push_controller()
             start_node = self.nodes[start_node_iden]
             target_node = self.nodes[target_node_iden]
 
@@ -456,35 +454,15 @@ class HGraph(Graph):
                     verb="pushing",
                     controller=controller)
 
-            try:
-                self.estimate_path(edge)
-            except ValueError as exc:
-                # path estimation fails
-                self.get_target_node(edge.to).status = UNFEASIBLE
-                edge.status = FAILED
-
-                # TODO: give info to terminal for every failed thingy
-                print(f"Failed hypothesis for subtask {target_node.subtask_name}, Path estimation failed: {exc}")
-
-                if LOG_METRICS:
-                    self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
-
-                return self._search_hypothesis()
-
-            edge.set_path_exist_status()
+            self.estimate_path(edge)
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
-            # TODO: if creation of the push edge fails, it tries again, but can eventually throw an error. Then
-            # go back to the drawing board
-            try:
-                self.create_push_ident_edge(start_node_iden, model_node.iden, edge.iden)
-            except ValueError as exc:
-                raise exc
-                # TODO: fail this edge, add to blacklist and try again
-                # TODO: define behavioru when all sys iden methods fail.
+            # Create DriveIdentificationEdge
+            # TODO: model_name is not used, please use that
+            self.create_push_ident_edge(start_node_iden, model_node.iden, edge.iden)
 
-            # create a node to drive the robot toward the box.
+            # Create EmptyEdge if nessesary
             target = self.find_push_state_against_obstacle(self.get_node(start_node_iden).obstacle)
             robot_to_box_id = self.unique_node_iden()
             robot_target_node = ObstacleNode
@@ -495,9 +473,8 @@ class HGraph(Graph):
                 self.get_node(target_node_iden).subtask_name
                 ))
 
-
+            # TODO: do that empty edge only if it is nessesary
             self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
-
 
     def create_push_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int):
         """ create a system identification edge for pushing. """
@@ -518,21 +495,10 @@ class HGraph(Graph):
                 controller=controller,
                 model_for_edge_iden=model_for_edge_iden)
 
-        try:
-            system_model = self.create_push_model(controller.name) # todo, system iden
-            edge.system_model = system_model
-            self.add_edge(edge)
-            self.hypothesis.insert(0, edge)
-
-        except ValueError as exc:
-            # system identification failed
-            print(f"System Identification failed: {exc} in subtask {self.nodes[target_node_iden].subtask_name}, ")
-
-            # TODO: this iden method should be excluded for this obstacle, add to blacklist
-            edge.status = FAILED
-            if LOG_METRICS:
-                self.logger.add_failed_hypothesis(self.hypothesis, self.nodes[target_node_iden].subtask_name , str(exc))
-                self.create_push_ident_edge(start_node_iden, target_node_iden, model_for_edge_iden)
+        system_model = self.create_push_model(controller.name) # todo, system iden
+        edge.system_model = system_model
+        self.add_edge(edge)
+        self.hypothesis.insert(0, edge)
 
     def find_push_state_against_obstacle(self, obstacle) -> State:
         """ find a push position (state) next to the obstacle. """
@@ -548,43 +514,34 @@ class HGraph(Graph):
             print('you did not implement this mister mister;')
             # TODO: this for cylinder and sphere
 
-    def in_blacklist(self, edge) -> bool:
+    def in_blacklist(self, edge_type: list) -> bool:
         """ checks if the edge is already in the blacklist. """
 
-        # TODO: how to split the model present and not present in edge?
-        if edge.system_model is not None:
-            sys_model_name = edge.system_model.name
-        else:
-            sys_model_name = None
-
-        for edge_type in self.blacklist[edge.to]:
-
-            # check if edge type is equal to the type of edge
-            if all(edge_type[0]==type(edge),
-                    edge_type[1]==edge.source,
-                    edge_type[2]==edge.to,
-                    edge_type[3]==edge.controller.name,
-                    edge_type[4]==sys_model_name):
-                return True
-
+        if edge_type[0] in self.blacklist:
+            for blacked_edge_type in self.blacklist[edge_type[0]]:
+                if blacked_edge_type==edge_type:
+                    return True
         return False
 
     def add_to_blacklist(self, edge):
         """ add edge to the blacklist. """
 
-        if edge.system_model is not None:
-            sys_model_name = edge.system_model.name
-        else:
-            sys_model_name = None
+        assert edge.controller.system_model.name is not None,\
+                "cannot add edge without system model name"
+        assert callable(edge.controller.system_model.model),\
+                "cannot add edge without callable system model"
 
-        edge_type = (self.get_node(edge.source).obstacle.name,
-                type(edge),
-                edge.source,
+        edge_type = [
                 edge.to,
+                self.get_node(edge.source).obstacle.name,
+                type(edge),
                 edge.controller.name,
-                sys_model_name)
+                edge.controller.system_model.name]
 
-        # create blacklist on target node
+        assert not self.in_blacklist(edge_type),\
+                f"edge: {edge.iden} should not already be in blacklist"
+
+        # create blacklist on target node key
         if edge.to in self.blacklist:
             self.blacklist[edge.to].append(edge_type)
         else:
@@ -617,24 +574,42 @@ class HGraph(Graph):
         elif isinstance(edge, PushActionEdge):
             edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.obstacles)
 
-        (path_estimation, does_path_exist) = edge.path_estimator.search_path(self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+        try:
+            except_triggered=False
+
+            path_estimation = edge.path_estimator.search_path(
+            self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+
+        except NoPathExistsException as exc:
+
+            # TODO: unfeasible status does not prevent the node, or edge from occuring again
+            except_triggered=True
+            self.get_node(edge.to).status = UNFEASIBLE
+            edge.status = FAILED
+
+            if LOG_METRICS:
+                self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+
+            if CREATE_SERVER_DASHBOARD:
+                self.visualise()
+
+        if except_triggered:
+            return self._search_hypothesis()
+
+        edge.path_estimation = path_estimation
+        edge.set_path_exist_status()
 
         if CREATE_SERVER_DASHBOARD:
             edge.path_estimator.visualise()
 
-        if does_path_exist:
-            edge.path_estimation = path_estimation
-        else:
-            self.add_to_blacklist(edge)
-            raise ValueError("path does not exist")
 
 
     @abstractmethod
-    def create_drive_path_estimator(self, obstacles) -> ConfigurationGridMap:
+    def create_drive_path_estimator(self, obstacles) -> PathEstimator:
         pass
 
     @abstractmethod
-    def create_push_path_estimator(self, push_obstacle, obstacles) -> ConfigurationGridMap:
+    def create_push_path_estimator(self, push_obstacle, obstacles) -> PathEstimator:
         pass
 
     def search_path(self, edge, increment_edge: bool):
@@ -653,14 +628,16 @@ class HGraph(Graph):
             current_state = self.robot.state
 
         elif isinstance(edge, PushActionEdge):
-            edge.motion_planner = self.create_push_motion_planner(self.obstacles, self.get_node(edge.source).obstacle, edge.path_estimator)
-            print(f'the motion planner is hrere {type(edge.motion_planner)}')
+            edge.motion_planner = self.create_push_motion_planner(
+                    self.obstacles, self.get_node(edge.source).obstacle, edge.path_estimator)
             current_state = self.get_node(edge.source).obstacle.state
 
         try:
+            error_triggered = False
             edge.path = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
-        except StopIteration as exc:
+        except PlanningTimeElapsedException as exc:
 
+            error_triggered = True
             if LOG_METRICS:
                 self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
 
@@ -682,15 +659,18 @@ class HGraph(Graph):
             for tedge in self.hypothesis:
                 print(f"new hypoth:{tedge.iden} and status {tedge.status}")
 
+
+        if error_triggered:
             return self._search_hypothesis()
+        else:
 
-        edge.set_path_is_planned_status()
+            edge.set_path_is_planned_status()
 
-        if increment_edge:
-            self._force_increment_edge(edge)
+            if increment_edge:
+                self._force_increment_edge(edge)
 
-        if CREATE_SERVER_DASHBOARD:
-            edge.motion_planner.visualise()
+            if CREATE_SERVER_DASHBOARD:
+                edge.motion_planner.visualise()
 
     @abstractmethod
     def create_drive_motion_planner(self, obstacles, path_estimator):
@@ -760,6 +740,9 @@ class HGraph(Graph):
                 f"edge status should be {PATH_EXISTS} but is {for_edge.status}"
         system_model = ident_edge.system_model
 
+        print('that is empty function?')
+        print(system_model)
+
         for_edge.set_has_system_model_status()
 
         if isinstance(for_edge.controller, DriveController):
@@ -771,11 +754,11 @@ class HGraph(Graph):
 
     @abstractmethod
     def _setup_drive_controller(self, controller, system_model):
-        """ TODO: create this. """
+        """ setup drive controller """
 
     @abstractmethod
     def _setup_push_controller(self, controller, system_model, push_edge):
-        """ TODO: create this. """
+        """ setup push controller """
 
     def go_to_loop(self, loop: str):
         """ go to the searching loop. """
@@ -813,24 +796,58 @@ class HGraph(Graph):
 ###############################
 ### CREATION OF CONTROLLERS ###
 ###############################
-    def create_drive_controller(self):
-        """for now: randomly select a driving controller. """
-        # TODO: find banned controllers, find blacklist, ask Kgraph for advice,
-        # fallback option is random select over all the availeble controllers
+    def create_drive_controller(self, source_iden: int, target_iden: int) -> Tuple[Controller, str]:
+        """ randomly select a driving controller that is not on the blacklist. """
 
-        possible_controllers = self.get_drive_controllers()
+        controllers = self.get_drive_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
 
-        controller = random.choice(possible_controllers)()
+        # filter the blacklisted edges
+        if target_iden in self.blacklist:
+            controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                    DriveActionEdge,
+                    controllers_and_model_names, source_iden, target_iden)
+        else:
+            controllers_and_model_names_filtered = controllers_and_model_names
 
-        return controller
+        (controller, model_names) = random.choice(controllers_and_model_names_filtered)
+        model_name = random.choice(model_names)
+
+        return (controller, model_name)
+
+    def filter_control_and_model_names(self, edge_type, cntrol_and_models: list, source_iden: int, target_iden: int) -> list:
+        """ removes the controllers and edges that are on the blacklist from cntrol_and_models. """
+
+        controller_and_model_names_filtered = []
+        # filter out blacked combinations of control methods with system models
+        for (controller, model_names) in cntrol_and_models:
+
+            model_names_filtered = []
+            for model_name in model_names:
+
+                if not self.in_blacklist([
+                    target_iden,
+                    self.get_node(source_iden).obstacle.name,
+                    edge_type,
+                    controller.name,
+                    model_name]):
+                    model_names_filtered.append(model_name)
+
+            if len(model_names_filtered) > 0:
+                controller_and_model_names_filtered.append((controller, model_names_filtered))
+
+        if len(controller_and_model_names_filtered) == 0:
+            raise RunnoutOfControlMethodsException("All possible edges are on the blacklist")
+
+        return controller_and_model_names_filtered
 
     @abstractmethod
     def get_drive_controllers(self) -> list:
         """ return drive controllers """
 
     @abstractmethod
-    def create_drive_model(self, controller_name: str):
-        """ create a dynamic model for driving. """
+    def _create_drive_model(self, model_name: str) -> SystemModel:
+        """ create the requested system model. """
 
     def create_push_controller(self) -> Controller:
         possible_controllers = self.get_push_controllers()
@@ -844,6 +861,9 @@ class HGraph(Graph):
     def create_push_model(self, controller_name: str):
         """ create a dynamic model for pushing. """
 
+    @abstractmethod
+    def find_compatible_models(self, controllers: list) -> list:
+        """ return compatible dynamic models for controllers. """
 #####################################
 ### HYPOTHESIS CHECKING FUNCTIONS ###
 #####################################

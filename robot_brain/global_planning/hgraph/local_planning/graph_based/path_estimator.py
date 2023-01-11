@@ -7,9 +7,10 @@ import numpy as np
 from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
-class ConfigurationGridMap(ABC):
-    """ Configuration grid map represents the environment in obstacle space
-    free space, movable obstacle space and unknown obstacle space and includes
+class PathEstimator(ABC):
+    """ With as internal structure a configuration grid map, the path estimator
+    represents the environment in obstacle space free space, movable obstacle
+    space and unknown obstacle space and includes
     the dimensions or the robot.
 
     The center represents the origin, an configuration grid map can only
@@ -41,7 +42,7 @@ class ConfigurationGridMap(ABC):
         self._n_orientations = n_orientations
 
     @abstractmethod
-    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
         """ return shortest path and boolean indicating if a shortest path can be found. """
 
     def setup(self):

@@ -2,7 +2,7 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from robot_brain.state import State
-from robot_brain.system_model import SystemModel, EMPTY_SYSTEM_MODEL
+from robot_brain.system_model import SystemModel
 
 
 INITIALISED = "initialised"
@@ -22,7 +22,7 @@ class Edge(ABC):
         self.to = to
         self.verb = verb
         self.controller = controller
-        self.system_model = EMPTY_SYSTEM_MODEL
+        self.system_model = SystemModel(None)
 
         self._path_estimation = None
         self._path = None

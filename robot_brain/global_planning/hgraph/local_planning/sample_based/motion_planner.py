@@ -13,11 +13,11 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_configuration_grid_map import RectangleObstacleConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_configuration_grid_map import CircleObstacleConfigurationGridMap
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi
-
+from robot_brain.exceptions import PlanningTimeElapsedException
 
 class MotionPlanner(ABC):
     """
@@ -57,21 +57,21 @@ class MotionPlanner(ABC):
         if include_orien:
             self.orien_sorted = SortedDict({})
 
-        if isinstance(configuration_grid_map, ConfigurationGridMap):
+        if isinstance(configuration_grid_map, PathEstimator):
             if isinstance(obstacle.properties, CylinderObstacle):
-                assert isinstance(configuration_grid_map, CircleObstacleConfigurationGridMap),\
+                assert isinstance(configuration_grid_map, CircleObstaclePathEstimator),\
                     "obstacle is CylinderObstacle, conf_grid_map should be of "\
-                    f"type CircleObstacleConfigurationGridMap and is {type(configuration_grid_map)}"
+                    f"type CircleObstaclePathEstimator and is {type(configuration_grid_map)}"
             elif isinstance(obstacle.properties, BoxObstacle):
-                assert isinstance(configuration_grid_map, RectangleObstacleConfigurationGridMap),\
+                assert isinstance(configuration_grid_map, RectangleObstaclePathEstimator),\
                     "obstacle is BoxObstacle, conf_grid_map should be of type"\
-                    f" RectangleObstacleConfigurationGridMap and is {type(configuration_grid_map)}"
+                    f" RectangleObstaclePathEstimator and is {type(configuration_grid_map)}"
 
             self.configuration_grid_map = configuration_grid_map
 
         else:
             if isinstance(obstacle.properties, CylinderObstacle):
-                self.configuration_grid_map = CircleObstacleConfigurationGridMap(
+                self.configuration_grid_map = CircleObstaclePathEstimator(
                     cell_size=0.2,
                     grid_x_length=grid_x_length,
                     grid_y_length=grid_y_length,
@@ -81,7 +81,7 @@ class MotionPlanner(ABC):
                     obst_radius=obstacle.properties.radius())
 
             elif isinstance(obstacle.properties, BoxObstacle):
-                self.configuration_grid_map = RectangleObstacleConfigurationGridMap(
+                self.configuration_grid_map = RectangleObstaclePathEstimator(
                     cell_size=0.2,
                     grid_x_length=grid_x_length,
                     grid_y_length=grid_y_length,
@@ -197,8 +197,9 @@ class MotionPlanner(ABC):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.05:
-            raise StopIteration("It takes to long to find a path, halt.")
+        if planning_time > 0.31:
+
+            raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
         if len(self.shortest_paths) < 5:
             return False
@@ -249,7 +250,8 @@ class MotionPlanner(ABC):
         for value in self.shortest_paths.values():
             sample1 = self.samples[value["sample1_key"]]
             sample2 = self.samples[value["sample2_key"]]
-            fig.add_scatter(y=[sample1["pose"][0], sample2["pose"][0]], x=[sample1["pose"][1], sample2["pose"][1]], **connect_style)
+            fig.add_scatter(y=[sample1["pose"][0], sample2["pose"][0]],
+                    x=[sample1["pose"][1], sample2["pose"][1]], **connect_style)
             connect_style["showlegend"] = False
 
         if self.shortest_path is not None:

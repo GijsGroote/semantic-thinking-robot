@@ -1,14 +1,18 @@
 
+def emptyfunction():
+    pass
 
 class SystemModel:
     """
     System model.
     """
-    def __init__(self, model):
-        # TODO: set a unique id such that the system model is unique
-        self.name = None
-        self.iden = None
-        self.model = model
+    def __init__(self, model, name=None):
+
+        if name is None:
+            self.model = emptyfunction
+        else:
+            self.model = model
+        self.name = name
 
     def to_string(self) -> str:
         """ return a human readible format of an SystemModel object."""
@@ -22,8 +26,3 @@ class SystemModel:
     def model(self, val):
         assert (callable(val)), f"system model must be a callable function and is {type(val)}"
         self._model = val
-
-def emptyfunction():
-    pass
-
-EMPTY_SYSTEM_MODEL = SystemModel(emptyfunction)

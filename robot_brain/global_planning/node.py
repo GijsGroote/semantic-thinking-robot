@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 
+INITIALISED = "initialised"
+COMPLETED = "completed"
+UNFEASIBLE = "unfeasible"
+
 class Node(ABC):
     """
     Abstract class for Node
@@ -7,6 +11,11 @@ class Node(ABC):
     def __init__(self, iden):
         self.iden = iden  # identifier
         self.type = None
+        self.status = INITIALISED
+
+    def ready_for_execution(self) -> bool:
+        """ returns true if the node is ready for execution. """
+        return self.status == INITIALISED
 
     @abstractmethod
     def to_string(self):

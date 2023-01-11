@@ -9,12 +9,13 @@ import plotly.graph_objects as go
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
 from helper_functions.figures import discrete_colorscale
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
+from robot_brain.exceptions import NoPathExistsException
 
-class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
+class CircleObstaclePathEstimator(PathEstimator):
     """ The configuration grid map for circular obstacles. """
 
     def __init__(self,
@@ -26,7 +27,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
             obst_name: str,
             obst_radius: float):
 
-        ConfigurationGridMap.__init__(self, cell_size, grid_x_length,
+        PathEstimator.__init__(self, cell_size, grid_x_length,
                 grid_y_length, obstacles, obst_cart_2d, obst_name, 1)
         self._obst_radius = obst_radius
         self._grid_map = np.zeros((
@@ -128,8 +129,9 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         return self.grid_map[x_idx, y_idx]
 
-    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
         """ Dijkstra shortest path algorithm. """
+
         if isinstance(cart_2d_start, State):
             cart_2d_start = cart_2d_start.get_xy_position()
 
@@ -137,7 +139,8 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
             cart_2d_target= cart_2d_target.get_xy_position()
 
         if self.occupancy(cart_2d_start) == 1 or self.occupancy(cart_2d_target) == 1:
-            return ([], False)
+            raise NoPathExistsException("Start or target state in obstacle space")
+
         if self.occupancy(cart_2d_start) != 0:
             warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
 
@@ -184,6 +187,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
                         if self._c_idx_to_occupancy(*c_idx) != 1:
 
                             # put cell in the queue if not already in there
+                            
                             if visited[c_idx] == 0:
                                 visited[c_idx] = 1
                                 queue.append(c_idx)
@@ -197,7 +201,7 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         # no shortest path was found
         if cost[c_idx_target] == sys.maxsize:
-            return ([], False)
+            raise NoPathExistsException("Dijkstra algorithm could not find a path from start to target state.")
 
         shortest_path_reversed = []
         c_idx_temp = c_idx_target
@@ -219,7 +223,9 @@ class CircleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         shortest_path.append(tuple(cart_2d_target))
 
-        return (shortest_path, True)
+        print('HEYYEYYEEY')
+
+        return shortest_path
 
     def update(self):
         self.grid_map = np.zeros((

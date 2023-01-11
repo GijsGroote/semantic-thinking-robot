@@ -3,7 +3,8 @@ from abc import abstractmethod
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.edge import Edge
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+
 from robot_brain.state import State
 
 from robot_brain.global_planning.edge import INITIALISED, COMPLETED, EXECUTING, FAILED
@@ -99,8 +100,8 @@ class ActionEdge(Edge):
                 f"Controller: {self.controller.name}<br>System model: todo system model here"
 
     def set_path_exist_status(self):
-        assert isinstance(self.path_estimator, ConfigurationGridMap),\
-                f"path_estimator should be ConfigurationGridMap and is {type(self.path_estimator)}"
+        assert isinstance(self.path_estimator, PathEstimator),\
+                f"path_estimator should be PathEstimator and is {type(self.path_estimator)}"
         assert isinstance(self.path_estimation, list),\
                 f"path_estimation should be list and is {type(self.path_estimation)}"
         assert self.status == INITIALISED,\
@@ -153,8 +154,8 @@ class ActionEdge(Edge):
 
     @path_estimator.setter
     def path_estimator(self, p_e):
-        assert isinstance(p_e, ConfigurationGridMap),\
-        f"path estimator should be of type ConfigurationGridMap, but is {type(p_e)}"
+        assert isinstance(p_e, PathEstimator),\
+        f"path estimator should be of type PathEstimator, but is {type(p_e)}"
         self._path_estimator = p_e
 
     @property

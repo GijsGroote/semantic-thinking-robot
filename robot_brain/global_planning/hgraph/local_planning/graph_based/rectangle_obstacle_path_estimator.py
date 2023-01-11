@@ -14,12 +14,13 @@ from helper_functions.geometrics import (
         )
 from helper_functions.figures import discrete_colorscale
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.configuration_grid_map import ConfigurationGridMap
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
+from robot_brain.exceptions import NoPathExistsException
 
-class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
+class RectangleObstaclePathEstimator(PathEstimator):
     """ The configuration grid map for rectangular obstacles. """
 
     def __init__(self,
@@ -33,7 +34,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         obst_x_length: float,
         obst_y_length: float):
 
-        ConfigurationGridMap.__init__(self, cell_size, grid_x_length, grid_y_length,
+        PathEstimator.__init__(self, cell_size, grid_x_length, grid_y_length,
                 obstacles, obst_cart_2d, obst_name, n_orientations)
         self._obst_x_length = obst_x_length
         self._obst_y_length = obst_y_length
@@ -189,7 +190,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
 
     def _p_idx_to_occupancy(self, x_idx: int, y_idx: int, orien_idx: int) -> int:
         """ returns the occupancy of a grid cell """
-        if not all(isinstance(x_idx, int) and isinstance(y_idx, int) and isinstance(orien_idx, int)):
+        if not all([isinstance(x_idx, int), isinstance(y_idx, int), isinstance(orien_idx, int)]):
             raise TypeError("all arguements should be intergers")
 
         if (x_idx >= self.grid_map.shape[0] or
@@ -212,7 +213,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         return self._p_idx_to_occupancy(*idx)
 
 
-    def search_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> Tuple[list, bool]:
+    def search_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
         """ use the Dijkstra algorithm to find the shortest path. """
 
         if isinstance(pose_2d_start, State):
@@ -226,7 +227,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
         pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
 
         if self.occupancy(pose_2d_start) == 1 or self.occupancy(pose_2d_target) == 1:
-            return ([], False)
+            raise NoPathExistsException("Start or target state in obstacle space")
 
         if self.occupancy(pose_2d_start) != 0:
             warnings.warn("the start position is in movable or unkown space")
@@ -293,7 +294,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
                                     previous_cell[x_idx, y_idx, orien_idx, :] = cell_pose_temp
 
         if cost[p_idx_target] == sys.maxsize:
-            return ([], False)
+            raise NoPathExistsException("Dijkstra algorithm is unable to connect start to target state")
 
         shortest_path_reversed = []
         cell_pose_temp = p_idx_target
@@ -316,7 +317,7 @@ class RectangleObstacleConfigurationGridMap(ConfigurationGridMap):
 
         shortest_path.append(tuple(pose_2d_target))
 
-        return (shortest_path, True)
+        return shortest_path
 
     def _pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> Tuple[int, int, int]:
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation). """
