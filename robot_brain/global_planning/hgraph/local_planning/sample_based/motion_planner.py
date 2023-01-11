@@ -197,7 +197,7 @@ class MotionPlanner(ABC):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.31:
+        if planning_time > 0.8:
 
             raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
