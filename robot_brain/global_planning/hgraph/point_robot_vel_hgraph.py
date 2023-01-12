@@ -2,7 +2,6 @@ import math
 import torch
 from casadi import vertcat
 
-
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
