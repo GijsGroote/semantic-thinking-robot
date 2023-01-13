@@ -1,3 +1,5 @@
+import random
+
 def discrete_colorscale(bvals, colors):
     """
     bvals - list of values bounding intervals/ranges of interest
@@ -6,12 +8,14 @@ def discrete_colorscale(bvals, colors):
     """
     if len(bvals) != len(colors)+1:
         raise ValueError('len(boundary values) should be equal to  len(colors)+1')
-    bvals = sorted(bvals)     
+    bvals = sorted(bvals)
     nvals = [(v-bvals[0])/(bvals[-1]-bvals[0]) for v in bvals]  #normalized values
-    
+
     dcolorscale = [] #discrete colorscale
-    for k in range(len(colors)):
-        dcolorscale.extend([[nvals[k], colors[k]], [nvals[k+1], colors[k]]])
-    return dcolorscale  
+    for (k, color) in enumerate(colors):
+        dcolorscale.extend([[nvals[k], color], [nvals[k+1]], color])
+    return dcolorscale
 
-
+def get_random_color():
+    """ return a random color. """
+    return [random.random(), random.random(), random.random(), 1]

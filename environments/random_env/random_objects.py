@@ -1,14 +1,15 @@
 import random
-import numpy as np
 from typing import Tuple
 import math
+import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle, UNMOVABLE
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
-
+from robot_brain.global_planning.hgraph.local_planning.graph_based.\
+        circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from helper_functions.figures import get_random_color
 
 class RandomObject():
     """ Generate random objects. """
@@ -30,16 +31,20 @@ class RandomObject():
         self.min_dimension = min_dimension
         self.max_dimension = max_dimension
         self.max_weight = max_weight
+        self.occupancy_graph = None
 
+
+    # TODO: function creates obstacles and a task, the task can have target locations in which obstacles overlap
+    # thus both cannot be at their respective target location at the same time.
     def create_random_objects_and_task(self, n_unmovable_obstacles: int, n_movable_obstacles: int, n_subtasks: int):
         """ create movable and unmovable obstacles and a task. """
+
         assert n_subtasks <= n_movable_obstacles, "number of subtasks cannot exceed the number of movable obstacles"
 
         obstacles = {}
 
         # create unmovable obstacles
         unmovable_obstacles = {}
-
         for _ in range(n_unmovable_obstacles):
             (random_box, position, orientation) = self._create_unmovable_random_box()
             obstacles[random_box.name()] = random_box
@@ -79,7 +84,8 @@ class RandomObject():
         for _ in range(n_subtasks):
             temp_key = random.choice(list(movable_obstacles))
             p2d = self._get_random_2d_pose()
-            task.append((movable_obstacles[temp_key].name(), State(pos=np.array([p2d[0], p2d[1], 0]), ang_p=np.array([0,0,p2d[2]]))))
+            task.append((movable_obstacles[temp_key].name(), State(pos=np.array([p2d[0],
+                p2d[1], 0]), ang_p=np.array([0,0,p2d[2]]))))
             movable_obstacles.pop(temp_key)
 
         return (obstacles, task)
@@ -120,7 +126,7 @@ class RandomObject():
             "mass": mass,
             "orientation": [0, 0, orientation],
             "type": "box",
-            "color": self._get_random_color(),
+            "color": get_random_color(),
             "position": position,
             "geometry": {
                 "length": length,
@@ -146,7 +152,7 @@ class RandomObject():
             "mass": mass,
             "orientation": [0, 0, orientation],
             "type": "cylinder",
-            "color": self._get_random_color(),
+            "color": get_random_color(),
             "position": position,
             "geometry": {
                 "radius": radius,
@@ -154,11 +160,8 @@ class RandomObject():
         }
 
         self.cylinder_counter += 1
-        return (CylinderObstacle(name="rand_cylinder_"+str(self.cylinder_counter), content_dict=cylinder_dict), position, orientation)
-
-    def _get_random_color(self):
-        """ return a random color. """
-        return [random.random(), random.random(), random.random(), 1]
+        return (CylinderObstacle(name="rand_cylinder_"+str(self.cylinder_counter),
+            content_dict=cylinder_dict), position, orientation)
 
     def _get_random_2d_pose(self) -> np.ndarray:
         """ return a random 2d pose that lies in free space. """
