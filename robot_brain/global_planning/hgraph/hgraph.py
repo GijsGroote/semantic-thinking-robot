@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import random
+import time
 from typing import Tuple
 import numpy as np
 from pyvis.network import Network
@@ -57,6 +58,7 @@ class HGraph(Graph):
         self.target_nodes = []         # target nodes one for every subtask
         self.start_to_target_iden = [] # identifier mapping from start to target node and vise versa
         self.blacklist = {}            # blacklist containing banned edges
+        self.test = 0
 
         # self.current_edge is the current edge being executed or first in line to be executed.
         # self.current_node is the source node of the current edge being executed for plotting purposes
@@ -579,6 +581,8 @@ class HGraph(Graph):
 
             path_estimation = edge.path_estimator.search_path(
             self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+            edge.path_estimation = path_estimation
+            edge.set_path_exist_status()
 
         except NoPathExistsException as exc:
 
@@ -593,14 +597,17 @@ class HGraph(Graph):
             if CREATE_SERVER_DASHBOARD:
                 self.visualise()
 
+
+        self.test +=1
+        if CREATE_SERVER_DASHBOARD and not except_triggered:
+            if self.test > 1:
+
+                edge.path_estimator.visualise()
+
         if except_triggered:
             return self._search_hypothesis()
 
-        edge.path_estimation = path_estimation
-        edge.set_path_exist_status()
 
-        if CREATE_SERVER_DASHBOARD:
-            edge.path_estimator.visualise()
 
 
 

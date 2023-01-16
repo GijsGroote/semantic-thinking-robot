@@ -49,7 +49,7 @@ class RBrain:
                 cylinder_dict = {
                     "type": "box",
                     # "geometry": {"radius": 0.22, "height": 0.25},
-                    "geometry": {"radius": 0.28, "height": 0.25},
+                    "geometry": {"radius": 0.38, "height": 0.25},
                 }
                 robot_properties = CylinderObstacle(name="pointRobot-vel-v7-obst", content_dict=cylinder_dict)
 
@@ -132,9 +132,9 @@ class RBrain:
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
             self.obstacles[key].type = UNMOVABLE
-            # if key == "simple_cilinder":
-            #     print('detected the simple cylinder, that is now set to movable')
-            #     self.obstacles[key].type = "movable"
+            if key == "simple_cilinder":
+                print('detected the simple cylinder, that is now set to movable')
+                self.obstacles[key].type = MOVABLE
 
     def setup_hgraph(self, stat_world_info):
         """

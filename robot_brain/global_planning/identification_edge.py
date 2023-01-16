@@ -57,7 +57,6 @@ class IdentificationEdge(Edge):
             # status can be: initialised, sys_model, path_planned, failed or completed
             "status": self.status,
             "verb": self.verb,
-            "controller_type": self.controller.name,
                }
 
     def ready_for_execution(self) -> bool:

@@ -4,9 +4,8 @@ import multiprocessing
 from dash import Dash, html, dcc
 from dashboard.callback import register_callbacks
 
-from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
+from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH, DASHBOARD_PORT_PID
 
-DASH_PORT_PID = 8040
 
 class Dashboard:
     """
@@ -169,7 +168,7 @@ def start_dash_server():
     def run():
         app.scripts.config.serve_locally = False
         app.run_server(
-            port=DASH_PORT_PID,
+            port=DASHBOARD_PORT_PID,
             debug=False,
             processes=4,
             threaded=False
