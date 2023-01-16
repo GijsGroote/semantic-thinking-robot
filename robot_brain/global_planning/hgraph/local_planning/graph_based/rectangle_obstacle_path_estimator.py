@@ -12,7 +12,6 @@ from helper_functions.geometrics import (
         do_intersect,
         to_interval_zero_to_two_pi,
         )
-from helper_functions.figures import discrete_colorscale
 
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.obstacle import Obstacle

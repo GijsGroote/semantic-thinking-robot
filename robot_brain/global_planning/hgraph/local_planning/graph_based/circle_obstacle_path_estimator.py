@@ -7,8 +7,6 @@ import numpy as np
 import plotly.graph_objects as go
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
-from helper_functions.figures import discrete_colorscale
-
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
