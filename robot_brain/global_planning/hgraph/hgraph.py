@@ -368,9 +368,7 @@ class HGraph(Graph):
             try:
                 error_trigger=False
 
-                (controller, model_name) = self.create_drive_controller(
-                        start_node_iden,
-                        target_node_iden)
+                (controller, model_name) = self.create_drive_controller(target_node_iden)
 
 
             except RunnoutOfControlMethodsException as exc:
@@ -428,7 +426,7 @@ class HGraph(Graph):
             # Create a PushActionEdge
             try:
                 exception_trigger = False
-                (controller, model_name) = self.create_push_controller()
+                (controller, model_name) = self.create_push_controller(target_node_iden)
 
             except RunnoutOfControlMethodsException as exc:
                 exception_trigger = True
@@ -443,7 +441,6 @@ class HGraph(Graph):
                 return self._search_hypothesis()
 
             # TODO: give the controller and model name here
-            controller = self.create_push_controller()
             start_node = self.nodes[start_node_iden]
             target_node = self.nodes[target_node_iden]
 
@@ -803,45 +800,47 @@ class HGraph(Graph):
 ###############################
 ### CREATION OF CONTROLLERS ###
 ###############################
-    def create_drive_controller(self, source_iden: int, target_iden: int) -> Tuple[Controller, str]:
+    def create_drive_controller(self, target_iden: int) -> Tuple[Controller, str]:
         """ randomly select a driving controller that is not on the blacklist. """
 
         controllers = self.get_drive_controllers()
         controllers_and_model_names = self.find_compatible_models(controllers)
 
         # filter the blacklisted edges
-        if target_iden in self.blacklist:
-            controllers_and_model_names_filtered = self.filter_control_and_model_names(
-                    DriveActionEdge,
-                    controllers_and_model_names, source_iden, target_iden)
-        else:
-            controllers_and_model_names_filtered = controllers_and_model_names
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                DriveActionEdge,
+                controllers_and_model_names,
+                target_iden)
 
         (controller, model_names) = random.choice(controllers_and_model_names_filtered)
         model_name = random.choice(model_names)
 
         return (controller, model_name)
 
-    def filter_control_and_model_names(self, edge_type, cntrol_and_models: list, source_iden: int, target_iden: int) -> list:
+    def filter_control_and_model_names(self, edge_type, control_and_models: list, target_iden: int) -> list:
         """ removes the controllers and edges that are on the blacklist from cntrol_and_models. """
 
         controller_and_model_names_filtered = []
         # filter out blacked combinations of control methods with system models
-        for (controller, model_names) in cntrol_and_models:
 
-            model_names_filtered = []
-            for model_name in model_names:
+        if target_iden in self.blacklist:
+            for (controller, model_names) in control_and_models:
 
-                if not self.in_blacklist([
-                    target_iden,
-                    self.get_node(source_iden).obstacle.name,
-                    edge_type,
-                    controller.name,
-                    model_name]):
-                    model_names_filtered.append(model_name)
+                model_names_filtered = []
+                for model_name in model_names:
 
-            if len(model_names_filtered) > 0:
-                controller_and_model_names_filtered.append((controller, model_names_filtered))
+                    if not self.in_blacklist([
+                        target_iden,
+                        self.get_node(target_iden).obstacle.name,
+                        edge_type,
+                        controller.name,
+                        model_name]):
+                        model_names_filtered.append(model_name)
+
+                if len(model_names_filtered) > 0:
+                    controller_and_model_names_filtered.append((controller, model_names_filtered))
+        else:
+            controller_and_model_names_filtered = control_and_models
 
         if len(controller_and_model_names_filtered) == 0:
             raise RunnoutOfControlMethodsException("All possible edges are on the blacklist")
@@ -856,9 +855,22 @@ class HGraph(Graph):
     def _create_drive_model(self, model_name: str) -> SystemModel:
         """ create the requested system model. """
 
-    def create_push_controller(self) -> Controller:
-        possible_controllers = self.get_push_controllers()
-        return random.choice(possible_controllers)()
+    def create_push_controller(self, target_iden: int) -> Tuple[Controller, str]:
+        """ create push controller. """
+
+        controllers = self.get_push_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
+
+        # filter the blacklisted edges
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                PushActionEdge,
+                controllers_and_model_names,
+                target_iden)
+
+        (controller, model_names) = random.choice(controllers_and_model_names_filtered)
+        model_name = random.choice(model_names)
+
+        return (controller, model_name)
 
     @abstractmethod
     def get_push_controllers(self) -> list:
