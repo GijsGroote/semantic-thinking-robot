@@ -254,7 +254,7 @@ class HGraph(Graph):
                 if n_failed_subtasks+n_completed_subtasks == 0:
                     task_success_ratio = None
                 else:
-                    task_success_ratio = n_completed_subtasks/(n_unfeasible_subtasks+n_failed_subtasks+n_completed_subtasks)
+                    task_success_ratio = n_completed_subtasks/len(self.task)
 
                 self.end_completed_task(task_success_ratio)
 

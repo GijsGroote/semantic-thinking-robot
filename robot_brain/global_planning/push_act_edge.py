@@ -12,6 +12,7 @@ class PushActionEdge(ActionEdge):
     def view_completed(self, state: State) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
+        print(f'wat is de error? = {state.pose_euclidean(self.get_current_target())}')
         return state.pose_euclidean(self.get_current_target()) < 2.5
 
     def respond(self, robot_state: State, obst_state=None) -> np.ndarray:
