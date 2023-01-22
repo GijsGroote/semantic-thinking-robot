@@ -10,8 +10,7 @@ class DriveIdentificationEdge(IdentificationEdge):
             to: int,
             verb: str,
             controller: Controller,
-            model_for_edge_iden: int):
+            model_for_edge_iden: int, 
+            sys_model_name: str):
 
-        IdentificationEdge.__init__(self, iden, source, to, verb, controller, model_for_edge_iden)
-
-    
+        IdentificationEdge.__init__(self, iden, source, to, verb, controller, model_for_edge_iden, sys_model_name)

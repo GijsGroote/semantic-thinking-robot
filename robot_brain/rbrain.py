@@ -131,10 +131,10 @@ class RBrain:
 
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
-            self.obstacles[key].type = UNMOVABLE
-            if key == "simple_cilinder":
-                print('detected the simple cylinder, that is now set to movable')
-                self.obstacles[key].type = MOVABLE
+            # self.obstacles[key].type = UNMOVABLE
+            # if key == "simple_cilinder":
+            #     print('detected the simple cylinder, that is now set to movable')
+            #     self.obstacles[key].type = MOVABLE
 
     def setup_hgraph(self, stat_world_info):
         """
@@ -155,7 +155,7 @@ class RBrain:
         else:
             raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
 
-        
+
         self.is_doing = IS_EXECUTING
 
         # halt if there are no subtask
@@ -180,7 +180,7 @@ class RBrain:
             assert isinstance(obstacle, Obstacle), \
                     f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
-            
+
             task["subtask_"+str(task_nmr)] = (obstacle, target)
 
         self.hgraph.setup(
@@ -226,18 +226,15 @@ class RBrain:
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 
-                    self.hgraph.visualise()
-                    time.sleep(2)
-                    print(f"Stop with executing, because {exc}")
-                    
                     if CREATE_SERVER_DASHBOARD:
+                        self.hgraph.visualise()
+                        time.sleep(2) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 
                     return self.default_action
             else:
-                warnings.warn("returning default action")
                 return self.default_action
-        elif self.is_doing is IS_DOING_NOTHING: 
+        elif self.is_doing is IS_DOING_NOTHING:
 
             return self.default_action
         else:

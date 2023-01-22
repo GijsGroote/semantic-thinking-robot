@@ -12,6 +12,7 @@ from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
 
+from robot_brain.exceptions import PlanningTimeElapsedException
 from helper_functions.geometrics import to_interval_zero_to_two_pi
 
 class DriveMotionPlanner(MotionPlanner):
@@ -287,6 +288,27 @@ class DriveMotionPlanner(MotionPlanner):
                     sample1[1] - sample2[1], sample1[2]-sample2[2]])
         else:
             return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])
+
+    def paths_converged_test(self) -> bool:
+        """ test is the shortest path converged. """
+
+        planning_time = time.time() - self.start_time_search
+
+
+        if planning_time > 1.5:
+            if len(self.shortest_paths) > 0:
+                return True
+            else:
+                raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
+
+        if len(self.shortest_paths) < 15:
+            return False
+
+        elif self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(14)[0]:
+            # return True when the 5th shortest path is at most 10% longer than the shortest path
+            return True
+        else:
+            return False
 
     def extract_shortest_path(self) -> list:
         """ Finds the shortest path after sampling. """

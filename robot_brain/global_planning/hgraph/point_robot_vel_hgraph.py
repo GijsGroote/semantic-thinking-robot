@@ -87,8 +87,8 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=self.robot,
-                step_size=0.5,
-                search_size=0.7,
+                step_size=0.1,
+                search_size=0.2,
                 configuration_grid_map=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
@@ -103,8 +103,8 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=10,
                 obstacles=obstacles,
                 obstacle=push_obstacle,
-                step_size=0.5,
-                search_size=0.7,
+                step_size=0.1,
+                search_size=0.2,
                 include_orien=include_orien,
                 configuration_grid_map=path_estimator)
 
@@ -122,7 +122,6 @@ class PointRobotVelHGraph(HGraph):
 
         # find every compatible model
         for controller in controllers:
-
             models = []
 
             if isinstance(controller, DriveMpc2thOrder):
@@ -146,17 +145,16 @@ class PointRobotVelHGraph(HGraph):
         elif model_name == DRIVE_MPPI_MODEL:
             return self._create_mppi_drive_model()
         else:
-            raise ValueError(f"controller name unknown: {controller_name}")
+            raise ValueError(f"controller name unknown: {model_name}")
 
     def get_push_controllers(self) -> list:
         return [self._create_mppi_push_controller()]
 
-    def create_push_model(self, controller_name: str):
-        match controller_name:
-            case "MPPI":
-                return self._create_mppi_push_model()
-            case _:
-                raise ValueError(f"controller name unknown: {controller_name}")
+    def create_push_model(self, model_name: str):
+        if model_name==PUSH_MPPI_MODEL:
+            return self._create_mppi_push_model()
+        else:
+            raise ValueError(f"model name unknown: {model_name}")
 
 
     def _setup_drive_controller(self, controller, system_model):
