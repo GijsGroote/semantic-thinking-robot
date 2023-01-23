@@ -88,7 +88,7 @@ class PointRobotVelHGraph(HGraph):
                 obstacles=obstacles,
                 obstacle=self.robot,
                 step_size=0.1,
-                search_size=0.2,
+                search_size=0.5,
                 configuration_grid_map=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
@@ -104,7 +104,7 @@ class PointRobotVelHGraph(HGraph):
                 obstacles=obstacles,
                 obstacle=push_obstacle,
                 step_size=0.1,
-                search_size=0.2,
+                search_size=0.5,
                 include_orien=include_orien,
                 configuration_grid_map=path_estimator)
 
