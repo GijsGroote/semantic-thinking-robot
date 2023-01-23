@@ -30,6 +30,8 @@ PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"
 
 UNKNOWN_OBSTACLE_COST = 150
 KNOWN_OBSTACLE_COST = 100
+GRID_X_SIZE = 15
+GRID_Y_SIZE = 15
 
 # MPC_CONTROLLER = "mpc controller"
 

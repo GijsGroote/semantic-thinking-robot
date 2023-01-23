@@ -7,7 +7,7 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import DT, TORCH_DEVICE
+from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE
 from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
@@ -40,9 +40,10 @@ class PointRobotVelHGraph(HGraph):
         self.robot_order = 2
 
     def create_drive_path_estimator(self, obstacles) -> PathEstimator:
-        occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
-                grid_x_length= 10,
-                grid_y_length= 12,
+        occ_graph = CircleObstaclePathEstimator(
+                cell_size=0.1,
+                grid_x_length = GRID_X_SIZE,
+                grid_y_length = GRID_Y_SIZE,
                 obstacles= obstacles,
                 obst_cart_2d= self.robot.state.get_xy_position(),
                 obst_name = self.robot.name,
@@ -56,9 +57,10 @@ class PointRobotVelHGraph(HGraph):
 
         if isinstance(push_obstacle.properties, BoxObstacle):
 
-            occ_graph = RectangleObstaclePathEstimator(cell_size=0.5,
-                    grid_x_length= 10,
-                    grid_y_length= 12,
+            occ_graph = RectangleObstaclePathEstimator(
+                    cell_size=0.5,
+                    grid_x_length = GRID_X_SIZE,
+                    grid_y_length = GRID_Y_SIZE,
                     obstacles= obstacles,
                     obst_cart_2d= push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,

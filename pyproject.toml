@@ -14,7 +14,7 @@ motion-planning-scenes = {path="../motion_planning_scenes"}
 urdfenvs = {path="../gym_envs_urdf"}
 pybullet = "^3.2.1"
 gym = "^0.21.0"
-numpy = ">=1.10.0 <1.23.4"
+numpy = ">=1.10.0, <1.24.0"
 multiprocess = "^0.70.12"
 do-mpc = "^4.3.2"
 pytorch_mppi = {git="git@github.com:UM-ARM-Lab/pytorch_mppi.git", rev="master"}
