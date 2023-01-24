@@ -9,7 +9,8 @@ from robot_brain.global_planning.edge import INITIALISED, COMPLETED, EXECUTING, 
 class IdentificationEdge(Edge):
     """ parent class for every system identification edge. """
 
-    def __init__(self, iden, source, to, verb, controller, model_for_edge_iden):
+     # TODO: the controller here makes no sense!
+    def __init__(self, iden, source, to, verb, controller, model_for_edge_iden, sys_model_name: str):
         Edge.__init__(self, iden, source, to, verb, controller)
         self.status = INITIALISED
         self.model_for_edge_iden = model_for_edge_iden
@@ -65,7 +66,7 @@ class IdentificationEdge(Edge):
 
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
-                f"System model: todo system model here"
+                f"System model: {self.system_model.name}"
 
 
     def set_executing_status(self):
@@ -74,4 +75,5 @@ class IdentificationEdge(Edge):
 
     def set_completed_status(self):
         print(f'edge {self.iden} status is completed')
+
         self.status = COMPLETED

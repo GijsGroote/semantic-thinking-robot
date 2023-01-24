@@ -17,7 +17,6 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obs
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi
-from robot_brain.exceptions import PlanningTimeElapsedException
 
 class MotionPlanner(ABC):
     """
@@ -192,23 +191,9 @@ class MotionPlanner(ABC):
 
         return x_keys.intersection(y_keys)
 
+    @abstractmethod
     def paths_converged_test(self) -> bool:
         """ test is the shortest path converged. """
-
-        planning_time = time.time() - self.start_time_search
-
-        if planning_time > 0.8:
-
-            raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
-
-        if len(self.shortest_paths) < 5:
-            return False
-
-        elif self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0]:
-            # return True when the 5th shortest path is at most 10% longer than the shortest path
-            return True
-        else:
-            return False
 
     def create_unique_id(self) -> int:
         """ creates and returns a unique id. """

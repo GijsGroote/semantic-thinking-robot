@@ -254,7 +254,7 @@ class HGraph(Graph):
                 if n_failed_subtasks+n_completed_subtasks == 0:
                     task_success_ratio = None
                 else:
-                    task_success_ratio = n_completed_subtasks/(n_unfeasible_subtasks+n_failed_subtasks+n_completed_subtasks)
+                    task_success_ratio = n_completed_subtasks/len(self.task)
 
                 self.end_completed_task(task_success_ratio)
 
@@ -408,7 +408,8 @@ class HGraph(Graph):
                 to=target_node_iden,
                 verb="identify",
                 controller="controller", # identify edge, does not really need controller
-                model_for_edge_iden=model_for_edge_iden)
+                model_for_edge_iden=model_for_edge_iden,
+                sys_model_name=model_name)
 
         edge.system_model= self._create_drive_model(model_name)
         self.add_edge(edge)
@@ -459,7 +460,7 @@ class HGraph(Graph):
 
             # Create DriveIdentificationEdge
             # TODO: model_name is not used, please use that
-            self.create_push_ident_edge(start_node_iden, model_node.iden, edge.iden)
+            self.create_push_ident_edge(start_node_iden, model_node.iden, edge.iden, model_name)
 
             # Create EmptyEdge if nessesary
             target = self.find_push_state_against_obstacle(self.get_node(start_node_iden).obstacle)
@@ -475,26 +476,18 @@ class HGraph(Graph):
             # TODO: do that empty edge only if it is nessesary
             self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
 
-    def create_push_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int):
+    def create_push_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int, model_name: str):
         """ create a system identification edge for pushing. """
-
-        model_for_node_controller_type = self.get_edge(model_for_edge_iden).controller.name # temp fix
-
-        # TODO: check for blacklist which sys iden methods are available
-
-        if model_for_node_controller_type == "MPPI":
-            controller = self._create_mppi_push_controller()
-        else:
-            raise ValueError("somethign goes terebly wrong")
 
         edge = PushIdentificationEdge(iden=self.unique_edge_iden(),
                 source=start_node_iden,
                 to=target_node_iden,
                 verb="identify",
-                controller=controller,
-                model_for_edge_iden=model_for_edge_iden)
+                controller="controller",
+                model_for_edge_iden=model_for_edge_iden,
+                sys_model_name=model_name)
 
-        system_model = self.create_push_model(controller.name) # todo, system iden
+        system_model = self.create_push_model(model_name) # todo, system iden
         edge.system_model = system_model
         self.add_edge(edge)
         self.hypothesis.insert(0, edge)
@@ -677,6 +670,7 @@ class HGraph(Graph):
             if increment_edge:
                 self._force_increment_edge(edge)
 
+            edge.motion_planner.visualise(save=False)
             if CREATE_SERVER_DASHBOARD:
                 edge.motion_planner.visualise()
 
@@ -881,7 +875,7 @@ class HGraph(Graph):
         """ get push controllers """
 
     @abstractmethod
-    def create_push_model(self, controller_name: str):
+    def create_push_model(self, model_name: str):
         """ create a dynamic model for pushing. """
 
     @abstractmethod

@@ -33,9 +33,13 @@ class PushMppi5thOrder(PushMppi):
 
         cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
 
+
+        
+
         return cost
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
+        # print(f'the current distance to cost self.
 
         return self.controller.command(
                 np.append(robot_state.get_xy_position(),

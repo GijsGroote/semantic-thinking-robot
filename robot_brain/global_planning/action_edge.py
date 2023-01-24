@@ -97,7 +97,7 @@ class ActionEdge(Edge):
 
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
-                f"Controller: {self.controller.name}<br>System model: todo system model here"
+                f"Controller: {self.controller.name}<br>System model: {self.system_model.name}"
 
     def set_path_exist_status(self):
         assert isinstance(self.path_estimator, PathEstimator),\
