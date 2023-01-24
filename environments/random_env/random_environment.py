@@ -14,29 +14,28 @@ def main():
     for the pointrobot to solve.
     """
 
-
     rand_obj_generator = RandomObject(
             grid_x_length=GRID_X_SIZE,
             grid_y_length=GRID_Y_SIZE,
             min_dimension=0.2,
             max_dimension=2.0,
-            max_weight=100)
+            max_weight=1000)
 
     robot_type = "pointRobot-vel-v7"
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
 
     # TODO: Do not yet give the obstacles a locaaation
-    rand_obj_generator.create_random_objects(
-            n_unmovable_obstacles = 0,
-            n_movable_obstacles = 20,
-            n_subtasks = 0)
+    rand_obj_generator.create_random_obstacles(
+            n_unmovable_obstacles = 3,
+            n_movable_obstacles = 5,
+            n_subtasks = 2)
 
     for n_env in range(3):
         print(f"create environment number: {n_env}")
 
         obstacles = rand_obj_generator.reshuffle_env()
-        task = rand_obj_generator.create_task(obstacles)
+        task = rand_obj_generator.create_task()
         env.reset()
 
         # add obstacles to environment
@@ -63,15 +62,11 @@ def main():
 
         brain.update(ob)
 
-        for _ in range(100):
+        for _ in range(10000):
 
-            # action[0:2] = brain.respond()
+            action[0:2] = brain.respond()
             ob, reward, done, info = env.step(action)
             brain.update(ob)
-
-        print("end of environment")
-        
-
 
 if __name__ == "__main__":
     main()

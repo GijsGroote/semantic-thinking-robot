@@ -29,12 +29,14 @@ class RectangleObstaclePathEstimator(PathEstimator):
         obstacles: dict,
         obst_cart_2d: np.ndarray,
         obst_name: str,
-        n_orientations: int,
         obst_x_length: float,
-        obst_y_length: float):
+        obst_y_length: float,
+        n_orientations: int,
+        single_orientation = False,
+        orientation = 0.0):
 
         PathEstimator.__init__(self, cell_size, grid_x_length, grid_y_length,
-                obstacles, obst_cart_2d, obst_name, n_orientations)
+                obstacles, obst_cart_2d, obst_name, n_orientations, single_orientation, orientation)
         self._obst_x_length = obst_x_length
         self._obst_y_length = obst_y_length
 
@@ -44,7 +46,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
             int(n_orientations)))
 
         self.setup()
-      
+
     def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ For a circular obstacle set all overlapping with grid
         cells (representing the obstacle) to a integer value. """
@@ -54,11 +56,11 @@ class RectangleObstaclePathEstimator(PathEstimator):
         sin_rl = math.sin(r_orien)*self.obst_y_length/2
         cos_rw = math.cos(r_orien)*self.obst_x_length/2
         sin_rw = math.sin(r_orien)*self.obst_x_length/2
-        
+
         obst_xy = obst.state.get_xy_position()
         max_obst_obst_distance= (math.sqrt(self.obst_x_length**2 + self.obst_y_length**2))/2 + obst.properties.radius()
 
-        # only search around obstacle 
+        # only search around obstacle
         (obst_clearance_x_min, obst_clearance_y_min) = self._cart_2d_to_c_idx_or_grid_edge(
                 obst_xy[0]-max_obst_obst_distance, obst_xy[1]-max_obst_obst_distance)
         (obst_clearance_x_max, obst_clearance_y_max) = self._cart_2d_to_c_idx_or_grid_edge(
@@ -107,7 +109,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
     def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ For a rectangular obstacle set all overlapping with grid cells
         (representing the obstacle) to a integer value. """
-        
+
         # obstacle space or some other space, Gijs Groote 4 oct 2022.
         cos_rl = math.cos(r_orien)*self.obst_y_length/2
         sin_rl = math.sin(r_orien)*self.obst_y_length/2
@@ -132,7 +134,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                 -max_obst_to_obst_x_distance, obst_cart_2d[1]-max_obst_to_obst_y_distance)
         (x_max, y_max) = self._cart_2d_to_c_idx_or_grid_edge(obst_cart_2d[0]\
                 +max_obst_to_obst_x_distance, obst_cart_2d[1]+max_obst_to_obst_y_distance)
-        
+
         # orientation with cos/sin could make x_min > x_max
         obst_clearance_x_min = min(x_min, x_max)
         obst_clearance_x_max = max(x_min, x_max)
@@ -208,6 +210,8 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
     def occupancy(self, pose_2d: np.ndarray) -> int:
         """ return the occupancy of a grid cell from a 2d pose. """
+        if isinstance(pose_2d, list):
+            pose_2d = np.array(pose_2d)
         idx = self._pose_2d_to_p_idx(pose_2d)
         return self._p_idx_to_occupancy(*idx)
 

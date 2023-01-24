@@ -510,8 +510,11 @@ class HGraph(Graph):
             # TODO this for box
 
         if isinstance(obstacle.properties, (CylinderObstacle, SphereObstacle)):
-            print('you did not implement this mister mister;')
-            # TODO: this for cylinder and sphere
+
+            pos = obstacle.state.pos
+
+            # TODO: this is not generic enough, working now ha
+            return State(pos=np.array([pos[0]+2.2, pos[1], pos[2]]))
 
     def in_blacklist(self, edge_type: list) -> bool:
         """ checks if the edge is already in the blacklist. """
@@ -576,8 +579,9 @@ class HGraph(Graph):
         try:
             except_triggered=False
 
+            print(f'path search between({self.get_node(edge.source).obstacle.state}, and {self.get_node(edge.to).obstacle.state})')
             path_estimation = edge.path_estimator.search_path(
-            self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+                self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
             edge.path_estimation = path_estimation
             edge.set_path_exist_status()
 

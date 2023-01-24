@@ -71,8 +71,8 @@ class PointRobotVelHGraph(HGraph):
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
             occ_graph = CircleObstaclePathEstimator(cell_size=0.5,
-                    grid_x_length= 10,
-                    grid_y_length= 12,
+                    grid_x_length= GRID_X_SIZE,
+                    grid_y_length= GRID_Y_SIZE,
                     obstacles= obstacles,
                     obst_cart_2d= self.robot.state.get_xy_position(),
                     obst_name = push_obstacle.name,
@@ -85,8 +85,9 @@ class PointRobotVelHGraph(HGraph):
         return occ_graph
 
     def create_drive_motion_planner(self, obstacles, path_estimator=None) -> DriveMotionPlanner:
-        return DriveMotionPlanner(grid_x_length=10,
-                grid_y_length=10,
+        return DriveMotionPlanner(
+                grid_x_length=GRID_X_SIZE,
+                grid_y_length=GRID_Y_SIZE,
                 obstacles=obstacles,
                 obstacle=self.robot,
                 step_size=0.5,
@@ -101,8 +102,9 @@ class PointRobotVelHGraph(HGraph):
         else:
             raise ValueError("Unknown obstacle encountered during estimating a path")
 
-        return PushMotionPlanner(grid_x_length=10,
-                grid_y_length=10,
+        return PushMotionPlanner(
+                grid_x_length=GRID_X_SIZE,
+                grid_y_length=GRID_Y_SIZE,
                 obstacles=obstacles,
                 obstacle=push_obstacle,
                 step_size=0.5,

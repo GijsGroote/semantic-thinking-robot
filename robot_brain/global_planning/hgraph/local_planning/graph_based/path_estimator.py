@@ -7,6 +7,8 @@ import numpy as np
 from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
+# TODO: make the path estimator focussed on an obstacle (and not the robot)
+# see the variables r_idx that stand for robot idx
 class PathEstimator(ABC):
     """ With as internal structure a configuration grid map, the path estimator
     represents the environment in obstacle space free space, movable obstacle
@@ -24,7 +26,9 @@ class PathEstimator(ABC):
             obstacles: dict,
             obst_cart_2d: np.ndarray,
             obst_name: str,
-            n_orientations: int):
+            n_orientations: int,
+            single_orientation: bool,
+            orientation: float):
 
         # assert the grid can be descritized in square cells
         if (not check_floats_divisible(grid_x_length, cell_size)  or
@@ -39,7 +43,14 @@ class PathEstimator(ABC):
                 f"obstacle position should be of shape (2,), it's: {obst_cart_2d.shape}"
         self._obst_cart_2d = obst_cart_2d
         self.obst_name = obst_name
-        self._n_orientations = n_orientations
+
+        if single_orientation:
+            self._n_orientations = 1
+        else:
+            self._n_orientations = n_orientations
+
+        self.single_orientation = single_orientation
+        self.orientation = orientation
 
     @abstractmethod
     def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:
@@ -56,6 +67,13 @@ class PathEstimator(ABC):
             3 -> unknown obstacle space
         """
         for r_orien_idx in range(self.n_orientations):
+
+            # if a specific orientation is requested, only create that one
+            if self.single_orientation:
+                r_orien = self.orientation
+            else:
+                r_orien = 2*math.pi*r_orien_idx/self.n_orientations
+
             for obst in self.obstacles.values():
 
                 # checking for an obstacle, exclude itself from the list
@@ -63,18 +81,16 @@ class PathEstimator(ABC):
                     continue
 
                 if obst.type==UNMOVABLE:
-                    self._setup_obstacle(obst, 1,
-                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 1, r_orien, r_orien_idx)
 
                 elif obst.type==MOVABLE:
-                    self._setup_obstacle(obst, 2,
-                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 2, r_orien, r_orien_idx)
 
                 elif obst.type==UNKNOWN:
-                    self._setup_obstacle(obst, 3,
-                            2*math.pi*r_orien_idx/self.n_orientations, r_orien_idx)
+                    self._setup_obstacle(obst, 3, r_orien, r_orien_idx)
                 else:
                     raise TypeError(f"unknown type: {obst.type}")
+
 
     def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """
@@ -93,6 +109,7 @@ class PathEstimator(ABC):
 
             case "box":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
+
                 if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or
                         math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
                         math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
@@ -121,7 +138,7 @@ class PathEstimator(ABC):
         pass
 
     @abstractmethod
-    def occupancy(self, y_position, x_position, *args):
+    def occupancy(self, pose: np.ndarray) -> int:
         pass
 
     def _c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> Tuple[float, float]:
