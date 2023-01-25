@@ -38,6 +38,7 @@ from robot_brain.exceptions import (
         )
 from logger.hlogger import HLogger
 
+
 EXECUTION_LOOP = "executing"
 SEARCHING_LOOP = "searching"
 ROBOT_IDEN = 0
@@ -249,7 +250,7 @@ class HGraph(Graph):
                     elif target_node.status == UNFEASIBLE:
                         n_unfeasible_subtasks += 1
                     else:
-                        raise ValueError(f"target node status should be {FAILED} or {COMPLETED} and is {target_node.status}")
+                        raise ValueError(f"target node status should be {FAILED} or {COMPLETED} and is {target_node.status} for node {target_node.iden}")
 
                 if n_failed_subtasks+n_completed_subtasks == 0:
                     task_success_ratio = None
@@ -309,10 +310,10 @@ class HGraph(Graph):
 
         target_node = self.find_source_node(self.current_subtask["target_node"].iden)
         assert target_node.status == INITIALISED,\
-                f"target node status must be {INITIALISED} and is {target_node.status}"
+                f"target node status must be {INITIALISED} and is {target_node.status} for node {target_node.iden}"
         start_node = self.find_corresponding_start_node(target_node)
         assert start_node.status == INITIALISED,\
-                f"start node status must be {INITIALISED} and is {start_node.status}"
+                f"start node status must be {INITIALISED} and is {start_node.status} for node {target_node.iden}"
 
         return (start_node, target_node)
 
@@ -588,21 +589,12 @@ class HGraph(Graph):
             if LOG_METRICS:
                 self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
 
-            if CREATE_SERVER_DASHBOARD:
-                self.visualise()
-
-
-        self.test +=1
-        if CREATE_SERVER_DASHBOARD and not except_triggered:
-            if self.test > 1:
-
-                edge.path_estimator.visualise()
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+            edge.path_estimator.visualise()
 
         if except_triggered:
             return self._search_hypothesis()
-
-
-
 
 
     @abstractmethod
@@ -635,18 +627,13 @@ class HGraph(Graph):
 
         try:
             error_triggered = False
-            edge.path = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
+            (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
         except PlanningTimeElapsedException as exc:
+            print(f'hhhhhhhhhhhhhhhhhhhhhhhhh {exc}')
 
             error_triggered = True
             if LOG_METRICS:
                 self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
-
-
-            for temp_edge in self.hypothesis:
-                print(f"edge name:{temp_edge.iden} and status {temp_edge.status}")
-
-            print(f"Motion Planning failed: {exc} in subtask: {self.nodes[edge.to].subtask_name}")
 
             self.add_to_blacklist(edge)
             edge.status = FAILED
@@ -654,33 +641,71 @@ class HGraph(Graph):
             self.visualise()
             # remove all edges up to the failed edge from the current hypothesis.
             self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
-
-
             self.edge_pointer = 0
-            for tedge in self.hypothesis:
-                print(f"new hypoth:{tedge.iden} and status {tedge.status}")
-
 
         if error_triggered:
             return self._search_hypothesis()
-        else:
 
+        elif len(add_node_list) > 0:
+            obst_keys = self._in_obstacle(add_node_list)
+
+            for obst_key in obst_keys:
+
+                # TODO: find the closest spot to place the obstacle that is not overlapping with the planned path
+                target_state = State(pos=[-4, 0, 0])
+
+                blocking_obst = Obstacle(obst_key, target_state, self.obstacles[obst_key].properties)
+
+                subtask_name = self.get_node(edge.source).subtask_name
+                blocking_obst_node = ObstacleNode(self.unique_node_iden(), obst_key, blocking_obst, subtask_name)
+
+                self.add_node(blocking_obst_node)
+
+                self.add_edge(EmptyEdge(self.unique_edge_iden(), blocking_obst_node.iden, edge.source))
+
+                # TODO: create this only if it is not already in the existing nodes
+                source_blocking_obst_iden = self.unique_node_iden()
+                self.add_node(ObstacleNode(
+                    source_blocking_obst_iden,
+                    self.obstacles[obst_key].name,
+                    self.obstacles[obst_key],
+                    subtask_name
+                    ))
+
+                # iden_edge = None
+
+                for temp_edge in self.edges:
+                    if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
+                        self.edges.remove(temp_edge)
+
+                for tedge in self.hypothesis:
+                    print(f'in hypoooothesis {tedge.iden}')
+                        # iden_edge = temp_edge
+
+
+                return self._search_hypothesis()
+
+
+        else:
             edge.set_path_is_planned_status()
 
             if increment_edge:
                 self._force_increment_edge(edge)
 
-            edge.motion_planner.visualise(save=False)
-            if CREATE_SERVER_DASHBOARD:
-                edge.motion_planner.visualise()
+        if CREATE_SERVER_DASHBOARD:
+            edge.motion_planner.visualise()
 
     @abstractmethod
     def create_drive_motion_planner(self, obstacles, path_estimator):
-        pass
+        """ create drive motion planner. """
 
     @abstractmethod
     def create_push_motion_planner(self, obstacles):
-        pass
+        """ create push motion planner. """
+
+    @abstractmethod
+    def _in_obstacle(self, pose_2ds: list) -> list:
+        """ return the obstacle keys at pose_2ds. """
 
 #######################################################
 ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###
@@ -741,9 +766,6 @@ class HGraph(Graph):
         assert for_edge.status==PATH_EXISTS,\
                 f"edge status should be {PATH_EXISTS} but is {for_edge.status}"
         system_model = ident_edge.system_model
-
-        print('that is empty function?')
-        print(system_model)
 
         for_edge.set_has_system_model_status()
 

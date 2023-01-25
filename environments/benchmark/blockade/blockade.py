@@ -1,10 +1,12 @@
+import urdfenvs.boxer_robot
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
+
 from multiprocessing import Process, Pipe
 import numpy as np
 import gym
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-import urdfenvs.boxer_robot
 from robot_brain.rbrain import RBrain
-from robot_brain.global_planning.state import State
+from robot_brain.state import State
 
 from robot_brain.global_variables import DT
 
@@ -14,7 +16,7 @@ def main():
     """
     Point robot which can drive around in its environment using a mpc controller.
     """
-    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
+    env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
     ob = env.reset()
 
     env.add_obstacle(blockade_obstacles["urdf_duck"])
@@ -28,6 +30,9 @@ def main():
     env.add_sensor(sensor)
 
     ob, reward, done, info = env.step(np.zeros(env.n()))
+
+
+
 
     brain = RBrain()
     brain.setup({

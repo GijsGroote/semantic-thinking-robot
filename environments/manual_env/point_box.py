@@ -11,7 +11,7 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT, TORCH_DEVICE
-from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder 
+from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
 from environments.mppi_push.obstacles import box
 
 

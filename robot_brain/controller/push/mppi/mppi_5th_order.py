@@ -15,8 +15,8 @@ class PushMppi5thOrder(PushMppi):
         """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
-        H = 2
-        W = 0.5
+        H = 1
+        W = 1
         xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
         ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
 
@@ -32,9 +32,6 @@ class PushMppi5thOrder(PushMppi):
         obst_rotation_cost = 1.0*torch.abs(x[:,4] - self.target_state.ang_p[2])
 
         cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
-
-
-        
 
         return cost
 

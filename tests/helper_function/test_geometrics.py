@@ -8,6 +8,7 @@ from helper_functions.geometrics import (
         point_in_rectangle,
         do_intersect,
         to_interval_zero_to_two_pi,
+        point_in_rectangle
         )
 
 def test_do_overlap():
@@ -54,3 +55,15 @@ def test_to_zero_to_two_pi():
     assert to_interval_zero_to_two_pi(math.pi) == math.pi
     assert to_interval_zero_to_two_pi(2*math.pi) == 0
     assert to_interval_zero_to_two_pi(3*math.pi) == math.pi
+
+def test_point_in_rectangle():
+
+    point_list = [[-0.99, 0], [0, 0.99], [0.99, 0], [0, -0.99], [-0.99, 0.99],
+            [0.99, 0.99], [-0.99, 0.99], [-0.99, -0.99], [0, 0]]
+
+    a = [-1, 1]
+    b = [1, 1]
+    c = [1, -1]
+
+    for point in point_list:
+        assert point_in_rectangle(np.array(point), np.array(a), np.array(b), np.array(c))

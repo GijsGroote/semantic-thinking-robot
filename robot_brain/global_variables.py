@@ -8,10 +8,17 @@ DASHBOARD_PORT_PID = 8040
 # plot_controller should be True for SAVE_LOG_METRICS
 SAVE_LOG_METRICS = False
 
-# you could add a rotation constraints here as well
 MIN_INPUT = -2.0
 MAX_INPUT = 2.0
 
+UNKNOWN_OBSTACLE_COST = 150
+KNOWN_OBSTACLE_COST = 100
+GRID_X_SIZE = 10
+GRID_Y_SIZE = 6
+
+POINT_ROBOT_RADIUS = 0.38
+BOXER_ROBOT_LENGTH = 0.85
+BOXER_ROBOT_WIDTH = 0.6
 
 # the number of time steps to plot for any controller
 PLOT_N_TIMESTEPS = 200
@@ -28,10 +35,6 @@ COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 # TODO: set this path automatically
 PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"
 
-UNKNOWN_OBSTACLE_COST = 150
-KNOWN_OBSTACLE_COST = 100
-GRID_X_SIZE = 15
-GRID_Y_SIZE = 15
 
 # MPC_CONTROLLER = "mpc controller"
 

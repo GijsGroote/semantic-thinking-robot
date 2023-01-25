@@ -15,9 +15,6 @@ class DriveMppi2thOrder(Mppi):
         """ penalty function for input when the system is in a state, the running 
         cost drives the system to it's desired state. """
 
-        
-
-
         return (x[:,0] - torch.tensor([self.target_state.pos[0]], device=TORCH_DEVICE))**2 +\
                (x[:,1] - torch.tensor([self.target_state.pos[1]], device=TORCH_DEVICE))**2 +\
                 1e-4*(u[:,0]**4 + u[:,1]**4)

@@ -11,6 +11,7 @@ class DriveActionEdge(ActionEdge):
 
     def view_completed(self, state: State) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
+        print(f' under 0.5? {state.pose_euclidean(self.get_current_target())}')
         return state.pose_euclidean(self.get_current_target()) < 0.5
 
     def respond(self, robot_state: State) -> np.ndarray:

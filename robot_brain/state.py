@@ -11,6 +11,9 @@ class State:
     def __init__(self, pos=np.array([0, 0, 0]), vel=np.array([0, 0, 0]),
                  ang_p=np.array([0, 0, 0]), ang_v=np.array([0, 0, 0])):
 
+        if isinstance(pos, list):
+            pos = np.array(pos)
+
         self.pos = pos
         self.vel = vel
         self.ang_p = ang_p
@@ -28,6 +31,7 @@ class State:
         Calculate the euclidean distance between the poses of two states.
         """
         orien_dist = to_interval_min_pi_to_pi(self.ang_p[2] - state.ang_p[2])
+        print(f'what is orien dist? {orien_dist}')
         return np.linalg.norm(self.get_xy_position() - state.get_xy_position()) + orien_dist
 
 

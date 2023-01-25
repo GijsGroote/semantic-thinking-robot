@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import random
 import math
 from typing import Tuple
 import pickle
@@ -105,36 +104,35 @@ class MotionPlanner(ABC):
 
         self.configuration_grid_map.update()
         shortest_path = self.configuration_grid_map.search_path(start.get_2d_pose(), target.get_2d_pose())
+        print(len(shortest_path))
         shortest_path = shortest_path[1:-1]
 
+        print('ahah')
+        print(len(shortest_path))
+
         self.setup(start.get_2d_pose(), target.get_2d_pose())
+
         self.start_time_search = time.time()
 
         # add samples from path estimation
         for sample_new in shortest_path:
 
-            sample_new += np.random.normal(0, 0.00001, np.asarray(sample_new).shape)
+                print(f'try to add sapmle {sample_new}')
 
-            sample_closest_key = self.get_closest_sample_key(sample_new)
+                sample_closest_key = self.get_closest_sample_key(sample_new)
 
-            if self.include_orien:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
-            else:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new[0:2]))
-            if in_space_id == 1: # obstacle space, abort sample
-                continue
+                if self.include_orien:
+                    in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
+                else:
+                    in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new[0:2]))
+                if in_space_id == 1: # obstacle space, abort sample
+                    continue
 
-            close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
+                close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
 
-            sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
+                sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
 
-            self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
-
-        if len(self.shortest_paths) > 0:
-            (path, add_node_list) = self.extract_shortest_path()
-            if len(add_node_list) == 0:
-                self.shortest_path = path
-                return (path, add_node_list)
+        self.visualise(save=False)
 
         # while keep searching:
         while not self.stop_criteria_test():

@@ -51,6 +51,7 @@ class PathEstimator(ABC):
 
         self.single_orientation = single_orientation
         self.orientation = orientation
+        self.shortest_path = None
 
     @abstractmethod
     def search_path(self, cart_2d_start: np.ndarray, cart_2d_target: np.ndarray) -> list:

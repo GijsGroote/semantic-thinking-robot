@@ -113,8 +113,12 @@ class CircleObstaclePathEstimator(PathEstimator):
 
     def occupancy(self, cart_2d: np.ndarray) -> int:
         """ returns the occupancy of the grid cell """
+
         if isinstance(cart_2d, list):
             cart_2d = np.array(cart_2d)
+
+        if cart_2d.shape == (3,):
+            cart_2d = cart_2d[0:2]
 
         assert cart_2d.shape == (2,), f"cart_2d not of shape (2,) but {cart_2d.shape}"
         idx = self._cart_2d_to_c_idx(cart_2d[0], cart_2d[1])
@@ -224,6 +228,8 @@ class CircleObstaclePathEstimator(PathEstimator):
             shortest_path.append(self._c_idx_to_cart_2d(*shortest_path_reversed.pop()))
 
         shortest_path.append(tuple(cart_2d_target))
+
+        self.shortest_path = shortest_path
 
         return shortest_path
 

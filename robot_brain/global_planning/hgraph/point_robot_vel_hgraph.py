@@ -1,5 +1,6 @@
 import math
 import torch
+import numpy as np
 from casadi import vertcat
 
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -7,7 +8,7 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE
+from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
 from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
@@ -23,7 +24,7 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 
-from helper_functions.geometrics import which_side_point_to_line
+from helper_functions.geometrics import which_side_point_to_line, circle_in_box_obstacle, circle_in_cylinder_obstacle
 
 
 DRIVE_MPC_MODEL= "drive_mpc_model"
@@ -90,8 +91,8 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=GRID_Y_SIZE,
                 obstacles=obstacles,
                 obstacle=self.robot,
-                step_size=0.1,
-                search_size=0.5,
+                step_size=0.2,
+                search_size=0.4,
                 configuration_grid_map=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
@@ -107,10 +108,32 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=GRID_Y_SIZE,
                 obstacles=obstacles,
                 obstacle=push_obstacle,
-                step_size=0.1,
-                search_size=0.5,
+                step_size=0.2,
+                search_size=0.4,
                 include_orien=include_orien,
                 configuration_grid_map=path_estimator)
+
+    def _in_obstacle(self, pose_2ds) -> list:
+        """ return the obstacle keys at pose_2ds. """
+
+        obst_keys = []
+        for pose_2d in pose_2ds:
+            xy_pos = np.array([pose_2d[0], pose_2d[1]])
+            for obst in self.obstacles.values():
+                if isinstance(obst.properties, BoxObstacle):
+                    if circle_in_box_obstacle(xy_pos, obst, POINT_ROBOT_RADIUS):
+                        obst_keys.append(obst.name)
+
+                elif isinstance(obst.properties, CylinderObstacle):
+                    if circle_in_cylinder_obstacle(xy_pos, obst, POINT_ROBOT_RADIUS):
+                        obst_keys.append(obst.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obst)}")
+
+        obst_keys = [*set(obst_keys)]
+
+        return obst_keys
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """

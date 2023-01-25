@@ -3,15 +3,14 @@ import time
 import numpy as np
 import pandas as pd
 from dashboard.app import start_dash_server, stop_dash_server
-from robot_brain.state import State
-from robot_brain.obstacle import Obstacle, MOVABLE, UNMOVABLE, UNKNOWN
-from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
-from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
-
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 pd.options.plotting.backend = "plotly"
+from robot_brain.state import State
+from robot_brain.obstacle import Obstacle, MOVABLE, UNMOVABLE, UNKNOWN
+from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
+from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 
 # is_doing states
 IS_DOING_NOTHING = "nothing"
@@ -49,16 +48,14 @@ class RBrain:
                 cylinder_dict = {
                     "type": "box",
                     # "geometry": {"radius": 0.22, "height": 0.25},
-                    "geometry": {"radius": 0.38, "height": 0.25},
-                }
+                    "geometry": {"radius": POINT_ROBOT_RADIUS, "height": 0.25}, }
                 robot_properties = CylinderObstacle(name="pointRobot-vel-v7-obst", content_dict=cylinder_dict)
 
             elif stat_world_info["robot_type"] == "boxerRobot-vel-v7-obst" or stat_world_info["robot_type"] == "boxerRobot-acc-v7":
 
-                box_dict = {
-                    "type": "box",
+                box_dict = { "type": "box",
                     "position": [0, 0, 0],
-                    "geometry": {"length": 0.85, "width": 0.6, "height": 0.2},
+                    "geometry": {"length": BOXER_ROBOT_LENGTH, "width": BOXER_ROBOT_WIDTH, "height": 0.2},
                 }
                 robot_properties = BoxObstacle(name="box_robot", content_dict=box_dict)
 
@@ -131,10 +128,9 @@ class RBrain:
 
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
-            # self.obstacles[key].type = UNMOVABLE
-            # if key == "simple_cilinder":
-            #     print('detected the simple cylinder, that is now set to movable')
-            #     self.obstacles[key].type = MOVABLE
+            self.obstacles[key].type = UNMOVABLE
+            if key == "blocking_object":
+                self.obstacles[key].type = MOVABLE
 
     def setup_hgraph(self, stat_world_info):
         """

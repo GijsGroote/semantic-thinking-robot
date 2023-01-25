@@ -320,6 +320,8 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
         shortest_path.append(tuple(pose_2d_target))
 
+        self.shortest_path = shortest_path
+
         return shortest_path
 
     def _pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> Tuple[int, int, int]:

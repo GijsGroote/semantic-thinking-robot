@@ -129,7 +129,7 @@ def to_interval_min_pi_to_pi(val: float) -> float:
 
 def which_side_point_to_line(a: torch.Tensor, b: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
     """ find if point p is on right (True) or left (False) side of line from a to b. """
-    
+
     right_or_left_bool = ((b[:,0]-a[:,0])*(p[:,1]-a[:,1])-(b[:,1]-a[:,1])*(p[:,0]-a[:,0]) < 0)
     right_or_left = torch.ones(a.size(dim=0), device=TORCH_DEVICE)
     right_or_left[right_or_left_bool] = -1
@@ -144,4 +144,37 @@ def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 
     return (scaled_x % scaled_y) == 0
 
+def circle_in_box_obstacle(xy_pos: np.ndarray, obst, radius: float) -> bool:
+    """ Return True if the circle overlaps with the box obstacle. """
+    cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+    sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+    cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+    sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
 
+    obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
+    obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
+    obst_c = np.array([obst.state.pos[0]+sin_ol-cos_ow, obst.state.pos[1]-cos_ol-sin_ow])
+    obst_d = np.array([obst.state.pos[0]+sin_ol+cos_ow, obst.state.pos[1]-cos_ol+sin_ow])
+
+
+    if point_in_rectangle(xy_pos, obst_a, obst_b, obst_c):
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_a, obst_b) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_b, obst_c) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_c, obst_d) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_d, obst_a) <= radius:
+        return True
+
+    else:
+        return False
+
+def circle_in_cylinder_obstacle(xy_pos, obst, radius) -> bool:
+    """ Return True if the circle overlaps with the cylinder obstacle. """
+    return np.linalg.norm(xy_pos-obst.state.get_xy_position()) <= obst.properties.radius() + radius
