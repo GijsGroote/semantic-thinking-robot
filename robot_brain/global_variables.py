@@ -1,8 +1,8 @@
 DT = 0.05
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = False
+CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = False
-LOG_METRICS = False
+LOG_METRICS = True
 DASHBOARD_PORT_PID = 8040
 
 # plot_controller should be True for SAVE_LOG_METRICS

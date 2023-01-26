@@ -12,9 +12,10 @@ from robot_brain.obstacle import Obstacle
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.exceptions import PlanningTimeElapsedException
-from helper_functions.geometrics import to_interval_zero_to_two_pi
+from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
 class DriveMotionPlanner(MotionPlanner):
     """ Motion planner, using a double rapid randomly tree star (RRT*)
@@ -27,11 +28,11 @@ class DriveMotionPlanner(MotionPlanner):
         obstacle: Obstacle,
         step_size: float,
         search_size: float,
-        include_orien=False,
-        configuration_grid_map=None):
+        path_estimator: PathEstimator,
+        include_orien=False):
 
         MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle, obstacles,
-                step_size, search_size, include_orien, configuration_grid_map)
+                step_size, search_size, path_estimator, include_orien)
 
         self.start_time = None
 
@@ -64,7 +65,7 @@ class DriveMotionPlanner(MotionPlanner):
             target_sample[0] = float(1e-8)
         if target_sample[1] == 0:
             target_sample[1] = float(1e-8)
-        if  target_sample[2] == 0:
+        if  self.include_orien and target_sample[2] == 0:
             target_sample[2] = float(1e-8)
         start_sample[2] = to_interval_zero_to_two_pi(start_sample[2])
         target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
@@ -109,6 +110,7 @@ class DriveMotionPlanner(MotionPlanner):
         """ finds and connect to the closeby sample which gives the cheapest path. """
 
         closest_sample_total_cost = sys.float_info.max
+        closest_sample_add_node_cost = 0
         closest_sample_key = None
 
         for close_sample_key in close_samples_keys:
@@ -116,36 +118,29 @@ class DriveMotionPlanner(MotionPlanner):
             close_sample = self.samples[close_sample_key]
 
             # add cost or an additional subtask
-            add_node_cost = 0
+            close_sample_add_node_cost = 0
             if in_space_id == 2: # movable space
-                if self.configuration_grid_map.occupancy(np.array(close_sample["pose"])) != 2:
-                    add_node_cost = KNOWN_OBSTACLE_COST
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 2:
+                    close_sample_add_node_cost = KNOWN_OBSTACLE_COST
 
             elif in_space_id == 3: # unkown space
-                if self.configuration_grid_map.occupancy(np.array(close_sample["pose"])) != 3:
-                    add_node_cost = UNKNOWN_OBSTACLE_COST
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 3:
+                    close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
-            orien_cost = 0
-            if self.include_orien:
-                orien_cost = np.abs(close_sample["pose"][2]-sample[2])
+            close_sample_total_cost = close_sample["cost_to_source"] +\
+                    self.distance(close_sample["pose"], sample) + close_sample_add_node_cost
 
-            temp_total_cost = close_sample["cost_to_source"] +\
-                    self.distance(close_sample["pose"], sample) + add_node_cost + orien_cost
-
-            if temp_total_cost < closest_sample_total_cost:
-                closest_sample_total_cost = temp_total_cost
+            if close_sample_total_cost < closest_sample_total_cost:
+                closest_sample_add_node_cost = close_sample_add_node_cost
+                closest_sample_total_cost = close_sample_total_cost
                 closest_sample_key = close_sample_key
 
-            add_node = False
-            if add_node_cost > 0:
-                add_node = True
+        add_node = False
+        if closest_sample_add_node_cost > 0:
+            add_node = True
 
-            # TODO: is this really nessecary?
-            if close_sample_key is None:
-                raise ValueError("closest sample key is None which should be impossible")
-
-            # add new sample
-            return self.add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
+        # add new sample
+        return self.add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
 
     def rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample,
@@ -176,7 +171,7 @@ class DriveMotionPlanner(MotionPlanner):
 
             else:
                 # find lowest cost to connect both trees
-                temp_path_cost = sample["cost_to_source"] + temp_close_sample["cost_to_source"] + self.distance(temp_close_sample["pose"], sample["pose"])
+                temp_path_cost = self._calculate_path_kost(sample, temp_close_sample)
 
                 if temp_path_cost < cheapest_path_cost:
 
@@ -230,37 +225,20 @@ class DriveMotionPlanner(MotionPlanner):
                 new_shortest_path_key = next_sample_new_cost + next_sample["cost_to_source"]
                 self.shortest_paths[new_shortest_path_key] = {"sample1_key": next_sample_key, "sample2_key": sample_key}
 
-        # if the new samples deletes a shortest path?
-
-    def distance(self, sample1: list, sample2: list) -> float:
-        if self.include_orien:
-            return np.linalg.norm([sample1[0] - sample2[0],\
-                    sample1[1] - sample2[1], sample1[2]-sample2[2]])
-        else:
-            return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])
-
     def stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.04:
-            self.visualise(save=False)
+        if planning_time < 0.5: # be picky
+            return len(self.shortest_paths) > 10 and self.shortest_paths.peekitem(0)[0] * 1.05 > self.shortest_paths.peekitem(9)[0]
+        elif planning_time < 1: # be less picky
+            return len(self.shortest_paths) > 5 and self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0]
+        elif len(self.shortest_paths) > 0: # beg for anything
             return True
         else:
-            return False
+            raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
-        # if planning_time < 2: # be picky
-        #     if len(self.shortest_paths) > 10 and self.shortest_paths.peekitem(0)[0] * 1.15 > self.shortest_paths.peekitem(9)[0]:
-        #         return True
-        #     else:
-        #         return False
-        # else: # be less picky
-        #     if len(self.shortest_paths) > 5 and self.shortest_paths.peekitem(0)[0] * 1.20 > self.shortest_paths.peekitem(4)[0]:
-        #         return True
-        #     else:
-        #         raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
-        #
 
     def extract_shortest_path(self) -> Tuple[list, list]:
         """ Finds the shortest path after sampling. """

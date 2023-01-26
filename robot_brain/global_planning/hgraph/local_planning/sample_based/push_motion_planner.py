@@ -30,11 +30,11 @@ class PushMotionPlanner(MotionPlanner):
         obstacle: Obstacle,
         step_size: float,
         search_size: float,
-        include_orien= False,
-        configuration_grid_map=None):
+        path_estimator: PathEstimator,
+        include_orien= False):
 
         MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle, obstacles,
-                step_size, search_size, include_orien, configuration_grid_map)
+                step_size, search_size, path_estimator, include_orien)
 
         self.start_time = None
 
@@ -97,8 +97,8 @@ class PushMotionPlanner(MotionPlanner):
     # def search_path(self, start: State, target: State) -> Tuple[list, list]:
     #     """ search for a path between start and target state, raises error if no path can be found. """
     #
-    #     self.configuration_grid_map.update()
-    #     # TODO:self.configuration_grid_map.shortest_path() # TODO: add samples to the RRT* planning algorithm
+    #     self.path_estimator.update()
+    #     # TODO:self.path_estimator.shortest_path() # TODO: add samples to the RRT* planning algorithm
     #     # before searching for a path
     #
     #     self.setup(start.get_2d_pose(), target.get_2d_pose())
@@ -118,9 +118,9 @@ class PushMotionPlanner(MotionPlanner):
     #         sample_new = self.project_to_connectivity_graph(sample_rand, sample_closest_key)
     #
     #         if self.include_orien:
-    #             in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
+    #             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
     #         else:
-    #             in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new[0:2]))
+    #             in_space_id = self.path_estimator.occupancy(np.array(sample_new[0:2]))
     #         if in_space_id == 1: # obstacle space, abort sample
     #             continue
     #
@@ -160,6 +160,7 @@ class PushMotionPlanner(MotionPlanner):
         """ finds and connect to the closeby sample which gives the cheapest path. """
 
         closest_sample_total_cost = sys.float_info.max
+        closest_sample_add_node_cost = 0
         closest_sample_key = None
 
         for close_sample_key in close_samples_keys:
@@ -167,35 +168,33 @@ class PushMotionPlanner(MotionPlanner):
             close_sample = self.samples[close_sample_key]
 
             # add cost or an additional subtask
-            add_node_cost = 0
+            close_sample_add_node_cost = 0
             if in_space_id == 2: # movable space
-                if self.configuration_grid_map.occupancy(np.array(close_sample["pose"])) != 2:
-                    add_node_cost = KNOWN_OBSTACLE_COST
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 2:
+                    close_sample_add_node_cost = KNOWN_OBSTACLE_COST
 
             elif in_space_id == 3: # unkown space
-                if self.configuration_grid_map.occupancy(np.array(close_sample["pose"])) != 3:
-                    add_node_cost = UNKNOWN_OBSTACLE_COST
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 3:
+                    close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
-            orien_cost = 0
-            if self.include_orien:
-                orien_cost = np.abs(close_sample["pose"][2]-sample[2])
+            close_sample_total_cost = close_sample["cost_to_source"] +\
+                    self.distance(close_sample["pose"], sample) + close_sample_add_node_cost
 
-
-            temp_total_cost = close_sample["cost_to_source"] +\
-                    self.distance(close_sample["pose"], sample) + add_node_cost + orien_cost
-
-            if temp_total_cost < closest_sample_total_cost:
-                closest_sample_total_cost = temp_total_cost
+            if close_sample_total_cost < closest_sample_total_cost:
+                closest_sample_add_node_cost = close_sample_add_node_cost
+                closest_sample_total_cost = close_sample_total_cost
                 closest_sample_key = close_sample_key
 
-            add_node = False
-            if add_node_cost > 0:
-                add_node = True
+        add_node = False
+        if closest_sample_add_node_cost > 0:
+            add_node = True
 
-            if close_sample_key is None:
-                raise ValueError("closest sample key is None which should be impossible")
-            # add new sample
-            return self.add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
+        if closest_sample_key is None:
+            print(f'how many things are in here? {close_samples_keys}')
+            raise ValueError("closest sample key is None which should be impossible")
+
+        # add new sample
+        return self.add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
 
     def rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample,
@@ -279,8 +278,8 @@ class PushMotionPlanner(MotionPlanner):
                 new_shortest_path_key = next_sample_new_cost + next_sample["cost_to_source"]
                 self.shortest_paths[new_shortest_path_key] = {"sample1_key": next_sample_key, "sample2_key": sample_key}
 
-    def distance(self, sample1: list, sample2: list) -> float:
-        return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])
+    # def distance(self, sample1: list, sample2: list) -> float:
+    #     return np.linalg.norm([sample1[0] - sample2[0], sample1[1] - sample2[1]])
 
     def stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """

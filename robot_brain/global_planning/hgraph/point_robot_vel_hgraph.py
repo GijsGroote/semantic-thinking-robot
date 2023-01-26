@@ -48,7 +48,7 @@ class PointRobotVelHGraph(HGraph):
                 obstacles= obstacles,
                 obst_cart_2d= self.robot.state.get_xy_position(),
                 obst_name = self.robot.name,
-                obst_radius= 0.4)
+                obst_radius= POINT_ROBOT_RADIUS)
 
         occ_graph.setup()
 
@@ -59,25 +59,25 @@ class PointRobotVelHGraph(HGraph):
         if isinstance(push_obstacle.properties, BoxObstacle):
 
             occ_graph = RectangleObstaclePathEstimator(
-                    cell_size=0.5,
+                    cell_size=0.1,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
                     obstacles= obstacles,
                     obst_cart_2d= push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,
-                    n_orientations= 10,
+                    n_orientations= 3,
                     obst_x_length= push_obstacle.properties.length(),
                     obst_y_length= push_obstacle.properties.width())
 
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
-            occ_graph = CircleObstaclePathEstimator(cell_size=0.5,
+            occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
                     obstacles= obstacles,
                     obst_cart_2d= self.robot.state.get_xy_position(),
                     obst_name = push_obstacle.name,
-                    obst_radius= 0.4)
+                    obst_radius= push_obstacle.properties.radius())
         else:
             raise ValueError("Unknown obstacle encountered during estimating a path")
 
@@ -93,7 +93,7 @@ class PointRobotVelHGraph(HGraph):
                 obstacle=self.robot,
                 step_size=0.2,
                 search_size=0.4,
-                configuration_grid_map=path_estimator)
+                path_estimator=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
         if isinstance(push_obstacle.properties, BoxObstacle):
@@ -110,8 +110,8 @@ class PointRobotVelHGraph(HGraph):
                 obstacle=push_obstacle,
                 step_size=0.2,
                 search_size=0.4,
-                include_orien=include_orien,
-                configuration_grid_map=path_estimator)
+                path_estimator=path_estimator,
+                include_orien=include_orien)
 
     def _in_obstacle(self, pose_2ds) -> list:
         """ return the obstacle keys at pose_2ds. """

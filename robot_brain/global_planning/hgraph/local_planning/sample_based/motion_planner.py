@@ -19,7 +19,7 @@ from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
-from helper_functions.geometrics import to_interval_zero_to_two_pi
+from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
 class MotionPlanner(ABC):
     """
@@ -31,8 +31,8 @@ class MotionPlanner(ABC):
             obstacles: dict,
             step_size: float,
             search_size: float,
-            include_orien: bool,
-            configuration_grid_map=None):
+            path_estimator: PathEstimator,
+            include_orien: bool):
 
         self.grid_x_length = grid_x_length
         self.grid_y_length = grid_y_length
@@ -59,44 +59,42 @@ class MotionPlanner(ABC):
         if include_orien:
             self.orien_sorted = SortedDict({})
 
-        if isinstance(configuration_grid_map, PathEstimator):
+        if isinstance(path_estimator, PathEstimator):
             if isinstance(obstacle.properties, CylinderObstacle):
-                assert isinstance(configuration_grid_map, CircleObstaclePathEstimator),\
+                assert isinstance(path_estimator, CircleObstaclePathEstimator),\
                     "obstacle is CylinderObstacle, conf_grid_map should be of "\
-                    f"type CircleObstaclePathEstimator and is {type(configuration_grid_map)}"
+                    f"type CircleObstaclePathEstimator and is {type(path_estimator)}"
             elif isinstance(obstacle.properties, BoxObstacle):
-                assert isinstance(configuration_grid_map, RectangleObstaclePathEstimator),\
+                assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
                     "obstacle is BoxObstacle, conf_grid_map should be of type"\
-                    f" RectangleObstaclePathEstimator and is {type(configuration_grid_map)}"
+                    f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
 
-            self.configuration_grid_map = configuration_grid_map
+            # TODO: rename this to path estimator
+            self.path_estimator = path_estimator
 
         else:
-            if isinstance(obstacle.properties, CylinderObstacle):
-                self.configuration_grid_map = CircleObstaclePathEstimator(
-                    cell_size=0.2,
-                    grid_x_length=grid_x_length,
-                    grid_y_length=grid_y_length,
-                    obstacles=obstacles,
-                    obst_cart_2d=obstacle.state.get_xy_position(),
-                    obst_name=obstacle.name,
-                    obst_radius=obstacle.properties.radius())
-
-            elif isinstance(obstacle.properties, BoxObstacle):
-                self.configuration_grid_map = RectangleObstaclePathEstimator(
-                    cell_size=0.2,
-                    grid_x_length=grid_x_length,
-                    grid_y_length=grid_y_length,
-                    obstacles=obstacles,
-                    obst_cart_2d=obstacle.state.get_xy_position(),
-                    obst_name=obstacle.name,
-                    n_orientations= 36,
-                    obst_x_length=obstacle.properties.length(),
-                    obst_y_length=obstacle.properties.width())
-            else:
-                raise ValueError("Obstacle type is unknown")
-
-        self.n_samples = 0
+            raise ValueError("Incorrect or No PathEstimator provided")
+            # if isinstance(obstacle.properties, CylinderObstacle):
+            #     self.path_estimator = CircleObstaclePathEstimator(
+            #         cell_size=0.2,
+            #         grid_x_length=grid_x_length,
+            #         grid_y_length=grid_y_length,
+            #         obstacles=obstacles,
+            #         obst_cart_2d=obstacle.state.get_xy_position(),
+            #         obst_name=obstacle.name,
+            #         obst_radius=obstacle.properties.radius())
+            #
+            # elif isinstance(obstacle.properties, BoxObstacle):
+            #     self.path_estimator = RectangleObstaclePathEstimator(
+            #         cell_size=0.2,
+            #         grid_x_length=grid_x_length,
+            #         grid_y_length=grid_y_length,
+            #         obstacles=obstacles,
+            #         obst_cart_2d=obstacle.state.get_xy_position(),
+            #         obst_name=obstacle.name,
+            #         n_orientations= 36,
+            #         obst_x_length=obstacle.properties.length(),
+            #         obst_y_length=obstacle.properties.width())
 
     @abstractmethod
     def setup(self, source_sample, target_sample):
@@ -112,7 +110,7 @@ class MotionPlanner(ABC):
             source_sample = source.get_xy_position()
             target_sample = target.get_xy_position()
 
-        self.configuration_grid_map.update()
+        self.path_estimator.update()
 
         self.setup(source_sample, target_sample)
         self.start_time_search = time.time()
@@ -127,6 +125,8 @@ class MotionPlanner(ABC):
             if len(add_node_list) == 0:
                 self.shortest_path = path
                 return (path, add_node_list)
+            else:
+                print('there is a sapmle in non free space, do actual motion planning')
 
         # while keep searching:
         while not self.stop_criteria_test():
@@ -144,9 +144,9 @@ class MotionPlanner(ABC):
                 sample_new = sample_rand
 
             if self.include_orien:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
+                in_space_id = self.path_estimator.occupancy(np.array(sample_new))
             else:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new[0:2]))
+                in_space_id = self.path_estimator.occupancy(np.array(sample_new[0:2]))
             if in_space_id == 1: # obstacle space, abort sample
                 continue
 
@@ -165,24 +165,24 @@ class MotionPlanner(ABC):
         (path, add_node_list)  = self.extract_shortest_path()
         self.shortest_path = path
 
-        # self.visualise(save=False)
-
         return (path, add_node_list)
 
     def _add_path_estimator_samples(self, source_sample, target_sample):
         """ convert samples from path estimation to motion planner. """
+        assert self.search_size > self.path_estimator.cell_size*1.5,\
+                f"the motion planner search size: {self.search_size} is smaller than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
 
-        shortest_path = self.configuration_grid_map.search_path(source_sample, target_sample)
+        shortest_path = self.path_estimator.search_path(source_sample, target_sample)
         shortest_path = shortest_path[1:-1]
 
         for sample_new in shortest_path:
 
             # add negligble amount making x and y coordinates unique
-            sample_new += np.random.normal(0, 0.00001, np.asarray(sample_new).shape)
+            # NOTE: At the edges, this small additional could put the sample outside of the
+            # environment, just as it could 'pass' 2*pi
+            sample_new += np.abs(np.random.normal(0, 0.0000001, np.asarray(sample_new).shape))
 
-            # TODO make sure that the new sample fall in the boundaries
-
-            in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
+            in_space_id = self.path_estimator.occupancy(np.array(sample_new))
 
             if in_space_id == 1: # obstacle space, abort sample
                 continue
@@ -280,9 +280,23 @@ class MotionPlanner(ABC):
             raise ValueError("could not found a closest sample, which should be impossible")
         return closest_sample_key
 
-    @abstractmethod
+    # @abstractmethod
+    # def distance(self, sample1: list, sample2: list) -> float:
+    #     """ returns distance measurement between 2 samples. """
+
     def distance(self, sample1: list, sample2: list) -> float:
-        """ returns distance measurement between 2 samples. """
+        """ return euclidean distance, add orientation cost of flag is set. """
+
+        xy_distance = np.linalg.norm([sample1[0] - sample2[0],\
+                    sample1[1] - sample2[1]])
+
+        if self.include_orien:
+            orien_cost = np.abs(to_interval_min_pi_to_pi(to_interval_zero_to_two_pi(sample1[2])\
+                        -to_interval_zero_to_two_pi(sample2[2])))
+            return xy_distance + orien_cost
+
+        else:
+            return xy_distance
 
     def get_closeby_sample_keys(self, sample: list, radius: float) -> set:
         """ return the keys of samples which are less than 2*radius manhattan distance to sample. """
@@ -295,6 +309,10 @@ class MotionPlanner(ABC):
             y_keys.add(self.y_sorted[y_key])
 
         return x_keys.intersection(y_keys)
+
+    def _calculate_path_kost(self, sample1: dict, sample2: dict) -> float:
+        """ calculate the cost for a path from source to target. """
+        return sample1["cost_to_source"] + sample2["cost_to_source"] + self.distance(sample1["pose"], sample2["pose"])
 
     @abstractmethod
     def stop_criteria_test(self) -> bool:
@@ -315,31 +333,50 @@ class MotionPlanner(ABC):
         fig = go.Figure()
 
         source_style = dict(showlegend = True,
-                name="Source Tree", legendgroup=1, line=dict(color="blue"))
+                name="Source Tree", legendgroup=1, line=dict(color="blue"), hoverinfo="x+y+text")
         target_style = dict(showlegend = True,
-                name="Target Tree", legendgroup=2, line=dict(color="green"))
+                name="Target Tree", legendgroup=2, line=dict(color="green"), hoverinfo="x+y+text")
         connect_style = dict(showlegend = True,
-                name="Connect Trees", legendgroup=3, line=dict(color="orange"))
+                name="Connect Trees", legendgroup=3, line=dict(color="orange"), hoverinfo="x+y+text")
+
+        # fig.add_scatter(y=[0,0],
+        #                 x=[0,0], **source_style)
+        # fig.add_scatter(y=[0,0],
+        #                 x=[0,0], **target_style)
+        # fig.add_scatter(y=[0,0],
+        #                 x=[0,0], **connect_style)
 
         # loop through samples
         for sample in self.samples.values():
+            prev_sample = self.samples[sample["prev_sample_key"]]
+            prev_sample_pose = prev_sample["pose"]
+            hover_text = [f"cost: {prev_sample['cost_to_source']}", f"cost: {sample['cost_to_source']}"]
 
-            prev_sample = self.samples[sample["prev_sample_key"]]["pose"]
 
             if sample["in_tree"] == self.source_tree_key:
-                fig.add_scatter(y=[prev_sample[0], sample["pose"][0]],
-                        x=[prev_sample[1], sample["pose"][1]], **source_style)
+                source_style["hovertext"] = hover_text
+                fig.add_scatter(y=[prev_sample_pose[0], sample["pose"][0]],
+                        x=[prev_sample_pose[1], sample["pose"][1]], **source_style)
+
                 source_style["showlegend"] = False
 
             elif sample["in_tree"] == self.target_tree_key:
-                fig.add_scatter(y=[prev_sample[0], sample["pose"][0]], x=[prev_sample[1], sample["pose"][1]], **target_style)
+                target_style["hovertext"] = hover_text
+                fig.add_scatter(y=[prev_sample_pose[0], sample["pose"][0]], x=[prev_sample_pose[1], sample["pose"][1]], **target_style)
+
                 target_style["showlegend"] = False
+
             else:
                 raise ValueError(f"in_tree in unknown and is {sample['in_tree']}")
 
-        for value in self.shortest_paths.values():
-            sample1 = self.samples[value["sample1_key"]]
-            sample2 = self.samples[value["sample2_key"]]
+        for short_path in self.shortest_paths.values():
+            sample1 = self.samples[short_path["sample1_key"]]
+            sample2 = self.samples[short_path["sample2_key"]]
+
+
+            cost_path = self._calculate_path_kost(sample1, sample2)
+
+            connect_style["hovertext"] = f"cost path: {cost_path}"
             fig.add_scatter(y=[sample1["pose"][0], sample2["pose"][0]],
                     x=[sample1["pose"][1], sample2["pose"][1]], **connect_style)
             connect_style["showlegend"] = False

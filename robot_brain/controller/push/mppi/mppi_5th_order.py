@@ -15,8 +15,8 @@ class PushMppi5thOrder(PushMppi):
         """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
-        H = 1
-        W = 1
+        H = 0.5 
+        W = 0.5
         xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
         ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
 

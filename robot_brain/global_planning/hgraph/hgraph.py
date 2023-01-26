@@ -573,9 +573,9 @@ class HGraph(Graph):
         try:
             except_triggered=False
 
-            print(f'path search between({self.get_node(edge.source).obstacle.state}, and {self.get_node(edge.to).obstacle.state})')
             path_estimation = edge.path_estimator.search_path(
                 self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+            # TODO: remove path_estimation, that stuff you have inside the estimator 
             edge.path_estimation = path_estimation
             edge.set_path_exist_status()
 
@@ -617,7 +617,7 @@ class HGraph(Graph):
 
         # motion planning
         if isinstance(edge, DriveActionEdge):
-            edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimation)
+            edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
             current_state = self.robot.state
 
         elif isinstance(edge, PushActionEdge):
@@ -629,7 +629,6 @@ class HGraph(Graph):
             error_triggered = False
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
         except PlanningTimeElapsedException as exc:
-            print(f'hhhhhhhhhhhhhhhhhhhhhhhhh {exc}')
 
             error_triggered = True
             if LOG_METRICS:
@@ -647,14 +646,11 @@ class HGraph(Graph):
             return self._search_hypothesis()
 
         elif len(add_node_list) > 0:
+            
             obst_keys = self._in_obstacle(add_node_list)
 
+            # TODO: rewrite this below here, it's a mess
             for obst_key in obst_keys:
-                print('#####################)#####################)#####################)#####################)')
-                print(f'Add the node with key {obst_key}')
-                print('#####################)#####################)#####################)#####################)')
-                raise ValueError
-
                 # TODO: find the closest spot to place the obstacle that is not overlapping with the planned path
                 target_state = State(pos=[-4, 0, 0])
 
@@ -676,19 +672,19 @@ class HGraph(Graph):
                     subtask_name
                     ))
 
-                # iden_edge = None
-
                 for temp_edge in self.edges:
                     if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
                         self.edges.remove(temp_edge)
+
 
                 for tedge in self.hypothesis:
                     print(f'in hypoooothesis {tedge.iden}')
                         # iden_edge = temp_edge
 
-
+                # remove the current edge, that will be added again later
+                # TODO: should yuo also reset the edge_pointer now?
+                self.hypothesis.pop(0)
                 return self._search_hypothesis()
-
 
         else:
             edge.set_path_is_planned_status()
@@ -739,14 +735,17 @@ class HGraph(Graph):
         """ forces incrementing to the next edge """
         next_node = self.get_node(next_edge.to)
 
+        print('in forc inc')
+        for edge in self.hypothesis:
+            print(f'the edge in hyp is {edge.iden}')
         # assert
         assert isinstance(next_edge, Edge),\
-                f"next edge should be of type edge and is type {type(next_edge)}"
+                f"next edge: {next_edge.iden}, should be of type edge and is type {type(next_edge)}"
         assert next_edge.ready_for_execution(),\
-                f"cannot increment toward next edge of type {type(next_edge)}"\
+                f"cannot increment toward next edge: {next_edge.iden}, of type {type(next_edge)}"\
                 "in hypothesis, edge is not ready"
         assert next_node.ready_for_execution(),\
-                "next node is not ready for execution"
+                f"next node: {next_node.iden}, is not ready for execution"
         # add ghost pose
         if isinstance(next_edge, PushActionEdge):
             self.env.add_target_ghost(next_node.obstacle.properties.name(),
@@ -1015,7 +1014,7 @@ class HGraph(Graph):
         self.add_node(node)
         self.target_nodes.append(node)
 
-    def visualise(self, save=bool):
+    def visualise(self, save=True):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
