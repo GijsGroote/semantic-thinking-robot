@@ -96,42 +96,34 @@ class MotionPlanner(ABC):
             else:
                 raise ValueError("Obstacle type is unknown")
 
-    @abstractmethod
-    def setup(self, start_sample, target_sample):
-        """ initialise the start and target samples. """
+        self.n_samples = 0
 
-    def search_path(self, start: State, target: State) -> Tuple[list, list]:
-        """ search for a path between start and target state. """
+    @abstractmethod
+    def setup(self, source_sample, target_sample):
+        """ initialise the source and target samples. """
+
+    def search_path(self, source: State, target: State) -> Tuple[list, list]:
+        """ search for a path between source and target state. """
+
+        if self.include_orien:
+            source_sample = source.get_2d_pose()
+            target_sample = target.get_2d_pose()
+        else:
+            source_sample = source.get_xy_position()
+            target_sample = target.get_xy_position()
 
         self.configuration_grid_map.update()
-        shortest_path = self.configuration_grid_map.search_path(start.get_2d_pose(), target.get_2d_pose())
-        shortest_path = shortest_path[1:-1]
 
-        self.setup(start.get_2d_pose(), target.get_2d_pose())
+        self.setup(source_sample, target_sample)
         self.start_time_search = time.time()
 
         # add samples from path estimation
-        for sample_new in shortest_path:
+        self._add_path_estimator_samples(source_sample, target_sample)
 
-            sample_new += np.random.normal(0, 0.00001, np.asarray(sample_new).shape)
-
-            sample_closest_key = self.get_closest_sample_key(sample_new)
-
-            if self.include_orien:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
-            else:
-                in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new[0:2]))
-            if in_space_id == 1: # obstacle space, abort sample
-                continue
-
-            close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
-
-            sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
-
-            self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
-
+        # return path if it exist and goes through free space only
         if len(self.shortest_paths) > 0:
             (path, add_node_list) = self.extract_shortest_path()
+            print(f' I FOUND SIMETHING IN THE AD NODE LIST LOOK {add_node_list}')
             if len(add_node_list) == 0:
                 self.shortest_path = path
                 return (path, add_node_list)
@@ -173,7 +165,32 @@ class MotionPlanner(ABC):
         (path, add_node_list)  = self.extract_shortest_path()
         self.shortest_path = path
 
+        # self.visualise(save=False)
+
         return (path, add_node_list)
+
+    def _add_path_estimator_samples(self, source_sample, target_sample):
+        """ convert samples from path estimation to motion planner. """
+
+        shortest_path = self.configuration_grid_map.search_path(source_sample, target_sample)
+        shortest_path = shortest_path[1:-1]
+
+        for sample_new in shortest_path:
+
+            # add negligble amount making x and y coordinates unique
+            sample_new += np.random.normal(0, 0.00001, np.asarray(sample_new).shape)
+
+            # TODO make sure that the new sample fall in the boundaries
+
+            in_space_id = self.configuration_grid_map.occupancy(np.array(sample_new))
+
+            if in_space_id == 1: # obstacle space, abort sample
+                continue
+
+            close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
+            sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
+            self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
+
 
     @abstractmethod
     def create_random_sample(self):

@@ -244,7 +244,7 @@ class DriveMotionPlanner(MotionPlanner):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time > 0.9:
+        if planning_time > 0.04:
             self.visualise(save=False)
             return True
         else:

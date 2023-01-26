@@ -650,6 +650,10 @@ class HGraph(Graph):
             obst_keys = self._in_obstacle(add_node_list)
 
             for obst_key in obst_keys:
+                print('#####################)#####################)#####################)#####################)')
+                print(f'Add the node with key {obst_key}')
+                print('#####################)#####################)#####################)#####################)')
+                raise ValueError
 
                 # TODO: find the closest spot to place the obstacle that is not overlapping with the planned path
                 target_state = State(pos=[-4, 0, 0])

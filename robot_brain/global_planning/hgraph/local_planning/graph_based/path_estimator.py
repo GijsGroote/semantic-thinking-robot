@@ -139,7 +139,7 @@ class PathEstimator(ABC):
         pass
 
     @abstractmethod
-    def occupancy(self, pose: np.ndarray) -> int:
+    def occupancy(self, pose_2d: np.ndarray) -> int:
         pass
 
     def _c_idx_to_cart_2d(self, x_idx: int, y_idx: int) -> Tuple[float, float]:

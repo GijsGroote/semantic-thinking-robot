@@ -40,6 +40,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         self._obst_x_length = obst_x_length
         self._obst_y_length = obst_y_length
 
+        # TODO: make this work with 2 dimensional values (and then grid_map is also 2D), and with 3 dimensional grid map.
         self._grid_map = np.zeros((
             int(self.grid_x_length/self.cell_size),
             int(self.grid_y_length/self.cell_size),
@@ -212,9 +213,12 @@ class RectangleObstaclePathEstimator(PathEstimator):
         """ return the occupancy of a grid cell from a 2d pose. """
         if isinstance(pose_2d, list):
             pose_2d = np.array(pose_2d)
+
+        if pose_2d.shape == (2,):
+            pose_2d = np.append(pose_2d, [0])
+
         idx = self._pose_2d_to_p_idx(pose_2d)
         return self._p_idx_to_occupancy(*idx)
-
 
     def search_path(self, pose_2d_start: np.ndarray, pose_2d_target:np.ndarray) -> list:
         """ use the Dijkstra algorithm to find the shortest path. """

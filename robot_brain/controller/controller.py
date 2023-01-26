@@ -31,7 +31,7 @@ class Controller(ABC):
         self.visualise(save=True)
 
     @abstractmethod
-    def visualise(self, save=True):
+    def visualise(self, save: bool):
         """ visualise the controller behaviour. """
 
     ##### Setters and Getters below this point #######
