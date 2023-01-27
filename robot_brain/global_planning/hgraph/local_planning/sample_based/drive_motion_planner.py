@@ -1,21 +1,18 @@
 import random
-import traceback
 import sys
 from typing import Tuple
 import time
-import warnings
 import math
 from sortedcontainers import SortedDict
 import numpy as np
 
 from robot_brain.obstacle import Obstacle
-from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.exceptions import PlanningTimeElapsedException
-from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
+from helper_functions.geometrics import to_interval_zero_to_two_pi
 
 class DriveMotionPlanner(MotionPlanner):
     """ Motion planner, using a double rapid randomly tree star (RRT*)
@@ -24,28 +21,27 @@ class DriveMotionPlanner(MotionPlanner):
     def __init__(self,
         grid_x_length: float,
         grid_y_length: float,
-        obstacles: dict,
         obstacle: Obstacle,
         step_size: float,
         search_size: float,
         path_estimator: PathEstimator,
         include_orien=False):
 
-        MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle, obstacles,
+        MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle,
                 step_size, search_size, path_estimator, include_orien)
 
         self.start_time = None
 
-    def setup(self, start_sample: np.ndarray | tuple | list, target_sample: np.ndarray | tuple | list):
+    def setup(self, source_sample: np.ndarray | tuple | list, target_sample: np.ndarray | tuple | list):
 
-        assert isinstance(start_sample, (np.ndarray, tuple, list)) and isinstance(target_sample, (np.ndarray, tuple, list)), \
+        assert isinstance(source_sample, (np.ndarray, tuple, list)) and isinstance(target_sample, (np.ndarray, tuple, list)), \
             "start- or target sample is not a type tuple, list or np.array which it should be."
-        if len(start_sample) == 2:
-            start_sample = np.array([start_sample[0], start_sample[1], 0])
+        if len(source_sample) == 2:
+            source_sample = np.array([source_sample[0], source_sample[1], 0])
         if len(target_sample) == 2:
             target_sample = np.array([target_sample[0], target_sample[1], 0])
-        assert len(start_sample) == 3 and len(target_sample) == 3, \
-                f"start- and target sample should have length 3 and have lengths {len(start_sample)} and {len(target_sample)}"
+        assert len(source_sample) == 3 and len(target_sample) == 3, \
+                f"start- and target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
 
         self.samples.clear()
         self.x_sorted.clear()
@@ -54,12 +50,12 @@ class DriveMotionPlanner(MotionPlanner):
             self.orien_sorted.clear()
 
         # add negligleble amount to make positions hashable if initial position is 0
-        if start_sample[0] == 0:
-            start_sample[0] = float(1e-8)
-        if start_sample[1] == 0:
-            start_sample[1] = float(1e-8)
-        if self.include_orien and start_sample[2] == 0:
-            start_sample[2] = float(1e-8)
+        if source_sample[0] == 0:
+            source_sample[0] = float(1e-8)
+        if source_sample[1] == 0:
+            source_sample[1] = float(1e-8)
+        if self.include_orien and source_sample[2] == 0:
+            source_sample[2] = float(1e-8)
 
         if target_sample[0] == 0:
             target_sample[0] = float(1e-8)
@@ -67,12 +63,12 @@ class DriveMotionPlanner(MotionPlanner):
             target_sample[1] = float(1e-8)
         if  self.include_orien and target_sample[2] == 0:
             target_sample[2] = float(1e-8)
-        start_sample[2] = to_interval_zero_to_two_pi(start_sample[2])
+        source_sample[2] = to_interval_zero_to_two_pi(source_sample[2])
         target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
 
         # add start and target samples
         self.samples[self.source_tree_key] = {
-                "pose": [start_sample[0], start_sample[1], start_sample[2]],
+                "pose": [source_sample[0], source_sample[1], source_sample[2]],
                 "cost_to_source": 0,
                 "prev_sample_key": self.source_tree_key,
                 "next_sample_keys": [],
@@ -88,10 +84,10 @@ class DriveMotionPlanner(MotionPlanner):
                 "add_node": []}
 
         self.n_samples = 2
-        self.x_sorted = SortedDict({start_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
-        self.y_sorted = SortedDict({start_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
+        self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
+        self.y_sorted = SortedDict({source_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
-    def create_random_sample(self) -> list:
+    def _create_random_sample(self) -> list:
         """ randomly generate sample inside grid boundaries. """
         x_rand = random.uniform(-self.grid_x_length/2, self.grid_x_length/2)
         y_rand = random.uniform(-self.grid_y_length/2, self.grid_y_length/2)
@@ -101,12 +97,13 @@ class DriveMotionPlanner(MotionPlanner):
         else:
             return [x_rand, y_rand]
 
-    def check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
+    def _check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
         """ check if 2 samples can be connected using a local planner. """
-        # The drive motion planner is always able to connect two samples
+        # TODO: The drive motion planner is always able to connect two samples
+        # As long as you pick only a holonomic robot
         return True
 
-    def connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
+    def _connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
         """ finds and connect to the closeby sample which gives the cheapest path. """
 
         closest_sample_total_cost = sys.float_info.max
@@ -128,7 +125,7 @@ class DriveMotionPlanner(MotionPlanner):
                     close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
             close_sample_total_cost = close_sample["cost_to_source"] +\
-                    self.distance(close_sample["pose"], sample) + close_sample_add_node_cost
+                    self._distance(close_sample["pose"], sample) + close_sample_add_node_cost
 
             if close_sample_total_cost < closest_sample_total_cost:
                 closest_sample_add_node_cost = close_sample_add_node_cost
@@ -140,9 +137,9 @@ class DriveMotionPlanner(MotionPlanner):
             add_node = True
 
         # add new sample
-        return self.add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
+        return self._add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
 
-    def rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
+    def _rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample,
         connect to the cheapest sample from the other tree if possible. """
 
@@ -160,18 +157,18 @@ class DriveMotionPlanner(MotionPlanner):
             if temp_close_sample["in_tree"] == sample["in_tree"]:
 
                 # check if cost can be lowered for closeby samples
-                cost_to_close_sample = sample["cost_to_source"]+self.distance(temp_close_sample["pose"], sample["pose"])
+                cost_to_close_sample = sample["cost_to_source"] + self._distance(temp_close_sample, sample)
                 if cost_to_close_sample < temp_close_sample["cost_to_source"]:
 
                     # rewire and update all next samples cost
                     self.samples[temp_close_sample["prev_sample_key"]]["next_sample_keys"].remove(temp_close_sample_key)
                     temp_close_sample["prev_sample_key"] = sample_key
                     sample["next_sample_keys"].append(temp_close_sample_key)
-                    self.update_cost_sample(temp_close_sample_key, temp_close_sample, cost_to_close_sample)
+                    self._update_cost_sample(temp_close_sample_key, temp_close_sample, cost_to_close_sample)
 
             else:
                 # find lowest cost to connect both trees
-                temp_path_cost = self._calculate_path_kost(sample, temp_close_sample)
+                temp_path_cost = self._calculate_path_cost(sample, temp_close_sample)
 
                 if temp_path_cost < cheapest_path_cost:
 
@@ -179,17 +176,18 @@ class DriveMotionPlanner(MotionPlanner):
                     cheapest_path_cost_sample_key = temp_close_sample_key
 
         # found a path to connect both trees
-        if cheapest_path_cost_sample_key is not None:
-            # TODO; found a extra object to remove first?
-            self.shortest_paths[cheapest_path_cost] = {"sample1_key": sample_key, "sample2_key": cheapest_path_cost_sample_key, "add_node": False}
+        if (cheapest_path_cost_sample_key is not None and
+                self._distance(sample, self.samples[cheapest_path_cost_sample_key]) < self.step_size):
+            self.shortest_paths[cheapest_path_cost] = {"sample1_key": sample_key,
+                    "sample2_key": cheapest_path_cost_sample_key}
 
-    def project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
+    def _project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
         """ projects the sample closer to the closest existing sample in the connectivity graphs. """
 
         # TODO: using vectors speeds up, convert sin/cos calculation to vector calculation
         project_to_sample = self.samples[project_to_sample_key]
 
-        if self.distance(project_to_sample["pose"], sample) > self.step_size:
+        if self._distance(project_to_sample, sample) > self.step_size:
 
             theta = np.arctan2(sample[1]-project_to_sample["pose"][1], sample[0]-project_to_sample["pose"][0])
             x_new = project_to_sample["pose"][0] + np.cos(theta) * self.step_size
@@ -203,29 +201,29 @@ class DriveMotionPlanner(MotionPlanner):
         else:
             return sample
 
-    def update_cost_sample(self, sample_key: int, sample: dict, new_cost: float):
+    def _update_cost_sample(self, sample_key: int, sample: dict, new_cost: float):
         """ update sample cost for sample and next samples, including cost for shortest paths. """
 
         # update cost for this sample,
         for next_sample_key in sample["next_sample_keys"]:
 
             next_sample = self.samples[next_sample_key]
-            next_sample_new_cost = new_cost + self.distance(next_sample["pose"], sample["pose"])
+            next_sample_new_cost = new_cost + self._distance(next_sample, sample)
 
             if next_sample["in_tree"] == sample["in_tree"]:
 
                 # recursively update new costs
-                self.update_cost_sample(next_sample_key, next_sample, next_sample_new_cost)
+                self._update_cost_sample(next_sample_key, next_sample, next_sample_new_cost)
 
             else:
                 # update the existing shortest path found shortest path
-                shortest_path_key = sample["cost_to_source"] + self.distance(sample["pose"], next_sample["pose"]) + next_sample["cost_to_source"]
+                shortest_path_key = sample["cost_to_source"] + self._distance(sample, next_sample) + next_sample["cost_to_source"]
                 self.shortest_paths.pop(shortest_path_key)
 
                 new_shortest_path_key = next_sample_new_cost + next_sample["cost_to_source"]
                 self.shortest_paths[new_shortest_path_key] = {"sample1_key": next_sample_key, "sample2_key": sample_key}
 
-    def stop_criteria_test(self) -> bool:
+    def _stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """
 
         planning_time = time.time() - self.start_time_search
@@ -240,7 +238,7 @@ class DriveMotionPlanner(MotionPlanner):
             raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
 
-    def extract_shortest_path(self) -> Tuple[list, list]:
+    def _extract_shortest_path(self) -> Tuple[list, list]:
         """ Finds the shortest path after sampling. """
         if len(self.shortest_paths) == 0:
             raise ValueError("start to target tree is not connected")

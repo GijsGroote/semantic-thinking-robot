@@ -89,7 +89,6 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obstacles=obstacles,
                 obstacle=self.robot,
                 step_size=0.2,
                 search_size=0.4,
@@ -106,7 +105,6 @@ class PointRobotVelHGraph(HGraph):
         return PushMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obstacles=obstacles,
                 obstacle=push_obstacle,
                 step_size=0.2,
                 search_size=0.4,

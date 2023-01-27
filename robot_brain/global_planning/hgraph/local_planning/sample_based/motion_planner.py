@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
-import random
-import math
 from typing import Tuple
 import pickle
 import sys
 import time
+import warnings
 import plotly.graph_objects as go
 from sortedcontainers import SortedDict
-import warnings
 import numpy as np
 
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -16,8 +14,10 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from robot_brain.obstacle import Obstacle
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
+        import RectangleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator\
+        import CircleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
@@ -28,7 +28,6 @@ class MotionPlanner(ABC):
     def __init__(self, grid_x_length: float,
             grid_y_length: float,
             obstacle: Obstacle,
-            obstacles: dict,
             step_size: float,
             search_size: float,
             path_estimator: PathEstimator,
@@ -120,26 +119,23 @@ class MotionPlanner(ABC):
 
         # return path if it exist and goes through free space only
         if len(self.shortest_paths) > 0:
-            (path, add_node_list) = self.extract_shortest_path()
-            print(f' I FOUND SIMETHING IN THE AD NODE LIST LOOK {add_node_list}')
+            (path, add_node_list) = self._extract_shortest_path()
             if len(add_node_list) == 0:
                 self.shortest_path = path
                 return (path, add_node_list)
-            else:
-                print('there is a sapmle in non free space, do actual motion planning')
 
         # while keep searching:
-        while not self.stop_criteria_test():
+        while not self._stop_criteria_test():
 
             # generate random sample
-            sample_rand = self.create_random_sample()
+            sample_rand = self._create_random_sample()
 
             # find closest sample
-            sample_closest_key = self.get_closest_sample_key(sample_rand)
+            sample_closest_key = self._get_closest_sample_key(sample_rand)
 
             # project it to existing samples
-            if self.distance(self.samples[sample_closest_key]["pose"], sample_rand) > self.step_size:
-                sample_new = self.project_to_connectivity_graph(sample_rand, sample_closest_key)
+            if self._distance(self.samples[sample_closest_key], sample_rand) > self.step_size:
+                sample_new = self._project_to_connectivity_graph(sample_rand, sample_closest_key)
             else:
                 sample_new = sample_rand
 
@@ -151,18 +147,18 @@ class MotionPlanner(ABC):
                 continue
 
             # find closeby samples and connect new sample to cheapest sample
-            close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
+            close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
 
             try:
-                sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
+                sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
             except AssertionError:
                 warnings.warn("duplicate key found in sorted pose of sample")
                 continue
 
             # rewire close samples lowering their cost, connect to other tree if possible
-            self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
+            self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
 
-        (path, add_node_list)  = self.extract_shortest_path()
+        (path, add_node_list)  = self._extract_shortest_path()
         self.shortest_path = path
 
         return (path, add_node_list)
@@ -187,16 +183,16 @@ class MotionPlanner(ABC):
             if in_space_id == 1: # obstacle space, abort sample
                 continue
 
-            close_samples_keys = self.get_closeby_sample_keys(sample_new, self.search_size)
-            sample_new_key = self.connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
-            self.rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
+            close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
+            sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
+            self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
 
 
     @abstractmethod
-    def create_random_sample(self):
+    def _create_random_sample(self):
         """ Randomly generates a sample in free, movable or unknown space. """
 
-    def add_sample(self, sample: list, prev_key: int, cost_to_source, add_node: bool) -> int:
+    def _add_sample(self, sample: list, prev_key: int, cost_to_source, add_node: bool) -> int:
         """ adds sample to all existing samples and return unique key generated. """
 
         # check if the x and y positions already exist
@@ -210,7 +206,7 @@ class MotionPlanner(ABC):
         if len(sample) == 2:
             sample = [sample[0], sample[1], 0]
 
-        key = self.create_unique_id()
+        key = self._create_unique_id()
 
         self.samples[prev_key]["next_sample_keys"].append(key)
 
@@ -232,36 +228,36 @@ class MotionPlanner(ABC):
         return key
 
     @abstractmethod
-    def project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
+    def _project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
         """ projects the sample closer to the closest existing sample in the connectivity graphs. """
 
     @abstractmethod
-    def check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
+    def _check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
         """ check if 2 samples can be connected using a local planner. """
 
     @abstractmethod
-    def extract_shortest_path(self) -> Tuple[list, list]:
+    def _extract_shortest_path(self) -> Tuple[list, list]:
         """ Finds the shortest path after sampling. """
 
     @abstractmethod
-    def rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
+    def _rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample,
         connect to the cheapest sample from the other tree if possible. """
 
     @abstractmethod
-    def connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
+    def _connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
         """ finds and connect to the closeby sample which gives the cheapest path. """
 
-    def get_closest_sample_key(self, sample: list) -> int:
+    def _get_closest_sample_key(self, sample: list) -> int:
         """ Search for closest points in x and y """
 
         # speed up, only compare closeby samples before comparing to all existing samples
-        test_closest_keys = self.get_closeby_sample_keys(sample, 10*self.grid_x_length/self.n_samples)
+        test_closest_keys = self._get_closeby_sample_keys(sample, 10*self.grid_x_length/self.n_samples)
 
         if len(test_closest_keys) > 0:
             closest_keys = test_closest_keys
         else:
-            test_closest_keys = self.get_closeby_sample_keys(sample, 100*self.grid_x_length/self.n_samples)
+            test_closest_keys = self._get_closeby_sample_keys(sample, 100*self.grid_x_length/self.n_samples)
             if len(test_closest_keys) > 0:
                 closest_keys = test_closest_keys
             else:
@@ -271,21 +267,21 @@ class MotionPlanner(ABC):
         closest_distance = sys.float_info.max
         for key in closest_keys:
 
-            temp_dist = self.distance(sample, self.samples[key]["pose"])
+            temp_dist = self._distance(sample, self.samples[key])
             if temp_dist < closest_distance:
                 closest_sample_key = key
                 closest_distance = temp_dist
 
-        if closest_sample_key is None:
-            raise ValueError("could not found a closest sample, which should be impossible")
+        # if closest_sample_key is None:
+        #     raise ValueError("could not found a closest sample, which should be impossible")
         return closest_sample_key
 
-    # @abstractmethod
-    # def distance(self, sample1: list, sample2: list) -> float:
-    #     """ returns distance measurement between 2 samples. """
-
-    def distance(self, sample1: list, sample2: list) -> float:
+    def _distance(self, sample1: dict | list, sample2: dict | list) -> float:
         """ return euclidean distance, add orientation cost of flag is set. """
+        if isinstance(sample2, dict):
+            sample2 = sample2["pose"]
+        if isinstance(sample1, dict):
+            sample1 = sample1["pose"]
 
         xy_distance = np.linalg.norm([sample1[0] - sample2[0],\
                     sample1[1] - sample2[1]])
@@ -296,9 +292,9 @@ class MotionPlanner(ABC):
             return xy_distance + orien_cost
 
         else:
-            return xy_distance
+            return float(xy_distance)
 
-    def get_closeby_sample_keys(self, sample: list, radius: float) -> set:
+    def _get_closeby_sample_keys(self, sample: list, radius: float) -> set:
         """ return the keys of samples which are less than 2*radius manhattan distance to sample. """
         x_keys = set()
         for x_key in self.x_sorted.irange(sample[0]-radius, sample[0]+radius):
@@ -310,19 +306,19 @@ class MotionPlanner(ABC):
 
         return x_keys.intersection(y_keys)
 
-    def _calculate_path_kost(self, sample1: dict, sample2: dict) -> float:
+    def _calculate_path_cost(self, sample1: dict, sample2: dict) -> float:
         """ calculate the cost for a path from source to target. """
-        return sample1["cost_to_source"] + sample2["cost_to_source"] + self.distance(sample1["pose"], sample2["pose"])
+        return sample1["cost_to_source"] + sample2["cost_to_source"] + self._distance(sample1, sample2)
 
     @abstractmethod
-    def stop_criteria_test(self) -> bool:
+    def _stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """
 
-    def create_unique_id(self) -> int:
+    def _create_unique_id(self) -> int:
         """ creates and returns a unique id. """
         unique_id = len(self.samples)
 
-        while unique_id in self.samples.keys():
+        while unique_id in self.samples:
             unique_id += 1
 
         return unique_id
@@ -374,7 +370,7 @@ class MotionPlanner(ABC):
             sample2 = self.samples[short_path["sample2_key"]]
 
 
-            cost_path = self._calculate_path_kost(sample1, sample2)
+            cost_path = self._calculate_path_cost(sample1, sample2)
 
             connect_style["hovertext"] = f"cost path: {cost_path}"
             fig.add_scatter(y=[sample1["pose"][0], sample2["pose"][0]],

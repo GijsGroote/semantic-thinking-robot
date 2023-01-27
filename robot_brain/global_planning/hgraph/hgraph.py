@@ -645,7 +645,10 @@ class HGraph(Graph):
         if error_triggered:
             return self._search_hypothesis()
 
-        elif len(add_node_list) > 0:
+        if CREATE_SERVER_DASHBOARD:
+            edge.motion_planner.visualise()
+
+        if len(add_node_list) > 0:
             
             obst_keys = self._in_obstacle(add_node_list)
 
@@ -691,9 +694,6 @@ class HGraph(Graph):
 
             if increment_edge:
                 self._force_increment_edge(edge)
-
-        if CREATE_SERVER_DASHBOARD:
-            edge.motion_planner.visualise()
 
     @abstractmethod
     def create_drive_motion_planner(self, obstacles, path_estimator):
