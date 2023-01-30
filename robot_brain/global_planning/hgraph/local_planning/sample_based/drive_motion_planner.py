@@ -51,18 +51,18 @@ class DriveMotionPlanner(MotionPlanner):
 
         # add negligleble amount to make positions hashable if initial position is 0
         if source_sample[0] == 0:
-            source_sample[0] = float(1e-8)
+            source_sample[0] = float(6e-9)
         if source_sample[1] == 0:
-            source_sample[1] = float(1e-8)
+            source_sample[1] = float(5e-9)
         if self.include_orien and source_sample[2] == 0:
-            source_sample[2] = float(1e-8)
+            source_sample[2] = float(4e-9)
 
         if target_sample[0] == 0:
-            target_sample[0] = float(1e-8)
+            target_sample[0] = float(3e-9)
         if target_sample[1] == 0:
-            target_sample[1] = float(1e-8)
+            target_sample[1] = float(2e-9)
         if  self.include_orien and target_sample[2] == 0:
-            target_sample[2] = float(1e-8)
+            target_sample[2] = float(1e-9)
         source_sample[2] = to_interval_zero_to_two_pi(source_sample[2])
         target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
 
@@ -84,6 +84,7 @@ class DriveMotionPlanner(MotionPlanner):
                 "add_node": []}
 
         self.n_samples = 2
+
         self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
         self.y_sorted = SortedDict({source_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
@@ -126,6 +127,8 @@ class DriveMotionPlanner(MotionPlanner):
 
             close_sample_total_cost = close_sample["cost_to_source"] +\
                     self._distance(close_sample["pose"], sample) + close_sample_add_node_cost
+
+            
 
             if close_sample_total_cost < closest_sample_total_cost:
                 closest_sample_add_node_cost = close_sample_add_node_cost

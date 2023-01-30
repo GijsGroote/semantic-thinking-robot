@@ -218,7 +218,7 @@ class RBrain:
         if self.is_doing is IS_EXECUTING:
             if self.hgraph is not None:
                 try:
-                    return self.hgraph.respond(self.robot.state)
+                    return self.hgraph.respond()
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 

@@ -4,6 +4,7 @@ import time
 from typing import Tuple
 import numpy as np
 from pyvis.network import Network
+import warnings
 
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
@@ -100,7 +101,6 @@ class HGraph(Graph):
                 Obstacle(obst_temp.name, target, obst_temp.properties),
                 subtask_name
                 ))
-            print(f'adding start to target {iden_start_node} to target {iden_target_node}')
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
         if CREATE_SERVER_DASHBOARD:
@@ -108,7 +108,7 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger.setup(task)
 
-    def respond(self, current_state) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ interface toward the robot simulation, eventually input for the robot is returned. """
 
         if self.in_loop == EXECUTION_LOOP:
@@ -116,65 +116,59 @@ class HGraph(Graph):
             if len(self.hypothesis) == 0:
                 raise ValueError("HGraph cannot respond without a hypothesis")
 
-
             # TODO: fault detection could be done here
             # TODO: when a fault is detected, abandon edge, move to blacklist and go to search loop
             # if fault:
             #     raise FaultDetectedException('tsting this ')
 
-
-            if self.current_edge.view_completed(self.current_node.obstacle.state):
+            if self._edge_view_completed():
                 if self.current_edge.completed():
-                    self.current_edge.set_completed_status()
-
-                    # identification edge completed -> update a system model
-                    if isinstance(self.current_edge, IdentificationEdge):
-
-                        self.update_system_model(self.current_edge)
-                        # now set next edge then
-
-                    if self.hypothesis_completed():
-                        self.stop_timing()
-
-                        if LOG_METRICS:
-                            self.logger.add_succesfull_hypothesis(self.hypothesis, self.current_subtask)
-
-                        # set all variables for completed hypothesis
-                        # self.get_target_node(self.current_edge.to).completed = True
-
-                        self.get_target_node(self.current_edge.to).status = COMPLETED
-
-                        self.reset_current_pointers()
-
-                        # go back to search loop
-                        self._search_hypothesis()
-
-                    else:
-                        self.increment_edge()
-
-                        return self.respond(current_state)
+                    self.increment_edge()
 
                 else:
-                    self.current_edge.increment_current_target()
+                    self.current_edge.increment_current_view()
 
-            return self._edge_respond(self.current_edge, current_state)
+            return self._edge_respond()
 
         elif self.in_loop == SEARCHING_LOOP:
             self._search_hypothesis()
-            return self.respond(current_state)
+            return self.respond()
 
         else:
             raise ValueError(f"HGraph in an unknown loop: {self.in_loop}")
 
-    def _edge_respond(self, edge: Edge, state: State) -> np.ndarray:
-        """ edge returns control input to the robot. """
-        if isinstance(edge, PushActionEdge):
-            obst_state = self.get_node(edge.source).obstacle.state
-            return edge.respond(state, obst_state=obst_state)
-        elif isinstance(edge, DriveActionEdge):
-            return edge.respond(state)
+    def _edge_view_completed(self) -> bool:
+        """ return true if the view is completed. """
+        edge = self.current_edge
+
+        if isinstance(edge, ActionEdge):
+            if isinstance(edge, DriveActionEdge):
+                robot_state = self.robot.state
+                return edge.view_completed(robot_state)
+            elif isinstance(edge, PushActionEdge):
+                obst_state = self.get_node(edge.source).obstacle.state
+                return edge.view_completed(obst_state)
         elif isinstance(edge, IdentificationEdge):
-            return edge.respond(state)
+            return edge.view_completed()
+
+        raise ValueError(f"edge type DriveAction or PushAction Edge expected and is {type(edge)}")
+
+    def _edge_respond(self) -> np.ndarray:
+        """ edge returns control input to the robot. """
+        edge = self.current_edge
+
+        print('skjd')
+        # put view completed in edges
+
+        if isinstance(edge, ActionEdge):
+            robot_state = self.robot.state
+            if isinstance(edge, DriveActionEdge):
+                return edge.respond(robot_state)
+            elif isinstance(edge, PushActionEdge):
+                obst_state = self.get_node(edge.source).obstacle.state
+                return edge.respond(robot_state, obst_state)
+        elif isinstance(edge, IdentificationEdge):
+            return edge.respond()
         else:
             raise ValueError(f"edge type DriveAction or PushAction Edge expected and is {type(edge)}")
 
@@ -186,13 +180,13 @@ class HGraph(Graph):
         (start_node, target_node) = self.update_subtask()
         print(f'start node name {start_node.name} target anem {target_node.name}')
 
-        # TODO: find if start node and target node are: (start robot, target robot) or (start obstacle, target obstacle)
-
         self.go_to_loop(SEARCHING_LOOP)
 
         # search for unfinished target node and connect to starting node
         # TODO: hypothesis should be reachable, but also the first edge in hypothesis (or the first after the current edge) should be
+        added_to_hypothesis = False
         while not self.is_reachable(ROBOT_IDEN, self.current_subtask["target_node"].iden):
+            added_to_hypothesis = True
 
             # the obstacles should be the same between an edge
             assert start_node.obstacle.name == target_node.obstacle.name,\
@@ -212,17 +206,19 @@ class HGraph(Graph):
             # find_subtask is not forced to find the same final_target_node
             (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
 
-        self.current_edge = self.hypothesis[0]
+        if added_to_hypothesis:
+            self.current_edge = self.hypothesis[0]
+        else:
+            self.current_edge = self.hypothesis[self.edge_pointer]
         self.current_node = self.get_node(self.current_edge.source)
 
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
-            # TODO: check why the edge is not ready for execution, then fix according to that
-
             # check if the first edge to execute is planned if it is an ActionEdge
             if isinstance(self.current_edge, ActionEdge):
                 if self.current_edge.status == HAS_SYSTEM_MODEL:
-                    self.search_path(self.current_edge, False)
+                    self.search_path(self.current_edge)
+
 
         self.current_edge.set_executing_status()
         self.go_to_loop(EXECUTION_LOOP)
@@ -395,7 +391,8 @@ class HGraph(Graph):
                     verb="driving",
                     controller=controller)
 
-            self.estimate_path(edge)
+            if self.get_node(edge.to).obstacle.state is not None:
+                self.estimate_path(edge)
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
@@ -418,6 +415,8 @@ class HGraph(Graph):
 
     def create_push_edge(self, start_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
+
+        # position_againts_obstacle_
 
         knowledge_graph = False
 
@@ -442,40 +441,49 @@ class HGraph(Graph):
             if exception_trigger:
                 return self._search_hypothesis()
 
-            # TODO: give the controller and model name here
             start_node = self.nodes[start_node_iden]
             target_node = self.nodes[target_node_iden]
 
-            model_node = ObstacleNode(self.unique_node_iden(), start_node.name+"_model", start_node.obstacle, target_node.subtask_name)
-            self.add_node(model_node)
+            """ The following steps are now performed:
+                1. Create node best_location_against_obstacle
+                2. Add push edge connecting (best_location_against_obstacle, start_node) to target_node
+                3. Create node model_node
+                4. Add edge connecting model_node to best_location_against_obstacle
+            """
 
+            # 1. create drive node and edge to the best pushing position againts the obstacle
+            best_push_position_node = ObstacleNode(
+                self.unique_node_iden(),
+                self.robot.name+"_against_"+self.get_node(start_node_iden).name,
+                Obstacle(self.robot.name, None, self.robot.properties), #this state is updated later, to the actual target state
+                self.get_node(target_node_iden).subtask_name
+                )
+            self.add_node(best_push_position_node)
+            self.add_edge(EmptyEdge(self.unique_edge_iden(), best_push_position_node.iden, start_node_iden))
+
+            # 2. create push edge
             edge = PushActionEdge(iden=self.unique_edge_iden(),
-                    source=model_node.iden,
+                    source=start_node_iden,
                     to=target_node_iden,
                     verb="pushing",
+                    best_push_position_node_iden=best_push_position_node.iden,
                     controller=controller)
-
             self.estimate_path(edge)
             self.add_edge(edge)
             self.hypothesis.insert(0, edge)
 
-            # Create DriveIdentificationEdge
-            # TODO: model_name is not used, please use that
-            self.create_push_ident_edge(start_node_iden, model_node.iden, edge.iden, model_name)
+            # 3. create model node
+            model_node = ObstacleNode(self.unique_node_iden(), start_node.name+"_model", start_node.obstacle, target_node.subtask_name)
+            self.add_node(model_node)
+            self.create_drive_edge(model_node.iden, best_push_position_node.iden)
 
-            # Create EmptyEdge if nessesary
-            target = self.find_push_state_against_obstacle(self.get_node(start_node_iden).obstacle)
-            robot_to_box_id = self.unique_node_iden()
-            robot_target_node = ObstacleNode
-            self.add_node(ObstacleNode(
-                robot_to_box_id,
-                self.robot.name+"_to_"+self.get_node(start_node_iden).name,
-                Obstacle(self.robot.name, target, self.robot.properties),
-                self.get_node(target_node_iden).subtask_name
-                ))
+            # 4. Create PushIdentificationEdge
+            self.create_push_ident_edge(self.robot_node.iden, model_node.iden, edge.iden, model_name)
 
-            # TODO: do that empty edge only if it is nessesary
-            self.add_edge(EmptyEdge(self.unique_edge_iden(), robot_to_box_id, start_node_iden))
+            # Set current edge
+            self.current_edge = self.hypothesis[0]
+            self.current_node = self.nodes[self.current_edge.source]
+
 
     def create_push_ident_edge(self, start_node_iden: int, target_node_iden: int, model_for_edge_iden: int, model_name: str):
         """ create a system identification edge for pushing. """
@@ -492,6 +500,7 @@ class HGraph(Graph):
         edge.system_model = system_model
         self.add_edge(edge)
         self.hypothesis.insert(0, edge)
+
 
     def find_push_state_against_obstacle(self, obstacle) -> State:
         """ find a push position (state) next to the obstacle. """
@@ -575,7 +584,7 @@ class HGraph(Graph):
 
             path_estimation = edge.path_estimator.search_path(
                 self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
-            # TODO: remove path_estimation, that stuff you have inside the estimator 
+            # TODO: remove path_estimation, that stuff you have inside the estimator
             edge.path_estimation = path_estimation
             edge.set_path_exist_status()
 
@@ -605,7 +614,7 @@ class HGraph(Graph):
     def create_push_path_estimator(self, push_obstacle, obstacles) -> PathEstimator:
         pass
 
-    def search_path(self, edge, increment_edge: bool):
+    def search_path(self, edge):
         """ Search for a path from start to target for an edge. """
 
         self.go_to_loop(SEARCHING_LOOP)
@@ -627,6 +636,7 @@ class HGraph(Graph):
 
         try:
             error_triggered = False
+
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
         except PlanningTimeElapsedException as exc:
 
@@ -638,6 +648,7 @@ class HGraph(Graph):
             edge.status = FAILED
             self.current_edge = None
             self.visualise()
+
             # remove all edges up to the failed edge from the current hypothesis.
             self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
             self.edge_pointer = 0
@@ -648,52 +659,76 @@ class HGraph(Graph):
         if CREATE_SERVER_DASHBOARD:
             edge.motion_planner.visualise()
 
+        if isinstance(edge, PushActionEdge):
+            best_position_against_obstacle_state = self._find_push_position_againts_obstacle_state(
+                    self.nodes[edge.to].obstacle,
+                    edge.path,
+                    edge.path_estimator)
+
+            # set best push position state, estimate and motion plan
+            self.nodes[edge.best_push_position_node_iden].obstacle.state = best_position_against_obstacle_state
+            drive_to_best_push_position_edge = self.get_incoming_edge(edge.best_push_position_node_iden)
+            self.estimate_path(drive_to_best_push_position_edge)
+
+
+
+        # if there is an object blocking, move that blocking obstacle first
         if len(add_node_list) > 0:
-            
+
+            # remove completed edges from hypothesis
+            for temp_edge in self.hypothesis:
+                if isinstance(temp_edge, IdentificationEdge) and temp_edge.status==COMPLETED:
+                    model_node = self.get_node(temp_edge.to)
+                    copy_node = ObstacleNode(self.unique_node_iden(), model_node.name, model_node.obstacle, model_node.subtask_name)
+                    self.add_node(copy_node)
+                    temp_edge.to = copy_node.iden
+                    self.hypothesis.remove(temp_edge)
+                    self.add_edge(temp_edge)
+
+
+            # find key blocking obstacle
             obst_keys = self._in_obstacle(add_node_list)
 
-            # TODO: rewrite this below here, it's a mess
-            for obst_key in obst_keys:
-                # TODO: find the closest spot to place the obstacle that is not overlapping with the planned path
-                target_state = State(pos=[-4, 0, 0])
 
-                blocking_obst = Obstacle(obst_key, target_state, self.obstacles[obst_key].properties)
+            # only look at the first blocking obstacle, ignore others
+            if len(obst_keys) > 1:
+                warnings.warn(f"multiple obstacles are blocking, but only {obst_keys[0]} is moved")
 
-                subtask_name = self.get_node(edge.source).subtask_name
-                blocking_obst_node = ObstacleNode(self.unique_node_iden(), obst_key, blocking_obst, subtask_name)
+            blocking_obst= self.obstacles[obst_keys[0]]
+            subtask_name = self.get_node(edge.source).subtask_name
 
-                self.add_node(blocking_obst_node)
-
-                self.add_edge(EmptyEdge(self.unique_edge_iden(), blocking_obst_node.iden, edge.source))
-
-                # TODO: create this only if it is not already in the existing nodes
-                source_blocking_obst_iden = self.unique_node_iden()
+            # add obstacle start node if not yet present
+            starting_node_present = False
+            for node in self.nodes:
+                if node.obstacle.properties == blocking_obst.properties:
+                    starting_node_present = True
+            if not starting_node_present:
                 self.add_node(ObstacleNode(
-                    source_blocking_obst_iden,
-                    self.obstacles[obst_key].name,
-                    self.obstacles[obst_key],
+                    self.unique_node_iden(),
+                    blocking_obst.name,
+                    blocking_obst,
                     subtask_name
                     ))
 
-                for temp_edge in self.edges:
-                    if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
-                        self.edges.remove(temp_edge)
+            # find state that is not overlapping with planned path
+            # target_state = self._find_push_position_againts_obstacle_state(blocking_obst, edge.path, edge.path_estimator)
+            target_state = self._find_free_state_for_blocking_obstacle(blocking_obst, edge.path)
 
+            # create new obstacle node
+            blocking_obst = Obstacle(obst_keys[0], target_state, blocking_obst.properties)
+            blocking_obst_iden = self.unique_node_iden()
+            self.add_node(ObstacleNode(blocking_obst_iden, obst_keys[0]+"_target", blocking_obst, subtask_name))
+            self.add_edge(EmptyEdge(self.unique_edge_iden(), blocking_obst_iden, edge.source))
 
-                for tedge in self.hypothesis:
-                    print(f'in hypoooothesis {tedge.iden}')
-                        # iden_edge = temp_edge
+            # TODO: create this only if it is not already in the existing nodes
+            # add edges after the current node, it may all move then
+            for temp_edge in self.edges:
+                if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
+                    self.edges.remove(temp_edge)
 
-                # remove the current edge, that will be added again later
-                # TODO: should yuo also reset the edge_pointer now?
-                self.hypothesis.pop(0)
-                return self._search_hypothesis()
+            return self._search_hypothesis()
 
-        else:
-            edge.set_path_is_planned_status()
-
-            if increment_edge:
-                self._force_increment_edge(edge)
+        edge.set_path_is_planned_status()
 
     @abstractmethod
     def create_drive_motion_planner(self, obstacles, path_estimator):
@@ -707,38 +742,55 @@ class HGraph(Graph):
     def _in_obstacle(self, pose_2ds: list) -> list:
         """ return the obstacle keys at pose_2ds. """
 
+    @abstractmethod
+    def _find_push_position_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
+        """ return a starting state to start pushing the obstacle. """
+
+    @abstractmethod
+    def _find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
+        """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+
 #######################################################
 ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###
 #######################################################
 
     def increment_edge(self):
         """ updates toward the next edge in the hypothesis. """
+        # complete current edge
+        self.current_edge.set_completed_status()
 
-        next_edge = self.hypothesis[self.edge_pointer+1]
-        print(f'next edge iden {next_edge.iden}')
+        # identification edge completed -> update a system model
+        if isinstance(self.current_edge, IdentificationEdge):
+            self.update_system_model(self.current_edge)
 
+        # TODO: update KGraph
+
+        if self.hypothesis_completed():
+            self.stop_timing()
+
+
+            if LOG_METRICS:
+                self.logger.add_succesfull_hypothesis(self.hypothesis, self.current_subtask)
+
+
+            self.get_target_node(self.current_edge.to).status = COMPLETED
+            self.reset_current_pointers()
+            return self._search_hypothesis()
+
+        # make ready/initialise next edge
         # plan path if not yet planned
-        if isinstance(next_edge, ActionEdge):
-            if next_edge.status == HAS_SYSTEM_MODEL:
-                self.search_path(next_edge, True)
-                print('go back to driving and stuff call incrment edge again!')
-                return
+        # assert
 
-        # TODO: what if planning a path results in a subtask that should first be taken care of?
+        if self.current_edge.status != COMPLETED:
+            return self._search_hypothesis()
 
-        for temp_edge in self.hypothesis:
-            print(f"in increment edgee name:{temp_edge.iden} and status {temp_edge.status}")
+        self.edge_pointer += 1
 
-        self._force_increment_edge(next_edge)
-
-    def _force_increment_edge(self, next_edge):
-        """ forces incrementing to the next edge """
+        next_edge = self.hypothesis[self.edge_pointer]
+        self.current_edge = next_edge
+        self.current_node = self.get_node(self.hypothesis[self.edge_pointer].source)
         next_node = self.get_node(next_edge.to)
 
-        print('in forc inc')
-        for edge in self.hypothesis:
-            print(f'the edge in hyp is {edge.iden}')
-        # assert
         assert isinstance(next_edge, Edge),\
                 f"next edge: {next_edge.iden}, should be of type edge and is type {type(next_edge)}"
         assert next_edge.ready_for_execution(),\
@@ -746,21 +798,17 @@ class HGraph(Graph):
                 "in hypothesis, edge is not ready"
         assert next_node.ready_for_execution(),\
                 f"next node: {next_node.iden}, is not ready for execution"
-        # add ghost pose
-        if isinstance(next_edge, PushActionEdge):
-            self.env.add_target_ghost(next_node.obstacle.properties.name(),
-                    next_node.obstacle.state.get_2d_pose())
 
-        # increment edge
-        self.edge_pointer += 1
-        next_edge.set_executing_status()
-        self.current_edge = next_edge
-        self.current_node = self.get_node(self.hypothesis[self.edge_pointer].source)
+        # add ghost pose
+        if isinstance(self.current_edge, PushActionEdge):
+            self.env.add_target_ghost(self.get_node(self.current_edge.to).obstacle.properties.name(),
+            self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
-        self.go_to_loop(EXECUTION_LOOP)
 
+        # go back to search loop
+        self._search_hypothesis()
 
     def update_system_model(self, ident_edge):
         """ update system model of the next edge. """
@@ -778,6 +826,11 @@ class HGraph(Graph):
             self._setup_push_controller(for_edge.controller, system_model, for_edge)
         else:
             raise ValueError(f"unknown controller of type {type(for_edge.controller)}")
+
+        # search path for the just updated action edge
+        self.search_path(self.edges[ident_edge.model_for_edge_iden])
+
+        # TODO: set the state to drive toward (best push position)
 
     @abstractmethod
     def _setup_drive_controller(self, controller, system_model):
@@ -1084,7 +1137,7 @@ class HGraph(Graph):
 
         if self.current_node is not None:
             net.add_node(self.current_node.iden,
-                    title = f"Current Node: {node.name}<br>{node.to_string()}<br>",
+                    title = f"Current Node: {self.current_node.name}<br>{self.current_node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
                     label = self.current_node.name,

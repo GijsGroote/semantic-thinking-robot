@@ -95,7 +95,7 @@ class Graph(ABC):
 
     def point_toward_nodes(self, node_iden) -> list:
         """ returns a list with node identifiers where an
-        non-failed edge points from node_id to these nodes. """
+        non-failed edge points from node_iden to these nodes. """
 
         assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist"
         point_toward_list = []
@@ -104,3 +104,13 @@ class Graph(ABC):
                 point_toward_list.append(edge.to)
 
         return point_toward_list
+
+    def get_incoming_edge(self, node_iden) -> Edge:
+        """ returns the non-failing edge pointing toward this node. """
+
+        for temp_edge in self.edges:
+            if temp_edge.status != FAILED and temp_edge.to == node_iden:
+                return temp_edge
+
+        raise ValueError(f"node {node_iden} has no non-failing incoming edges")
+

@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import

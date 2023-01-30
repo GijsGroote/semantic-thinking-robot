@@ -43,15 +43,15 @@ class Edge(ABC):
         """ returns true if the edge is completed, otherwise false. """
 
     @abstractmethod
-    def increment_current_target(self):
+    def increment_current_view(self):
         """ updates toward the next current target from path. """
 
     @abstractmethod
-    def get_current_target(self) -> State:
+    def get_current_view(self) -> State:
         """ returns the current target the controller tries to steer toward. """
 
     @abstractmethod
-    def respond(self, state, obst_state= None) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ respond to the current state. """
 
     def create_log(self) -> dict:

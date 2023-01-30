@@ -7,6 +7,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
+from robot_brain.obstacle import Obstacle
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
 from robot_brain.state import State
@@ -66,6 +67,7 @@ class PointRobotVelHGraph(HGraph):
                     obst_cart_2d= push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,
                     n_orientations= 3,
+                    single_orientation=True,
                     obst_x_length= push_obstacle.properties.length(),
                     obst_y_length= push_obstacle.properties.width())
 
@@ -133,6 +135,53 @@ class PointRobotVelHGraph(HGraph):
 
         return obst_keys
 
+    def _find_push_position_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
+        """ return a starting state to start pushing the obstacle. """
+
+        obst_xy_position = path[0][0:2]
+
+        if len(path)>4:
+            clost_obst_xy_position = path[3][0:2]
+        else:
+            raise ValueError(f"path is shorter than 4 samples, its: {len(path)}")
+
+        # retrieve min and max dimension of the obstacle
+        if isinstance(blocking_obst.properties, BoxObstacle):
+            min_obst_dimension = min(blocking_obst.properties.width(), blocking_obst.properties.length())
+            max_obst_dimension = max(blocking_obst.properties.width(), blocking_obst.properties.length())
+        elif isinstance(blocking_obst.properties, CylinderObstacle):
+            min_obst_dimension = max_obst_dimension = blocking_obst.properties.radius()
+        else:
+            raise ValueError(f"obstacle not recognised, type: {type(blocking_obst)}")
+
+        dxdy = -(obst_xy_position[0]-clost_obst_xy_position[0])/(obst_xy_position[1]-clost_obst_xy_position[1])
+
+
+        # for obst_center_to_push_position in np.linspace(min_obst_dimension, 2*max_obst_dimension, 11):
+        #
+        #     temp_xy_position = [obst_xy_position[0] + np.cos(dxdy)*obst_center_to_push_position,
+        #             obst_xy_position[1] + np.sin(dxdy) * obst_center_to_push_position]
+        #     if path_estimator.occupancy(temp_xy_position) == 0:
+        #         return State(pos=np.array([*temp_xy_position, 0]))
+
+        # for xy_pos in xy_positions:
+
+        # check if opposite of the trajectory direction is free space
+
+        # check if close to opposite of the trajectory is free space
+
+
+        # check if there is any free space around the obstacle
+
+        return State(pos=np.array([-0.9, 0.1, 0.0]))
+
+    def _find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
+        """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+
+        return State(pos=np.array([-5, 0.2, -0.1]))
+
+
+
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
 
@@ -192,7 +241,6 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
 
         source_state = self.get_node(push_edge.source).obstacle.state
-
         controller.setup(system_model, self.robot.state, source_state, source_state)
 
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuplemotion_planner.
 import pickle
 import sys
 import time
@@ -67,33 +67,9 @@ class MotionPlanner(ABC):
                 assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
                     "obstacle is BoxObstacle, conf_grid_map should be of type"\
                     f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
-
-            # TODO: rename this to path estimator
             self.path_estimator = path_estimator
-
         else:
             raise ValueError("Incorrect or No PathEstimator provided")
-            # if isinstance(obstacle.properties, CylinderObstacle):
-            #     self.path_estimator = CircleObstaclePathEstimator(
-            #         cell_size=0.2,
-            #         grid_x_length=grid_x_length,
-            #         grid_y_length=grid_y_length,
-            #         obstacles=obstacles,
-            #         obst_cart_2d=obstacle.state.get_xy_position(),
-            #         obst_name=obstacle.name,
-            #         obst_radius=obstacle.properties.radius())
-            #
-            # elif isinstance(obstacle.properties, BoxObstacle):
-            #     self.path_estimator = RectangleObstaclePathEstimator(
-            #         cell_size=0.2,
-            #         grid_x_length=grid_x_length,
-            #         grid_y_length=grid_y_length,
-            #         obstacles=obstacles,
-            #         obst_cart_2d=obstacle.state.get_xy_position(),
-            #         obst_name=obstacle.name,
-            #         n_orientations= 36,
-            #         obst_x_length=obstacle.properties.length(),
-            #         obst_y_length=obstacle.properties.width())
 
     @abstractmethod
     def setup(self, source_sample, target_sample):
@@ -102,12 +78,8 @@ class MotionPlanner(ABC):
     def search_path(self, source: State, target: State) -> Tuple[list, list]:
         """ search for a path between source and target state. """
 
-        if self.include_orien:
-            source_sample = source.get_2d_pose()
-            target_sample = target.get_2d_pose()
-        else:
-            source_sample = source.get_xy_position()
-            target_sample = target.get_xy_position()
+        source_sample = source.get_2d_pose()
+        target_sample = target.get_2d_pose()
 
         self.path_estimator.update()
 
@@ -169,14 +141,15 @@ class MotionPlanner(ABC):
                 f"the motion planner search size: {self.search_size} is smaller than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
 
         shortest_path = self.path_estimator.search_path(source_sample, target_sample)
-        shortest_path = shortest_path[1:-1]
+        # shortest_path = shortest_path[1:-1]
 
         for sample_new in shortest_path:
-
             # add negligble amount making x and y coordinates unique
             # NOTE: At the edges, this small additional could put the sample outside of the
             # environment, just as it could 'pass' 2*pi
             sample_new += np.abs(np.random.normal(0, 0.0000001, np.asarray(sample_new).shape))
+            if sample_new.shape == (2,):
+                sample_new = np.array([sample_new[0], sample_new[1], 0])
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
 
@@ -184,6 +157,7 @@ class MotionPlanner(ABC):
                 continue
 
             close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
+
             sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
             self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
 
@@ -207,11 +181,10 @@ class MotionPlanner(ABC):
             sample = [sample[0], sample[1], 0]
 
         key = self._create_unique_id()
-
         self.samples[prev_key]["next_sample_keys"].append(key)
 
         self.samples[key] = {
-                "pose": [sample[0], sample[1], sample[2]],
+                "pose": sample,
                 "cost_to_source": cost_to_source,
                 "prev_sample_key": prev_key,
                 "next_sample_keys": [],

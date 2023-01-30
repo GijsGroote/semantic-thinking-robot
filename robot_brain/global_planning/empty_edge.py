@@ -36,10 +36,10 @@ class EmptyEdge(Edge):
         """ checks if all parameters are set to execute this transition. """
         return True
 
-    def increment_current_target(self):
+    def increment_current_view(self):
         pass
 
-    def get_current_target(self) -> State:
+    def get_current_view(self) -> State:
         pass
 
     def to_string(self):

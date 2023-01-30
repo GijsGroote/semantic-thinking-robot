@@ -18,42 +18,41 @@ class ActionEdge(Edge):
     def __init__(self, iden, source, to, verb, controller):
         Edge.__init__(self, iden, source, to, verb, controller)
         self.status = INITIALISED
-        print(f'edge {iden} is initialised')
 
         self._motion_planner = None
         self._path_estimator = None
 
     @abstractmethod
-    def respond(self, robot_state: State, obst_state=None) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ respond to the current state. """
 
     @abstractmethod
-    def view_completed(self, state: State) -> bool:
+    def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
-        return self.path_pointer >= len(self.path)-1
+        return self.path_pointer >= len(self.motion_planner.shortest_path)-1
 
-    def increment_current_target(self):
+    def increment_current_view(self):
         """ updates toward the next current target from path. """
 
-        if self.path_pointer < len(self.path)-1:
+        if self.path_pointer < len(self.motion_planner.shortest_path)-1:
             self.path_pointer += 1
 
-        if  len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
+        if  len(self.motion_planner.shortest_path[self.path_pointer]) == 3:
+            orien = self.motion_planner.shortest_path[self.path_pointer][2]
         else:
             orien = 0
 
         next_target = State(
-                pos=np.array([self.path[self.path_pointer][0], self.path[self.path_pointer][1], 0]),
+                pos=np.array([self.motion_planner.shortest_path[self.path_pointer][0], self.motion_planner.shortest_path[self.path_pointer][1], 0]),
                 ang_p=np.array([0, 0, orien])
                 )
 
         self.controller.set_target_state(next_target)
 
-    def get_current_target(self) -> State:
+    def get_current_view(self) -> State:
         """ returns the current target the controller tries to steer toward. """
         return self.controller.target_state
 
@@ -86,10 +85,10 @@ class ActionEdge(Edge):
         if self.status == PATH_IS_PLANNED:
             assert isinstance(self.controller, Controller),\
                     f"controller is not of type Controller but {type(self.controller)}"
-            assert isinstance(self.path, list),\
-                    f"path should be a list and is {type(self.path)}"
-            assert len(self.path) >= 2,\
-                    f"path should contain more then 2 positions and contains {len(self.path)}"
+            assert isinstance(self.motion_planner.shortest_path, list),\
+                    f"path should be a list and is {type(self.motion_planner.shortest_path)}"
+            assert len(self.motion_planner.shortest_path) >= 2,\
+                    f"path should contain more then 2 positions and contains {len(self.motion_planner.shortest_path)}"
 
             return True
         else:
@@ -107,7 +106,6 @@ class ActionEdge(Edge):
         assert self.status == INITIALISED,\
                 f"before setting status to {PATH_EXISTS} the status must be {INITIALISED} and it's {self.status}"
 
-        print(f'status of edge {self.iden} is set to {PATH_EXISTS}')
         self.status = PATH_EXISTS
 
     def set_has_system_model_status(self):
@@ -115,18 +113,14 @@ class ActionEdge(Edge):
                 f"before setting status to {HAS_SYSTEM_MODEL} the status must be {PATH_EXISTS} and it's {self.status}"
         self.status = HAS_SYSTEM_MODEL
 
-        print(f'status of edge {self.iden} is set to {HAS_SYSTEM_MODEL}')
-
     def set_path_is_planned_status(self):
         assert isinstance(self.motion_planner, MotionPlanner),\
         f"motion_planner should be MotionPlanner and is {type(self.motion_planner)}"
-        assert isinstance(self.path, list),\
+        assert isinstance(self.motion_planner.shortest_path, list),\
         f"motion_planner should be list and is {type(self.motion_planner)}"
         assert self.status == HAS_SYSTEM_MODEL,\
                 f"before setting status to {PATH_IS_PLANNED} the status"\
                 f"must be {HAS_SYSTEM_MODEL} and it's {self.status}"
-
-        print(f'status of edge {self.iden} is set to {PATH_IS_PLANNED}')
 
         self.status = PATH_IS_PLANNED
 
@@ -140,12 +134,10 @@ class ActionEdge(Edge):
         assert self.status == EXECUTING,\
         f"before setting status to {COMPLETED} the status"\
         f"must be {EXECUTING} and it's {self.status}"
-        print(f'status of edge {self.iden} is set to {COMPLETED}')
         self.status = COMPLETED
 
     def set_failed_status(self):
         """ from any status the status can be come FAILED. """
-        print(f'status of edge {self.iden} is set to {FAILED}')
         self.status = FAILED
 
     @property

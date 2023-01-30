@@ -21,15 +21,14 @@ class IdentificationEdge(Edge):
             path.append([0, 0])# also a temp fix
         self.path = path
 
-
-    def respond(self, state) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ respond to the current state. """
 
         self.counter += 1
         # how does the system identifier respond?
         return np.array([0, 0])
 
-    def view_completed(self, current_state: State) -> bool:
+    def view_completed(self) -> bool:
         """ view is completed if the test push time is over. """
         if self.counter >= 50:
             return True
@@ -41,12 +40,12 @@ class IdentificationEdge(Edge):
         # wait 50 time steps
         return self.counter >= 50
 
-    def increment_current_target(self):
+    def increment_current_view(self):
         """"""
         # TODO: implement this
         return
 
-    def get_current_target(self):
+    def get_current_view(self):
         """"""
         # TODO: implement this
         return
@@ -67,7 +66,6 @@ class IdentificationEdge(Edge):
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
                 f"System model: {self.system_model.name}"
-
 
     def set_executing_status(self):
         print(f'edge {self.iden} status is executing')
