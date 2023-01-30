@@ -60,7 +60,6 @@ class HGraph(Graph):
         self.target_nodes = []         # target nodes one for every subtask
         self.start_to_target_iden = [] # identifier mapping from start to target node and vise versa
         self.blacklist = {}            # blacklist containing banned edges
-        self.test = 0
 
         # self.current_edge is the current edge being executed or first in line to be executed.
         # self.current_node is the source node of the current edge being executed for plotting purposes
