@@ -16,10 +16,6 @@ class IdentificationEdge(Edge):
         self.model_for_edge_iden = model_for_edge_iden
 
         self.counter = 0 # temp fix
-        path = [] # also a temp fix
-        for _ in range(100):# also a temp fix
-            path.append([0, 0])# also a temp fix
-        self.path = path
 
     def respond(self) -> np.ndarray:
         """ respond to the current state. """
@@ -30,15 +26,12 @@ class IdentificationEdge(Edge):
 
     def view_completed(self) -> bool:
         """ view is completed if the test push time is over. """
-        if self.counter >= 50:
-            return True
-        else:
-            return False
+        return self.counter >= 100
 
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
         # wait 50 time steps
-        return self.counter >= 50
+        return self.counter >= 20
 
     def increment_current_view(self):
         """"""
@@ -68,10 +61,17 @@ class IdentificationEdge(Edge):
                 f"System model: {self.system_model.name}"
 
     def set_executing_status(self):
+        assert self.status == INITIALISED,\
+            f"before setting status to {EXECUTING} the status must"\
+            f"be {INITIALISED} and it's {self.status}"
+
         print(f'edge {self.iden} status is executing')
         self.status = EXECUTING
 
     def set_completed_status(self):
-        print(f'edge {self.iden} status is completed')
+        assert self.status == EXECUTING,\
+            f"before setting status to {COMPLETED} the status"\
+            f"must be {EXECUTING} and it's {self.status}"
 
+        print(f'edge {self.iden} status is completed')
         self.status = COMPLETED

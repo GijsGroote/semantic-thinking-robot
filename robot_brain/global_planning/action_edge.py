@@ -15,9 +15,11 @@ PATH_IS_PLANNED = "path_is_planned"
 class ActionEdge(Edge):
     """ Parent class for all actions. """
 
-    def __init__(self, iden, source, to, verb, controller):
+    def __init__(self, iden, source, to, robot_obst, verb, controller, model_name):
         Edge.__init__(self, iden, source, to, verb, controller)
         self.status = INITIALISED
+        self.robot_obst = robot_obst
+        self.model_name = model_name
 
         self._motion_planner = None
         self._path_estimator = None
@@ -46,7 +48,8 @@ class ActionEdge(Edge):
             orien = 0
 
         next_target = State(
-                pos=np.array([self.motion_planner.shortest_path[self.path_pointer][0], self.motion_planner.shortest_path[self.path_pointer][1], 0]),
+                pos=np.array([self.motion_planner.shortest_path[self.path_pointer][0],
+                    self.motion_planner.shortest_path[self.path_pointer][1], 0]),
                 ang_p=np.array([0, 0, orien])
                 )
 
@@ -101,8 +104,8 @@ class ActionEdge(Edge):
     def set_path_exist_status(self):
         assert isinstance(self.path_estimator, PathEstimator),\
                 f"path_estimator should be PathEstimator and is {type(self.path_estimator)}"
-        assert isinstance(self.path_estimation, list),\
-                f"path_estimation should be list and is {type(self.path_estimation)}"
+        assert isinstance(self.path_estimator.shortest_path, list),\
+                f"path_estimator should contain a shortest path of type list {type(self.path_estimator.shortest_path)}"
         assert self.status == INITIALISED,\
                 f"before setting status to {PATH_EXISTS} the status must be {INITIALISED} and it's {self.status}"
 

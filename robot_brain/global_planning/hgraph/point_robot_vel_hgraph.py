@@ -113,7 +113,7 @@ class PointRobotVelHGraph(HGraph):
                 path_estimator=path_estimator,
                 include_orien=include_orien)
 
-    def _in_obstacle(self, pose_2ds) -> list:
+    def in_obstacle(self, pose_2ds) -> list:
         """ return the obstacle keys at pose_2ds. """
 
         obst_keys = []
@@ -135,8 +135,10 @@ class PointRobotVelHGraph(HGraph):
 
         return obst_keys
 
-    def _find_push_position_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
+    def find_push_pose_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
         """ return a starting state to start pushing the obstacle. """
+
+        print(' in find_push_pose_againts_obstacle_state aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
         obst_xy_position = path[0][0:2]
 
@@ -157,6 +159,7 @@ class PointRobotVelHGraph(HGraph):
         dxdy = -(obst_xy_position[0]-clost_obst_xy_position[0])/(obst_xy_position[1]-clost_obst_xy_position[1])
 
 
+
         # for obst_center_to_push_position in np.linspace(min_obst_dimension, 2*max_obst_dimension, 11):
         #
         #     temp_xy_position = [obst_xy_position[0] + np.cos(dxdy)*obst_center_to_push_position,
@@ -175,19 +178,21 @@ class PointRobotVelHGraph(HGraph):
 
         return State(pos=np.array([-0.9, 0.1, 0.0]))
 
-    def _find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
+    def find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+        print('in find_free_state_for_blocking_obstacle AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
-        return State(pos=np.array([-5, 0.2, -0.1]))
+
+
+        return State(pos=np.array([-4, 0.2, -0.1]))
 
 
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
 
-        return [self._create_mppi_drive_controller(),
-                self._create_mpc_drive_controller()]
-
+        return [self.create_mppi_drive_controller(),
+                self.create_mpc_drive_controller()]
 
     def find_compatible_models(self, controllers: list) -> list:
         """ find every compatible model for every drive controller. """
@@ -211,32 +216,32 @@ class PointRobotVelHGraph(HGraph):
 
         return controllers_and_models
 
-    def _create_drive_model(self, model_name: str) -> SystemModel:
+    def create_drive_model(self, model_name: str) -> SystemModel:
         """ return the corresponding drive model. """
 
         if model_name == DRIVE_MPC_MODEL:
-            return self._create_mpc_drive_model()
+            return self.create_mpc_drive_model()
         elif model_name == DRIVE_MPPI_MODEL:
-            return self._create_mppi_drive_model()
+            return self.create_mppi_drive_model()
         else:
             raise ValueError(f"controller name unknown: {model_name}")
 
     def get_push_controllers(self) -> list:
-        return [self._create_mppi_push_controller()]
+        return [self.create_mppi_push_controller()]
 
     def create_push_model(self, model_name: str):
         if model_name==PUSH_MPPI_MODEL:
-            return self._create_mppi_push_model()
+            return self.create_mppi_push_model()
         else:
             raise ValueError(f"model name unknown: {model_name}")
 
 
-    def _setup_drive_controller(self, controller, system_model):
+    def setup_drive_controller(self, controller, system_model):
 
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
         controller.setup(system_model, self.robot.state, self.robot.state)
 
-    def _setup_push_controller(self, controller, system_model, push_edge):
+    def setup_push_controller(self, controller, system_model, push_edge):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
 
@@ -245,16 +250,16 @@ class PointRobotVelHGraph(HGraph):
 
 
     ##### DRIVE MPPI #####
-    def _create_mppi_drive_controller(self):
+    def create_mppi_drive_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
         return DriveMppi2thOrder()
 
 
     ##### DRIVE MPC #####
-    def _create_mpc_drive_controller(self):
+    def create_mpc_drive_controller(self):
         return DriveMpc2thOrder()
 
-    def _create_mpc_drive_model(self):
+    def create_mpc_drive_model(self):
 
         def model(x, u):
             dx_next = vertcat(
@@ -265,7 +270,7 @@ class PointRobotVelHGraph(HGraph):
 
         return SystemModel(model, name=DRIVE_MPC_MODEL)
 
-    def _create_mppi_drive_model(self):
+    def create_mppi_drive_model(self):
 
         def model(x, u):
 
@@ -278,11 +283,11 @@ class PointRobotVelHGraph(HGraph):
         return SystemModel(model, name=DRIVE_MPPI_MODEL)
 
     ##### PUSH MPPI #####
-    def _create_mppi_push_controller(self):
+    def create_mppi_push_controller(self):
         """ create MPPI push controller. """
         return PushMppi5thOrder()
 
-    def _create_mppi_push_model(self):
+    def create_mppi_push_model(self):
         """ create push model for MPPI pointrobot. """
         def model(x, u):
 

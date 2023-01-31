@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuplemotion_planner.
+from typing import Tuple
 import pickle
 import sys
 import time
@@ -108,13 +108,15 @@ class MotionPlanner(ABC):
             # project it to existing samples
             if self._distance(self.samples[sample_closest_key], sample_rand) > self.step_size:
                 sample_new = self._project_to_connectivity_graph(sample_rand, sample_closest_key)
+                # TODO: the project_to_connectivity graph can project samples outside grid if the
+                # xgridlength and ygridlength is not equal
+                if not self.sample_outside_grid(sample_new):
+                    continue
             else:
                 sample_new = sample_rand
 
-            if self.include_orien:
-                in_space_id = self.path_estimator.occupancy(np.array(sample_new))
-            else:
-                in_space_id = self.path_estimator.occupancy(np.array(sample_new[0:2]))
+
+            in_space_id = self.path_estimator.occupancy(np.array(sample_new))
             if in_space_id == 1: # obstacle space, abort sample
                 continue
 
@@ -286,6 +288,10 @@ class MotionPlanner(ABC):
     @abstractmethod
     def _stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """
+
+    def sample_outside_grid(self, sample: np.ndarray) -> bool:
+        """ return True if the sample is inside the grid. """
+        return np.abs(sample[0]) < self.grid_x_length/2 and np.abs(sample[1]) < self.grid_y_length/2
 
     def _create_unique_id(self) -> int:
         """ creates and returns a unique id. """

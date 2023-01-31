@@ -222,6 +222,8 @@ class RBrain:
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 
+                    print(f"Halt because: {exc}")
+
                     if CREATE_SERVER_DASHBOARD:
                         self.hgraph.visualise()
                         time.sleep(2) # give the dashboard some time to process visualising the hgraph
@@ -236,7 +238,6 @@ class RBrain:
         else:
             raise Exception("Unable to respond")
 
-    # TODO: all setters and getters should be sanitized properly, and test!
     @property
     def obstacles(self):
         return self._obstacles

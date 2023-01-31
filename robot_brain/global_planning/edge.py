@@ -58,6 +58,16 @@ class Edge(ABC):
         """ return a dictionary with metrics. """
 
     @abstractmethod
+    def set_executing_status(self):
+        """ Sets executing status. """
+
+    @abstractmethod
+    def set_completed_status(self):
+        """ Sets completed status. """
+
+
+
+    @abstractmethod
     def to_string(self):
         """ Creates readable format of an Edge. """
 
