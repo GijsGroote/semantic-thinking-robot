@@ -6,7 +6,7 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
 
-from environments.three_objects_to_escape.objects import (
+from environments.two_pushes_to_freedom.objects import (
         blocking_object1, blocking_object2, center_wall,
         wall1, wall2, wall3, wall4, wall5, wall6,
         wall7, wall8, wall9, wall10, wall11)
@@ -60,24 +60,24 @@ def main():
 
     ob, reward, done, info = env.step(action)
 
-    # brain = RBrain()
-    # brain.setup({
-    #     "dt": DT,
-    #     "robot_type": robot_type,
-    #     "obstacles_in_env": True,
-    #     "default_action": np.array(np.zeros(2)),
-    #     "task": [("robot", State(pos=np.array([-3.3212, -2, 0])))],
-    #     "obstacles": obstacles,
-    #     "env": env
-    # }, ob)
-    #
-    # brain.update(ob)
-    #
+    brain = RBrain()
+    brain.setup({
+        "dt": DT,
+        "robot_type": robot_type,
+        "obstacles_in_env": True,
+        "default_action": np.array(np.zeros(2)),
+        "task": [("robot", State(pos=np.array([-5, 3.5, 0])))],
+        "obstacles": obstacles,
+        "env": env
+    }, ob)
+
+    brain.update(ob)
+
     for _ in range(n_steps):
 
-        # action[0:2] = brain.respond()
+        action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)
-        # brain.update(ob)
+        brain.update(ob)
 
 if __name__ == "__main__":
     main()

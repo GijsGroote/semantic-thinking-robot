@@ -292,6 +292,9 @@ class HGraph(Graph):
         except NoPathExistsException as exc:
             self.handle_no_path_exists_exception(exc, edge)
 
+        if CREATE_SERVER_DASHBOARD:
+            edge.path_estimator.visualise()
+
     def search_path(self, edge):
         """ Search for a path from start to target for an edge. """
 
@@ -329,6 +332,8 @@ class HGraph(Graph):
 
         if CREATE_SERVER_DASHBOARD:
             edge.motion_planner.visualise()
+            edge.motion_planner.visualise(save=False)
+
 
         if isinstance(edge, PushActionEdge):
             self.create_drive_to_best_push_position_edge(edge)
