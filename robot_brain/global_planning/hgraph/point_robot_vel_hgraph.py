@@ -43,7 +43,7 @@ class PointRobotVelHGraph(HGraph):
 
     def create_drive_path_estimator(self, obstacles) -> PathEstimator:
         occ_graph = CircleObstaclePathEstimator(
-                cell_size=0.1,
+                cell_size=0.01,
                 grid_x_length = GRID_X_SIZE,
                 grid_y_length = GRID_Y_SIZE,
                 obstacles= obstacles,
@@ -60,7 +60,7 @@ class PointRobotVelHGraph(HGraph):
         if isinstance(push_obstacle.properties, BoxObstacle):
 
             occ_graph = RectangleObstaclePathEstimator(
-                    cell_size=0.1,
+                    cell_size=0.01,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
                     obstacles= obstacles,
