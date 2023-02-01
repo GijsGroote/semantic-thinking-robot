@@ -78,7 +78,7 @@ def main(conn=None):
 
     brain.update(ob)
 
-    for _ in range(n_steps):
+    for i in range(n_steps):
 
         action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)
