@@ -6,14 +6,12 @@ from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
-
 class KGraph(Graph):
     """
     Knowledge graph.
     """
     def __init__(self):
         Graph.__init__(self)
-
 
 # T5HIS IS SOME STUFF TO INITIALISE THE kgRAPH LATER
 ##  temp KGraph
@@ -69,7 +67,7 @@ class KGraph(Graph):
                             )
 
 
-            if isinstance(node, ChangeOfConfSetNode):
+            if isinstance(node, ChangeOfStateNode):
                 net.add_node(node.iden,
                         title = "Node:<br>" + node.to_string() + "<br>",
                         x=1.0,
