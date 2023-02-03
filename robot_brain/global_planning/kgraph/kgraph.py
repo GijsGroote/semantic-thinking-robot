@@ -6,6 +6,7 @@ from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_variables import FIG_BG_COLOR
 
+
 class KGraph(Graph):
     """
     Knowledge graph.
@@ -31,7 +32,8 @@ class KGraph(Graph):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
-        net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
+        # net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
+        net = Network(height="450px", directed=True)
 
         # set a custom style sheet
         # TODO: relative path (which works)

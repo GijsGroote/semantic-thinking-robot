@@ -39,16 +39,16 @@ def main(conn=None):
 
     n_steps = 10000
 
-    obstacles = {box.name(): box}
-            # box2.name(): box2,
-            # sphere.name(): sphere
-            # cylinder.name(): cylinder}
+    obstacles = {box.name(): box,
+            box2.name(): box2,
+            sphere.name(): sphere,
+            cylinder.name(): cylinder}
 
     # add obstacles
     env.add_obstacle(box)
-    # env.add_obstacle(box2)
-    # env.add_obstacle(sphere)
-    # env.add_obstacle(cylinder)
+    env.add_obstacle(box2)
+    env.add_obstacle(sphere)
+    env.add_obstacle(cylinder)
 
     # add sensors
     sensor = ObstacleSensor()

@@ -6,6 +6,11 @@ from robot_brain.state import State
 
 from robot_brain.global_planning.drive_act_edge import DriveActionEdge
 
+class controller:
+    def __init__(self, name):
+        self.name = name
+
+
 def main():
     # create a knowledge graph and visualise
 
@@ -24,11 +29,9 @@ def main():
     kgraph.add_node(node4)
     kgraph.add_node(node5)
 
-
-
-    kgraph.add_edge(DriveActionEdge(1, 2, 1, "MPC<br>other", "PEM"))
-    kgraph.add_edge(DriveActionEdge(1, 2, 1, "MPC<br>other", "PEM"))
-    kgraph.add_edge(DriveActionEdge(1, 2, 1, "MPC<br>other", "PEM"))
+    kgraph.add_edge(DriveActionEdge(1, 1, 3, "MPC, LTI model2",  controller("mpc")))
+    kgraph.add_edge(DriveActionEdge(2, 1, 4, "MPC, LTI model1",  controller("mpc")))
+    kgraph.add_edge(DriveActionEdge(3, 2, 5, "MPPI, nonlinear model",  controller("mpc")))
 
     kgraph.visualise()
 
