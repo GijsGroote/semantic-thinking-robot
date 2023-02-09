@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.exceptions import NoPathExistsException
@@ -144,13 +144,13 @@ class CircleObstaclePathEstimator(PathEstimator):
         if isinstance(cart_2d_target, State):
             cart_2d_target= cart_2d_target.get_xy_position()
 
-        if self.occupancy(cart_2d_start) == 1 or self.occupancy(cart_2d_target) == 1:
+        if self.occupancy(cart_2d_start) == UNMOVABLE or self.occupancy(cart_2d_target) == UNMOVABLE:
             raise NoPathExistsException("Start or target state in obstacle space")
 
-        if self.occupancy(cart_2d_start) != 0:
+        if self.occupancy(cart_2d_start) != FREE:
             warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
 
-        if self.occupancy(cart_2d_target) != 0:
+        if self.occupancy(cart_2d_target) != FREE:
             warnings.warn(f"the target position {cart_2d_target} is in movable or unknown space")
 
         # convert position to indices on the grid
@@ -172,7 +172,6 @@ class CircleObstaclePathEstimator(PathEstimator):
 
         while len(queue) != 0:
             c_idx_temp = queue.pop(0)
-            
             # set c_idx_temp to visited
             visited[c_idx_temp] = 2
 
@@ -190,10 +189,9 @@ class CircleObstaclePathEstimator(PathEstimator):
                     if visited[c_idx] != 2:
 
                         # path cannot go through obstacles
-                        if self._c_idx_to_occupancy(*c_idx) != 1:
+                        if self._c_idx_to_occupancy(*c_idx) != UNMOVABLE:
 
                             # put cell in the queue if not already in there
-                            
                             if visited[c_idx] == 0:
                                 visited[c_idx] = 1
                                 queue.append(c_idx)
@@ -242,12 +240,17 @@ class CircleObstaclePathEstimator(PathEstimator):
     def visualise(self, save: bool=True):
         """ Display the configuration grid map. """
 
-        dcolorsc = [[0, '#09ffff'], [0.25, '#09ffff'],
+        # dcolorsc = [[0, '#09ffff'], [0.25, '#09ffff'],
+        #         [0.25, '#19d3f3'],[0.5, '#19d3f3'],
+        #         [0.5, '#e763fa'], [0.75, '#e763fa'],
+        #         [0.75, '#ab63fa'], [1.0, '#ab63fa']]
+        dcolorsc = [[0, '#90ee90'], [0.25, '#90ee90'],
                 [0.25, '#19d3f3'],[0.5, '#19d3f3'],
                 [0.5, '#e763fa'], [0.75, '#e763fa'],
                 [0.75, '#ab63fa'], [1.0, '#ab63fa']]
+
         tickvals = [3/8, 9/8, 15/8, 21/8]
-        ticktext = ["free", "obstacle", "movable", "unknown"]
+        ticktext = ["free", "movable", "unknown", "obstacle"]
 
         extended_grid_map = np.zeros((int(self.grid_x_length/self.cell_size+2.0),
             int(self.grid_y_length/self.cell_size+2.0)))

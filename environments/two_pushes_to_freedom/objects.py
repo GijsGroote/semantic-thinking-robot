@@ -34,7 +34,7 @@ wall1 =  BoxObstacle(name="wall1", content_dict={
             "orientation": [0, 0, 0],
             "color": [245, 181, 27, 1],
             "position": [-4.5, 0, 0.2],
-            "geometry": {"length": 1, "width": 0.2, "height": 0.4},
+            "geometry": {"length": 1.2, "width": 0.2, "height": 0.4},
         })
 
 wall2 = BoxObstacle(name="wall2", content_dict={
@@ -43,7 +43,7 @@ wall2 = BoxObstacle(name="wall2", content_dict={
             "orientation": [0,0,0],
             "color": [245, 181, 27, 1],
             "position":[-4.5, 1.5, 0.2],
-            "geometry": {"length": 1, "width": 0.2, "height": 0.4},
+            "geometry": {"length": 1.2, "width": 0.2, "height": 0.4},
         })
 
 wall3 = BoxObstacle(name="wall3", content_dict={

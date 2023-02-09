@@ -129,7 +129,7 @@ class RBrain:
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
             self.obstacles[key].type = UNMOVABLE
-            if key == "blocking_object1" or key == "blocking_object2":
+            if key == "blocking_object" or key == "blocking_object2":
                 self.obstacles[key].type = UNKNOWN
 
     def setup_hgraph(self, stat_world_info):

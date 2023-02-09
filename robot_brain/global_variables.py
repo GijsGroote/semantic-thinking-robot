@@ -24,6 +24,7 @@ BOXER_ROBOT_WIDTH = 0.6
 PLOT_N_TIMESTEPS = 200
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
+FIG_BG_COLOR = "rgb(255, 255, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
 
 COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 

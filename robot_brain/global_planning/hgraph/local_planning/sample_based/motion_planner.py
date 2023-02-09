@@ -11,7 +11,7 @@ import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
@@ -21,6 +21,14 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstac
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
+### TODO: this motion planner is nice and all that but..
+""" 3 issues:
+    - adding samples from path estimation (without blocking objects) must not start sampling. Just take the samples from path estimation
+     an exeption is the nonholonomic constaints, the it would be okey. but otherwise, just dont
+     - appending samples from path estimation can trigger a Keyerror self.samples[prev_key] while prev_key = None
+     - samples can be projected toward outside the grid
+
+"""
 class MotionPlanner(ABC):
     """
     Motion planner that finds a start to target position for pushing and driving tasks.
@@ -98,7 +106,6 @@ class MotionPlanner(ABC):
 
         # while keep searching:
         while not self._stop_criteria_test():
-
             # generate random sample
             sample_rand = self._create_random_sample()
 
@@ -117,7 +124,7 @@ class MotionPlanner(ABC):
 
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
-            if in_space_id == 1: # obstacle space, abort sample
+            if in_space_id == UNMOVABLE: # obstacle space, abort sample
                 continue
 
             # find closeby samples and connect new sample to cheapest sample
@@ -140,7 +147,8 @@ class MotionPlanner(ABC):
     def _add_path_estimator_samples(self, source_sample, target_sample):
         """ convert samples from path estimation to motion planner. """
         assert self.search_size > self.path_estimator.cell_size*1.5,\
-                f"the motion planner search size: {self.search_size} is smaller than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
+                f"the motion planner search size: {self.search_size} is smaller "\
+                f"than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
 
         shortest_path = self.path_estimator.search_path(source_sample, target_sample)
         # shortest_path = shortest_path[1:-1]
@@ -155,8 +163,8 @@ class MotionPlanner(ABC):
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
 
-            if in_space_id == 1: # obstacle space, abort sample
-                continue
+            if in_space_id == UNMOVABLE: # obstacle space, abort sample
+                raise ValueError(f"Sample {sample_new} from the path estimator is in obstacle space")
 
             close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
 

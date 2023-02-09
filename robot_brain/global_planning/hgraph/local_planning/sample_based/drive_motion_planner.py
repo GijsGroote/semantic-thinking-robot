@@ -6,7 +6,7 @@ import math
 from sortedcontainers import SortedDict
 import numpy as np
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
@@ -117,18 +117,16 @@ class DriveMotionPlanner(MotionPlanner):
 
             # add cost or an additional subtask
             close_sample_add_node_cost = 0
-            if in_space_id == 2: # movable space
-                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 2:
-                    close_sample_add_node_cost = KNOWN_OBSTACLE_COST
+            if in_space_id == MOVABLE and self.path_estimator.occupancy(np.array(close_sample["pose"])) != MOVABLE:
+                close_sample_add_node_cost = KNOWN_OBSTACLE_COST
 
-            elif in_space_id == 3: # unkown space
-                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 3:
-                    close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
+            elif in_space_id == UNKNOWN and self.path_estimator.occupancy(np.array(close_sample["pose"])) != UNKNOWN:
+                close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
             close_sample_total_cost = close_sample["cost_to_source"] +\
                     self._distance(close_sample["pose"], sample) + close_sample_add_node_cost
 
-            
+
 
             if close_sample_total_cost < closest_sample_total_cost:
                 closest_sample_add_node_cost = close_sample_add_node_cost

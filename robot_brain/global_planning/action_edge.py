@@ -7,17 +7,17 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimato
 
 from robot_brain.state import State
 
-from robot_brain.global_planning.edge import INITIALISED, COMPLETED, EXECUTING, FAILED
-PATH_EXISTS = "path_exists"
-HAS_SYSTEM_MODEL = "has_system_model"
-PATH_IS_PLANNED = "path_is_planned"
+from robot_brain.global_planning.edge import EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
+EDGE_PATH_EXISTS = "path_exists"
+EDGE_HAS_SYSTEM_MODEL = "has_system_model"
+EDGE_PATH_IS_PLANNED = "path_is_planned"
 
 class ActionEdge(Edge):
     """ Parent class for all actions. """
 
     def __init__(self, iden, source, to, robot_obst, verb, controller, model_name):
         Edge.__init__(self, iden, source, to, verb, controller)
-        self.status = INITIALISED
+        self.status = EDGE_INITIALISED
         self.robot_obst = robot_obst
         self.model_name = model_name
 
@@ -85,7 +85,7 @@ class ActionEdge(Edge):
 
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
-        if self.status == PATH_IS_PLANNED:
+        if self.status == EDGE_PATH_IS_PLANNED:
             assert isinstance(self.controller, Controller),\
                     f"controller is not of type Controller but {type(self.controller)}"
             assert isinstance(self.motion_planner.shortest_path, list),\
@@ -106,42 +106,42 @@ class ActionEdge(Edge):
                 f"path_estimator should be PathEstimator and is {type(self.path_estimator)}"
         assert isinstance(self.path_estimator.shortest_path, list),\
                 f"path_estimator should contain a shortest path of type list {type(self.path_estimator.shortest_path)}"
-        assert self.status == INITIALISED,\
-                f"before setting status to {PATH_EXISTS} the status must be {INITIALISED} and it's {self.status}"
+        assert self.status == EDGE_INITIALISED,\
+                f"before setting status to {EDGE_PATH_EXISTS} the status must be {EDGE_INITIALISED} and it's {self.status}"
 
-        self.status = PATH_EXISTS
+        self.status = EDGE_PATH_EXISTS
 
     def set_has_system_model_status(self):
-        assert self.status == PATH_EXISTS,\
-                f"before setting status to {HAS_SYSTEM_MODEL} the status must be {PATH_EXISTS} and it's {self.status}"
-        self.status = HAS_SYSTEM_MODEL
+        assert self.status == EDGE_PATH_EXISTS,\
+                f"before setting status to {EDGE_HAS_SYSTEM_MODEL} the status must be {EDGE_PATH_EXISTS} and it's {self.status}"
+        self.status = EDGE_HAS_SYSTEM_MODEL
 
     def set_path_is_planned_status(self):
         assert isinstance(self.motion_planner, MotionPlanner),\
         f"motion_planner should be MotionPlanner and is {type(self.motion_planner)}"
         assert isinstance(self.motion_planner.shortest_path, list),\
         f"motion_planner should be list and is {type(self.motion_planner)}"
-        assert self.status == HAS_SYSTEM_MODEL,\
-                f"before setting status to {PATH_IS_PLANNED} the status"\
-                f"must be {HAS_SYSTEM_MODEL} and it's {self.status}"
+        assert self.status == EDGE_HAS_SYSTEM_MODEL,\
+                f"before setting status to {EDGE_PATH_IS_PLANNED} the status"\
+                f"must be {EDGE_HAS_SYSTEM_MODEL} and it's {self.status}"
 
-        self.status = PATH_IS_PLANNED
+        self.status = EDGE_PATH_IS_PLANNED
 
     def set_executing_status(self):
-        assert self.status == PATH_IS_PLANNED,\
-        f"before setting status to {EXECUTING} the status must"\
-        f"be {PATH_IS_PLANNED} and it's {self.status}"
-        self.status = EXECUTING
+        assert self.status == EDGE_PATH_IS_PLANNED,\
+        f"before setting status to {EDGE_EXECUTING} the status must"\
+        f"be {EDGE_PATH_IS_PLANNED} and it's {self.status}"
+        self.status = EDGE_EXECUTING
 
     def set_completed_status(self):
-        assert self.status == EXECUTING,\
-        f"before setting status to {COMPLETED} the status"\
-        f"must be {EXECUTING} and it's {self.status}"
-        self.status = COMPLETED
+        assert self.status == EDGE_EXECUTING,\
+        f"before setting status to {EDGE_COMPLETED} the status"\
+        f"must be {EDGE_EXECUTING} and it's {self.status}"
+        self.status = EDGE_COMPLETED
 
     def set_failed_status(self):
         """ from any status the status can be come FAILED. """
-        self.status = FAILED
+        self.status = EDGE_FAILED
 
     @property
     def path_estimator(self):

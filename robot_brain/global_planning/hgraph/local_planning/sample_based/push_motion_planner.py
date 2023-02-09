@@ -243,6 +243,8 @@ class PushMotionPlanner(MotionPlanner):
         """ Finds the shortest path after sampling. """
         if len(self.shortest_paths) == 0:
             raise ValueError("start to target tree is not connected")
+        
+        print('in push motin planner, extracting shortest path')
 
         shortest_path_samples = self.shortest_paths.values()[0]
         sample1 = self.samples[shortest_path_samples["sample1_key"]]

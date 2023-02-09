@@ -1,15 +1,13 @@
 import numpy as np
-
 from abc import ABC, abstractmethod
 from robot_brain.state import State
 from robot_brain.system_model import SystemModel
 
 
-INITIALISED = "initialised"
-COMPLETED = "completed"
-EXECUTING = "executing"
-FAILED = "failed"
-
+EDGE_INITIALISED = "edge:initialised"
+EDGE_COMPLETED = "edge:completed"
+EDGE_EXECUTING = "edge:executing"
+EDGE_FAILED = "edge:failed"
 
 class Edge(ABC):
     """

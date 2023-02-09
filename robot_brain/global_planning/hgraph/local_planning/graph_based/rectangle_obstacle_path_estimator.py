@@ -14,7 +14,7 @@ from helper_functions.geometrics import (
         )
 
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, FREE, UNKNOWN, MOVABLE, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.exceptions import NoPathExistsException
@@ -233,13 +233,13 @@ class RectangleObstaclePathEstimator(PathEstimator):
         pose_2d_start[2] = to_interval_zero_to_two_pi(pose_2d_start[2])
         pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
 
-        if self.occupancy(pose_2d_start) == 1 or self.occupancy(pose_2d_target) == 1:
+        if self.occupancy(pose_2d_start) == UNMOVABLE or self.occupancy(pose_2d_target) == UNMOVABLE:
             raise NoPathExistsException("Start or target state in obstacle space")
 
-        if self.occupancy(pose_2d_start) != 0:
+        if self.occupancy(pose_2d_start) != FREE:
             warnings.warn("the start position is in movable or unkown space")
 
-        if self.occupancy(pose_2d_target) != 0:
+        if self.occupancy(pose_2d_target) != FREE:
             warnings.warn("the target position is in movable or unknown space")
 
         # convert position to indices on the grid
@@ -285,7 +285,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                         if visited[p_idx] != 2:
 
                             # path cannot go through obstacles
-                            if self._p_idx_to_occupancy(*p_idx) != 1:
+                            if self._p_idx_to_occupancy(*p_idx) != UNMOVABLE:
 
                                 # put cell in the queue if not already in there
                                 if visited[p_idx] == 0:

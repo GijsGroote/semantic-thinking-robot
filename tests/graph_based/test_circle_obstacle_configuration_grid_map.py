@@ -74,6 +74,5 @@ def test_grid_map_shape():
 #
 #     occ_map = CircleObstaclePathEstimator(1, 40, 60, objects, 2, np.array([0,0]))
 #     occ_map.setup()
-#     occ_map.visualise(save=False)
 #
 #     assert False
