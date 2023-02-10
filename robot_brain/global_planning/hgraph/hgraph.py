@@ -620,6 +620,7 @@ class HGraph(Graph):
             temp_edge.status = EDGE_FAILED
             if temp_edge in self.hypothesis:
                 self.add_to_blacklist(temp_edge)
+                self.fail_corresponding_iden_edge(temp_edge)
                 self.hypothesis.remove(temp_edge)
 
         if LOG_METRICS:
@@ -629,8 +630,9 @@ class HGraph(Graph):
 
     def handle_no_path_exists_exception(self, exc: NoPathExistsException, edge: Edge):
         """ handle a NoPathExistsException. """
-        self.get_node(edge.to).status = UNFEASIBLE
+        self.get_node(edge.to).status = EDGE_UNFEASIBLE
         edge.status = EDGE_FAILED
+        self.fail_corresponding_iden_edge(edge)
 
         if LOG_METRICS:
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
@@ -646,6 +648,7 @@ class HGraph(Graph):
 
         self.add_to_blacklist(edge)
         edge.status = EDGE_FAILED
+        self.fail_corresponding_iden_edge(edge)
         self.current_edge = None
         self.visualise()
 
@@ -662,6 +665,18 @@ class HGraph(Graph):
     #######################################################
     ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###
     #######################################################
+    def fail_corresponding_iden_edge(self, edge: ActionEdge):
+        """ update status of corresponding identification edge if it exists. """
+        assert isinstance(edge, ActionEdge),\
+                f"edge should be an ActionEdge but is {type(edge)}"
+
+        for temp_edge in self.edges:
+            if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
+                print(f'found the corresponding ident edge, update status to failed')
+                for outgoing_edge in self.get_outgoing_edges(temp_edge):
+                    if isinstance(outgoing_edge, EmptyEdge):
+                        outgoing_edge.status = EDGE_FAILED
+                temp_edge.status = EDGE_FAILED
 
     def increment_edge(self):
         """ updates toward the next edge in the hypothesis. """

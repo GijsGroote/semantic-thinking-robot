@@ -1,5 +1,6 @@
 import numpy as np
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED
+# TODO: only traverse this emtpy edge once, that could be an optoin
 from robot_brain.state import State
 
 class EmptyEdge(Edge):
