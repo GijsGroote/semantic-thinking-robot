@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-NODE_INITIALISED = "node;initialised"
+NODE_INITIALISED = "node:initialised"
 NODE_COMPLETED = "node:completed"
 NODE_UNFEASIBLE = "node:unfeasible"
 NODE_FAILED = "node:failed"

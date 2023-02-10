@@ -101,7 +101,7 @@ class HGraph(Graph):
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
-        
+
         self.update_subtask()
 
         if CREATE_SERVER_DASHBOARD:
@@ -109,7 +109,7 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger.setup(task)
 
-    
+
     ##############################################################################################
     ################ MAIN FUNCTIONS ######################### MAIN FUNCTIONS #####################
     ##############################################################################################
@@ -121,7 +121,7 @@ class HGraph(Graph):
             # TODO: fault detection could be done here if fault -> raise FaultDetectedException('tsting this ')
 
             if self.current_edge.completed():
-                
+
                 self.increment_edge()
 
             return self.current_edge.respond()
@@ -167,17 +167,16 @@ class HGraph(Graph):
                 # find_subtask is not forced to find the same final_target_node
                 (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
 
-
         self.current_edge = self.hypothesis[self.edge_pointer]
         self.current_node = self.get_node(self.current_edge.source)
 
-
-        
-        
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
 
             print(f"above edge {self.current_edge.iden} is not yet ready it's at {self.current_edge.status}")
+            print(f'is it ready: {self.current_edge.ready_for_execution()}')
+
+            # make the action edge ready
             if isinstance(self.current_edge, ActionEdge):
                 if self.current_edge.status == EDGE_INITIALISED:
                     self.estimate_path(self.current_edge)
@@ -189,18 +188,45 @@ class HGraph(Graph):
                     print('start path search please')
                     self.search_path(self.current_edge)
 
-                elif self.current_edge.status == EDGE_PATH_IS_PLANNED:
-                    ValueError("path is planned, but somehow still not ready for execution")
+                elif self.current_edge.status == EDGE_EXECUTING:
+                    print(f"current action edge {self.current_edge.iden} is already execution")
+                    return
+
+                elif self.current_edge.status in [EDGE_PATH_IS_PLANNED, EDGE_COMPLETED, EDGE_FAILED]:
+                    ValueError("path is {self.current_edge.iden}, and that in this section should be impossible.")
 
                 else:
-                    ValueError(f"should not be able to reach here edge {self.current_edge.iden}, status {self.current_edge.status}")
+                    ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
+
+            return self.search_hypothesis()
+
+        # make the identification edge ready
+        if not self.current_edge.ready_for_execution():
+            if isinstance(self.current_edge, IdentificationEdge):
+
+                if self.current_edge.status == EDGE_INITIALISED:
+                    print(f'current ident edge status = {self.current_edge.status}')
+                    # self.estimate_path(self.current_edge)
+
+                elif self.current_edge.status == EDGE_EXECUTING:
+                    print(f"current identification edge {self.current_edge.iden} is already execution")
+                    return
+
+                elif self.current_edge.status == EDGE_FAILED:
+                    print(f'current ident edge status = {self.current_edge.status}')
+                    # self.search_path(self.current_edge)
+
+                else:
+                    ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
 
 
-            if self.current_edge.iden == 6:
-
-                print(f"edge {self.current_edge.iden} is not yet ready it's at {self.current_edge.status}")
-                self.visualise(save=False)
-                raise ValueError
+            # if self.current_edge.iden == 6:
+            #     for temp_edge in self.hypothesis:
+            #         print(f'hyp {temp_edge.iden}')
+            #
+            #     print(f"edge {self.current_edge.iden} is not yet ready it's at {self.current_edge.status}")
+            #     self.visualise(save=False)
+            #     raise ValueError
             return self.search_hypothesis()
 
         # add ghost pose
@@ -208,10 +234,11 @@ class HGraph(Graph):
             self.env.add_target_ghost(self.get_node(self.current_edge.to).obstacle.properties.name(),
             self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
 
-        # keep this check, but rewrite it
-        if self.current_edge.status == EDGE_EXECUTING:
-            raise ValueError(f"edge {self.current_edge.iden} is already executing!")
-                
+
+        print('current hyp is like this')
+        for temp_edge in self.hypothesis:
+            print(f'hyp {temp_edge.iden}')
+        self.visualise(save=False) # delete this
 
         self.current_edge.set_executing_status()
         self.go_to_loop(EXECUTION_LOOP)
@@ -319,16 +346,17 @@ class HGraph(Graph):
 
         assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
 
-        # motion planning
-        if isinstance(edge, DriveActionEdge):
-            edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
-            current_state = self.robot.state
+        if edge.motion_planner is None:
+            # motion planning
+            if isinstance(edge, DriveActionEdge):
+                edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
+                current_state = self.robot.state
 
-        elif isinstance(edge, PushActionEdge):
+            elif isinstance(edge, PushActionEdge):
 
-            edge.motion_planner = self.create_push_motion_planner(
-                    self.obstacles, self.get_node(edge.source).obstacle, edge.path_estimator)
-            current_state = self.get_node(edge.source).obstacle.state
+                edge.motion_planner = self.create_push_motion_planner(
+                        self.obstacles, self.get_node(edge.source).obstacle, edge.path_estimator)
+                current_state = self.get_node(edge.source).obstacle.state
 
         try:
             error_triggered = False
@@ -352,7 +380,10 @@ class HGraph(Graph):
 
         if len(add_node_list) > 0:
             print('add_node_list containts a thingy... first remove that obstacle mate')
+
             self.create_remove_obstacle_edge(add_node_list, edge)
+            return
+
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -398,6 +429,7 @@ class HGraph(Graph):
         self.hypothesis.insert(self.edge_pointer, drive_ident_edge)
 
         self.current_edge=self.hypothesis[self.edge_pointer]
+        print(f'now having current edge = {self.current_edge.iden}')
 
     def create_push_ident_edge(self, edge: PushActionEdge):
         """ create a system identification edge for pushing. """
@@ -467,11 +499,13 @@ class HGraph(Graph):
         blocking_obst = self.obstacles[obst_keys[0]]
 
         # add obstacle start node if not yet present
-        starting_node_present = False
-        for node in self.nodes:
-            if node.obstacle.properties == blocking_obst.properties:
-                starting_node_present = True
-        if not starting_node_present:
+        blocking_obst_start_node = None
+        for temp_node in self.nodes:
+            if temp_node.name == blocking_obst.name:
+                print(f'here we should see the connection from emt edge to blocking object {temp_node.name}')
+                blocking_obst_start_node = temp_node
+
+        if blocking_obst_start_node is None:
             blocking_obst_start_node = ObstacleNode(
                 self.unique_node_iden(),
                 blocking_obst.name,
@@ -479,8 +513,6 @@ class HGraph(Graph):
                 self.get_node(edge.to).subtask_name
                 )
             self.add_node(blocking_obst_start_node)
-        else:
-            blocking_obst_start_node = self.get_node(obst_keys[0])
 
         # rewire current node toward blocking obstacle start node
         self.add_edge(EmptyEdge(
@@ -491,7 +523,17 @@ class HGraph(Graph):
         # find state that is not overlapping with planned path
         target_state = self.find_free_state_for_blocking_obstacle(blocking_obst, edge.motion_planner.shortest_path)
 
-        # create new obstacle node
+        # update existing target node if that already exist
+        # blocking_obst_target_node = None
+        # for temp_node in self.nodes:
+        #     if temp_node.name == obst_keys[0]+"_target":
+        #         print(f'updating exitingn node with status  {temp_node.status}')
+        #         temp_node.state = target_state
+        #         blocking_obst_target_node = temp_node
+        #
+        # # create new obstacle node
+        # if blocking_obst_target_node is None:
+
         blocking_obst_target_node = ObstacleNode(
                 self.unique_node_iden(),
                 obst_keys[0]+"_target",
@@ -577,8 +619,8 @@ class HGraph(Graph):
         for temp_edge in self.get_outgoing_edges(target_node_iden):
             temp_edge.status = EDGE_FAILED
             if temp_edge in self.hypothesis:
+                self.add_to_blacklist(temp_edge)
                 self.hypothesis.remove(temp_edge)
-
 
         if LOG_METRICS:
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
@@ -641,6 +683,7 @@ class HGraph(Graph):
             self.reset_current_pointers()
             return self.search_hypothesis()
 
+        print(f'incremnte edge from {self.current_edge.iden} to {self.hypothesis[self.edge_pointer+1]}')
         self.edge_pointer += 1
 
         # search_hypothesis checks the validity of the next edge
@@ -1025,7 +1068,7 @@ class HGraph(Graph):
         return target_node_list[0]
 
     def get_start_iden_from_target_iden(self, target_iden):
-        assert isinstance(target_iden, int), f"target_iden should be an int and it {type(target_iden)}"
+        assert isinstance(target_iden, int), f")target_iden should be an int and it {type(target_iden)}"
         start_iden_list = []
         for start_2_target in self.start_to_target_iden:
             if start_2_target[1] == target_iden:

@@ -31,6 +31,7 @@ from helper_functions.geometrics import which_side_point_to_line, circle_in_box_
 DRIVE_MPC_MODEL= "drive_mpc_model"
 DRIVE_MPPI_MODEL= "drive_mppi_model"
 PUSH_MPPI_MODEL = "push_mppi_model"
+PUSH_MPPI_MODEL2 = "push_mppi_model2"
 
 class PointRobotVelHGraph(HGraph):
     """
@@ -211,6 +212,7 @@ class PointRobotVelHGraph(HGraph):
 
             if isinstance(controller, PushMppi5thOrder):
                 models.append(PUSH_MPPI_MODEL)
+                models.append(PUSH_MPPI_MODEL2)
 
             controllers_and_models.append((controller, models))
 
@@ -230,8 +232,10 @@ class PointRobotVelHGraph(HGraph):
         return [self.create_mppi_push_controller()]
 
     def create_push_model(self, model_name: str):
-        if model_name==PUSH_MPPI_MODEL:
+        if model_name == PUSH_MPPI_MODEL:
             return self.create_mppi_push_model()
+        elif model_name == PUSH_MPPI_MODEL2:
+            return self.create_mppi_push_model2()
         else:
             raise ValueError(f"model name unknown: {model_name}")
 
@@ -333,3 +337,50 @@ class PointRobotVelHGraph(HGraph):
             return x_next
 
         return SystemModel(model, PUSH_MPPI_MODEL)
+
+    def create_mppi_push_model2(self):
+        """ create push model for MPPI pointrobot. """
+        def model(x, u):
+
+            # width square obstacle
+            H = 2
+
+            # point a in the center of the pushed against edge
+            xa = x[:,2]+torch.sin(x[:,4])*H/2
+            ya = x[:,3]-torch.cos(x[:,4])*H/2
+
+            # line parallel to the obstacle edge being pushed against
+            a_abc = torch.tan(math.pi/2-x[:,4])
+            b_abc = x[:,2]+H/2*torch.sin(x[:,4])-torch.tan(math.pi/2-x[:,4])*(x[:,3]-H/2*torch.cos(x[:,4]))
+
+
+            # line from center robot to center obstacle
+            a_ro = (x[:,0]-x[:,2])/(x[:,1]-x[:,3])
+            b_ro = x[:,2]-(x[:,0]-x[:,2])/(x[:,1]-x[:,3])*x[:,3]
+
+            yb = (b_ro-b_abc)/(a_abc-a_ro)
+            xb = a_abc*yb+b_abc
+
+            # st is the distance from pushing point to the centerline of the obstacle perpendicular to the edge which is pushed against
+            st=1.2*torch.sqrt((xa-xb)**2+(ya-yb)**2)
+
+            # obstacle rotating clockwise (positive) or anti-clockwise (negative)
+            st = which_side_point_to_line(
+                    x[:,2:4],
+                    torch.stack((xa, ya), dim=-1),
+                    torch.stack((xb, yb), dim=-1))*st
+
+            # velocity of robot perpendicular to box at point p
+            vp = u[:,0]*torch.sin(x[:,4]) + u[:,1]*torch.cos(x[:,4])
+
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+            x_next[:,2] = torch.add(x[:,2], torch.sin(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,3] = torch.add(x[:,3], torch.cos(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,4] = torch.add(x[:,4], 2*vp/H*st, alpha=DT)
+
+            return x_next
+
+        return SystemModel(model, PUSH_MPPI_MODEL2)
