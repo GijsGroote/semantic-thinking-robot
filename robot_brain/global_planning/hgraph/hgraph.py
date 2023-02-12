@@ -141,7 +141,6 @@ class HGraph(Graph):
             (start_node, target_node) = self.update_subtask()
             # find nodes in new subtask or current unfinished subtask
             self.go_to_loop(SEARCHING_LOOP)
-            print(f'not connected connect start node {start_node.name} and target: {target_node.name}')
 
             # search for unfinished target node and connect to starting node
             # TODO: hypothesis should be reachable, but also the first edge in hypothesis (or the first after the current edge) should be
