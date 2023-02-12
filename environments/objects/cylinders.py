@@ -5,7 +5,7 @@ cylinder_dict = {
     "mass": 1,
     "type": "cylinder",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [2.0, -0.2, 0.5],
+    "position": [-2, -1, 0.5],
     "geometry": {"radius": 0.92, "height": 0.25},
 }
 

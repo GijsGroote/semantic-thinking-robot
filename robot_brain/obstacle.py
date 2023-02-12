@@ -68,6 +68,8 @@ class Obstacle:
 
     # state setter
     @state.setter
-    def state(self, stat):
+    def state(self, state):
         # TODO: input sanitization
-        self._state = stat
+        print(f'state of object {self.name} has been set to {state.pos}')
+
+        self._state = state

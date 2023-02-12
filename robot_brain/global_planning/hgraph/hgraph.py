@@ -92,6 +92,7 @@ class HGraph(Graph):
                     obst_temp,
                     subtask_name
                     ))
+
             iden_target_node = self.unique_node_iden()
             self.add_target_node(ObstacleNode(
                 iden_target_node,
@@ -100,7 +101,6 @@ class HGraph(Graph):
                 subtask_name
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
-
 
         self.update_subtask()
 
@@ -160,7 +160,6 @@ class HGraph(Graph):
                 else:
                     self.create_push_edge(start_node.iden, target_node.iden)
 
-
                 # find_subtask is not forced to find the same final_target_node
                 (start_node, target_node) = self.find_nodes_to_connect_in_subtask()
 
@@ -179,6 +178,7 @@ class HGraph(Graph):
                     self.create_ident_edge(self.current_edge)
 
                 elif self.current_edge.status == EDGE_HAS_SYSTEM_MODEL:
+                    print(f'start hyp yo {self.get_node(1).obstacle.state.pos}start and target {self.get_node(2).obstacle.state.pos}')
                     self.search_path(self.current_edge)
 
                 elif self.current_edge.status == EDGE_EXECUTING:
@@ -339,7 +339,10 @@ class HGraph(Graph):
             elif isinstance(edge, PushActionEdge):
 
                 edge.motion_planner = self.create_push_motion_planner(
-                        self.obstacles, self.get_node(edge.source).obstacle, edge.path_estimator)
+                        obstacles=self.obstacles,
+                        push_obstacle=self.get_node(edge.source).obstacle,
+                        path_estimator=edge.path_estimator)
+
                 current_state = self.get_node(edge.source).obstacle.state
 
         try:
@@ -417,9 +420,9 @@ class HGraph(Graph):
 
         model_node = ObstacleNode(
                 self.unique_node_iden(),
-                self.get_node(edge.to).name+"_model",
-                self.get_node(edge.to).obstacle,
-                self.get_node(edge.to).subtask_name)
+                self.get_node(edge.source).name+"_model",
+                self.get_node(edge.source).obstacle,
+                self.get_node(edge.source).subtask_name)
 
         self.add_node(model_node)
 
@@ -449,18 +452,22 @@ class HGraph(Graph):
                 edge.path_estimator)
         best_push_pose_against_obstacle_node = ObstacleNode(
                 self.unique_node_iden(),
-                "best_push_pose_against_"+edge.name,
+                "best_push_pose_against_"+self.get_node(edge.to).obstacle.name,
                 Obstacle(name=self.robot.name,
-                    state=best_position_against_obstacle_state,
+                    state=best_push_pose_against_obstacle_state,
                     properties=self.robot.properties),
-                edge.subtask_name)
+                self.get_node(edge.source).subtask_name)
+
         self.add_node(best_push_pose_against_obstacle_node)
+
+        self.visualise(save=False)
+
+        # create driving edge
+        self.create_drive_edge(edge.source, best_push_pose_against_obstacle_node.iden)
 
         # rewire edge
         edge.source = best_push_pose_against_obstacle_node.iden
-
-        # create driving edge
-        self.create_drive_edge(edge.source, best_push_pose_against_obstacle_node)
+        self.visualise(save=False)
 
     def create_remove_obstacle_edge(self, add_node_list: list, edge: ActionEdge):
         """ add edges/nodes to remove a obstacle. """
@@ -527,7 +534,7 @@ class HGraph(Graph):
         """ create drive motion planner. """
 
     @abstractmethod
-    def create_push_motion_planner(self, obstacles):
+    def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None):
         """ create push motion planner. """
 
     @abstractmethod
@@ -783,6 +790,11 @@ class HGraph(Graph):
         # no edges pointing toward this node -> return
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)
+
+
+        # delte thsi belwo
+        if len(edge_to_list) > 1:
+            self.visualise(save=False)
 
         # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
         assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."

@@ -236,7 +236,9 @@ class PushMotionPlanner(MotionPlanner):
                     self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0])
         elif len(self.shortest_paths) > 0: # beg for anything
             return True
+
         else:
+            self.visualise(save=False)
             raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
     def _extract_shortest_path(self) -> Tuple[list, list]:
