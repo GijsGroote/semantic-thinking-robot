@@ -1,0 +1,17 @@
+{
+  "configurations": {
+    "<name>: Launch": {
+      "adapter": "debugpy",
+      "configuration": {
+        "name": "Python: Launch",
+        "type": "python",
+        "request": "launch",
+        "python": "/home/gijs/.cache/pypoetry/virtualenvs/robot-brain-xXy1ugOt-py3.10/bin/python",
+        "stopOnEntry": true,
+        "console": "externalTerminal",
+        "debugOptions": [],
+        "program": "${workspaceRoot}/environments/a_point_pushing_robot.py"
+      }
+    }
+  }
+}

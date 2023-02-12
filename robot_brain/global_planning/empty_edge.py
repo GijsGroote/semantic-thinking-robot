@@ -1,22 +1,19 @@
 import numpy as np
-from robot_brain.global_planning.edge import Edge
+from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED
+# TODO: only traverse this emtpy edge once, that could be an optoin
 from robot_brain.state import State
-
-INITIALISED = "initialised"
-COMPLETED = "completed"
-
 
 class EmptyEdge(Edge):
     """ Empty edge is the links in the hgraph, that does not have any action in the simulation environmnemt. """
 
     def __init__(self, iden, source, to):
         Edge.__init__(self, iden, source, to, "empty_edge", "controller?")
-        self.status = INITIALISED
+        self.status = EDGE_INITIALISED
 
     def respond(self, state) -> np.ndarray:
         """ respond to the current state. """
         # how does the empty edge ? respond?
-        return np.array([0, 0]) 
+        return np.array([0, 0])
 
     def view_completed(self, current_state: State) -> bool:
         """ view is completed if the test push time is over. """
@@ -36,10 +33,21 @@ class EmptyEdge(Edge):
         """ checks if all parameters are set to execute this transition. """
         return True
 
-    def increment_current_target(self):
+    def set_executing_status(self):
+        """ Sets executing status. """
+        raise ValueError("do not execute a EmptyEdge")
+
+    def set_completed_status(self):
+        """ Sets completed status. """
+        assert self.status == EDGE_INITIALISED,\
+        f"before setting status to {EDGE_COMPLETED} the status"\
+        f"must be {EDGE_INITIALISED} and it's {self.status}"
+        self.status = EDGE_COMPLETED
+
+    def increment_current_view(self):
         pass
 
-    def get_current_target(self) -> State:
+    def get_current_view(self) -> State:
         pass
 
     def to_string(self):

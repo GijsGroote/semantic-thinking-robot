@@ -11,7 +11,7 @@ import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
@@ -21,6 +21,14 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstac
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
+### TODO: this motion planner is nice and all that but..
+""" 3 issues:
+    - adding samples from path estimation (without blocking objects) must not start sampling. Just take the samples from path estimation
+     an exeption is the nonholonomic constaints, the it would be okey. but otherwise, just dont
+     - appending samples from path estimation can trigger a Keyerror self.samples[prev_key] while prev_key = None
+     - samples can be projected toward outside the grid
+
+"""
 class MotionPlanner(ABC):
     """
     Motion planner that finds a start to target position for pushing and driving tasks.
@@ -67,33 +75,9 @@ class MotionPlanner(ABC):
                 assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
                     "obstacle is BoxObstacle, conf_grid_map should be of type"\
                     f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
-
-            # TODO: rename this to path estimator
             self.path_estimator = path_estimator
-
         else:
             raise ValueError("Incorrect or No PathEstimator provided")
-            # if isinstance(obstacle.properties, CylinderObstacle):
-            #     self.path_estimator = CircleObstaclePathEstimator(
-            #         cell_size=0.2,
-            #         grid_x_length=grid_x_length,
-            #         grid_y_length=grid_y_length,
-            #         obstacles=obstacles,
-            #         obst_cart_2d=obstacle.state.get_xy_position(),
-            #         obst_name=obstacle.name,
-            #         obst_radius=obstacle.properties.radius())
-            #
-            # elif isinstance(obstacle.properties, BoxObstacle):
-            #     self.path_estimator = RectangleObstaclePathEstimator(
-            #         cell_size=0.2,
-            #         grid_x_length=grid_x_length,
-            #         grid_y_length=grid_y_length,
-            #         obstacles=obstacles,
-            #         obst_cart_2d=obstacle.state.get_xy_position(),
-            #         obst_name=obstacle.name,
-            #         n_orientations= 36,
-            #         obst_x_length=obstacle.properties.length(),
-            #         obst_y_length=obstacle.properties.width())
 
     @abstractmethod
     def setup(self, source_sample, target_sample):
@@ -102,12 +86,8 @@ class MotionPlanner(ABC):
     def search_path(self, source: State, target: State) -> Tuple[list, list]:
         """ search for a path between source and target state. """
 
-        if self.include_orien:
-            source_sample = source.get_2d_pose()
-            target_sample = target.get_2d_pose()
-        else:
-            source_sample = source.get_xy_position()
-            target_sample = target.get_xy_position()
+        source_sample = source.get_2d_pose()
+        target_sample = target.get_2d_pose()
 
         self.path_estimator.update()
 
@@ -126,7 +106,6 @@ class MotionPlanner(ABC):
 
         # while keep searching:
         while not self._stop_criteria_test():
-
             # generate random sample
             sample_rand = self._create_random_sample()
 
@@ -136,14 +115,16 @@ class MotionPlanner(ABC):
             # project it to existing samples
             if self._distance(self.samples[sample_closest_key], sample_rand) > self.step_size:
                 sample_new = self._project_to_connectivity_graph(sample_rand, sample_closest_key)
+                # TODO: the project_to_connectivity graph can project samples outside grid if the
+                # xgridlength and ygridlength is not equal
+                if not self.sample_outside_grid(sample_new):
+                    continue
             else:
                 sample_new = sample_rand
 
-            if self.include_orien:
-                in_space_id = self.path_estimator.occupancy(np.array(sample_new))
-            else:
-                in_space_id = self.path_estimator.occupancy(np.array(sample_new[0:2]))
-            if in_space_id == 1: # obstacle space, abort sample
+
+            in_space_id = self.path_estimator.occupancy(np.array(sample_new))
+            if in_space_id == UNMOVABLE: # obstacle space, abort sample
                 continue
 
             # find closeby samples and connect new sample to cheapest sample
@@ -166,24 +147,27 @@ class MotionPlanner(ABC):
     def _add_path_estimator_samples(self, source_sample, target_sample):
         """ convert samples from path estimation to motion planner. """
         assert self.search_size > self.path_estimator.cell_size*1.5,\
-                f"the motion planner search size: {self.search_size} is smaller than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
+                f"the motion planner search size: {self.search_size} is smaller "\
+                f"than conf_grid_map.cell_size * 1.5: {self.path_estimator.cell_size*1.5}"
 
         shortest_path = self.path_estimator.search_path(source_sample, target_sample)
-        shortest_path = shortest_path[1:-1]
+        # shortest_path = shortest_path[1:-1]
 
         for sample_new in shortest_path:
-
             # add negligble amount making x and y coordinates unique
             # NOTE: At the edges, this small additional could put the sample outside of the
             # environment, just as it could 'pass' 2*pi
             sample_new += np.abs(np.random.normal(0, 0.0000001, np.asarray(sample_new).shape))
+            if sample_new.shape == (2,):
+                sample_new = np.array([sample_new[0], sample_new[1], 0])
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
 
-            if in_space_id == 1: # obstacle space, abort sample
-                continue
+            if in_space_id == UNMOVABLE: # obstacle space, abort sample
+                raise ValueError(f"Sample {sample_new} from the path estimator is in obstacle space")
 
             close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
+
             sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
             self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
 
@@ -207,11 +191,10 @@ class MotionPlanner(ABC):
             sample = [sample[0], sample[1], 0]
 
         key = self._create_unique_id()
-
         self.samples[prev_key]["next_sample_keys"].append(key)
 
         self.samples[key] = {
-                "pose": [sample[0], sample[1], sample[2]],
+                "pose": sample,
                 "cost_to_source": cost_to_source,
                 "prev_sample_key": prev_key,
                 "next_sample_keys": [],
@@ -313,6 +296,10 @@ class MotionPlanner(ABC):
     @abstractmethod
     def _stop_criteria_test(self) -> bool:
         """ test is the shortest path converged. """
+
+    def sample_outside_grid(self, sample: np.ndarray) -> bool:
+        """ return True if the sample is inside the grid. """
+        return np.abs(sample[0]) < self.grid_x_length/2 and np.abs(sample[1]) < self.grid_y_length/2
 
     def _create_unique_id(self) -> int:
         """ creates and returns a unique id. """

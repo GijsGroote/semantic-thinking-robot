@@ -4,7 +4,7 @@ import warnings
 from typing import Tuple
 import numpy as np
 
-from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE, UNMOVABLE
+from robot_brain.obstacle import Obstacle, MOVABLE, UNKNOWN, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
 # TODO: make the path estimator focussed on an obstacle (and not the robot)
@@ -63,9 +63,9 @@ class PathEstimator(ABC):
 
         indices in the grid_map indicat the following:
             0 -> free space
-            1 -> obstacle space
-            2 -> movable obstacle space
-            3 -> unknown obstacle space
+            1 -> movable space
+            2 -> unknown space
+            3 -> obstacle space
         """
         for r_orien_idx in range(self.n_orientations):
 
@@ -75,23 +75,28 @@ class PathEstimator(ABC):
             else:
                 r_orien = 2*math.pi*r_orien_idx/self.n_orientations
 
+            # setup movable obstacles
             for obst in self.obstacles.values():
-
                 # checking for an obstacle, exclude itself from the list
                 if obst.name == self.obst_name:
                     continue
+                if obst.type==MOVABLE:
+                    self._setup_obstacle(obst, MOVABLE, r_orien, r_orien_idx)
 
+            # setup unknown obstacles
+            for obst in self.obstacles.values():
+                if obst.name == self.obst_name:
+                    continue
+                if obst.type==UNKNOWN:
+                    self._setup_obstacle(obst, UNKNOWN, r_orien, r_orien_idx)
+
+            # setup unmovable obstacles
+            for obst in self.obstacles.values():
+                # checking for an obstacle, exclude itself from the list
+                if obst.name == self.obst_name:
+                    continue
                 if obst.type==UNMOVABLE:
-                    self._setup_obstacle(obst, 1, r_orien, r_orien_idx)
-
-                elif obst.type==MOVABLE:
-                    self._setup_obstacle(obst, 2, r_orien, r_orien_idx)
-
-                elif obst.type==UNKNOWN:
-                    self._setup_obstacle(obst, 3, r_orien, r_orien_idx)
-                else:
-                    raise TypeError(f"unknown type: {obst.type}")
-
+                    self._setup_obstacle(obst, UNMOVABLE, r_orien, r_orien_idx)
 
     def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """
@@ -110,7 +115,6 @@ class PathEstimator(ABC):
 
             case "box":
                 # "obstects" x-axis is parallel to the global z-axis (normal situation)
-
                 if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or
                         math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
                         math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
@@ -123,7 +127,6 @@ class PathEstimator(ABC):
                 warnings.warn("the urdf type is not yet implemented")
 
             case _:
-
                 raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
     @abstractmethod

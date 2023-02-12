@@ -183,7 +183,6 @@ class PushMotionPlanner(MotionPlanner):
 
     def _project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
         """ projects the sample closer to the closest existing sample in the connectivity graphs. """
-
         # TODO: using vectors speeds up, convert sin/cos calculation to vector calculation
         project_to_sample = self.samples[project_to_sample_key]
 
@@ -232,7 +231,7 @@ class PushMotionPlanner(MotionPlanner):
         if planning_time < 0.5: # be picky
             return (len(self.shortest_paths) > 10 and
                     self.shortest_paths.peekitem(0)[0] * 1.05 > self.shortest_paths.peekitem(9)[0])
-        elif planning_time < 1: # be less picky
+        elif planning_time < 3: # be less picky
             return (len(self.shortest_paths) > 5 and
                     self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0])
         elif len(self.shortest_paths) > 0: # beg for anything
@@ -244,6 +243,8 @@ class PushMotionPlanner(MotionPlanner):
         """ Finds the shortest path after sampling. """
         if len(self.shortest_paths) == 0:
             raise ValueError("start to target tree is not connected")
+        
+        print('in push motin planner, extracting shortest path')
 
         shortest_path_samples = self.shortest_paths.values()[0]
         sample1 = self.samples[shortest_path_samples["sample1_key"]]

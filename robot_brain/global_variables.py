@@ -11,12 +11,19 @@ SAVE_LOG_METRICS = False
 MIN_INPUT = -2.0
 MAX_INPUT = 2.0
 
+<<<<<<< HEAD
 UNKNOWN_OBSTACLE_COST = 150
 KNOWN_OBSTACLE_COST = 100
 GRID_X_SIZE = 16
 GRID_Y_SIZE = 8
+=======
+UNKNOWN_OBSTACLE_COST = 0.5
+KNOWN_OBSTACLE_COST = 0.5
+GRID_X_SIZE =12# up to down length
+GRID_Y_SIZE = 16 # left to right length
+>>>>>>> fix-mediocre-hgraph-structure
 
-POINT_ROBOT_RADIUS = 0.38
+POINT_ROBOT_RADIUS = 0.18
 BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
 
@@ -24,6 +31,7 @@ BOXER_ROBOT_WIDTH = 0.6
 PLOT_N_TIMESTEPS = 200
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
+FIG_BG_COLOR = "rgb(255, 255, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
 
 COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 

@@ -161,7 +161,6 @@ def start_dash_server():
             update_title=None,
             assets_folder="assets")
 
-
     # create dashboard
     Dashboard(app)
 

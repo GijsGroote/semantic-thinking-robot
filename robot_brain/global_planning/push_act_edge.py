@@ -6,15 +6,19 @@ from robot_brain.state import State
 class PushActionEdge(ActionEdge):
     """ Push action edge controls all pushing actions. """
 
-    def __init__(self, iden, source, to, verb, controller):
-        ActionEdge.__init__(self, iden, source, to, verb, controller)
+    def __init__(self, iden, source, to, robot_obst, push_obst, verb, controller, model_name):
 
-    def view_completed(self, state: State) -> bool:
+        ActionEdge.__init__(self, iden, source, to, robot_obst, verb, controller, model_name)
+        self.push_obst = push_obst
+
+    def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
-        print(f'wat is de error? = {state.pose_euclidean(self.get_current_target())}')
-        return state.pose_euclidean(self.get_current_target()) < 0.8
+        return self.push_obst.state.pose_euclidean(self.get_current_view()) < 1.0
 
-    def respond(self, robot_state: State, obst_state=None) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ respond to the robot and obstacle state. """
-        return self.controller.respond(robot_state, obst_state=obst_state)
+        if self.view_completed():
+            self.increment_current_view()
+
+        return self.controller.respond(self.robot_obst.state, self.push_obst.state)

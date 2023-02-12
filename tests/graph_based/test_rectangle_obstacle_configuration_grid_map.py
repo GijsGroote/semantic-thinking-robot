@@ -309,7 +309,6 @@ def test_position_to_cell_or_grid_edge():
 #
 #     print("printint the shortest path")
 #     print(occ_map.shortest_path(np.array([0,0,0]), np.array([-10,-15,0])))
-#     occ_map.visualise(save=False)
 #
 #     # occ_map.visualise(1, objects)
 #     # occ_map.visualise(2, objects)

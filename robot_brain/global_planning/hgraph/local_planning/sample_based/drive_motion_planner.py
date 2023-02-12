@@ -6,7 +6,7 @@ import math
 from sortedcontainers import SortedDict
 import numpy as np
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
@@ -51,18 +51,18 @@ class DriveMotionPlanner(MotionPlanner):
 
         # add negligleble amount to make positions hashable if initial position is 0
         if source_sample[0] == 0:
-            source_sample[0] = float(1e-8)
+            source_sample[0] = float(6e-9)
         if source_sample[1] == 0:
-            source_sample[1] = float(1e-8)
+            source_sample[1] = float(5e-9)
         if self.include_orien and source_sample[2] == 0:
-            source_sample[2] = float(1e-8)
+            source_sample[2] = float(4e-9)
 
         if target_sample[0] == 0:
-            target_sample[0] = float(1e-8)
+            target_sample[0] = float(3e-9)
         if target_sample[1] == 0:
-            target_sample[1] = float(1e-8)
+            target_sample[1] = float(2e-9)
         if  self.include_orien and target_sample[2] == 0:
-            target_sample[2] = float(1e-8)
+            target_sample[2] = float(1e-9)
         source_sample[2] = to_interval_zero_to_two_pi(source_sample[2])
         target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
 
@@ -84,6 +84,7 @@ class DriveMotionPlanner(MotionPlanner):
                 "add_node": []}
 
         self.n_samples = 2
+
         self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
         self.y_sorted = SortedDict({source_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
@@ -116,16 +117,16 @@ class DriveMotionPlanner(MotionPlanner):
 
             # add cost or an additional subtask
             close_sample_add_node_cost = 0
-            if in_space_id == 2: # movable space
-                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 2:
-                    close_sample_add_node_cost = KNOWN_OBSTACLE_COST
+            if in_space_id == MOVABLE and self.path_estimator.occupancy(np.array(close_sample["pose"])) != MOVABLE:
+                close_sample_add_node_cost = KNOWN_OBSTACLE_COST
 
-            elif in_space_id == 3: # unkown space
-                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 3:
-                    close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
+            elif in_space_id == UNKNOWN and self.path_estimator.occupancy(np.array(close_sample["pose"])) != UNKNOWN:
+                close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
             close_sample_total_cost = close_sample["cost_to_source"] +\
                     self._distance(close_sample["pose"], sample) + close_sample_add_node_cost
+
+
 
             if close_sample_total_cost < closest_sample_total_cost:
                 closest_sample_add_node_cost = close_sample_add_node_cost

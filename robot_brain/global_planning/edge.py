@@ -1,15 +1,13 @@
 import numpy as np
-
 from abc import ABC, abstractmethod
 from robot_brain.state import State
 from robot_brain.system_model import SystemModel
 
 
-INITIALISED = "initialised"
-COMPLETED = "completed"
-EXECUTING = "executing"
-FAILED = "failed"
-
+EDGE_INITIALISED = "edge:initialised"
+EDGE_COMPLETED = "edge:completed"
+EDGE_EXECUTING = "edge:executing"
+EDGE_FAILED = "edge:failed"
 
 class Edge(ABC):
     """
@@ -43,19 +41,29 @@ class Edge(ABC):
         """ returns true if the edge is completed, otherwise false. """
 
     @abstractmethod
-    def increment_current_target(self):
+    def increment_current_view(self):
         """ updates toward the next current target from path. """
 
     @abstractmethod
-    def get_current_target(self) -> State:
+    def get_current_view(self) -> State:
         """ returns the current target the controller tries to steer toward. """
 
     @abstractmethod
-    def respond(self, state, obst_state= None) -> np.ndarray:
+    def respond(self) -> np.ndarray:
         """ respond to the current state. """
 
     def create_log(self) -> dict:
         """ return a dictionary with metrics. """
+
+    @abstractmethod
+    def set_executing_status(self):
+        """ Sets executing status. """
+
+    @abstractmethod
+    def set_completed_status(self):
+        """ Sets completed status. """
+
+
 
     @abstractmethod
     def to_string(self):

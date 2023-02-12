@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
-from pyvis.network import Network
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.edge import Edge
-from robot_brain.global_planning.action_edge import FAILED
+from robot_brain.global_planning.action_edge import EDGE_FAILED
 
 
 class Graph(ABC):
@@ -95,12 +94,33 @@ class Graph(ABC):
 
     def point_toward_nodes(self, node_iden) -> list:
         """ returns a list with node identifiers where an
-        non-failed edge points from node_id to these nodes. """
+        non-failed edge points from node_iden to these nodes. """
 
         assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist"
         point_toward_list = []
         for edge in self.edges:
-            if edge.status != FAILED and node_iden == edge.source:
+            if edge.status != EDGE_FAILED and node_iden == edge.source:
                 point_toward_list.append(edge.to)
 
         return point_toward_list
+
+    def get_outgoing_edges(self, node_iden) -> list:
+        """ returns all non-failing edges pointing toward this node. """
+
+        outgoing_edges = []
+
+        for temp_edge in self.edges:
+            if temp_edge.status != EDGE_FAILED and temp_edge.source == node_iden:
+                outgoing_edges.append(temp_edge)
+
+        return outgoing_edges
+
+    def get_incoming_edge(self, node_iden) -> Edge:
+        """ returns the non-failing edge pointing toward this node. """
+
+        for temp_edge in self.edges:
+            if temp_edge.status != EDGE_FAILED and temp_edge.to == node_iden:
+                return temp_edge
+
+        raise ValueError(f"node {node_iden} has no non-failing incoming edges")
+

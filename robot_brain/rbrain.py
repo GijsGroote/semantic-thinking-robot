@@ -129,8 +129,8 @@ class RBrain:
             # pretent that obstacles are unmovable, falsely mislabeled
             # PRENTEND THAT THIS OBSTACLE IS UNMOVABLE
             self.obstacles[key].type = UNMOVABLE
-            if key == "blocking_object":
-                self.obstacles[key].type = MOVABLE
+            if key == "blocking_object" or key == "blocking_object2":
+                self.obstacles[key].type = UNKNOWN
 
     def setup_hgraph(self, stat_world_info):
         """
@@ -218,9 +218,11 @@ class RBrain:
         if self.is_doing is IS_EXECUTING:
             if self.hgraph is not None:
                 try:
-                    return self.hgraph.respond(self.robot.state)
+                    return self.hgraph.respond()
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
+
+                    print(f"Halt because: {exc}")
 
                     if CREATE_SERVER_DASHBOARD:
                         self.hgraph.visualise()
@@ -236,7 +238,6 @@ class RBrain:
         else:
             raise Exception("Unable to respond")
 
-    # TODO: all setters and getters should be sanitized properly, and test!
     @property
     def obstacles(self):
         return self._obstacles
