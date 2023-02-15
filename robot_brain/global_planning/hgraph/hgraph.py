@@ -170,7 +170,6 @@ class HGraph(Graph):
         self.current_node = self.get_node(self.current_edge.source)
 
 
-        print(f'current edge {self.current_edge.iden} and current node {self.current_node.iden}')
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
 
@@ -183,11 +182,9 @@ class HGraph(Graph):
                     self.create_ident_edge(self.current_edge)
 
                 elif self.current_edge.status == EDGE_HAS_SYSTEM_MODEL:
-                    print(f'start hyp yo {self.get_node(1).obstacle.state.pos}start and target {self.get_node(2).obstacle.state.pos}')
                     self.search_path(self.current_edge)
 
                 elif self.current_edge.status == EDGE_EXECUTING:
-                    print(f"current action edge {self.current_edge.iden} is already execution")
                     return
 
                 elif self.current_edge.status in [EDGE_PATH_IS_PLANNED, EDGE_COMPLETED, EDGE_FAILED]:
@@ -266,7 +263,6 @@ class HGraph(Graph):
     def create_push_edge(self, source_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
 
-        print(f'create push edge between {source_node_iden} and {target_node_iden}')
         knowledge_graph = False
 
         if knowledge_graph:
@@ -458,8 +454,8 @@ class HGraph(Graph):
         # create and add best push pose against obstacle node
         best_push_pose_against_obstacle_state = self.find_push_pose_againts_obstacle_state(
                 self.nodes[edge.to].obstacle,
-                edge.path,
-                edge.path_estimator)
+                edge.path)
+
         best_push_pose_against_obstacle_node = ObstacleNode(
                 self.unique_node_iden(),
                 "best_push_pose_against_"+self.get_node(edge.to).obstacle.name,
@@ -470,14 +466,25 @@ class HGraph(Graph):
 
         self.add_node(best_push_pose_against_obstacle_node)
 
-        self.visualise(save=False)
+        # add robot node
+        robot_node_copy = ObstacleNode(
+                self.unique_node_iden(),
+                self.robot.name+"_copy",
+                self.robot,
+                self.get_node(edge.source).subtask_name)
+        self.add_node(robot_node_copy)
+
+        # add emptyEdge
+        self.add_edge(EmptyEdge(
+            self.unique_edge_iden(),
+            edge.source,
+            robot_node_copy.iden))
 
         # create driving edge
-        self.create_drive_edge(edge.source, best_push_pose_against_obstacle_node.iden)
+        self.create_drive_edge(robot_node_copy.iden, best_push_pose_against_obstacle_node.iden)
 
         # rewire edge
         edge.source = best_push_pose_against_obstacle_node.iden
-        self.visualise(save=False)
 
     def create_remove_obstacle_edge(self, add_node_list: list, edge: ActionEdge):
         """ add edges/nodes to remove a obstacle. """
@@ -552,7 +559,7 @@ class HGraph(Graph):
         """ return the obstacle keys at pose_2ds. """
 
     @abstractmethod
-    def find_push_pose_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
+    def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
         """ return a starting state to start pushing the obstacle. """
 
     @abstractmethod
@@ -761,7 +768,6 @@ class HGraph(Graph):
                     "execute_time": 0.0,
                     "search_time": 0.0,
                     }
-            print(f'currrent subtask new subtask connect {subtask_start_node.iden} to {subtask_target_node.iden}')
 
             return (subtask_start_node, subtask_target_node)
         else:
@@ -779,7 +785,6 @@ class HGraph(Graph):
         assert start_node.status == NODE_INITIALISED,\
                 f"start node status must be {NODE_INITIALISED} and is {start_node.status} for node {target_node.iden}"
 
-        print(f'focus on this subtas {start_node.iden} to {target_node.iden}')
         return (start_node, target_node)
 
     def find_source_node(self, node_iden) -> Node:
@@ -802,14 +807,9 @@ class HGraph(Graph):
                 self.get_node(edge.source) != NODE_FAILED) and\
                 self.get_node(edge.to).subtask_name == self.current_subtask["name"]]
 
-        print('are any edges pionting toward me?')
-        for tedge in edge_to_list:
-            print(tedge.iden)
-
         # no edges pointing toward this node -> return
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)
-
 
         # delte thsi belwo
         if len(edge_to_list) > 1:

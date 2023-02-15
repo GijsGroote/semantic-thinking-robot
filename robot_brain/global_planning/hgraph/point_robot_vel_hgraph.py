@@ -7,7 +7,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, FREE
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
 from robot_brain.state import State
@@ -25,7 +25,12 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 
-from helper_functions.geometrics import which_side_point_to_line, circle_in_box_obstacle, circle_in_cylinder_obstacle
+from helper_functions.geometrics import (
+        which_side_point_to_line,
+        circle_in_box_obstacle,
+        circle_in_cylinder_obstacle,
+        to_interval_zero_to_two_pi
+        )
 
 
 DRIVE_MPC_MODEL= "drive_mpc_model"
@@ -136,10 +141,8 @@ class PointRobotVelHGraph(HGraph):
 
         return obst_keys
 
-    def find_push_pose_againts_obstacle_state(self, blocking_obst, path, path_estimator) -> State:
+    def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
         """ return a starting state to start pushing the obstacle. """
-
-        print(' in find_push_pose_againts_obstacle_state aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
         obst_xy_position = path[0][0:2]
 
@@ -157,27 +160,24 @@ class PointRobotVelHGraph(HGraph):
         else:
             raise ValueError(f"obstacle not recognised, type: {type(blocking_obst)}")
 
-        dxdy = -(obst_xy_position[0]-clost_obst_xy_position[0])/(obst_xy_position[1]-clost_obst_xy_position[1])
+        # orientation where the robot should stand to push
+        best_robot_pose_orien = np.tanh((clost_obst_xy_position[0]-obst_xy_position[0])/
+                (clost_obst_xy_position[1]-obst_xy_position[1]))+3*math.pi/2
 
+        path_estimator = self.create_drive_path_estimator(self.obstacles)
 
+        for temp_orien in [best_robot_pose_orien, best_robot_pose_orien + math.pi/2,best_robot_pose_orien - math.pi/2]:
+            temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
-        # for obst_center_to_push_position in np.linspace(min_obst_dimension, 2*max_obst_dimension, 11):
-        #
-        #     temp_xy_position = [obst_xy_position[0] + np.cos(dxdy)*obst_center_to_push_position,
-        #             obst_xy_position[1] + np.sin(dxdy) * obst_center_to_push_position]
-        #     if path_estimator.occupancy(temp_xy_position) == 0:
-        #         return State(pos=np.array([*temp_xy_position, 0]))
+            for obst_center_to_push_position in np.linspace(min_obst_dimension, 2*max_obst_dimension, 11):
 
-        # for xy_pos in xy_positions:
+                temp_xy_position = [obst_xy_position[0] - np.sin(temp_orien)*obst_center_to_push_position,
+                        obst_xy_position[1] + np.cos(temp_orien) * obst_center_to_push_position]
+                if path_estimator.occupancy(temp_xy_position) == FREE:
+                    print(f' best pose is {temp_xy_position}')
+                    return State(pos=np.array([*temp_xy_position, 0]))
 
-        # check if opposite of the trajectory direction is free space
-
-        # check if close to opposite of the trajectory is free space
-
-
-        # check if there is any free space around the obstacle
-
-        return State(pos=np.array([-0.9, 0.1, 0.0]))
+        raise ValueError("could not find a push position against object")
 
     def find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
