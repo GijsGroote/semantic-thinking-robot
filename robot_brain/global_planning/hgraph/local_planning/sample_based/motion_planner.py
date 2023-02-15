@@ -27,7 +27,7 @@ from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_
      an exeption is the nonholonomic constaints, the it would be okey. but otherwise, just dont
      - appending samples from path estimation can trigger a Keyerror self.samples[prev_key] while prev_key = None
      - samples can be projected toward outside the grid
-
+     - reusing a motion planner fails stuff, because the are not properly cleared
 """
 class MotionPlanner(ABC):
     """
@@ -55,13 +55,8 @@ class MotionPlanner(ABC):
         self.source_tree_key = 0
         self.target_tree_key = 1
 
-        self.samples = {}
-        self.shortest_paths = SortedDict({})
-        self.shortest_path = None
-        self.x_sorted = SortedDict({})
-        self.y_sorted = SortedDict({})
-        self.n_samples = 0
         self.include_orien = include_orien
+
 
         if include_orien:
             self.orien_sorted = SortedDict({})
@@ -79,6 +74,22 @@ class MotionPlanner(ABC):
         else:
             raise ValueError("Incorrect or No PathEstimator provided")
 
+        # reset variables that change every search
+        self.reset()
+
+    def reset(self):
+        """ clear al samples that change during a search. """
+
+        self.samples = {}
+        self.shortest_paths = SortedDict({})
+        self.shortest_path = None
+        self.x_sorted = SortedDict({})
+        self.y_sorted = SortedDict({})
+        self.n_samples = 0
+
+        if self.include_orien:
+            self.orien_sorted = SortedDict({})
+
     @abstractmethod
     def setup(self, source_sample, target_sample):
         """ initialise the source and target samples. """
@@ -90,6 +101,7 @@ class MotionPlanner(ABC):
         target_sample = target.get_2d_pose()
 
         self.path_estimator.update()
+        self.reset()
 
         self.setup(source_sample, target_sample)
         self.start_time_search = time.time()

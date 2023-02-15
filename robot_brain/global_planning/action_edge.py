@@ -141,6 +141,7 @@ class ActionEdge(Edge):
 
     def set_failed_status(self):
         """ from any status the status can be come FAILED. """
+        print(f'edge has failed ')
         self.status = EDGE_FAILED
 
     @property

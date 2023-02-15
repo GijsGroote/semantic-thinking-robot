@@ -65,9 +65,9 @@ def main(conn=None):
         "default_action": np.array(np.zeros(2)),
         "task": [
             (cylinder.name(), State(pos=np.array([-4, -3, 0]))),
-            # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
-            # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
-            # ("robot", State(pos=np.array([-3.3212, 1, 0]))),
+            ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
+            ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
+            ("robot", State(pos=np.array([-3.3212, 1, 0]))),
             # ("robot", State(pos=np.array([3.3212, 2.20, 0]))),
             # ("robot", State(pos=np.array([4,-2,0]))),
             # ("robot", State(pos=np.array([-4, -4, 0]))),
