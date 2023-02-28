@@ -31,9 +31,6 @@ def main():
 
     ob, reward, done, info = env.step(np.zeros(env.n()))
 
-
-
-
     brain = RBrain()
     brain.setup({
         "dt": DT,

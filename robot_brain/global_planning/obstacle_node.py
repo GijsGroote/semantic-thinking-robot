@@ -1,6 +1,7 @@
 from robot_brain.global_planning.node import Node
 from robot_brain.obstacle import Obstacle
 
+
 class ObstacleNode(Node):
     """
     Object node.
@@ -14,7 +15,7 @@ class ObstacleNode(Node):
 
     def to_string(self):
         return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
-                f"<br>With Obstacle: {self.obstacle.name}"
+                f"<br>With Obstacle: {self.obstacle.name}<br>2d pos = {self.obstacle.state.get_2d_pose()}"
 
     @property
     def obstacle(self):

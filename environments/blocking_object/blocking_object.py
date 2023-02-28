@@ -46,7 +46,7 @@ def main():
         "robot_type": robot_type,
         "obstacles_in_env": True,
         "default_action": np.array(np.zeros(2)),
-        "task": [("robot", State(pos=np.array([-3.3212, -2, 0])))],
+        "task": [("robot", State(pos=np.array([-4.3212, -4, 0])))],
         "obstacles": obstacles,
         "env": env
     }, ob)

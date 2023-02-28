@@ -351,6 +351,7 @@ class HGraph(Graph):
 
         try:
             error_triggered = False
+            print(f'these should be different! {current_state.pos} and {self.get_node(edge.to).obstacle.state.pos}')
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
 
         except PlanningTimeElapsedException as exc:
