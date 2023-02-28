@@ -10,7 +10,7 @@
         "stopOnEntry": true,
         "console": "externalTerminal",
         "debugOptions": [],
-        "program": "${workspaceRoot}/environments/a_point_pushing_robot.py"
+        "program": "${workspaceRoot}/environments/blocking_object/blocking_object.py"
       }
     }
   }
