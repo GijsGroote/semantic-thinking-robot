@@ -13,10 +13,10 @@ MAX_INPUT = 2.0
 
 UNKNOWN_OBSTACLE_COST = 0.5
 KNOWN_OBSTACLE_COST = 0.5
-GRID_X_SIZE =12# up to down length
-GRID_Y_SIZE = 16 # left to right length
+GRID_X_SIZE =13# up to down length
+GRID_Y_SIZE =13# left to right length
 
-POINT_ROBOT_RADIUS = 0.30
+POINT_ROBOT_RADIUS = 0.20
 BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
 

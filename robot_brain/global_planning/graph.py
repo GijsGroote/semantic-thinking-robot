@@ -13,8 +13,6 @@ class Graph(ABC):
         self._nodes = []
         self._edges = []
 
-        self.count_point = 0
-
     @abstractmethod
     def visualise(self, save=True):
         pass
@@ -97,13 +95,6 @@ class Graph(ABC):
     def point_toward_nodes(self, node_iden) -> list:
         """ returns a list with node identifiers where an
         non-failed edge points from node_iden to these nodes. """
-        print('in the point toward nodes')
-        if self.count_point > 100:
-            print('visualise that shit')
-            self.visualise(save=False)
-            raise ValueError
-        else:
-            self.count_point += 1
 
         assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist"
         point_toward_list = []

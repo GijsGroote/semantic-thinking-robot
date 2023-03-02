@@ -10,3 +10,5 @@ class PlanningTimeElapsedException(Exception):
 class FaultDetectedException(Exception):
     """ A fault is detected during execution. """
 
+class NoBestPushPositionException(Exception):
+    """ No best push position around an object could be found. """

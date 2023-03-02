@@ -36,6 +36,7 @@ from robot_brain.exceptions import (
         RunnoutOfControlMethodsException,
         NoPathExistsException,
         PlanningTimeElapsedException,
+        NoBestPushPositionException,
         FaultDetectedException
         )
 from logger.hlogger import HLogger
@@ -102,7 +103,7 @@ class HGraph(Graph):
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
-        self.update_subtask()
+        # self.update_subtask()
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -255,7 +256,6 @@ class HGraph(Graph):
                     verb="driving",
                     controller=controller,
                     model_name=model_name)
-
 
             self.add_edge(edge)
             self.hypothesis.insert(self.edge_pointer, edge)
@@ -453,9 +453,13 @@ class HGraph(Graph):
                 f"current_node: {self.current_node} and/or current_edge: {self.current_edge} cannot be None"
 
         # create and add best push pose against obstacle node
-        best_push_pose_against_obstacle_state = self.find_push_pose_againts_obstacle_state(
+        try:
+            best_push_pose_against_obstacle_state = self.find_push_pose_againts_obstacle_state(
                 self.nodes[edge.to].obstacle,
                 edge.path)
+        except NoBestPushPositionException as exc:
+            self.handle_no_push_position_found_exception(exc)
+            return
 
         best_push_pose_against_obstacle_node = ObstacleNode(
                 self.unique_node_iden(),
@@ -653,11 +657,29 @@ class HGraph(Graph):
         # remove all edges up to the failed edge from the current hypothesis.
         self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
         self.edge_pointer = 0
-
+    def handle_no_push_position_found_exception(self, exc: NoBestPushPositionException):
+        """ handle a NoBestPushPositionException. """
+        # no node has been created yet, and no blacklist should be made specifically for this
+        pass
 
     def handle_fault_detected_exception(self, exc: FaultDetectedException, edge: Edge):
         """ handle a FaultDetectedException. """
         pass
+
+    def fail_edge(self, edge_iden):
+        """ fail edge and corresponding identification and empty edges. """
+
+        fail_this_edge = self.get_edge(edge_iden)
+        fail_this_edge.status = EDGE_FAILED
+        if isinstance(self.get_incoming_edge(fail_this_edge.source), EmptyEdge):
+            self.get_incoming_edge(fail_this_edge.source).status = EDGE_FAILED
+
+        for outgoing_edge in self.get_outgoing_edges(fail_this_edge.to):
+            if isinstance(outgoing_edge, EmptyEdge):
+                outgoing_edge = EDGE_FAILED
+
+        if isinstance(fail_this_edge, ActionEdge):
+            self.fail_corresponding_iden_edge(temp_edge)
 
 
     #######################################################

@@ -25,6 +25,8 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 
+from robot_brain.exceptions import NoBestPushPositionException
+
 from helper_functions.geometrics import (
         which_side_point_to_line,
         circle_in_box_obstacle,
@@ -144,17 +146,12 @@ class PointRobotVelHGraph(HGraph):
     def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
         """ return a starting state to start pushing the obstacle. """
 
-
-
         obst_xy_position = path[0][0:2]
-
-        print(f'okey find that best push pose against the object BBBBBBBBBBBBBBBBB obstacle is at {obst_xy_position}')
 
         if len(path)>4:
             clost_obst_xy_position = path[3][0:2]
         else:
             raise ValueError(f"path is shorter than 4 samples, its: {len(path)}")
-
 
         # retrieve min and max dimension of the obstacle
         if isinstance(blocking_obst.properties, BoxObstacle):
@@ -166,11 +163,14 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"obstacle not recognised, type: {type(blocking_obst)}")
 
         # orientation where the robot should stand to push
-
-        best_robot_pose_orien = math.pi/2 - np.tanh((clost_obst_xy_position[0]-obst_xy_position[0]) /\
-            (clost_obst_xy_position[1]-obst_xy_position[1]) if (clost_obst_xy_position[1]-obst_xy_position[1]) else 0)
-
-        print(f'best robot pose orien is {best_robot_pose_orien}')
+        if (clost_obst_xy_position[1]-obst_xy_position[1]) == 0:
+            if clost_obst_xy_position[0] < obst_xy_position[0]:
+                best_robot_pose_orien = math.pi/2
+            else:
+                best_robot_pose_orien = -math.pi/2
+        else:
+            best_robot_pose_orien = math.atan2(-clost_obst_xy_position[0]-obst_xy_position[0],\
+                    clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
 
         path_estimator = self.create_drive_path_estimator(self.obstacles)
 
@@ -183,18 +183,15 @@ class PointRobotVelHGraph(HGraph):
                         obst_xy_position[1] + np.cos(temp_orien) * obst_center_to_push_position]
 
                 if path_estimator.occupancy(temp_xy_position) == FREE:
-                    print(f' best pose is {temp_xy_position}')
                     return State(pos=np.array([*temp_xy_position, 0]))
-                else:
-                    print(f'{temp_xy_position} is not a gread pose')
 
-        raise ValueError("could not find a push position against object")
+            
+
+        raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
 
     def find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
         print('in find_free_state_for_blocking_obstacle AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
-
 
         return State(pos=np.array([-4, 0.2, -0.1]))
 
