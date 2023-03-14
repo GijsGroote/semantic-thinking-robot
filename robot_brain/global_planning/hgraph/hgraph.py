@@ -258,7 +258,11 @@ class HGraph(Graph):
                     model_name=model_name)
 
             self.add_edge(edge)
+            print(f'adding drive toward best {self.get_node(edge.to).iden} to hypothesis')
             self.hypothesis.insert(self.edge_pointer, edge)
+
+            for hyp in self.hypothesis:
+                print(f'the hyp is {hyp.iden}')
 
     def create_push_edge(self, source_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
@@ -457,9 +461,11 @@ class HGraph(Graph):
             best_push_pose_against_obstacle_state = self.find_push_pose_againts_obstacle_state(
                 self.nodes[edge.to].obstacle,
                 edge.path)
+
         except NoBestPushPositionException as exc:
             self.handle_no_push_position_found_exception(exc)
             return
+
 
         best_push_pose_against_obstacle_node = ObstacleNode(
                 self.unique_node_iden(),
@@ -615,9 +621,8 @@ class HGraph(Graph):
 
         # make outgoing edges unfeasible and remove from hypothesis
         for temp_edge in self.get_outgoing_edges(target_node_iden):
-            temp_edge.status = EDGE_FAILED
+            self.fail_edge(temp_edge)
             self.add_to_blacklist(temp_edge)
-            self.fail_corresponding_iden_edge(temp_edge)
 
             if temp_edge in self.hypothesis:
                 self.hypothesis.remove(temp_edge)
@@ -631,10 +636,9 @@ class HGraph(Graph):
         """ handle a NoPathExistsException. """
         self.get_node(edge.to).status = NODE_UNFEASIBLE
         for outgoing_edge in self.get_outgoing_edges(edge.to):
-            outgoing_edge.status = EDGE_FAILED
+            self.fail_edge(outgoing_edge)
 
-        edge.status = EDGE_FAILED
-        self.fail_corresponding_iden_edge(edge)
+        self.fail_edge(edge)
 
         if LOG_METRICS:
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
@@ -649,8 +653,7 @@ class HGraph(Graph):
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
 
         self.add_to_blacklist(edge)
-        edge.status = EDGE_FAILED
-        self.fail_corresponding_iden_edge(edge)
+        self.fail_edge(edge)
         self.current_edge = None
         self.visualise()
 
@@ -666,36 +669,37 @@ class HGraph(Graph):
         """ handle a FaultDetectedException. """
         pass
 
-    def fail_edge(self, edge_iden):
+    def fail_edge(self, edge: Edge):
         """ fail edge and corresponding identification and empty edges. """
 
-        fail_this_edge = self.get_edge(edge_iden)
-        fail_this_edge.status = EDGE_FAILED
-        if isinstance(self.get_incoming_edge(fail_this_edge.source), EmptyEdge):
-            self.get_incoming_edge(fail_this_edge.source).status = EDGE_FAILED
+        edge.status = EDGE_FAILED
 
-        for outgoing_edge in self.get_outgoing_edges(fail_this_edge.to):
-            if isinstance(outgoing_edge, EmptyEdge):
-                outgoing_edge = EDGE_FAILED
+        if isinstance(edge, IdentificationEdge):
+            # fail incoming/outgoing emtpy edges
+            if isinstance(self.get_incoming_edge(edge.source), EmptyEdge):
+                self.get_incoming_edge(edge.source).status = EDGE_FAILED
 
-        if isinstance(fail_this_edge, ActionEdge):
-            self.fail_corresponding_iden_edge(temp_edge)
+            for outgoing_edge in self.get_outgoing_edges(edge.to):
+                if isinstance(outgoing_edge, EmptyEdge):
+                    print(f'failing outing edge numero {outgoing_edge.iden}')
+                    outgoing_edge.status = EDGE_FAILED
+
+        elif isinstance(edge, ActionEdge):
+            # fail corresponding identification edge
+            for temp_edge in self.edges:
+                if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
+                    self.fail_edge(temp_edge)
+
+
+    # def fail_corresponding_iden_edge(self, edge: ActionEdge):
+    #     """ update status of corresponding identification edge if it exists. """
+    #     assert isinstance(edge, ActionEdge),\
+    #             f"edge should be an ActionEdge but is {type(edge)}"
 
 
     #######################################################
     ### INCREMENTING THE EDGE AND KEEPING TRACK OF TIME ###
     #######################################################
-    def fail_corresponding_iden_edge(self, edge: ActionEdge):
-        """ update status of corresponding identification edge if it exists. """
-        assert isinstance(edge, ActionEdge),\
-                f"edge should be an ActionEdge but is {type(edge)}"
-
-        for temp_edge in self.edges:
-            if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
-                for outgoing_edge in self.get_outgoing_edges(temp_edge.to):
-                    if isinstance(outgoing_edge, EmptyEdge):
-                        outgoing_edge.status = EDGE_FAILED
-                temp_edge.status = EDGE_FAILED
 
     def increment_edge(self):
         """ updates toward the next edge in the hypothesis. """
@@ -833,10 +837,6 @@ class HGraph(Graph):
         # no edges pointing toward this node -> return
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)
-
-        # delte thsi belwo
-        if len(edge_to_list) > 1:
-            self.visualise(save=False)
 
         # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
         assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."

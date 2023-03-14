@@ -51,4 +51,4 @@ class EmptyEdge(Edge):
         pass
 
     def to_string(self):
-        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}"
+        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}"

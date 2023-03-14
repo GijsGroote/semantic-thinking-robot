@@ -23,7 +23,6 @@ def pr_hgraph():
                 }),
         ), "env")
 
-# TODO: make 4 push positions, and then a test that comes iwth an extra hard find push pose 
 def test_find_push_pose_againts_obstacle_state_test(pr_hgraph):
     blocking_obst = Obstacle(
                 "blocking_obj",
@@ -45,12 +44,8 @@ def test_find_push_pose_againts_obstacle_state_test(pr_hgraph):
     paths = [path_going_north, path_going_south, path_going_west, path_going_east]
     best_push_pose_answers = [[1+POINT_ROBOT_RADIUS, 0], [-1-POINT_ROBOT_RADIUS, 0], [0, 1+POINT_ROBOT_RADIUS],  [0, -1-POINT_ROBOT_RADIUS]]
 
-    for i in range(len(paths)):
-
-        temp_push_pose =  pr_hgraph.find_push_pose_againts_obstacle_state(blocking_obst, paths[i]).get_xy_position()
-
-        print(f'ansser is {best_push_pose_answers[i]} and tmep thingy is {temp_push_pose}')
-
+    for (i, path) in enumerate(paths):
+        temp_push_pose =  pr_hgraph.find_push_pose_againts_obstacle_state(blocking_obst, path).get_xy_position()
 
         assert almost_equal(best_push_pose_answers[i][0], temp_push_pose[0])
         assert almost_equal(best_push_pose_answers[i][1], temp_push_pose[1])

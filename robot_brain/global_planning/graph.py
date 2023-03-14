@@ -121,6 +121,3 @@ class Graph(ABC):
         for temp_edge in self.edges:
             if temp_edge.status != EDGE_FAILED and temp_edge.to == node_iden:
                 return temp_edge
-
-        raise ValueError(f"node {node_iden} has no non-failing incoming edges")
-

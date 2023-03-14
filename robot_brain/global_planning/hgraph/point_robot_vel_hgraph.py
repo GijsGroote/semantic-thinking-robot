@@ -173,6 +173,7 @@ class PointRobotVelHGraph(HGraph):
                     clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
 
         path_estimator = self.create_drive_path_estimator(self.obstacles)
+        path_estimator.visualise(save=False)
 
         for temp_orien in [best_robot_pose_orien, best_robot_pose_orien + math.pi/2,best_robot_pose_orien - math.pi/2]:
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
@@ -184,8 +185,6 @@ class PointRobotVelHGraph(HGraph):
 
                 if path_estimator.occupancy(temp_xy_position) == FREE:
                     return State(pos=np.array([*temp_xy_position, 0]))
-
-            
 
         raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
 

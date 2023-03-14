@@ -176,12 +176,7 @@ class RBrain:
             assert isinstance(obstacle, Obstacle), \
                     f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
-
-
             task["subtask_"+str(task_nmr)] = (obstacle, target)
-
-        print(task)
-        print('kkldjfwkljfkwljwkldjfwkljfkwljwkldjfwkljfkwljwldjfwkljfkwljw')
 
         self.hgraph.setup(
                 task=task,
