@@ -10,7 +10,7 @@ class Obstacle:
     """
     Obstacle class.
     """
-    def __init__(self, name, state, properties):
+    def __init__(self, name, state, properties, obj_type=None):
         self.name = name
         self.state = state
         # create empty nonetype properties
@@ -25,7 +25,12 @@ class Obstacle:
             properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict)
 
         self.properties = properties
-        self.type = UNKNOWN
+
+        if obj_type is not None:
+            assert any(obj_type == typ for typ in [FREE, MOVABLE, UNKNOWN, UNMOVABLE]), f"obj_type should be 0, 1, 2 or 3 and is {obj_type}"
+            self.type = obj_type
+        else:
+            self.type = UNKNOWN
 
     # name getter
     @property

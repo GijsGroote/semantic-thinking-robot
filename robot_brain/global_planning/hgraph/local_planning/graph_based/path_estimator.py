@@ -4,6 +4,9 @@ import warnings
 from typing import Tuple
 import numpy as np
 
+from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
+
 from robot_brain.obstacle import Obstacle, MOVABLE, UNKNOWN, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
@@ -101,33 +104,26 @@ class PathEstimator(ABC):
     def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """
 
-        match obst.properties.type():
-            case "cylinder":
-                # "obstects" x-axis is parallel to the global z-axis (normal situation)
-                if not (math.isclose(math.sin(obst.state.ang_p[0]), 0, abs_tol=0.01) and
-                        math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
-                    warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
+        if isinstance(obst.properties, CylinderObstacle):
+            # "obstects" x-axis is parallel to the global z-axis (normal situation)
+            if not (math.isclose(math.sin(obst.state.ang_p[0]), 0, abs_tol=0.01) and
+                    math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
+                warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
 
-                self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
+            self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
 
-            case "sphere":
-                self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
+        elif isinstance(obst.properties, BoxObstacle):
+            # "obstects" x-axis is parallel to the global z-axis (normal situation)
+            if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or
+                    math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
+                    math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
+                    math.isclose(obst.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
+                warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
 
-            case "box":
-                # "obstects" x-axis is parallel to the global z-axis (normal situation)
-                if not ((math.isclose(obst.state.ang_p[0], 0, abs_tol=0.01) or
-                        math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
-                        math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
-                        math.isclose(obst.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
-                    warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
+            self._setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
 
-                self._setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
-
-            case "urdf":
-                warnings.warn("the urdf type is not yet implemented")
-
-            case _:
-                raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
+        else:
+            raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
     @abstractmethod
     def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):

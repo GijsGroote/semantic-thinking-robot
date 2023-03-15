@@ -1,4 +1,7 @@
 import math
+import copy
+
+from typing import Tuple
 import torch
 import numpy as np
 from casadi import vertcat
@@ -7,7 +10,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle, FREE
+from robot_brain.obstacle import Obstacle, UNMOVABLE, FREE
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
 from robot_brain.state import State
@@ -25,7 +28,7 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 
-from robot_brain.exceptions import NoBestPushPositionException
+from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsException
 
 from helper_functions.geometrics import (
         which_side_point_to_line,
@@ -68,16 +71,16 @@ class PointRobotVelHGraph(HGraph):
         if isinstance(push_obstacle.properties, BoxObstacle):
 
             occ_graph = RectangleObstaclePathEstimator(
-                    cell_size=0.1,
+                    cell_size = 0.1,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
                     obstacles= obstacles,
-                    obst_cart_2d= push_obstacle.state.get_xy_position(),
+                    obst_cart_2d = push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,
-                    n_orientations= 3,
-                    single_orientation=True,
-                    obst_x_length= push_obstacle.properties.length(),
-                    obst_y_length= push_obstacle.properties.width())
+                    n_orientations = 3,
+                    single_orientation = False,
+                    obst_x_length = push_obstacle.properties.length(),
+                    obst_y_length = push_obstacle.properties.width())
 
 
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
@@ -154,13 +157,7 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"path is shorter than 4 samples, its: {len(path)}")
 
         # retrieve min and max dimension of the obstacle
-        if isinstance(blocking_obst.properties, BoxObstacle):
-            min_obst_dimension = min(blocking_obst.properties.width(), blocking_obst.properties.length())
-            max_obst_dimension = max(blocking_obst.properties.width(), blocking_obst.properties.length())
-        elif isinstance(blocking_obst.properties, CylinderObstacle):
-            min_obst_dimension = max_obst_dimension = blocking_obst.properties.radius()
-        else:
-            raise ValueError(f"obstacle not recognised, type: {type(blocking_obst)}")
+        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obst)
 
         # orientation where the robot should stand to push
         if (clost_obst_xy_position[1]-obst_xy_position[1]) == 0:
@@ -173,28 +170,110 @@ class PointRobotVelHGraph(HGraph):
                     clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
 
         path_estimator = self.create_drive_path_estimator(self.obstacles)
-        path_estimator.visualise(save=False)
 
-        for temp_orien in [best_robot_pose_orien, best_robot_pose_orien + math.pi/2,best_robot_pose_orien - math.pi/2]:
+        for temp_orien in [best_robot_pose_orien, best_robot_pose_orien + math.pi/2, best_robot_pose_orien - math.pi/2]:
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
-            for obst_center_to_push_position in np.linspace(min_obst_dimension, 2*max_obst_dimension, 11):
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obst_xy_position, min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator)
 
-                temp_xy_position = [obst_xy_position[0] - np.sin(temp_orien)*obst_center_to_push_position,
-                        obst_xy_position[1] + np.cos(temp_orien) * obst_center_to_push_position]
+            if xy_position_in_free_space is not None:
 
-                if path_estimator.occupancy(temp_xy_position) == FREE:
-                    return State(pos=np.array([*temp_xy_position, 0]))
+                return State(pos=np.array([*xy_position_in_free_space, 0]))
 
         raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
 
-    def find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
+    def find_free_state_for_blocking_obstacle(self, blocking_obj: Obstacle, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
         print('in find_free_state_for_blocking_obstacle AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
-        return State(pos=np.array([-4, 0.2, -0.1]))
 
 
+        # pretend that the object is unmovable
+        blocking_obj_type = blocking_obj.type
+        print(f'blocking_obj memory adress is {hex(id(blocking_obj))}')
+        blocking_obj.type = UNMOVABLE
+
+        # configuration space for the robot
+        path_estimator_robot = self.create_drive_path_estimator(self.obstacles)
+
+        # find reachable position around the object
+        reachable_xy_positions = []
+        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
+
+        # find reachable positions around blocking object
+        for temp_orien in np.linspace(0, 2*math.pi, 8):
+            temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(blocking_obj.state.get_xy_position(),
+                    min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator_robot)
+
+            if xy_position_in_free_space is not None:
+                try:
+                    path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
+                    reachable_xy_positions.append(xy_position_in_free_space)
+
+                except NoPathExistsException:
+                    pass
+
+        blocking_obj.type = blocking_obj_type
+
+        assert len(reachable_xy_positions) != 0, f"no positions where reachable around object {blocking_obj.name}"
+
+        # configuration space for the object
+        objects_and_path = copy.deepcopy(self.obstacles)
+
+        for (i, robot_xy_position_in_path) in enumerate(path):
+            objects_and_path['path_position_'+str(i)] = Obstacle('path_position_'+str(i),
+                    State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
+                    self.robot.properties, obj_type=UNMOVABLE)
+
+        path_estimator_obst = self.create_push_path_estimator(blocking_obj, objects_and_path)
+
+
+        for reachable_xy_pos in reachable_xy_positions:
+            pass
+            # TODO: find if there is a free spot of the positions (per distance, not per position first)
+
+        # TODO: now if no position has been found, find a position slightly tilted to left or le right. 
+
+
+
+        return State(pos=np.array([-4, 4.2, -0.1]))
+
+
+    def get_min_max_dimension_from_object(self, obj: Obstacle) -> Tuple[float, float]:
+        """ return the minimal and maximal dimensions for a box or cylinder object. """
+
+        # retrieve min and max dimension of the object
+        if isinstance(obj.properties, BoxObstacle):
+            min_obj_dimension = min(obj.properties.width(), obj.properties.length())
+            max_obj_dimension = max(obj.properties.width(), obj.properties.length())
+        elif isinstance(obj.properties, CylinderObstacle):
+            min_obj_dimension = max_obj_dimension = obj.properties.radius()
+        else:
+            raise ValueError(f"object not recognised, type: {type(obj)}")
+
+        return (min_obj_dimension, max_obj_dimension)
+
+    def _find_first_xy_position_in_free_space(self, obst_xy_position: np.ndarray, dist_from_obj_min: float, dist_from_obj_max: float,
+                                    orien: float,  path_estimator: PathEstimator) -> np.ndarray:
+        """ return the first pose that is in free space if no
+            pose_2d is in free space, nothing is returned.
+
+            obst_xy_position:    objects position is xy coordinates
+            dist_from_obj_min:  min distance from object
+            dist_from_obj_max:  maximal distance from object
+            orien:              orientation between line where points to check lie, and positive y axis.
+            path_estimator:     configuration space of the robot
+
+        """
+        for xy_pos_temp in np.linspace(dist_from_obj_min, dist_from_obj_max, 11):
+
+            temp_xy_position = [obst_xy_position[0] - np.sin(orien)*xy_pos_temp,
+                    obst_xy_position[1] + np.cos(orien) * xy_pos_temp]
+
+            if path_estimator.occupancy(temp_xy_position) == FREE:
+                return temp_xy_position
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """

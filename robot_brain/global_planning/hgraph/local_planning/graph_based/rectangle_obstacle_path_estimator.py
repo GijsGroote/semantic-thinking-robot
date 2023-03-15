@@ -6,6 +6,9 @@ import warnings
 import plotly.graph_objects as go
 import numpy as np
 
+from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
+
 from helper_functions.geometrics import (
         minimal_distance_point_to_line,
         point_in_rectangle,
@@ -116,6 +119,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         sin_rl = math.sin(r_orien)*self.obst_y_length/2
         cos_rw = math.cos(r_orien)*self.obst_x_length/2
         sin_rw = math.sin(r_orien)*self.obst_x_length/2
+
         cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
         sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
         cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
@@ -471,40 +475,37 @@ class RectangleObstaclePathEstimator(PathEstimator):
                 )
             )
 
-            match obst.properties.type():
-                case "sphere" | "cylinder":
-                    fig.add_shape(type="circle",
-                            xref="x", yref="y",
-                            x0=obst.state.pos[1]-obst.properties.radius(),
-                            y0=obst.state.pos[0]-obst.properties.radius(),
-                            x1=obst.state.pos[1]+obst.properties.radius(),
-                            y1=obst.state.pos[0]+obst.properties.radius(),
-                            line_color="black",
-                            )
-                case "box":
-                    cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
-                    sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
-                    cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
-                    sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
-
-                    fig.add_trace(go.Scatter(y=[obst.state.pos[0]-sin_ol+cos_ow,
-                        obst.state.pos[0]-sin_ol-cos_ow,
-                        obst.state.pos[0]+sin_ol-cos_ow,
-                        obst.state.pos[0]+sin_ol+cos_ow,
-                        obst.state.pos[0]-sin_ol+cos_ow],
-                        x=[obst.state.pos[1]+cos_ol+sin_ow,
-                            obst.state.pos[1]+cos_ol-sin_ow,
-                            obst.state.pos[1]-cos_ol-sin_ow,
-                            obst.state.pos[1]-cos_ol+sin_ow,
-                            obst.state.pos[1]+cos_ol+sin_ow],
+            if isinstance(obst.properties, CylinderObstacle):
+                fig.add_shape(type="circle",
+                        xref="x", yref="y",
+                        x0=obst.state.pos[1]-obst.properties.radius(),
+                        y0=obst.state.pos[0]-obst.properties.radius(),
+                        x1=obst.state.pos[1]+obst.properties.radius(),
+                        y1=obst.state.pos[0]+obst.properties.radius(),
                         line_color="black",
-                        mode='lines'))
+                        )
 
-                case "urdf":
-                    warnings.warn("the urdf obststacle is not yet implemented")
+            elif isinstance(obst.properties, BoxObstacle):
+                cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+                sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+                cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+                sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
 
-                case _:
-                    raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
+                fig.add_trace(go.Scatter(y=[obst.state.pos[0]-sin_ol+cos_ow,
+                    obst.state.pos[0]-sin_ol-cos_ow,
+                    obst.state.pos[0]+sin_ol-cos_ow,
+                    obst.state.pos[0]+sin_ol+cos_ow,
+                    obst.state.pos[0]-sin_ol+cos_ow],
+                    x=[obst.state.pos[1]+cos_ol+sin_ow,
+                        obst.state.pos[1]+cos_ol-sin_ow,
+                        obst.state.pos[1]-cos_ol-sin_ow,
+                        obst.state.pos[1]-cos_ol+sin_ow,
+                        obst.state.pos[1]+cos_ol+sin_ow],
+                    line_color="black",
+                    mode='lines'))
+
+            else:
+                raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
         fig.update_layout(
                 height=900,
