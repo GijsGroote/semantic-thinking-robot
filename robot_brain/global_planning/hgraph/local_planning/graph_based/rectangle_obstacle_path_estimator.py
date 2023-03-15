@@ -451,8 +451,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
             )
         )
 
-        # add the boundaries of the map
-        fig.add_shape(type="rect",
+        # add the boundaries of the map fig.add_shape(type="rect",
                 x0=self.grid_y_length/2, y0=self.grid_x_length/2,
                 x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
                 line_color="black",
