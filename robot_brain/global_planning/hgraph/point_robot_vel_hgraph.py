@@ -12,7 +12,7 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.obstacle import Obstacle, UNMOVABLE, FREE
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
+from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS, in_grid
 from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
@@ -28,7 +28,7 @@ from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 
-from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsException
+from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsException, NoTargetPositionFoundException
 
 from helper_functions.geometrics import (
         which_side_point_to_line,
@@ -185,12 +185,10 @@ class PointRobotVelHGraph(HGraph):
     def find_free_state_for_blocking_obstacle(self, blocking_obj: Obstacle, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
         print('in find_free_state_for_blocking_obstacle AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
-
+        # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
         # pretend that the object is unmovable
         blocking_obj_type = blocking_obj.type
-        print(f'blocking_obj memory adress is {hex(id(blocking_obj))}')
         blocking_obj.type = UNMOVABLE
 
         # configuration space for the robot
@@ -199,12 +197,13 @@ class PointRobotVelHGraph(HGraph):
         # find reachable position around the object
         reachable_xy_positions = []
         (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
+        obj_xy_position = blocking_obj.state.get_xy_position()
 
         # find reachable positions around blocking object
         for temp_orien in np.linspace(0, 2*math.pi, 8):
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
-            xy_position_in_free_space = self._find_first_xy_position_in_free_space(blocking_obj.state.get_xy_position(),
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obj_xy_position,
                     min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator_robot)
 
             if xy_position_in_free_space is not None:
@@ -217,8 +216,8 @@ class PointRobotVelHGraph(HGraph):
 
         blocking_obj.type = blocking_obj_type
 
-        assert len(reachable_xy_positions) != 0, f"no positions where reachable around object {blocking_obj.name}"
-
+        if len(reachable_xy_positions) == 0:
+            raise NoTargetPositionFoundException(f"no positions where reachable around object {blocking_obj.name}")
         # configuration space for the object
         objects_and_path = copy.deepcopy(self.obstacles)
 
@@ -227,19 +226,39 @@ class PointRobotVelHGraph(HGraph):
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
                     self.robot.properties, obj_type=UNMOVABLE)
 
-        path_estimator_obst = self.create_push_path_estimator(blocking_obj, objects_and_path)
+        path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
+
+        # create the orientations
+        obj_target_orien = []
+        for robot_xy_pos in reachable_xy_positions:
+            obj_target_orien.append(math.atan2(-robot_xy_pos[0]-obj_xy_position[0],\
+                    robot_xy_pos[1]-obj_xy_position[1]) + math.pi)
+
+        for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):
+            for temp_orien in obj_target_orien:
+                temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+                temp_xy_position = [obj_xy_position[0] - np.sin(temp_orien)*blocking_obj_to_target_dist,
+                    obj_xy_position[1] + np.cos(temp_orien)*blocking_obj_to_target_dist]
+
+                if in_grid(*temp_xy_position) and path_estimator_obj.occupancy(temp_xy_position) == FREE:
+                    return State(pos=[temp_xy_position[0], temp_xy_position[1], 0])
 
 
-        for reachable_xy_pos in reachable_xy_positions:
-            pass
-            # TODO: find if there is a free spot of the positions (per distance, not per position first)
+        obj_target_semi_orien = [obj_target_orien+math.pi/3*np.ones(len(obj_target_orien)),
+                obj_target_orien-math.pi/3*np.ones(len(obj_target_orien))]
 
-        # TODO: now if no position has been found, find a position slightly tilted to left or le right. 
+        for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):
+            for temp_orien in obj_target_semi_orien:
+                temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
+                temp_xy_position = [obj_xy_position[0] - np.sin(temp_orien)*blocking_obj_to_target_dist,
+                    obj_xy_position[1] + np.cos(temp_orien)*blocking_obj_to_target_dist]
 
+                if in_grid(*temp_xy_position) and path_estimator_obj.occupancy(temp_xy_position) == FREE:
+                    return State(pos=[temp_xy_position[0], temp_xy_position[1], 0])
 
-        return State(pos=np.array([-4, 4.2, -0.1]))
-
+        raise NoTargetPositionFoundException
 
     def get_min_max_dimension_from_object(self, obj: Obstacle) -> Tuple[float, float]:
         """ return the minimal and maximal dimensions for a box or cylinder object. """

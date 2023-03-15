@@ -42,7 +42,7 @@ class PathEstimator(ABC):
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
         self._obstacles = obstacles
-        assert obst_cart_2d.shape == (2,), \
+        assert obst_cart_2d.shape in  ((2,), (2,1)), \
                 f"obstacle position should be of shape (2,), it's: {obst_cart_2d.shape}"
         self._obst_cart_2d = obst_cart_2d
         self.obst_name = obst_name

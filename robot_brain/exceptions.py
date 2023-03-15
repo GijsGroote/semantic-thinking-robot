@@ -12,3 +12,6 @@ class FaultDetectedException(Exception):
 
 class NoBestPushPositionException(Exception):
     """ No best push position around an object could be found. """
+
+class NoTargetPositionFoundException(Exception):
+    """ No target position can be found to push object toward. """

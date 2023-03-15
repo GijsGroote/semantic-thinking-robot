@@ -536,7 +536,9 @@ class HGraph(Graph):
             blocking_obst_start_node.iden))
 
         # find state that is not overlapping with planned path
+        # TODO: the find_free_state_for_blocking_obstacle could raise an assertionerror, fix that
         target_state = self.find_free_state_for_blocking_obstacle(blocking_obst, edge.motion_planner.shortest_path)
+        print(f'Fuck yeah the target state iissssssssss {target_state.get_xy_position()}')
 
         blocking_obst_target_node = ObstacleNode(
                 self.unique_node_iden(),

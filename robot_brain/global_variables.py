@@ -1,6 +1,6 @@
 DT = 0.05
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = True
+CREATE_SERVER_DASHBOARD = False
 PLOT_CONTROLLER = False
 LOG_METRICS = True
 DASHBOARD_PORT_PID = 8040
@@ -15,6 +15,11 @@ UNKNOWN_OBSTACLE_COST = 0.5
 KNOWN_OBSTACLE_COST = 0.5
 GRID_X_SIZE =13# up to down length
 GRID_Y_SIZE =13# left to right length
+
+def in_grid(x:float, y:float) -> bool:
+    """ return True if the (x,y) position in
+    inside the grid boundaries, otherwise False. """
+    return abs(x)<=GRID_X_SIZE/2 and abs(y)<=GRID_Y_SIZE
 
 POINT_ROBOT_RADIUS = 0.20
 BOXER_ROBOT_LENGTH = 0.85

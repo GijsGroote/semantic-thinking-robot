@@ -218,7 +218,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         if isinstance(pose_2d, list):
             pose_2d = np.array(pose_2d)
 
-        if pose_2d.shape == (2,):
+        if pose_2d.shape == ((2,), (2,1)):
             pose_2d = np.append(pose_2d, [0])
 
         idx = self._pose_2d_to_p_idx(pose_2d)
@@ -451,11 +451,12 @@ class RectangleObstaclePathEstimator(PathEstimator):
             )
         )
 
-        # add the boundaries of the map fig.add_shape(type="rect",
-                x0=self.grid_y_length/2, y0=self.grid_x_length/2,
-                x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
-                line_color="black",
-                )
+        # add the boundaries of the map 
+        fig.add_shape(type="rect",
+            x0=self.grid_y_length/2, y0=self.grid_x_length/2,
+            x1=-self.grid_y_length/2, y1=-self.grid_x_length/2,
+            line_color="black",
+            )
 
         # add the obstacles over the gridmap
         for obst in self.obstacles.values():
