@@ -64,7 +64,7 @@ def main(conn=None):
         "obstacles_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [
-            (box.name(), State(pos=np.array([4, 5.31, 0]))),
+            (box.name(), State(pos=np.array([0, 5.31, 0.1]))),
             # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
             # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
             # ("robot", State(pos=np.array([-3.3212, 1, 0]))),

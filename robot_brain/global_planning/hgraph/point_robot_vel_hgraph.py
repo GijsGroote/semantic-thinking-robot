@@ -21,6 +21,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstac
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
+from robot_brain.controller.push.mppi.mppi_4th_order import PushMppi4thOrder
 from robot_brain.system_model import SystemModel
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
@@ -37,11 +38,13 @@ from helper_functions.geometrics import (
         to_interval_zero_to_two_pi
         )
 
-
 DRIVE_MPC_MODEL= "drive_mpc_model"
 DRIVE_MPPI_MODEL= "drive_mppi_model"
 PUSH_MPPI_MODEL = "push_mppi_model"
 PUSH_MPPI_MODEL2 = "push_mppi_model2"
+PUSH_MPPI_MODEL_4TH_ORDER = "push_mppi_model_4th_order"
+
+
 
 class PointRobotVelHGraph(HGraph):
     """
@@ -333,6 +336,9 @@ class PointRobotVelHGraph(HGraph):
                 models.append(PUSH_MPPI_MODEL)
                 models.append(PUSH_MPPI_MODEL2)
 
+            if isinstance(controller, PushMppi4thOrder):
+                models.append(PUSH_MPPI_MODEL_4TH_ORDER)
+
             controllers_and_models.append((controller, models))
 
         return controllers_and_models
@@ -348,13 +354,19 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"controller name unknown: {model_name}")
 
     def get_push_controllers(self) -> list:
-        return [self.create_mppi_push_controller()]
+
+        return [self.create_mppi_push_controller_4th_order()]
+    # TODO: uncomment this below, use both controller please
+        # return [self.create_mppi_push_controller_4th_order(),
+        #         self.create_mppi_push_controller_5th_order()]
 
     def create_push_model(self, model_name: str):
         if model_name == PUSH_MPPI_MODEL:
             return self.create_mppi_push_model()
         elif model_name == PUSH_MPPI_MODEL2:
             return self.create_mppi_push_model2()
+        elif model_name == PUSH_MPPI_MODEL_4TH_ORDER:
+            return self.create_mppi_push_model_4th_order()
         else:
             raise ValueError(f"model name unknown: {model_name}")
 
@@ -406,9 +418,14 @@ class PointRobotVelHGraph(HGraph):
         return SystemModel(model, name=DRIVE_MPPI_MODEL)
 
     ##### PUSH MPPI #####
-    def create_mppi_push_controller(self):
+    def create_mppi_push_controller_5th_order(self):
         """ create MPPI push controller. """
         return PushMppi5thOrder()
+
+    def create_mppi_push_controller_4th_order(self):
+        """ create MPPI push controller. """
+        return PushMppi4thOrder()
+
 
     def create_mppi_push_model(self):
         """ create push model for MPPI pointrobot. """
@@ -503,3 +520,20 @@ class PointRobotVelHGraph(HGraph):
             return x_next
 
         return SystemModel(model, PUSH_MPPI_MODEL2)
+
+    def create_mppi_push_model_4th_order(self):
+        """ create push model for MPPI point robot. """
+
+        def model(x, u):
+            # this model describes the robot and objects as a solid block. they move as if stuck together
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
+            x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=DT)
+            x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=DT)
+
+            return x_next
+
+        return SystemModel(model, PUSH_MPPI_MODEL_4TH_ORDER)

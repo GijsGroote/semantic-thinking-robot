@@ -4,43 +4,40 @@ from robot_brain.controller.push.mppi.mppi import PushMppi
 from robot_brain.global_variables import TORCH_DEVICE
 from robot_brain.state import State
 
-class PushMppi5thOrder(PushMppi):
+class PushMppi4thOrder(PushMppi):
     """ Mppi push controller specific for 2th order systems
     it corresponds to the point robot which is driven by velocity input. """
 
     def __init__(self):
-        PushMppi.__init__(self, order=5)
+        PushMppi.__init__(self, order=4)
 
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
-        H = 0.5
-        W = 0.5
-        xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
-        ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
+        # target vector in torch format
+        target_torch = torch.cat((torch.tensor([self.target_state.pos[0]], device=TORCH_DEVICE),
+            torch.tensor([self.target_state.pos[1]], device=TORCH_DEVICE)), 0)
 
-        bools = ((x[:, 0] - xa)**2 + (x[:,1] - ya)**2 > 0.5*W**2*torch.ones(x.size(dim=0), device=TORCH_DEVICE)).type(torch.uint8)
-        # penalise:
-         # - going away from push position against the obstacle
-        robot_pose_cost = 100*bools*((x[:, 0] - xa)**2 + (x[:,1] - ya)**2)
+        # penalty for object not on the target position
+        obj_to_target_cost = torch.norm((target_torch - x[:,2:4]), p=2, dim=1)
 
-        # - the obstacle not being on the target position
-        obst_to_target_cost = torch.sqrt((x[:,2] - self.target_state.pos[0])**2 + (x[:,3] - self.target_state.pos[1])**2)
+        # penalty for the robot not being in line with target position an objects current position
+        b = x[:,2:4]-target_torch
+        # a = x[:,0:2]
+        # a1 = torch.div(a*b, b*b)*b
+        # a2 = a - a1
+        robot_to_line_cost = torch.norm(x[:,0:2]-torch.div(x[:,0:2]*b, b*b)*b, p=2, dim=1)
 
-        # - obstacle orientation to target position
-        obst_rotation_cost = 1.0*torch.abs(x[:,4] - self.target_state.ang_p[2])
+        # return obj_to_target_cost
+        return obj_to_target_cost + robot_to_line_cost
 
-        cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
-
-        return cost
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
-        # print(f'the current distance to cost self.
 
         return self.controller.command(
                 np.append(robot_state.get_xy_position(),
-                obstacle_state.get_2d_pose(), axis=0)).cpu().numpy()
+                obstacle_state.get_xy_position(), axis=0)).cpu().numpy()
 
     def _simulate(self, robot_state: State, obstacle_state: State, system_input: np.ndarray) -> State:
         """ simulate one time step into the future. """
