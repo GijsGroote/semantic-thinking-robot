@@ -107,7 +107,7 @@ class MotionPlanner(ABC):
         self.start_time_search = time.time()
 
         # add samples from path estimation
-        self._add_path_estimator_samples(source_sample, target_sample)
+        # self._add_path_estimator_samples(source_sample, target_sample)
 
         # return path if it exist and goes through free space only
         if len(self.shortest_paths) > 0:

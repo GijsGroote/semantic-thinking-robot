@@ -11,10 +11,10 @@ SAVE_LOG_METRICS = False
 MIN_INPUT = -2.0
 MAX_INPUT = 2.0
 
-UNKNOWN_OBSTACLE_COST = 0.5
-KNOWN_OBSTACLE_COST = 0.5
-GRID_X_SIZE =13# up to down length
-GRID_Y_SIZE =13# left to right length
+UNKNOWN_OBSTACLE_COST = 3.5
+KNOWN_OBSTACLE_COST = 3.5
+GRID_X_SIZE =10# up to down length
+GRID_Y_SIZE =10# left to right length
 
 def in_grid(x:float, y:float) -> bool:
     """ return True if the (x,y) position in
@@ -29,7 +29,7 @@ BOXER_ROBOT_WIDTH = 0.6
 PLOT_N_TIMESTEPS = 200
 
 FIG_BG_COLOR = "rgb(230, 230, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
-FIG_BG_COLOR = "rgb(255, 255, 255)"  # myEvenLighterColor "rgba(229,236,246,255)"
+FIG_BG_COLOR = "rgb(255, 255, 255)"  # white
 
 COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 

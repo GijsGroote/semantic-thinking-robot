@@ -356,6 +356,7 @@ class HGraph(Graph):
         try:
             error_triggered = False
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
+            edge.motion_planner.visualise(save=False)
 
         except PlanningTimeElapsedException as exc:
             error_triggered = True
