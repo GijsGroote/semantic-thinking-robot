@@ -238,7 +238,6 @@ class PushMotionPlanner(MotionPlanner):
             return True
 
         else:
-            self.visualise(save=False)
             raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
 
     def _extract_shortest_path(self) -> Tuple[list, list]:

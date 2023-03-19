@@ -16,22 +16,29 @@ class PushMppi4thOrder(PushMppi):
         cost drives the system to it's desired state. """
 
         # target vector in torch format
-        target_torch = torch.cat((torch.tensor([self.target_state.pos[0]], device=TORCH_DEVICE),
-            torch.tensor([self.target_state.pos[1]], device=TORCH_DEVICE)), 0)
+        target_points = torch.cat((self.target_state.pos[0]*torch.ones((x.size(dim=0), 1), device=TORCH_DEVICE),
+                self.target_state.pos[1]*torch.ones((x.size(dim=0), 1), device=TORCH_DEVICE)), 1)
 
         # penalty for object not on the target position
-        obj_to_target_cost = torch.norm((target_torch - x[:,2:4]), p=2, dim=1)
+        obj_to_target_cost = torch.norm((target_points - x[:,2:4]), p=2, dim=1)
 
-        # penalty for the robot not being in line with target position an objects current position
-        b = x[:,2:4]-target_torch
-        # a = x[:,0:2]
-        # a1 = torch.div(a*b, b*b)*b
-        # a2 = a - a1
-        robot_to_line_cost = torch.norm(x[:,0:2]-torch.div(x[:,0:2]*b, b*b)*b, p=2, dim=1)
+        # Calculate vector from b to a
+        ba = x[:,0:2] - x[:,2:4]
+        # Calculate unit vector in the direction of c
+        norm_c = torch.norm(target_points, dim=1, keepdim=True)
+        unit_c = target_points / norm_c
 
-        # return obj_to_target_cost
-        return obj_to_target_cost + robot_to_line_cost
+        # Calculate projection of ba onto unit_c
+        dot = torch.sum(ba * unit_c, dim=1, keepdim=True)
+        projection = dot * unit_c
 
+        # Calculate closest point on line segment to a
+        closest = x[:,2:4] + torch.clamp(dot, max=0) * unit_c
+
+        # Calculate distance between a and closest point
+        robot_behind_obj_cost = torch.norm(x[:,0:2] - closest, dim=1)
+
+        return robot_behind_obj_cost + obj_to_target_cost
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
 

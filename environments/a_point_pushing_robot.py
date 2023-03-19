@@ -39,16 +39,16 @@ def main(conn=None):
 
     n_steps = 10000
 
-    obstacles = {box.name(): box}
-            # box2.name(): box2,
+    obstacles = {box.name(): box,
+            box2.name(): box2,
             # sphere.name(): sphere,
-            # cylinder.name(): cylinder}
+            cylinder.name(): cylinder}
 
     # add obstacles
     env.add_obstacle(box)
-    # env.add_obstacle(box2)
+    env.add_obstacle(box2)
     # env.add_obstacle(sphere)
-    # env.add_obstacle(cylinder)
+    env.add_obstacle(cylinder)
 
     # add sensors
     sensor = ObstacleSensor()
@@ -65,6 +65,8 @@ def main(conn=None):
         "default_action": np.array(np.zeros(2)),
         "task": [
             (box.name(), State(pos=np.array([0, 5.31, 0.1]))),
+            (box2.name(), State(pos=np.array([-3, 1.31, 0.1]))),
+            (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
             # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
             # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
             # ("robot", State(pos=np.array([-3.3212, 1, 0]))),

@@ -36,7 +36,7 @@ class PushMppi(PushController):
                     running_cost=self._running_cost,
                     nx=self.order, # number of states in the system
                     noise_sigma=torch.tensor([[1,0],[0,1]], device=TORCH_DEVICE, dtype=torch.double),
-                    num_samples=5000, # number of rollouts
+                    num_samples=1000, # number of rollouts
                     horizon=self.n_horizon,
                     lambda_=1e-2,
                     device=TORCH_DEVICE,

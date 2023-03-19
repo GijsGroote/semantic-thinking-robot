@@ -531,8 +531,8 @@ class PointRobotVelHGraph(HGraph):
 
             x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
             x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
-            x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=DT)
-            x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=DT)
+            x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=0.5*DT)
+            x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=0.5*DT)
 
             return x_next
 

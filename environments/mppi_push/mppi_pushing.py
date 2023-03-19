@@ -41,14 +41,14 @@ def main():
         
         x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
         x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
-        x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=DT)
-        x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=DT)
+        x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=0.5*DT)
+        x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=0.5*DT)
 
         return x_next
 
     dyn_model = SystemModel(model, 'mppi_test_model')
 
-    box_target = State(pos=np.array([-3, 0, 0]), ang_p=np.array([0, 0, 0]))
+    box_target = State(pos=np.array([0, 5, 0]), ang_p=np.array([0, 0, 0]))
     env.add_target_ghost(box.name(), box_target.get_2d_pose())
 
     # box_targets = []
