@@ -1,20 +1,19 @@
 import numpy as np
 
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-# from robot_brain.global_planning.kgraph.kgraph import KGraph
 
-from robot_brain.global_planning.node import Node, COMPLETED, UNFEASIBLE, INITIALISED
+from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED
 from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.obstacle import Obstacle
 from robot_brain.state import State
 
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
-from robot_brain.global_planning.edge import Edge, INITIALISED, EXECUTING, FAILED
+from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_EXECUTING, EDGE_FAILED, EDGE_COMPLETED
 from robot_brain.global_planning.drive_act_edge import DriveActionEdge
 from robot_brain.global_planning.push_ident_edge import PushIdentificationEdge
 from robot_brain.global_planning.push_act_edge import PushActionEdge
-from robot_brain.global_planning.action_edge import ActionEdge, PATH_EXISTS, PATH_IS_PLANNED, HAS_SYSTEM_MODEL
+from robot_brain.global_planning.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.global_planning.identification_edge import IdentificationEdge
 from robot_brain.global_planning.empty_edge import EmptyEdge
@@ -22,6 +21,7 @@ from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
+
 
 
 def main():
@@ -33,12 +33,13 @@ def main():
 
     # robot
     robot_node = ObstacleNode(0, "robot", robot_obst)
+
     hgraph.add_start_node(robot_node)
 
     # green_box
-    green_box_start_node = ObstacleNode(1, "green_box", Obstacle("green_box", State(), "empty"))
+    green_box_start_node = ObstacleNode(1, "box", Obstacle("box", State(), "empty"))
     hgraph.add_start_node(green_box_start_node)
-    green_box_target_node = ObstacleNode(2, "green_box", Obstacle("green_box", State(), "empty"))
+    green_box_target_node = ObstacleNode(2, "box_target", Obstacle("box", State(), "empty"))
     hgraph.add_target_node(green_box_target_node)
 
     class controller:
@@ -57,11 +58,14 @@ def main():
                     model_name="model_name")
     hgraph.add_edge(push_box_edge)
 
+    hgraph.hypothesis.append(push_box_edge)
+    # push_box_edge.status = EDGE_COMPLETED
+    #
     # model node
     green_box_model_node = ObstacleNode(
             hgraph.unique_node_iden(),
-            "green_box_model",
-            Obstacle("green_box", State(), "empty"))
+            "box_model",
+            Obstacle("box", State(), "empty"))
 
     hgraph.add_node(green_box_model_node)
 
@@ -75,10 +79,12 @@ def main():
             push_box_edge.iden,
             "sys_model_name")
     hgraph.add_edge(push_ident_edge)
-
-    # rewire push edge
+    push_ident_edge.status  = EDGE_COMPLETED
+    #
+    # # rewire push edge
+    # hgraph.hypothesis.append(push_ident_edge)
     push_box_edge.source = green_box_model_node.iden
-
+    # #
     # robot drive to box
     drive_to_box_edge = DriveActionEdge(
             hgraph.unique_edge_iden(),
@@ -89,7 +95,9 @@ def main():
             controller("MPC"),
             "LTI model")
 
+    drive_to_box_edge.status = EDGE_COMPLETED
     hgraph.add_edge(drive_to_box_edge)
+    # hgraph.hypothesis.append(drive_to_box_edge)
 
     robot_model_node = ObstacleNode(
             hgraph.unique_node_iden(),
@@ -97,7 +105,7 @@ def main():
             Obstacle("robot_model", State(), "empty"))
 
     hgraph.add_node(robot_model_node)
-
+    #
     # drive ident edge
     drive_ident_edge = DriveIdentificationEdge(
             hgraph.unique_edge_iden(),
@@ -107,54 +115,68 @@ def main():
             controller("MPC"),
             0,
             "str")
+    drive_ident_edge.status = EDGE_COMPLETED
     hgraph.add_edge(drive_ident_edge)
+    # hgraph.hypothesis.append(drive_ident_edge)
 
-    # rewire drive edge
+    # # rewire drive edge
     drive_to_box_edge.source = robot_model_node.iden
-
+    # #
     # best pose node
-    best_push_node = ObstacleNode(
-            hgraph.unique_node_iden(),
-            "best_push_position",
-            Obstacle("-", State(), "empty"))
+    # best_push_node = ObstacleNode(
+    #         hgraph.unique_node_iden(),
+    #         "best_push_position",
+    #         Obstacle("-", State(), "empty"))
+    #
+    # hgraph.add_node(best_push_node)
 
-    hgraph.add_node(best_push_node)
 
-    # robot drive to best push pose 
-    drive_to_best_push_edge = DriveActionEdge(
-            hgraph.unique_edge_iden(),
-            green_box_model_node.iden,
-            best_push_node.iden,
-            robot_obst,
-            "driving",
-            controller("MPC"),
-            "LTI model")
+    # robot_copy_node = ObstacleNode(9, "robot_copy", robot_obst)
+    # hgraph.add_node(robot_copy_node)
 
-    hgraph.add_edge(drive_to_best_push_edge)
+    # robot drive to best push pose
+    # drive_to_best_push_edge = DriveActionEdge(
+    #         hgraph.unique_edge_iden(),
+    #         robot_copy_node.iden,
+    #         best_push_node.iden,
+    #         robot_obst,
+    #         "driving",
+    #         controller("MPC"),
+    #         "LTI model")
 
-    push_box_edge.source = best_push_node.iden
+    # hgraph.hypothesis.append(drive_to_best_push_edge)
+    # drive_to_best_push_edge.status = EDGE_COMPLETED
 
+    # hgraph.add_edge(EmptyEdge(15, green_box_model_node.iden, robot_copy_node.iden))
+
+    # hgraph.add_edge(drive_to_best_push_edge)
+
+    # push_box_edge.source = best_push_node.iden
+    #
     robot_model2_node = ObstacleNode(
             hgraph.unique_node_iden(),
             "robot_model2",
-            Obstacle("robot_model2", State(), "empty"))
+            Obstacle("robot_copy_model", State(), "empty"))
 
-    hgraph.add_node(robot_model2_node)
-
+    # hgraph.add_node(robot_model2_node)
+    #
     # drive ident edge
-    drive_best_push_ident_edge = DriveIdentificationEdge(
-            hgraph.unique_edge_iden(),
-            green_box_model_node.iden,
-            robot_model2_node.iden,
-            "Sys. Iden.",
-            controller("MPC"),
-            0,
-            "str")
-    hgraph.add_edge(drive_best_push_ident_edge)
+    # drive_best_push_ident_edge = DriveIdentificationEdge(
+    #         hgraph.unique_edge_iden(),
+    #         robot_copy_node.iden,
+    #         robot_model2_node.iden,
+    #         "Sys. Iden.",
+    #         controller("MPC"),
+    #         0,
+    #         "str")
+    # hgraph.add_edge(drive_best_push_ident_edge)
+    # hgraph.hypothesis.append(drive_best_push_ident_edge)
+    # drive_best_push_ident_edge.status = EDGE_COMPLETED
+    # #
+    # #
+    # drive_to_best_push_edge.source = robot_model2_node.iden
 
-
-    drive_to_best_push_edge.source = robot_model2_node.iden
-
+    hgraph.current_node = green_box_model_node
 
     hgraph.visualise(save=False)
 

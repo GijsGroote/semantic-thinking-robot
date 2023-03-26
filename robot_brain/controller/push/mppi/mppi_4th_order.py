@@ -38,7 +38,8 @@ class PushMppi4thOrder(PushMppi):
         # Calculate distance between a and closest point
         robot_behind_obj_cost = torch.norm(x[:,0:2] - closest, dim=1)
 
-        return robot_behind_obj_cost + obj_to_target_cost
+        # return robot_behind_obj_cost + obj_to_target_cost
+        return obj_to_target_cost
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
 

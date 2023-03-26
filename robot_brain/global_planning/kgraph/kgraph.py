@@ -27,7 +27,7 @@ class KGraph(Graph):
             # self.kgraph = kgraph
             # self.kgraph.visualise(
             #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
-            
+
     def visualise(self, path=None):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
@@ -37,7 +37,7 @@ class KGraph(Graph):
 
         # set a custom style sheet
         # TODO: relative path (which works)
-        # net.path = os.getcwd() + 
+        # net.path = os.getcwd() +
         net.path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/assets/graph_template.html"
 
 

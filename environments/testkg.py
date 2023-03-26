@@ -23,15 +23,56 @@ def main():
     node3 = ChangeOfStateNode(3, "robot_and_green_wall", [])
     node4 = ChangeOfStateNode(4, "robot_and_green_wall", [])
     node5 = ChangeOfStateNode(5, "robot_and_green_wall", [])
+    node6 = ChangeOfStateNode(6, "robot_and_green_wall", [])
+    node7 = ChangeOfStateNode(7, "robot_and_green_wall", [])
     kgraph.add_node(node1)
     kgraph.add_node(node2)
     kgraph.add_node(node3)
     kgraph.add_node(node4)
     kgraph.add_node(node5)
+    kgraph.add_node(node6)
+    kgraph.add_node(node7)
 
-    kgraph.add_edge(DriveActionEdge(1, 1, 3, "MPC, LTI model2",  controller("mpc")))
-    kgraph.add_edge(DriveActionEdge(2, 1, 4, "MPC, LTI model1",  controller("mpc")))
-    kgraph.add_edge(DriveActionEdge(3, 2, 5, "MPPI, nonlinear model",  controller("mpc")))
+    kgraph.add_edge(DriveActionEdge(iden=1,
+        source=1,
+        to=3,
+        robot_obst="robot",
+        verb="MPC, LTI model1",
+        controller=controller("mpc"),
+        model_name="LTI ss"))
+
+    kgraph.add_edge(DriveActionEdge(iden=2,
+        source=1,
+        to=4,
+        robot_obst="robot",
+        verb="MPC, LTI model2",
+        controller=controller("mpc"),
+        model_name="LTI ss"))
+
+    kgraph.add_edge(DriveActionEdge(iden=3,
+        source=1,
+        to=5,
+        robot_obst="robot",
+        verb="MPPI, nonlinear model1",
+        controller=controller("mppi"),
+        model_name="LTI ss2"))
+
+    kgraph.add_edge(DriveActionEdge(iden=4,
+        source=2,
+        to=7,
+        robot_obst="robot",
+        verb="MPC, LTI model3",
+        controller=controller("mpc"),
+        model_name="LTI ss3"))
+
+    kgraph.add_edge(DriveActionEdge(iden=4,
+        source=2,
+        to=6,
+        robot_obst="robot",
+        verb="MPPI, nonlinear model2",
+        controller=controller("mpc"),
+        model_name="LTI ss3"))
+
 
     kgraph.visualise()
 
