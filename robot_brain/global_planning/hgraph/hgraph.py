@@ -17,7 +17,7 @@ from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.obstacle import Obstacle
+from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
@@ -293,6 +293,11 @@ class HGraph(Graph):
             start_node = self.get_node(source_node_iden)
             target_node = self.get_node(target_node_iden)
 
+
+            check_obj_movable = False
+            if self.get_node(target_node_iden).obstacle.type == UNKNOWN:
+                check_obj_movable = True
+
             edge = PushActionEdge(
                     iden=self.unique_edge_iden(),
                     source=source_node_iden,
@@ -301,10 +306,12 @@ class HGraph(Graph):
                     push_obst=start_node.obstacle,
                     verb="pushing",
                     controller=controller,
-                    model_name=model_name)
+                    model_name=model_name,
+                    check_obj_movable=check_obj_movable)
 
             self.add_edge(edge)
             self.hypothesis.insert(self.edge_pointer, edge)
+
 
     def estimate_path(self, edge):
         """ Estimate path existance for from start to target for an edge. """
@@ -360,12 +367,17 @@ class HGraph(Graph):
 
         try:
             error_triggered = False
+
+            edge.path_estimator.visualise(save=False)
+            print(f'motion planner for obj {self.get_node(edge.source).obstacle.name} from {current_state.get_2d_pose()}  to {self.get_node(edge.to).obstacle.state.get_2d_pose()}')
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
 
         except PlanningTimeElapsedException as exc:
             error_triggered = True
             add_node_list = []
             self.handle_planning_time_elapsed_exception(exc, edge)
+        
+        edge.motion_planner.visualise(save=False)# delete this yo
 
         if error_triggered:
             return self.search_hypothesis()
@@ -507,6 +519,8 @@ class HGraph(Graph):
         # find which obstacle is blocking
         obst_keys = self.in_obstacle(add_node_list)
 
+        print(f'creating edge to remove obstacle {obst_keys}')
+
         if len(obst_keys) == 0:
             warnings.warn(f"could not find obstacle at {add_node_list[0]}, do not create edges to remove obstacle")
             return
@@ -553,6 +567,8 @@ class HGraph(Graph):
 
         self.add_node(blocking_obst_target_node)
         edge.source = blocking_obst_target_node.iden
+
+        print(f'push that thing to state: {target_state.get_2d_pose()}')
 
     @abstractmethod
     def create_drive_path_estimator(self, obstacles) -> PathEstimator:

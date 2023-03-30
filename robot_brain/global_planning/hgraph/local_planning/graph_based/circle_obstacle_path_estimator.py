@@ -243,10 +243,6 @@ class CircleObstaclePathEstimator(PathEstimator):
     def visualise(self, save: bool=True):
         """ Display the configuration grid map. """
 
-        # dcolorsc = [[0, '#09ffff'], [0.25, '#09ffff'],
-        #         [0.25, '#19d3f3'],[0.5, '#19d3f3'],
-        #         [0.5, '#e763fa'], [0.75, '#e763fa'],
-        #         [0.75, '#ab63fa'], [1.0, '#ab63fa']]
         dcolorsc = [[0, '#90ee90'], [0.25, '#90ee90'],
                 [0.25, '#19d3f3'],[0.5, '#19d3f3'],
                 [0.5, '#e763fa'], [0.75, '#e763fa'],

@@ -32,61 +32,6 @@ class DriveMotionPlanner(MotionPlanner):
 
         self.start_time = None
 
-    def setup(self, source_sample: np.ndarray | tuple | list, target_sample: np.ndarray | tuple | list):
-
-        assert isinstance(source_sample, (np.ndarray, tuple, list)) and isinstance(target_sample, (np.ndarray, tuple, list)), \
-            "start- or target sample is not a type tuple, list or np.array which it should be."
-        if len(source_sample) == 2:
-            source_sample = np.array([source_sample[0], source_sample[1], 0])
-        if len(target_sample) == 2:
-            target_sample = np.array([target_sample[0], target_sample[1], 0])
-        assert len(source_sample) == 3 and len(target_sample) == 3, \
-                f"start- and target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
-
-        self.samples.clear()
-        self.x_sorted.clear()
-        self.y_sorted.clear()
-        if self.include_orien:
-            self.orien_sorted.clear()
-
-        # add negligleble amount to make positions hashable if initial position is 0
-        if source_sample[0] == 0:
-            source_sample[0] = float(6e-9)
-        if source_sample[1] == 0:
-            source_sample[1] = float(5e-9)
-        if self.include_orien and source_sample[2] == 0:
-            source_sample[2] = float(4e-9)
-
-        if target_sample[0] == 0:
-            target_sample[0] = float(3e-9)
-        if target_sample[1] == 0:
-            target_sample[1] = float(2e-9)
-        if  self.include_orien and target_sample[2] == 0:
-            target_sample[2] = float(1e-9)
-        source_sample[2] = to_interval_zero_to_two_pi(source_sample[2])
-        target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
-
-        # add start and target samples
-        self.samples[self.source_tree_key] = {
-                "pose": [source_sample[0], source_sample[1], source_sample[2]],
-                "cost_to_source": 0,
-                "prev_sample_key": self.source_tree_key,
-                "next_sample_keys": [],
-                "in_tree": self.source_tree_key,
-                "add_node": []}
-
-        self.samples[self.target_tree_key] = {
-                "pose": [target_sample[0], target_sample[1], target_sample[2]],
-                "cost_to_source": 0,
-                "prev_sample_key": self.target_tree_key,
-                "next_sample_keys": [],
-                "in_tree": self.target_tree_key,
-                "add_node": []}
-
-        self.n_samples = 2
-
-        self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key, target_sample[0]: self.target_tree_key})
-        self.y_sorted = SortedDict({source_sample[1]: self.source_tree_key, target_sample[1]: self.target_tree_key})
 
     def _create_random_sample(self) -> list:
         """ randomly generate sample inside grid boundaries. """

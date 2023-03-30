@@ -106,7 +106,7 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=GRID_Y_SIZE,
                 obstacle=self.robot,
                 step_size=0.2,
-                search_size=0.4,
+                search_size=0.25,
                 path_estimator=path_estimator)
 
     def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
@@ -122,7 +122,7 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=GRID_Y_SIZE,
                 obstacle=push_obstacle,
                 step_size=0.2,
-                search_size=0.4,
+                search_size=0.25,
                 path_estimator=path_estimator,
                 include_orien=include_orien)
 
@@ -170,12 +170,19 @@ class PointRobotVelHGraph(HGraph):
             else:
                 best_robot_pose_orien = -math.pi/2
         else:
-            best_robot_pose_orien = math.atan2(-clost_obst_xy_position[0]-obst_xy_position[0],\
+            best_robot_pose_orien = math.atan2(-(clost_obst_xy_position[0]-obst_xy_position[0]),\
                     clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
 
         path_estimator = self.create_drive_path_estimator(self.obstacles)
 
-        for temp_orien in [best_robot_pose_orien, best_robot_pose_orien + math.pi/2, best_robot_pose_orien - math.pi/2]:
+        bo = best_robot_pose_orien
+        pi = math.pi
+        try_these_orien = [bo, bo-pi/100, bo+pi/100,
+                bo-pi/80, bo+pi/80, bo-pi/60, bo+pi/60,
+                bo-pi/40, bo+pi/40, bo-pi/20, bo+pi/20,
+                bo-pi/10, bo+pi/10, bo-pi/5, bo+pi/5]
+
+        for temp_orien in try_these_orien:
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
             xy_position_in_free_space = self._find_first_xy_position_in_free_space(obst_xy_position,
@@ -191,6 +198,7 @@ class PointRobotVelHGraph(HGraph):
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
+        print('hey')
         # pretend that the object is unmovable
         blocking_obj_type = blocking_obj.type
         blocking_obj.type = UNMOVABLE
@@ -198,12 +206,14 @@ class PointRobotVelHGraph(HGraph):
         # configuration space for the robot
         path_estimator_robot = self.create_drive_path_estimator(self.obstacles)
 
+        print('hey2')
         # find reachable position around the object
         reachable_xy_positions = []
         (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
         obj_xy_position = blocking_obj.state.get_xy_position()
         blocking_obj_orien = to_interval_zero_to_two_pi(blocking_obj.state.get_2d_pose()[2])
 
+        print('hey3')
         # find reachable positions around blocking object
         for temp_orien in np.linspace(0, 2*math.pi, 8):
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
@@ -217,10 +227,13 @@ class PointRobotVelHGraph(HGraph):
                     reachable_xy_positions.append(xy_position_in_free_space)
 
                 except NoPathExistsException:
+
+                    print('hey4')
                     pass
 
         blocking_obj.type = blocking_obj_type
 
+        print('hey5')
 
         if len(reachable_xy_positions) == 0:
             raise NoTargetPositionFoundException(f"no positions where reachable around object {blocking_obj.name}")
@@ -302,7 +315,7 @@ class PointRobotVelHGraph(HGraph):
             path_estimator:     configuration space of the robot
 
         """
-        for xy_pos_temp in np.linspace(dist_from_obj_min, dist_from_obj_max, 11):
+        for xy_pos_temp in np.linspace(dist_from_obj_min, dist_from_obj_max, 50):
 
             temp_xy_position = [obst_xy_position[0] - np.sin(orien)*xy_pos_temp,
                     obst_xy_position[1] + np.cos(orien) * xy_pos_temp]

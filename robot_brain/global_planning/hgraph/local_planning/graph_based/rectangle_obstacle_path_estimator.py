@@ -379,11 +379,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
     def visualise(self, orien_idx:int=0, save:bool=True):
         """ Display the configuration grid map. """
 
-        # bvals = [0, 1, 2, 3, 4]
-        # colors = ['#09ffff', '#19d3f3', '#e763fa' , '#ab63fa']
-        # dcolorsc = discrete_colorscale(bvals, colors)
-
-        dcolorsc = [[0, '#09ffff'], [0.25, '#09ffff'],
+        dcolorsc = [[0, '#90ee90'], [0.25, '#90ee90'],
                 [0.25, '#19d3f3'],[0.5, '#19d3f3'],
                 [0.5, '#e763fa'], [0.75, '#e763fa'],
                 [0.75, '#ab63fa'], [1.0, '#ab63fa']]
@@ -421,7 +417,6 @@ class RectangleObstaclePathEstimator(PathEstimator):
         cos_rw = math.cos(r_orien)*self.obst_x_length/2
         sin_rw = math.sin(r_orien)*self.obst_x_length/2
 
-        # TODO: make this more generic, obst not robot
         fig.add_trace(go.Scatter(
             x=[self.obst_cart_2d[1]],
             y=[self.obst_cart_2d[0]],

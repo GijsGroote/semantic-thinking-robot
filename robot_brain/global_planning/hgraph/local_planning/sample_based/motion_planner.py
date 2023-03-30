@@ -11,7 +11,7 @@ import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle, UNMOVABLE
+from robot_brain.obstacle import Obstacle, FREE, UNMOVABLE, MOVABLE, UNKNOWN
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
@@ -90,9 +90,79 @@ class MotionPlanner(ABC):
         if self.include_orien:
             self.orien_sorted = SortedDict({})
 
-    @abstractmethod
-    def setup(self, source_sample, target_sample):
-        """ initialise the source and target samples. """
+    def setup_source(self, source_sample: np.ndarray | tuple | list):
+
+        assert isinstance(source_sample, (np.ndarray, tuple, list)), \
+            "start- sample is not a type tuple, list or np.array which it should be."
+        if len(source_sample) == 2:
+            source_sample = np.array([source_sample[0], source_sample[1], 0])
+        assert len(source_sample) == 3, \
+                f"start- and target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
+
+        self.samples.clear()
+        self.x_sorted.clear()
+        self.y_sorted.clear()
+        if self.include_orien:
+            self.orien_sorted.clear()
+
+        # add negligleble amount to make positions hashable if initial position is 0
+        if source_sample[0] == 0:
+            source_sample[0] = float(6e-9)
+        if source_sample[1] == 0:
+            source_sample[1] = float(5e-9)
+        if self.include_orien and source_sample[2] == 0:
+            source_sample[2] = float(4e-9)
+
+        source_sample[2] = to_interval_zero_to_two_pi(source_sample[2])
+
+        # add start and target samples
+        self.samples[self.source_tree_key] = {
+                "pose": [source_sample[0], source_sample[1], source_sample[2]],
+                "cost_to_source": 0,
+                "prev_sample_key": self.source_tree_key,
+                "next_sample_keys": [],
+                "in_tree": self.source_tree_key,
+                "add_node": []}
+
+
+        self.n_samples = 1
+
+        self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key})
+        self.y_sorted = SortedDict({source_sample[1]: self.source_tree_key})
+
+
+    def setup_target(self, target_sample: np.ndarray | tuple | list):
+
+
+        assert isinstance(target_sample, (np.ndarray, tuple, list)), \
+            "target sample is not a type tuple, list or np.array which it should be."
+        if len(target_sample) == 2:
+            target_sample = np.array([target_sample[0], target_sample[1], 0])
+        assert len(target_sample) == 3, \
+                f"target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
+
+
+        if target_sample[0] == 0:
+            target_sample[0] = float(3e-9)
+        if target_sample[1] == 0:
+            target_sample[1] = float(2e-9)
+        if  self.include_orien and target_sample[2] == 0:
+            target_sample[2] = float(1e-9)
+        target_sample[2] = to_interval_zero_to_two_pi(target_sample[2])
+
+        self.samples[self.target_tree_key] = {
+                "pose": [target_sample[0], target_sample[1], target_sample[2]],
+                "cost_to_source": 0,
+                "prev_sample_key": self.target_tree_key,
+                "next_sample_keys": [],
+                "in_tree": self.target_tree_key,
+                "add_node": []}
+
+        self.n_samples = 2
+
+        self.x_sorted[target_sample[0]] = self.target_tree_key
+        self.y_sorted[target_sample[1]] = self.target_tree_key
+
 
     def search_path(self, source: State, target: State) -> Tuple[list, list]:
         """ search for a path between source and target state. """
@@ -103,11 +173,15 @@ class MotionPlanner(ABC):
         self.path_estimator.update()
         self.reset()
 
-        self.setup(source_sample, target_sample)
+        self.setup_source(source_sample)
         self.start_time_search = time.time()
 
         # add samples from path estimation
         self._add_path_estimator_samples(source_sample, target_sample)
+        self.setup_target(target_sample)
+        close_samples_keys = self._get_closeby_sample_keys(target_sample, self.search_size)
+        self._rewire_close_samples_and_connect_trees(self.target_tree_key, close_samples_keys)
+        print(f'adding pe samples takes {time.time() -self.start_time_search } seconds')
 
         # return path if it exist and goes through free space only
         if len(self.shortest_paths) > 0:
@@ -116,8 +190,11 @@ class MotionPlanner(ABC):
                 self.shortest_path = path
                 return (path, add_node_list)
 
+        print(f'lets search a little more this already took {time.time() -self.start_time_search } seconds')
+
         # while keep searching:
         while not self._stop_criteria_test():
+
             # generate random sample
             sample_rand = self._create_random_sample()
 
@@ -137,6 +214,7 @@ class MotionPlanner(ABC):
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
             if in_space_id == UNMOVABLE: # obstacle space, abort sample
+                print('sample in unmovable space')
                 continue
 
             # find closeby samples and connect new sample to cheapest sample
@@ -144,8 +222,9 @@ class MotionPlanner(ABC):
 
             try:
                 sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
-            except AssertionError:
-                warnings.warn("duplicate key found in sorted pose of sample")
+            except [AssertionError, ValueError] as exc:
+                print('error occured with sample')
+                warnings.warn(f"emerged Error during planning, discard sample: {exc}")
                 continue
 
             # rewire close samples lowering their cost, connect to other tree if possible
@@ -153,6 +232,10 @@ class MotionPlanner(ABC):
 
         (path, add_node_list)  = self._extract_shortest_path()
         self.shortest_path = path
+
+        print('thjis visualisation should be a complete path after mp')
+        self.visualise(save=False)
+        self.path_estimator.visualise(save=False)
 
         return (path, add_node_list)
 
@@ -164,6 +247,12 @@ class MotionPlanner(ABC):
 
         shortest_path = self.path_estimator.search_path(source_sample, target_sample)
         # shortest_path = shortest_path[1:-1]
+        # do not add if shortest path does go though movable or unknown space
+        for sample in shortest_path:
+            if self.path_estimator.occupancy(np.array(sample)) != FREE:
+                print('Do not add shortest path that goes through movable of unknown space')
+                return
+
 
         for sample_new in shortest_path:
             # add negligble amount making x and y coordinates unique
@@ -175,14 +264,12 @@ class MotionPlanner(ABC):
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
 
-            if in_space_id == UNMOVABLE: # obstacle space, abort sample
-                raise ValueError(f"Sample {sample_new} from the path estimator is in obstacle space")
-
             close_samples_keys = self._get_closeby_sample_keys(sample_new, self.search_size)
 
-            sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
-            self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
-
+            try:
+                sample_new_key = self._connect_to_cheapest_sample(sample_new, close_samples_keys, in_space_id)
+            except ValueError:
+                continue
 
     @abstractmethod
     def _create_random_sample(self):
@@ -215,6 +302,7 @@ class MotionPlanner(ABC):
 
         self.x_sorted[sample[0]] = key
         self.y_sorted[sample[1]]= key
+
         if self.include_orien:
             self.orien_sorted[sample[2]]= key
 
