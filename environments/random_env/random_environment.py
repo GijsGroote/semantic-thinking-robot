@@ -28,10 +28,10 @@ def main():
     # TODO: Do not yet give the obstacles a locaaation
     rand_obj_generator.create_random_obstacles(
             n_unmovable_obstacles = 3,
-            n_movable_obstacles = 5,
+            n_movable_obstacles = 10,
             n_subtasks = 2)
 
-    for n_env in range(3):
+    for n_env in range(4):
         print(f"create environment number: {n_env}")
 
         obstacles = rand_obj_generator.reshuffle_env()
@@ -42,12 +42,17 @@ def main():
         for obstacle in obstacles.values():
             env.add_obstacle(obstacle)
 
-        # add sensors
         sensor = ObstacleSensor()
         sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
         env.add_sensor(sensor)
-
         ob, reward, done, info = env.step(action)
+
+        # for subtask in task:
+        #     print(subtask)
+        #     print(obstacles)
+        #     env.add_target_ghost(subtask[0], subtask[1].get_2d_pose())
+
+        # add sensors
 
         brain = RBrain()
         brain.setup({
@@ -62,11 +67,11 @@ def main():
 
         brain.update(ob)
 
-        for _ in range(10000):
+        for _ in range(250):
 
-            action[0:2] = brain.respond()
+            # action[0:2] = brain.respond()
             ob, reward, done, info = env.step(action)
-            brain.update(ob)
+            # brain.update(ob)
 
 if __name__ == "__main__":
     main()

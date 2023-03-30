@@ -18,8 +18,10 @@ def main():
     """
     env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
     ob = env.reset()
+    action = np.zeros(env.n())
 
-    env.add_obstacle(blockade_obstacles["urdf_duck"])
+    # env.add_obstacle(blockade_obstacles["urdf_duck"])
+    env.add_obstacle(blockade_obstacles["simpleCylinder"])
     env.add_obstacle(blockade_obstacles["simpleBox"])
     env.add_obstacle(blockade_obstacles["wall1"])
     env.add_obstacle(blockade_obstacles["wall2"])
@@ -31,14 +33,26 @@ def main():
 
     ob, reward, done, info = env.step(np.zeros(env.n()))
 
+    for i in range(50):
+        ob, _, _, _ = env.step(action)
+
+
+    box_target_state = State(pos=np.array([3, 0, 0]))
+    # print("now adding the robot")
+    # env.add_robot_ghost("boxerRobot-vel-v7", box_target_state.get_2d_pose(), 0.2)
+    # print("now done adding the robot")
+
+    env.add_target_ghost(blockade_obstacles["simpleBox"].name(), box_target_state.get_2d_pose())
+
     brain = RBrain()
     brain.setup({
         "dt": DT,
         "robot_type": "boxer_robot",
         "obstacles_in_env": True,
         "obstacles": blockade_obstacles,
-        "target_state": State(pos=np.array([3,0,0])),
-
+        "task": [
+                (blockade_obstacles["simpleBox"].name(), box_target_state),
+                ]
     }, ob)
 
     for i in range(10000):
@@ -49,8 +63,6 @@ def main():
         
         if i==200:
             brain.controller.set_target_state(State(pos=np.array([1,3,0])))
-
-
 
         action = brain.respond()
         ob, _, _, _ = env.step(action)

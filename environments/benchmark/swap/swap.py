@@ -2,11 +2,12 @@ from multiprocessing import Process, Pipe
 import numpy as np
 import gym
 import urdfenvs.boxer_robot
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
-from robot_brain.global_planning.state import State
+from robot_brain.state import State
 
 from environments.benchmark.benchmark_obstacles.obstacles import swap
 from robot_brain.global_variables import DT
@@ -17,17 +18,30 @@ target_ang_p = np.array([0, 0, 0])
 user_input_mode = False
 
 def main(conn=None):
-    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
+    env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
 
     ob = env.reset()
+    action = np.zeros(env.n())
     
-    env.add_obstacle(swap["small_duck"])
+    # env.add_obstacle(swap["small_duck"])
     env.add_obstacle(swap["small_box"])
+    env.add_obstacle(swap["small_cylinder"])
+
+
+
 
     sensor = ObstacleSensor()
     sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
     env.add_sensor(sensor)
     ob, _, _, _ = env.step(np.zeros(env.n()))
+
+    for _ in range(10):
+
+        ob, _, _, _ = env.step(action)
+
+
+    env.add_target_ghost(swap["small_cylinder"].name(),  [2, 1, 0])
+    env.add_target_ghost(swap["small_box"].name(),  [2, -1, 0])
 
     brain = None
     if not user_input_mode:

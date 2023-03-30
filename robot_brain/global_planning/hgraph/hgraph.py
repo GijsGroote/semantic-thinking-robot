@@ -106,7 +106,7 @@ class HGraph(Graph):
         # self.update_subtask()
 
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
         if LOG_METRICS:
             self.logger.setup(task)
 
@@ -225,7 +225,7 @@ class HGraph(Graph):
         self.current_edge.set_executing_status()
         self.go_to_loop(EXECUTION_LOOP)
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
 
     def create_drive_edge(self, source_node_iden: int, target_node_iden: int):
         """ returns create drive edge and adds created model node to hgraph. """
@@ -367,7 +367,7 @@ class HGraph(Graph):
 
 
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
             edge.motion_planner.visualise()
 
         # take care of blocking object
@@ -382,7 +382,7 @@ class HGraph(Graph):
             self.create_drive_to_best_push_position_edge(edge)
 
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
             edge.motion_planner.visualise()
 
 
@@ -630,7 +630,7 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
 
     def handle_no_path_exists_exception(self, exc: NoPathExistsException, edge: Edge):
         """ handle a NoPathExistsException. """
@@ -643,7 +643,7 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
         if CREATE_SERVER_DASHBOARD:
-            self.visualise(save=False)
+            self.visualise()
             edge.path_estimator.visualise()
 
     def handle_planning_time_elapsed_exception(self, exc: PlanningTimeElapsedException, edge: Edge):
@@ -655,7 +655,7 @@ class HGraph(Graph):
         self.add_to_blacklist(edge)
         self.fail_edge(edge)
         self.current_edge = None
-        self.visualise(save=False)
+        self.visualise()
 
         # remove all edges up to the failed edge from the current hypothesis.
         self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]

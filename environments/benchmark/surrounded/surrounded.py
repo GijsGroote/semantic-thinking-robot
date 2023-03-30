@@ -1,6 +1,7 @@
 from multiprocessing import Process, Pipe
 import numpy as np
 import gym
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 import urdfenvs.boxer_robot
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
@@ -9,12 +10,16 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
 
+import pybullet as p
+
+from motion_planning_env.box_obstacle import BoxObstacle
+
 from environments.benchmark.benchmark_obstacles.obstacles import surrounded
 
-USER_INPUT_MODE = False
+USER_INPUT_MODE = True
 
 def main(conn=None):
-    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
+    env = gym.make("pointRobot-vel-v7", dt=DT, render=True)
 
     action = np.zeros(env.n())
 
@@ -47,8 +52,17 @@ def main(conn=None):
             "default_action": action,
         }, ob)
 
-    for i in range(1000):
+    for i in range(50):
+        ob, _, _, _ = env.step(action)
 
+    box_target_state = State(pos=np.array([3, 3, 0]))
+
+    # box_target_state = State(pos=np.array([0, 0, 0]))
+    print("now adding the robot")
+    env.add_robot_ghost("pointRobot-vel-v7", box_target_state.get_2d_pose(), 0.2)
+    print("now done adding the robot")
+
+    for i in range(1000):
         if i == 300:
             brain.controller.set_target_state(State(pos=np.array([2,3,0])))
         if i == 500:
@@ -63,7 +77,6 @@ def main(conn=None):
 
         else:
             action = brain.respond()
-
             ob, _, _, _ = env.step(action)
             brain.update(ob)
 
@@ -102,3 +115,4 @@ if __name__ == "__main__":
 
         # kill parent process
         p.kill()
+

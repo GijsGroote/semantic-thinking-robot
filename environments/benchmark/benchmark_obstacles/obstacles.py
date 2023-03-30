@@ -2,6 +2,7 @@ import os
 import math
 from motion_planning_env.urdf_obstacle import UrdfObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 # blockade
 pushable_cube_dict = {
@@ -12,6 +13,15 @@ pushable_cube_dict = {
     "color": [22, 63, 88],
     "position": [1, 2, 0.8],
     "geometry": {"length": 0.8, "width": 0.8, "height": 0.8},
+}
+
+pushable_cylinder_dict = {
+    "movable": True,
+    "mass": 3,
+    "color": [13, 180, 185],
+    "position": [2, 0, 1],
+    "type": "cylinder",
+    "geometry": {"radius": 0.4, "height": 0.3},
 }
 
 urdf_duck_dict= {
@@ -25,6 +35,7 @@ urdf_duck_dict= {
 
 blockade_obstacles = {
         "simpleBox": BoxObstacle(name="simpleBox", content_dict=pushable_cube_dict),
+        "simpleCylinder": CylinderObstacle(name="simpleCylinder", content_dict=pushable_cylinder_dict),
         "urdf_duck": UrdfObstacle(name="urdf_duck", content_dict=urdf_duck_dict),
         "wall1": BoxObstacle(name="wall1", content_dict={
                 "movable": False,
@@ -113,10 +124,17 @@ surrounded = {
 
 # swap
 box_dict = {
-    "color": [140, 125, 125],
+    "color": [44, 95, 45],
     "position": [2, 1, 1],
     "type": "box",
     "geometry": {"length": 0.6, "width": 0.5, "height": 0.6},
+}
+
+cylinder_dict = {
+    "color": [155, 188, 98],
+    "position": [2, -1, 1],
+    "type": "cylinder",
+    "geometry": {"radius": 0.4, "height": 0.3},
 }
 
 duck_small_dict= {
@@ -129,4 +147,5 @@ duck_small_dict= {
 }
 
 swap = {"small_box": BoxObstacle(name="small_box", content_dict=box_dict),
+        "small_cylinder": CylinderObstacle(name="small_cylinder", content_dict=cylinder_dict),
         "small_duck": UrdfObstacle(name="small_duck", content_dict=duck_small_dict)}

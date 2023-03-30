@@ -224,7 +224,7 @@ class RBrain:
                     print(f"Halt because: {exc}")
 
                     if CREATE_SERVER_DASHBOARD:
-                        self.hgraph.visualise(save=False) # make this save=True
+                        self.hgraph.visualise() # make this save=True
                         time.sleep(2) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 
