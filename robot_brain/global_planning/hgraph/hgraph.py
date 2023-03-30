@@ -50,9 +50,10 @@ class HGraph(Graph):
     """
     Hypothesis graph.
     """
-    def __init__(self, env):
+    def __init__(self, robot, env):
         Graph.__init__(self)
 
+        self.robot = robot             # robot object
         self.env = env                 # urdf environment
         self.in_loop = SEARCHING_LOOP  # hgraph can be in the execution or search loop
         self.task = None               # task in form [(obst_name, target_state),..]
@@ -220,6 +221,10 @@ class HGraph(Graph):
         if isinstance(self.current_edge, PushActionEdge):
             self.env.add_target_ghost(self.get_node(self.current_edge.to).obstacle.properties.name(),
             self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
+
+        elif isinstance(self.current_edge, DriveActionEdge):
+            self.env.add_robot_target_ghost(self.robot.name,
+                    self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
 
 
         self.current_edge.set_executing_status()
@@ -943,6 +948,7 @@ class HGraph(Graph):
 
             self.current_subtask["now_timing"] = None
             self.current_subtask["start_time"] = None # you could leave this out
+
 
 ###############################
 ### CREATION OF CONTROLLERS ###

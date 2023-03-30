@@ -129,10 +129,10 @@ class Plotter():
         else:
             fig.show()
 
- 
+
 class DriveMpc2thOrder(Mpc):
     """
-    Model Predictive Control controller for a 2th order system model. 
+    Model Predictive Control controller for a 2th order system model.
     Such as the point robot with velocity input.
     """
     def __init__(self):
@@ -179,7 +179,7 @@ class DriveMpc2thOrder(Mpc):
 
     def calculate_prediction_error(self, current_state: State) -> float:
         """ return calculated prediction error. """
-        return self.y_predicted.pose_euclidean(current_state)
+        return self.y_predicted.position_euclidean(current_state)
 
     def simulate(self, system_input: np.ndarray) -> State:
         """ return simulated state one step into the future. """

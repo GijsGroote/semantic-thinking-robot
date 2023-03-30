@@ -51,8 +51,7 @@ class PointRobotVelHGraph(HGraph):
     Hypothesis graph for a Point Robot accepting velocity input.
     """
     def __init__(self, robot, env):
-        HGraph.__init__(self, env)
-        self.robot = robot
+        HGraph.__init__(self, robot, env)
         self.robot_order = 2
 
     def create_drive_path_estimator(self, obstacles) -> PathEstimator:
@@ -537,3 +536,5 @@ class PointRobotVelHGraph(HGraph):
             return x_next
 
         return SystemModel(model, PUSH_MPPI_MODEL_4TH_ORDER)
+
+

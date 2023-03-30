@@ -8,6 +8,8 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimato
 from robot_brain.state import State
 
 from robot_brain.global_planning.edge import EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
+from robot_brain.global_variables import DT
+
 EDGE_PATH_EXISTS = "path_exists"
 EDGE_HAS_SYSTEM_MODEL = "has_system_model"
 EDGE_PATH_IS_PLANNED = "path_is_planned"
@@ -23,6 +25,7 @@ class ActionEdge(Edge):
 
         self._motion_planner = None
         self._path_estimator = None
+        self.plot_counter = 1 # /DT
 
     @abstractmethod
     def respond(self) -> np.ndarray:

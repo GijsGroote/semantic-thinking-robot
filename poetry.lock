@@ -154,7 +154,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "dash"
-version = "2.9.1"
+version = "2.9.2"
 description = "A Python framework for building reactive web-apps. Developed by Plotly."
 category = "main"
 optional = false
@@ -228,7 +228,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "do-mpc"
-version = "4.4.0"
+version = "4.5.1"
 description = ""
 category = "main"
 optional = false
@@ -278,7 +278,7 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "fonttools"
-version = "4.39.2"
+version = "4.39.3"
 description = "Tools to manipulate font files"
 category = "main"
 optional = false
@@ -531,7 +531,7 @@ traitlets = "*"
 
 [[package]]
 name = "motion-planning-scenes"
-version = "0.1.2"
+version = "0.1.1"
 description = "Generic motion planning scenes, including goals and obstacles."
 category = "main"
 optional = false
@@ -716,13 +716,14 @@ tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "pa
 
 [[package]]
 name = "plotly"
-version = "5.13.1"
+version = "5.14.0"
 description = "An open-source, interactive data visualization library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
+packaging = "*"
 tenacity = ">=6.2.0"
 
 [[package]]
@@ -1041,7 +1042,7 @@ resolved_reference = "c1f3869102b61b4b0ac952aba25c2204fed52926"
 
 [[package]]
 name = "pytz"
-version = "2023.2"
+version = "2023.3"
 description = "World timezone definitions, modern and historical"
 category = "main"
 optional = false
@@ -1243,12 +1244,12 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "urdfenvs"
-version = "0.2.4"
+version = "0.2.7"
 description = "Simple simulation environment for robots, based on the urdf files."
 category = "main"
 optional = false
 python-versions = ">=3.10, <3.12"
-develop = true
+develop = false
 
 [package.dependencies]
 gym = "^0.21.0"
@@ -1336,7 +1337,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10, <3.12"
-content-hash = "324402643c0019b5c105d6620571787524aa97d91488e8897078fbe7f69cc648"
+content-hash = "78545f0963fc0818d2fbf1c20f30cbff47d37d7bfc31257ab68d0402175d5674"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -1535,8 +1536,8 @@ cycler = [
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
 ]
 dash = [
-    {file = "dash-2.9.1-py3-none-any.whl", hash = "sha256:714c9ee2a972b0157b4d3f7dc111b3d77d49916d7e851c0c8318d0030706b2e9"},
-    {file = "dash-2.9.1.tar.gz", hash = "sha256:92838be734ffb4b42a09bbc1b721a5a47b019606a02a76f8e1f0f578dead9786"},
+    {file = "dash-2.9.2-py3-none-any.whl", hash = "sha256:f54c0ce81defa92b429f967829f8a5ccdb0dc8208d4e4e96f7149a016c820071"},
+    {file = "dash-2.9.2.tar.gz", hash = "sha256:ee3d244f560e58300d807f820f7854f8f9d3b482d0c99ddb3ff7cb4dc3be1346"},
 ]
 dash-core-components = [
     {file = "dash_core_components-2.0.0-py3-none-any.whl", hash = "sha256:52b8e8cce13b18d0802ee3acbc5e888cb1248a04968f962d63d070400af2e346"},
@@ -1562,8 +1563,8 @@ dill = [
     {file = "dill-0.3.6.tar.gz", hash = "sha256:e5db55f3687856d8fbdab002ed78544e1c4559a130302693d839dfe8f93f2373"},
 ]
 do-mpc = [
-    {file = "do_mpc-4.4.0-py3-none-any.whl", hash = "sha256:8294a82777086e7f31f39b561c71a584c0012f97cb265941319a360a850d0501"},
-    {file = "do_mpc-4.4.0.tar.gz", hash = "sha256:6602ef99a0aa19e8c3d64061c517e8116167316b902432483c9d3a6137b0d3be"},
+    {file = "do_mpc-4.5.1-py3-none-any.whl", hash = "sha256:68beb380e2b178bea3f255528e44a63cb743f24c017506c8a84e45e044eac8d1"},
+    {file = "do_mpc-4.5.1.tar.gz", hash = "sha256:0716c6e63eeab2cc96ed425b903da07909dcc8b5ff654a6529e770aaf7a03d04"},
 ]
 evdev = [
     {file = "evdev-1.6.1.tar.gz", hash = "sha256:299db8628cc73b237fc1cc57d3c2948faa0756e2a58b6194b5bf81dc2081f1e3"},
@@ -1577,8 +1578,8 @@ flask = [
     {file = "Flask-2.2.3.tar.gz", hash = "sha256:7eb373984bf1c770023fce9db164ed0c3353cd0b53f130f4693da0ca756a2e6d"},
 ]
 fonttools = [
-    {file = "fonttools-4.39.2-py3-none-any.whl", hash = "sha256:85245aa2fd4cf502a643c9a9a2b5a393703e150a6eaacc3e0e84bb448053f061"},
-    {file = "fonttools-4.39.2.zip", hash = "sha256:e2d9f10337c9e3b17f9bce17a60a16a885a7d23b59b7f45ce07ea643e5580439"},
+    {file = "fonttools-4.39.3-py3-none-any.whl", hash = "sha256:64c0c05c337f826183637570ac5ab49ee220eec66cf50248e8df527edfa95aeb"},
+    {file = "fonttools-4.39.3.zip", hash = "sha256:9234b9f57b74e31b192c3fc32ef1a40750a8fbc1cd9837a7b7bfc4ca4a5c51d7"},
 ]
 freetype-py = [
     {file = "freetype-py-2.3.0.zip", hash = "sha256:f9b64ce3272a5c358dcee824800a32d70997fb872a0965a557adca20fce7a5d0"},
@@ -2045,8 +2046,8 @@ pillow = [
     {file = "Pillow-9.4.0.tar.gz", hash = "sha256:a1c2d7780448eb93fbcc3789bf3916aa5720d942e37945f4056680317f1cd23e"},
 ]
 plotly = [
-    {file = "plotly-5.13.1-py2.py3-none-any.whl", hash = "sha256:f776a5c664908450c6c1727f61e8e2e22798d9c6c69d37a9057735365084a2fa"},
-    {file = "plotly-5.13.1.tar.gz", hash = "sha256:90ee9a1fee0dda30e2830e129855081ea17bd1b06a553a62b62de15caff1a219"},
+    {file = "plotly-5.14.0-py2.py3-none-any.whl", hash = "sha256:2e3407d93a9700beebbef66d11f63992c58e058dd808442ee54af40f98fb4940"},
+    {file = "plotly-5.14.0.tar.gz", hash = "sha256:02e40264f145e524d9628fd516031976b60d74a33bbabce037ea28580bcd4e0c"},
 ]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
@@ -2235,8 +2236,8 @@ python-xlib = [
 ]
 pytorch-mppi = []
 pytz = [
-    {file = "pytz-2023.2-py2.py3-none-any.whl", hash = "sha256:8a8baaf1e237175b02f5c751eea67168043a749c843989e2b3015aa1ad9db68b"},
-    {file = "pytz-2023.2.tar.gz", hash = "sha256:a27dcf612c05d2ebde626f7d506555f10dfc815b3eddccfaadfc7d99b11c9a07"},
+    {file = "pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
+    {file = "pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
 ]
 pyvis = [
     {file = "pyvis-0.1.9-py3-none-any.whl", hash = "sha256:4d7cab58f120db544e668ac53194fbb3f312e5ba691d7843e2048a43981b1356"},
