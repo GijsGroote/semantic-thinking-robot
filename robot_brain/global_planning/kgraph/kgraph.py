@@ -2,9 +2,11 @@ import os
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
+
+from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
+from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.global_variables import FIG_BG_COLOR
 
 
 class KGraph(Graph):
@@ -12,7 +14,30 @@ class KGraph(Graph):
     Knowledge graph.
     """
     def __init__(self):
+        print('kgraph is now created')
         Graph.__init__(self)
+
+    def add_object(self, obj: Obstacle):
+        """ adds new obstacle to the kgraph. """
+        if not isinstance(obj, Obstacle):
+            raise TypeError("Obstacle's only")
+        assert obj.type in [MOVABLE, UNMOVABLE], f"added obstacle must have type MOVABLE or UNMOVABLE and is {obj.type}"
+        #TODO check if the object is not already in the kgraph
+
+
+        obj_node = ObstacleNode(self.unique_node_iden(), obj.name, obj)
+        self.add_node(obj_node)
+
+        print('added node to the kgraph')
+        self.visualise(save=False)
+
+    def obj_info(self, obj):
+        """ return the type of the obj if known. """
+        for node in self.nodes:
+            if node.obstacle.name == obj.name:
+                print(f'yes i know that {obj.name} is of type {node.obstacle.type}')
+                return node.obstacle.type
+
 
 # T5HIS IS SOME STUFF TO INITIALISE THE kgRAPH LATER
 ##  temp KGraph
@@ -28,85 +53,58 @@ class KGraph(Graph):
             # self.kgraph.visualise(
             #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
 
-    def visualise(self, path=None):
+    def visualise(self, save=True):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
-        # net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
-        net = Network(height="450px", directed=True)
+
+        net = Network(bgcolor=FIG_BG_COLOR, height="450px", directed=True)
 
         # set a custom style sheet
-        # TODO: relative path (which works)
-        # net.path = os.getcwd() +
-        net.path = "/home/gijs/Documents/semantic-thinking-robot/dashboard/assets/graph_template.html"
-
+        net.path = PROJECT_PATH+"/dashboard/assets/graph_template.html"
 
         net.set_edge_smooth('dynamic')
+
         for node in self.nodes:
-            if isinstance(node, ObstacleNode):
-                # TODO: relative path, somehow this image shows, but not if it runs on the server...
-                # os.getcwd() + "/../lit_study_benchmark/" +  node.name + ".png"
-                path_to_png = "/home/gijs/Documents/semantic-thinking-robot"\
-                        "/dashboard/assets/images/" +  node.name + ".png"
 
-                if os.path.exists(path_to_png):
-                    net.add_node(node.iden,
-                            title = "Node:<br>" + node.to_string() + "<br>",
-                            x=1.0,
-                            y=1.0,
-                            color= {
-                                'border': '#000000', # grey and black
-                                'background': '#808080',
-                                'highlight': {
-                                    'border': '#000000',
-                                    'background': '#a6a6a6'
-                                    }
-                                },
-                            image= path_to_png,
-                            shape= "circularImage",
-                            label = " ",
-                            group = node.__class__.__name__
-                            )
-
-
-            if isinstance(node, ChangeOfStateNode):
-                net.add_node(node.iden,
-                        title = "Node:<br>" + node.to_string() + "<br>",
-                        x=1.0,
-                        y=1.0,
-                        color= {
-                            'border': '#2B7CE9', # blue
-                            'background': '#97C2FC',
-                            'highlight': {
-                                'border': '#2B7CE9',
-                                'background': '#D2E5FF'
-                                }
-                            },
-                        label = " ",
-                        group = node.__class__.__name__
-                        )
-
-
+            net.add_node(node.iden,
+                    title = f"Node: {node.name}<br>{node.to_string()}<br>",
+                    x=10.0,
+                    y=10.0,
+                    label = node.name,
+                    borderWidth= 1,
+                    borderWidthSelected= 2,
+                    color= {
+                        'border': '#2B7CE9', # blue
+                        'background': '#97C2FC',
+                        'highlight': {
+                            'border': '#2B7CE9',
+                            'background': '#D2E5FF'
+                            }
+                        },
+                    group = "nodes")
         # add edges
         for edge in self.edges:
 
+            value = 1.5
+
             net.add_edge(edge.source,
                     edge.to,
-                    weight=1.0,
+                    # dashes=dashes,
+                    width=value,
+                    # color=color,
                     label=edge.verb,
-                    title="edge:<br>" + edge.to_string() + "<br>",
+                    title=f"{edge.to_string()}<br>",
                     )
 
         # if you want to edit cusomize the graph
         # net.show_buttons(filter_=['physics'])
 
-        if path is None:
-            net.show("delete.html")
+        if save:
+            net.write_html(name=PROJECT_PATH+"dashboard/data/knowledge_graph.html")
         else:
-            net.write_html(path)
+            net.show("delete2.html")
 
 
     def add_node(self, node):
-        if not(isinstance(node, Node)):
-            raise TypeError("todo: only allowed in KGraph")
         self.nodes.append(node)

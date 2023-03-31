@@ -61,8 +61,9 @@ class Obstacle:
     # type setter
     @type.setter
     def type(self, val):
-        if val in {UNKNOWN, MOVABLE, UNMOVABLE}:
+        if val in [UNKNOWN, MOVABLE, UNMOVABLE]:
             self._type = val
+
         else:
             raise ValueError(f"the type {val} is not allowed")
 

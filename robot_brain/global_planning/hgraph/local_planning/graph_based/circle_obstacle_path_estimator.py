@@ -147,8 +147,8 @@ class CircleObstaclePathEstimator(PathEstimator):
         if isinstance(cart_2d_target, State):
             cart_2d_target= cart_2d_target.get_xy_position()
 
-        if self.occupancy(cart_2d_start) == UNMOVABLE or self.occupancy(cart_2d_target) == UNMOVABLE:
-            raise NoPathExistsException("Start or target state in obstacle space")
+        if self.occupancy(cart_2d_target) == UNMOVABLE:
+            raise NoPathExistsException("Target state in obstacle space")
 
         if self.occupancy(cart_2d_start) != FREE:
             warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")

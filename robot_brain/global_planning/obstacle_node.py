@@ -15,7 +15,7 @@ class ObstacleNode(Node):
 
     def to_string(self):
         return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
-                f"<br>With Obstacle: {self.obstacle.name}<br>2d pos = {self.obstacle.state.get_2d_pose()}"
+                f"<br>With Obstacle: {self.obstacle.name}<br>2d pos = {self.obstacle.state.get_2d_pose()}<br>type = {self.obstacle.type}"
 
     @property
     def obstacle(self):

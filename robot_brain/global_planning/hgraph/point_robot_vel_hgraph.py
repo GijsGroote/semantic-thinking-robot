@@ -367,10 +367,8 @@ class PointRobotVelHGraph(HGraph):
 
     def get_push_controllers(self) -> list:
 
-        return [self.create_mppi_push_controller_4th_order()]
-    # TODO: uncomment this below, use both controller please
-        # return [self.create_mppi_push_controller_4th_order(),
-        #         self.create_mppi_push_controller_5th_order()]
+        return [self.create_mppi_push_controller_4th_order(),
+                self.create_mppi_push_controller_5th_order()]
 
     def create_push_model(self, model_name: str):
         if model_name == PUSH_MPPI_MODEL:

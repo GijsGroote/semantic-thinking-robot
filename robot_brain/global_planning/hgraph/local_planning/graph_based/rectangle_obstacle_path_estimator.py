@@ -237,8 +237,8 @@ class RectangleObstaclePathEstimator(PathEstimator):
         pose_2d_start[2] = to_interval_zero_to_two_pi(pose_2d_start[2])
         pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
 
-        if self.occupancy(pose_2d_start) == UNMOVABLE or self.occupancy(pose_2d_target) == UNMOVABLE:
-            raise NoPathExistsException("Start or target state in obstacle space")
+        if self.occupancy(pose_2d_start) == UNMOVABLE:
+            raise NoPathExistsException("Target state in obstacle space")
 
         if self.occupancy(pose_2d_start) != FREE:
             warnings.warn("the start position is in movable or unkown space")

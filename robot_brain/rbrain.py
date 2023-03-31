@@ -143,7 +143,7 @@ class RBrain:
             self.hgraph = PointRobotVelHGraph(self.robot, stat_world_info["env"])
 
         elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
-            self.hgraph = BoxerRobotVelHGraph(self.robot, env, stat_world_info["env"])
+            self.hgraph = BoxerRobotVelHGraph(self.robot, stat_world_info["env"])
 
         else:
             raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
@@ -177,7 +177,8 @@ class RBrain:
 
         self.hgraph.setup(
                 task=task,
-                obstacles=self.obstacles)
+                obstacles=self.obstacles,
+                kgraph=stat_world_info["kgraph"])
 
 
     def update(self, ob):
@@ -220,8 +221,11 @@ class RBrain:
 
                     print(f"Halt because: {exc}")
 
+
+                    self.hgraph.visualise(save=False) # make this save=True
+
                     if CREATE_SERVER_DASHBOARD:
-                        self.hgraph.visualise() # make this save=True
+                        self.hgraph.visualise()
                         time.sleep(2) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 

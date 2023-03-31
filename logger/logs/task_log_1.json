@@ -1,0 +1,83 @@
+{
+ "completed": true,
+  "subtasks": {
+    "subtask_0": {
+      "obstacle_name": "pointRobot-vel-v7",
+      "target_state_pos_2d": [
+        -4.3212,
+        -2.9,
+        0
+      ],
+      "completed": true,
+      "num_hypotheses": 1,
+      "hypotheses": {
+        "hypothesis_1": {
+          "edges": {
+            "edge_0": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_1": {
+              "status": "edge:completed",
+              "verb": "driving",
+              "controller_type": "MPPI",
+              "final_pose_error": null,
+              "avg_pred_error": 6e-05,
+              "max_pred_error": 9e-05,
+              "min_pred_error": 0
+            }
+          },
+          "num_edges": 2,
+          "completed": true,
+          "search_time": 6.984854221343994,
+          "execute_time": 0.057317256927490234,
+          "total_time": 7.042171478271484
+        }
+      },
+      "search_time": 6.984854221343994,
+      "execute_time": 0.057317256927490234,
+      "total_time": 7.042171478271484
+    },
+    "subtask_1": {
+      "obstacle_name": "pointRobot-vel-v7",
+      "target_state_pos_2d": [
+        3.3212,
+        -2,
+        0
+      ],
+      "completed": true,
+      "num_hypotheses": 1,
+      "hypotheses": {
+        "hypothesis_1": {
+          "edges": {
+            "edge_0": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_1": {
+              "status": "edge:completed",
+              "verb": "driving",
+              "controller_type": "MPPI",
+              "final_pose_error": null,
+              "avg_pred_error": 7e-05,
+              "max_pred_error": 8e-05,
+              "min_pred_error": 0
+            }
+          },
+          "num_edges": 2,
+          "completed": true,
+          "search_time": 1.739952564239502,
+          "execute_time": 0.05964326858520508,
+          "total_time": 1.799595832824707
+        }
+      },
+      "search_time": 1.739952564239502,
+      "execute_time": 0.05964326858520508,
+      "total_time": 1.799595832824707
+    }
+  },
+  "total_time": 8.841767311096191,
+  "execute_time": 0.11696052551269531,
+  "search_time": 8.724806785583496,
+  "hypothesis_success_ratio": 1
+}

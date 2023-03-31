@@ -85,9 +85,29 @@ class DriveMotionPlanner(MotionPlanner):
         # add new sample
         return self._add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
 
-    def _rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
-        """ rewire closeby samples if that lowers the cost for that sample,
-        connect to the cheapest sample from the other tree if possible. """
+    def _rewire_close_samples(self, sample_key, close_samples_keys: list):
+        """ rewire closeby samples if that lowers the cost for that sample. """
+
+        sample = self.samples[sample_key]
+
+        # closeby samples are updated if the cost can be lowered
+        for temp_close_sample_key in close_samples_keys:
+            temp_close_sample = self.samples[temp_close_sample_key]
+
+            if temp_close_sample["in_tree"] == sample["in_tree"]:
+                # check if cost can be lowered for closeby samples
+                cost_to_close_sample = sample["cost_to_source"] + self._distance(temp_close_sample, sample)
+                if cost_to_close_sample < temp_close_sample["cost_to_source"]:
+
+                    # rewire and update all next samples cost
+                    self.samples[temp_close_sample["prev_sample_key"]]["next_sample_keys"].remove(temp_close_sample_key)
+                    temp_close_sample["prev_sample_key"] = sample_key
+                    sample["next_sample_keys"].append(temp_close_sample_key)
+                    self._update_cost_sample(temp_close_sample_key, temp_close_sample, cost_to_close_sample)
+
+
+    def _connect_trees(self, sample_key, close_samples_keys: list):
+        """ connect to the cheapest sample from the other tree if possible."""
 
         sample = self.samples[sample_key]
 
@@ -99,31 +119,17 @@ class DriveMotionPlanner(MotionPlanner):
         for temp_close_sample_key in close_samples_keys:
 
             temp_close_sample = self.samples[temp_close_sample_key]
-
-            if temp_close_sample["in_tree"] == sample["in_tree"]:
-
-                # check if cost can be lowered for closeby samples
-                cost_to_close_sample = sample["cost_to_source"] + self._distance(temp_close_sample, sample)
-                if cost_to_close_sample < temp_close_sample["cost_to_source"]:
-
-                    # rewire and update all next samples cost
-                    self.samples[temp_close_sample["prev_sample_key"]]["next_sample_keys"].remove(temp_close_sample_key)
-                    temp_close_sample["prev_sample_key"] = sample_key
-                    sample["next_sample_keys"].append(temp_close_sample_key)
-                    self._update_cost_sample(temp_close_sample_key, temp_close_sample, cost_to_close_sample)
-
-            else:
-                # find lowest cost to connect both trees
+            if temp_close_sample["in_tree"] != sample["in_tree"]:
                 temp_path_cost = self._calculate_path_cost(sample, temp_close_sample)
 
                 if temp_path_cost < cheapest_path_cost:
-
                     cheapest_path_cost = temp_path_cost
                     cheapest_path_cost_sample_key = temp_close_sample_key
 
         # found a path to connect both trees
-        if (cheapest_path_cost_sample_key is not None and
-                self._distance(sample, self.samples[cheapest_path_cost_sample_key]) < self.step_size):
+        if cheapest_path_cost_sample_key is not None:
+
+            # add new path
             self.shortest_paths[cheapest_path_cost] = {"sample1_key": sample_key,
                     "sample2_key": cheapest_path_cost_sample_key}
 
@@ -203,7 +209,9 @@ class DriveMotionPlanner(MotionPlanner):
         reversed_path = []
 
         add_node_list = []
+
         while source_sample["prev_sample_key"] != self.source_tree_key:
+
             if source_sample["add_node"]:
                 add_node_list.append(source_sample["pose"])
 

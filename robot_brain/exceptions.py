@@ -15,3 +15,7 @@ class NoBestPushPositionException(Exception):
 
 class NoTargetPositionFoundException(Exception):
     """ No target position can be found to push object toward. """
+
+class PushAnUnmovableObjectException(Exception):
+    """ A unmovable object was insuccesfully pushed. """
+

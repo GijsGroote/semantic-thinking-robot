@@ -3,12 +3,12 @@ import numpy as np
 import json
 from pygments import highlight, lexers, formatters
 from pathlib import Path
- 
+
 from robot_brain.global_planning.edge import Edge
-from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS 
+from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS
 
 class HLogger:
-    """ Logger class which collects and outputs/saves data of the hypothesis graph. """ 
+    """ Logger class which collects and outputs/saves data of the hypothesis graph. """
 
     def __init__(self):
         self.data = {
@@ -44,9 +44,9 @@ class HLogger:
             subtask_name = subtask["target_node"].subtask_name
 
         self.data["subtasks"][subtask_name]["completed"] = True
-        self.data["subtasks"][subtask_name]["num_hypotheses"] += 1 
-        
-        # TODO: final position of the drive/push 
+        self.data["subtasks"][subtask_name]["num_hypotheses"] += 1
+
+        # TODO: final position of the drive/push
         hypothesis_log = {
                 "edges": {},
                 "num_edges":  len(hypothesis),
@@ -76,9 +76,9 @@ class HLogger:
             subtask_name = subtask["target_node"].subtask_name
 
         self.data["subtasks"][subtask_name]["completed"] = False
-        self.data["subtasks"][subtask_name]["num_hypotheses"] += 1 
-        
-        # TODO: final position of the drive/push 
+        self.data["subtasks"][subtask_name]["num_hypotheses"] += 1
+
+        # TODO: final position of the drive/push
         hypothesis_log = {
                 "edges": {},
                 "num_edges":  len(hypothesis),
@@ -109,7 +109,7 @@ class HLogger:
 
     def compute_total_time(self):
         """ sum up the time spend in the execution/searching loop for every hypothesis. """
-        
+
         task_search_time = 0
         task_execute_time = 0
 
@@ -130,18 +130,18 @@ class HLogger:
             task_execute_time += subtask_execute_time
             subtask["search_time"] = subtask_search_time
             subtask["execute_time"] = subtask_execute_time
-            subtask["total_time"] = subtask_search_time + subtask_execute_time 
+            subtask["total_time"] = subtask_search_time + subtask_execute_time
 
         self.data["search_time"] = task_search_time
         self.data["execute_time"] = task_execute_time
-        self.data["total_time"] = task_search_time + task_execute_time 
+        self.data["total_time"] = task_search_time + task_execute_time
 
     def print_logs(self):
         """ prints the logs in JSON format. """
         formatted_json = json.dumps(self.data, sort_keys=False, indent=2)
         colorful_json = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
         print(colorful_json)
-        
+
     def save_logs(self):
         """ converts the logs to JSON and saves it under a unique new name. """
 

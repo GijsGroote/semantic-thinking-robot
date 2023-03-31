@@ -97,7 +97,7 @@ class MotionPlanner(ABC):
         if len(source_sample) == 2:
             source_sample = np.array([source_sample[0], source_sample[1], 0])
         assert len(source_sample) == 3, \
-                f"start- and target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
+                f"start sample should have length 3 and has length {len(source_sample)}"
 
         self.samples.clear()
         self.x_sorted.clear()
@@ -124,7 +124,6 @@ class MotionPlanner(ABC):
                 "in_tree": self.source_tree_key,
                 "add_node": []}
 
-
         self.n_samples = 1
 
         self.x_sorted = SortedDict({source_sample[0]: self.source_tree_key})
@@ -133,14 +132,12 @@ class MotionPlanner(ABC):
 
     def setup_target(self, target_sample: np.ndarray | tuple | list):
 
-
         assert isinstance(target_sample, (np.ndarray, tuple, list)), \
             "target sample is not a type tuple, list or np.array which it should be."
         if len(target_sample) == 2:
             target_sample = np.array([target_sample[0], target_sample[1], 0])
         assert len(target_sample) == 3, \
-                f"target sample should have length 3 and have lengths {len(source_sample)} and {len(target_sample)}"
-
+                f"target sample should have length 3 and has length {len(target_sample)}"
 
         if target_sample[0] == 0:
             target_sample[0] = float(3e-9)
@@ -158,11 +155,10 @@ class MotionPlanner(ABC):
                 "in_tree": self.target_tree_key,
                 "add_node": []}
 
-        self.n_samples = 2
+        self.n_samples += 1
 
         self.x_sorted[target_sample[0]] = self.target_tree_key
         self.y_sorted[target_sample[1]] = self.target_tree_key
-
 
     def search_path(self, source: State, target: State) -> Tuple[list, list]:
         """ search for a path between source and target state. """
@@ -174,23 +170,23 @@ class MotionPlanner(ABC):
         self.reset()
 
         self.setup_source(source_sample)
+
         self.start_time_search = time.time()
 
         # add samples from path estimation
         self._add_path_estimator_samples(source_sample, target_sample)
+
         self.setup_target(target_sample)
-        close_samples_keys = self._get_closeby_sample_keys(target_sample, self.search_size)
-        self._rewire_close_samples_and_connect_trees(self.target_tree_key, close_samples_keys)
-        print(f'adding pe samples takes {time.time() -self.start_time_search } seconds')
+        close_samples_keys = self._get_closeby_sample_keys(target_sample, 0.001)
+        self._connect_trees(self.target_tree_key, close_samples_keys)
 
         # return path if it exist and goes through free space only
         if len(self.shortest_paths) > 0:
             (path, add_node_list) = self._extract_shortest_path()
             if len(add_node_list) == 0:
                 self.shortest_path = path
-                return (path, add_node_list)
 
-        print(f'lets search a little more this already took {time.time() -self.start_time_search } seconds')
+                return (path, add_node_list)
 
         # while keep searching:
         while not self._stop_criteria_test():
@@ -214,7 +210,6 @@ class MotionPlanner(ABC):
 
             in_space_id = self.path_estimator.occupancy(np.array(sample_new))
             if in_space_id == UNMOVABLE: # obstacle space, abort sample
-                print('sample in unmovable space')
                 continue
 
             # find closeby samples and connect new sample to cheapest sample
@@ -228,14 +223,11 @@ class MotionPlanner(ABC):
                 continue
 
             # rewire close samples lowering their cost, connect to other tree if possible
-            self._rewire_close_samples_and_connect_trees(sample_new_key, close_samples_keys)
+            self._rewire_close_samples(sample_new_key, close_samples_keys)
+            self._connect_trees(sample_new_key, close_samples_keys)
 
         (path, add_node_list)  = self._extract_shortest_path()
         self.shortest_path = path
-
-        print('thjis visualisation should be a complete path after mp')
-        self.visualise(save=False)
-        self.path_estimator.visualise(save=False)
 
         return (path, add_node_list)
 
@@ -252,7 +244,6 @@ class MotionPlanner(ABC):
             if self.path_estimator.occupancy(np.array(sample)) != FREE:
                 print('Do not add shortest path that goes through movable of unknown space')
                 return
-
 
         for sample_new in shortest_path:
             # add negligble amount making x and y coordinates unique
@@ -323,9 +314,12 @@ class MotionPlanner(ABC):
         """ Finds the shortest path after sampling. """
 
     @abstractmethod
-    def _rewire_close_samples_and_connect_trees(self, sample_key, close_samples_keys: list):
-        """ rewire closeby samples if that lowers the cost for that sample,
-        connect to the cheapest sample from the other tree if possible. """
+    def _rewire_close_samples(self, sample_key, close_samples_keys: list):
+        """ rewire closeby samples if that lowers the cost for that sample"""
+
+    @abstractmethod
+    def _connect_trees(self, sample_key, close_samples_keys: list):
+        """connect to the cheapest sample from the other tree if possible. """
 
     @abstractmethod
     def _connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
@@ -405,7 +399,7 @@ class MotionPlanner(ABC):
         """ creates and returns a unique id. """
         unique_id = len(self.samples)
 
-        while unique_id in self.samples:
+        while unique_id in self.samples or unique_id == self.target_tree_key:
             unique_id += 1
 
         return unique_id

@@ -12,7 +12,7 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
-# from robot_brain.global_planning.kgraph.kgraph import KGraph
+from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.obstacle_node import ObstacleNode
@@ -37,7 +37,8 @@ from robot_brain.exceptions import (
         NoPathExistsException,
         PlanningTimeElapsedException,
         NoBestPushPositionException,
-        FaultDetectedException
+        FaultDetectedException,
+        PushAnUnmovableObjectException,
         )
 from logger.hlogger import HLogger
 
@@ -64,6 +65,8 @@ class HGraph(Graph):
         self.start_to_target_iden = [] # identifier mapping from start to target node and vise versa
         self.blacklist = {}            # blacklist containing banned edges
         self.current_subtask = None    # current subtask that the HGraph tries to complete
+        self.recursion_depth=0 #delete this
+        self.kgraph = None
 
         # self.current_edge is the current edge being executed or first in line to be executed.
         # self.current_node is the source node of the current edge being executed for plotting purposes
@@ -72,11 +75,17 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger = HLogger()
 
-    def setup(self, task, obstacles):
+    def setup(self, task, obstacles, kgraph):
         """ create start and target nodes and adds them to the hgraph. """
 
+        self.kgraph = kgraph
         self.task = task
         self.obstacles = obstacles
+
+        for obj in self.obstacles:
+            obj_type = kgraph.obj_info(obj)
+            
+
 
         #  add robot as start_state
         self.robot_node = ObstacleNode(ROBOT_IDEN, self.robot.name, self.robot)
@@ -126,7 +135,14 @@ class HGraph(Graph):
 
                 self.increment_edge()
 
-            return self.current_edge.respond()
+            try:
+                return self.current_edge.respond()
+            except PushAnUnmovableObjectException as exc:
+                self.handle_push_an_unmovable_object_exception(exc, self.current_edge)
+
+            self.search_hypothesis()
+            return self.respond()
+
 
         elif self.in_loop == SEARCHING_LOOP:
             self.search_hypothesis()
@@ -271,6 +287,12 @@ class HGraph(Graph):
 
     def create_push_edge(self, source_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
+        # check if there already is an edge from target to source
+        for temp_edge in self.edges:
+            if temp_edge.source == target_node_iden and temp_edge.to == source_node_iden:
+                # there already appears to be such an edge
+                self.create_ident_edge(temp_edge)
+
 
         knowledge_graph = False
 
@@ -376,12 +398,9 @@ class HGraph(Graph):
             error_triggered = True
             add_node_list = []
             self.handle_planning_time_elapsed_exception(exc, edge)
-        
-        edge.motion_planner.visualise(save=False)# delete this yo
 
         if error_triggered:
             return self.search_hypothesis()
-
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -453,6 +472,14 @@ class HGraph(Graph):
 
         self.add_node(model_node)
 
+        # connect to robot if a failed empty edge points to this node
+        for temp_edge in self.edges:
+            if temp_edge.status == EDGE_FAILED and temp_edge.to == edge.source:
+                self.add_edge(EmptyEdge(
+                    self.unique_edge_iden(),
+                    self.robot_node.iden,
+                    self.get_node(edge.source).iden))
+
         push_ident_edge = PushIdentificationEdge(iden=self.unique_edge_iden(),
                 source=edge.source,
                 to=model_node.iden,
@@ -466,6 +493,7 @@ class HGraph(Graph):
         self.add_edge(push_ident_edge)
         self.hypothesis.insert(self.edge_pointer, push_ident_edge)
         self.current_edge=self.hypothesis[self.edge_pointer]
+
 
     def create_drive_to_best_push_position_edge(self, edge: PushActionEdge):
         """ add edges/nodes to drive toward the best push position. """
@@ -681,6 +709,7 @@ class HGraph(Graph):
         # remove all edges up to the failed edge from the current hypothesis.
         self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
         self.edge_pointer = 0
+
     def handle_no_push_position_found_exception(self, exc: NoBestPushPositionException):
         """ handle a NoBestPushPositionException. """
         # no node has been created yet, and no blacklist should be made specifically for this
@@ -689,6 +718,50 @@ class HGraph(Graph):
     def handle_fault_detected_exception(self, exc: FaultDetectedException, edge: Edge):
         """ handle a FaultDetectedException. """
         pass
+
+    def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):
+        """ handle a PushAnUnmovableObjectException. """
+
+        #TODO: give a reason why this edge has failed for the logger
+
+
+        self.update_object_type_to_unmovable(self.get_node(edge.to).obstacle.properties.name)
+        self.fail_edge(edge)
+
+        self.kgraph.add_object(self.get_node(edge.to).obstacle)
+
+
+    def update_object_type_to_unmovable(self, obj_name: str):
+        """ update all nodes in hgraph, and update kgraph
+        that have that store obj_name. """
+
+
+        for node in self.nodes:
+
+            if node.obstacle.properties.name == obj_name:
+                print(f'node {node.iden} will now be marked fail')
+                node.obstacle.type = UNMOVABLE
+                node.status = NODE_UNFEASIBLE
+
+                outgoing_edges = []
+                for temp_edge in self.edges:
+                    if temp_edge.source == node.iden:
+                        outgoing_edges.append(temp_edge)
+
+                # fail nodes and outgoing edges, that object is unmovable
+                print(f'any outgoing edges mister? {outgoing_edges}')
+
+                for outgoing_edge in outgoing_edges:
+                    print(f'failing edge number {outgoing_edge.iden}')
+                    self.fail_edge(outgoing_edge)
+
+
+        for obj in self.obstacles.values():
+            if obj.properties.name == obj_name:
+                obj.type = UNMOVABLE
+
+        # TODO: the kgraph should be updated to unmovable
+
 
     def fail_edge(self, edge: Edge):
         """ fail edge and corresponding identification and empty edges. """
@@ -702,7 +775,6 @@ class HGraph(Graph):
 
             for outgoing_edge in self.get_outgoing_edges(edge.to):
                 if isinstance(outgoing_edge, EmptyEdge):
-                    print(f'failing outing edge numero {outgoing_edge.iden}')
                     outgoing_edge.status = EDGE_FAILED
 
         elif isinstance(edge, ActionEdge):
@@ -833,6 +905,23 @@ class HGraph(Graph):
         assert start_node.status == NODE_INITIALISED,\
                 f"start node status must be {NODE_INITIALISED} and is {start_node.status} for node {target_node.iden}"
 
+        # # reverse source and target_node.name if names very much indicate so
+        # if "_" in start_node.name:
+        #     if start_node.name.split("_")[1] == "target":
+        #         if start_node.name.split("_")[0] == target_node.name:
+        #             print(f'node {start_node.name} and {target_node.name} are reversed')
+        #             # find pushing edge
+        #             outgoing_push_edge = self.get_outgoing_edges(target_node)
+        #             print(f"these are the outging edges from the push edge {outgoing_push_edge}")
+        #             assert isinstance(outgoing_push_edge, PushActionEdge), f"this should be a push edge {outgoing_push_edge.iden}"
+        #             self.create_push_ident_edge(outgoing_push_edge)
+        #             # return (target_node, start_node)
+
+        # if "_" in target_node.name:
+        #     if target_node.name.split("_")[1] == "target":
+        #         if target_node.name.split("_")[0] == target_node.name:
+        #             return (target_node, start_node)
+
         return (start_node, target_node)
 
     def find_source_node(self, node_iden) -> Node:
@@ -859,6 +948,11 @@ class HGraph(Graph):
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)
 
+        # remove this visualiseation please
+        if len(edge_to_list) > 1:
+            self.visualise(save=False)
+            raise ValueError
+
         # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
         assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
 
@@ -867,7 +961,12 @@ class HGraph(Graph):
 
         assert not edge_to_list[0].to == edge_to_list[0].source, "self loop detected"
 
-        # no fea
+        if self.recursion_depth == 900:
+            self.visualise(save=False)
+            raise ValueError
+        self.recursion_depth +=1
+
+
         if self.get_node(edge_to_list[0].source).status in [NODE_UNFEASIBLE, NODE_FAILED]:
             return self.get_node(node_iden)
         else:
