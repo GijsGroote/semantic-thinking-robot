@@ -178,3 +178,100 @@ def circle_in_box_obstacle(xy_pos: np.ndarray, obst, radius: float) -> bool:
 def circle_in_cylinder_obstacle(xy_pos, obst, radius) -> bool:
     """ Return True if the circle overlaps with the cylinder obstacle. """
     return np.linalg.norm(xy_pos-obst.state.get_xy_position()) <= obst.properties.radius() + radius
+
+def box_in_cylinder_obstacle(pose_2d: np.ndarray, cylinder_obj, box_obj):
+    box_obj_orien = box_obj.state.get_2d_pose()[2]
+
+    cos_rl = math.cos(box_obj_orien)*box_obj.properties.width()/2
+    sin_rl = math.sin(box_obj_orien)*box_obj.properties.width()/2
+    cos_rw = math.cos(box_obj_orien)*box_obj.properties.length()/2
+    sin_rw = math.sin(box_obj_orien)*box_obj.properties.length()/2
+
+    box_obj_xy = box_obj.state.get_xy_position()
+    cylinder_obj_xy = cylinder_obj.state.get_xy_position()
+
+    if (np.linalg.norm(cylinder_obj.state.get_xy_position()-box_obj_xy) <= \
+        cylinder_obj.properties.radius() + min(box_obj.properties.length(), box_obj.properties.width()) / 2):
+        return True
+
+    # corner points of the obstacle
+    a = box_obj_xy + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
+
+    b = box_obj_xy + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
+
+    c = box_obj_xy + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
+
+    d = box_obj_xy + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
+
+
+    # check if the edges of the obst overlap with the cylinder 
+    if minimal_distance_point_to_line(cylinder_obj_xy, a, b) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, b, c) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, c, d) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, d, a) <= cylinder_obj.properties.radius():
+        return True
+
+    return False
+
+def box_in_box_obstacle(pose_2d, in_this_box_obj, box_obj):
+
+    box_obj_orien = box_obj.state.get_2d_pose()[2]
+
+    cos_rl = math.cos(box_obj_orien)*box_obj.properties.width()/2
+    sin_rl = math.sin(box_obj_orien)*box_obj.properties.width()/2
+    cos_rw = math.cos(box_obj_orien)*box_obj.properties.length()/2 # x
+    sin_rw = math.sin(box_obj_orien)*box_obj.properties.length()/2
+
+    cos_ol = math.cos(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.width()/2
+    sin_ol = math.sin(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.width()/2
+    cos_ow = math.cos(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.length()/2
+    sin_ow = math.sin(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.length()/2
+    # corner points of the in_this_box_objacle
+    obst_a= np.array([in_this_box_obj.state.pos[0]-sin_ol+cos_ow, in_this_box_obj.state.pos[1]+cos_ol+sin_ow])
+    obst_b = np.array([in_this_box_obj.state.pos[0]-sin_ol-cos_ow, in_this_box_obj.state.pos[1]+cos_ol-sin_ow])
+    obst_c = np.array([in_this_box_obj.state.pos[0]+sin_ol-cos_ow, in_this_box_obj.state.pos[1]-cos_ol-sin_ow])
+    obst_d = np.array([in_this_box_obj.state.pos[0]+sin_ol+cos_ow, in_this_box_obj.state.pos[1]-cos_ol+sin_ow])
+
+    box_obj_xy = box_obj.state.get_xy_position()
+
+    if point_in_rectangle(box_obj.state.get_xy_position(), obst_a, obst_b, obst_c):
+        return True
+
+   # corner points of the obstacle
+    a = box_obj_xy + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
+
+    b = box_obj_xy + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
+
+    c = box_obj_xy + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
+
+    d = box_obj_xy + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
+
+    if (do_intersect(a, b, obst_a, obst_b) or
+        do_intersect(a, b, obst_b, obst_c) or
+        do_intersect(a, b, obst_c, obst_d) or
+        do_intersect(a, b, obst_d, obst_a) or
+
+        do_intersect(b, c, obst_a, obst_b) or
+        do_intersect(b, c, obst_b, obst_c) or
+        do_intersect(b, c, obst_c, obst_d) or
+        do_intersect(b, c, obst_d, obst_a) or
+
+        do_intersect(c, d, obst_a, obst_b) or
+        do_intersect(c, d, obst_b, obst_c) or
+        do_intersect(c, d, obst_c, obst_d) or
+        do_intersect(c, d, obst_d, obst_a) or
+
+        do_intersect(d, a, obst_a, obst_b) or
+        do_intersect(d, a, obst_b, obst_c) or
+        do_intersect(d, a, obst_c, obst_d) or
+        do_intersect(d, a, obst_d, obst_a)):
+
+        return True
+
+    return False

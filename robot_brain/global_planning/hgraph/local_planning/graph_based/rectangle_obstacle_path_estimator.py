@@ -384,7 +384,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                 [0.5, '#e763fa'], [0.75, '#e763fa'],
                 [0.75, '#ab63fa'], [1.0, '#ab63fa']]
         tickvals = [3/8, 9/8, 15/8, 21/8]
-        ticktext = ["free", "obstacle", "movable", "unknown"]
+        ticktext = ["free", "movable", "unknown", "obstacle"]
 
         extended_grid_map = np.zeros((int(self.grid_x_length/self.cell_size+2.0),
             int(self.grid_y_length/self.cell_size+2.0)))

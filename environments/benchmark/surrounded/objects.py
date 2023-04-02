@@ -4,12 +4,13 @@ from motion_planning_env.box_obstacle import BoxObstacle
 # surrounded
 surrounded = {
         "simpleBox1": BoxObstacle(name="simpleBox1", content_dict={
-            "movable": True,
+            "movable": False,
+            # "movable": True,
+            # "mass": 3,
             "type": "box",
             "orientation": [0, 0, 0],
-            "mass": 3,
             "color": [253, 1, 0],
-            "position": [-2, 0, 0.6],
+            "position": [-2, 0, 0.5],
             "geometry": {"length": 1.5, "width": 1.5, "height": 1.0},
             }),
         "simpleBox2": BoxObstacle(name="simpleBox2", content_dict={

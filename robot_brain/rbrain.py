@@ -34,12 +34,14 @@ class RBrain:
         self.hgraph = None
         self.kgraph = None
         self.obstacles_in_env = None
+        self.dash_app = None
+
+
+    def setup(self, stat_world_info, ob):
 
         # update all plots in webpage
         if CREATE_SERVER_DASHBOARD:
-            self.dash_app = start_dash_server()
-
-    def setup(self, stat_world_info, ob):
+            self.dash_app = start_dash_server(stat_world_info["n_env"])
 
         # create robot
         if "robot_type" in stat_world_info:
@@ -229,7 +231,8 @@ class RBrain:
                         time.sleep(2) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 
-                    return self.default_action
+                    raise exc
+                    # return self.default_action
             else:
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:

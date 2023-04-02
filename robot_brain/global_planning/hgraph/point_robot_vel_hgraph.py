@@ -1,4 +1,5 @@
 import math
+import sys
 import copy
 
 from typing import Tuple
@@ -33,6 +34,8 @@ from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsExce
 
 from helper_functions.geometrics import (
         which_side_point_to_line,
+        box_in_cylinder_obstacle,
+        box_in_box_obstacle,
         circle_in_box_obstacle,
         circle_in_cylinder_obstacle,
         to_interval_zero_to_two_pi
@@ -126,27 +129,105 @@ class PointRobotVelHGraph(HGraph):
                 path_estimator=path_estimator,
                 include_orien=include_orien)
 
-    def in_obstacle(self, pose_2ds) -> list:
-        """ return the obstacle keys at pose_2ds. """
+    def in_object(self, pose_2ds, obj) -> list:
+        """ return the object keys at pose_2ds that are in collision with object obj. """
+        blocking_obj_keys = []
 
-        obst_keys = []
+        if obj.name == self.robot.name:
+            blocking_obj_keys = self.robot_in_object(pose_2ds)
+        elif isinstance(obj.properties, BoxObstacle):
+            blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
+        elif isinstance(obj.properties, CylinderObstacle):
+            blocking_obj_keys = self.cylinder_obj_in_object(pose_2ds, obj)
+        else:
+            raise ValueError("unknown object")
+
+        # if nothing is found, return closes object that is not obj
+        if len(blocking_obj_keys) == 0:
+
+            for pose_2d in pose_2ds:
+                min_dist = sys.maxsize
+                closest_obj_key = None
+
+                for temp_obj in self.obstacles.values():
+
+                    # exclude the obj
+                    if temp_obj.name == obj.name:
+                        continue
+
+                    temp_dist = np.linalg.norm(temp_obj.state.get_xy_position() - pose_2d[0:2])
+
+                    if temp_dist < min_dist:
+                        min_dist = temp_dist
+                        closest_obj_key = temp_obj.name
+
+                if closest_obj_key is not None:
+                    blocking_obj_keys.append(closest_obj_key)
+
+        return [*set(blocking_obj_keys)]
+
+
+    def robot_in_object(self, pose_2ds) -> list:
+        obj_keys = []
         for pose_2d in pose_2ds:
             xy_pos = np.array([pose_2d[0], pose_2d[1]])
-            for obst in self.obstacles.values():
-                if isinstance(obst.properties, BoxObstacle):
-                    if circle_in_box_obstacle(xy_pos, obst, POINT_ROBOT_RADIUS):
-                        obst_keys.append(obst.name)
+            for obj in self.obstacles.values():
+                if isinstance(obj.properties, BoxObstacle):
+                    if circle_in_box_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                        obj_keys.append(obj.name)
 
-                elif isinstance(obst.properties, CylinderObstacle):
-                    if circle_in_cylinder_obstacle(xy_pos, obst, POINT_ROBOT_RADIUS):
-                        obst_keys.append(obst.name)
+                elif isinstance(obj.properties, CylinderObstacle):
+                    if circle_in_cylinder_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                        obj_keys.append(obj.name)
 
                 else:
-                    raise ValueError(f"obstacle unknown: {type(obst)}")
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
 
-        obst_keys = [*set(obst_keys)]
+        return obj_keys
 
-        return obst_keys
+    def box_obj_in_object(self, pose_2ds, obj) -> list:
+        blocking_obj_keys = []
+        for pose_2d in pose_2ds:
+
+            for temp_obj in self.obstacles.values():
+                if temp_obj.name == obj.name:
+                    continue
+
+                if isinstance(temp_obj.properties, BoxObstacle):
+                    if box_in_box_obstacle(pose_2d, temp_obj, obj):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                elif isinstance(temp_obj.properties, CylinderObstacle):
+                    if box_in_cylinder_obstacle(pose_2d, temp_obj, obj):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
+
+        return blocking_obj_keys
+
+
+    def cylinder_obj_in_object(self, pose_2ds, obj) -> list:
+        blocking_obj_keys = []
+        for pose_2d in pose_2ds:
+            xy_pos = np.array([pose_2d[0], pose_2d[1]])
+
+            for temp_obj in self.obstacles.values():
+                if temp_obj.name == obj.name:
+                    continue
+
+                if isinstance(temp_obj.properties, BoxObstacle):
+                    if circle_in_box_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                elif isinstance(temp_obj.properties, CylinderObstacle):
+                    if circle_in_cylinder_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
+
+        return blocking_obj_keys
 
     def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
         """ return a starting state to start pushing the obstacle. """
@@ -270,8 +351,12 @@ class PointRobotVelHGraph(HGraph):
                     return State(pos=np.array([temp_2d_pose[0], temp_2d_pose[1], 0]),
                             ang_p=np.array([0, 0, temp_2d_pose[2]]))
 
-        obj_target_semi_orien = [obj_target_orien+math.pi/3*np.ones(len(obj_target_orien)),
-                obj_target_orien-math.pi/3*np.ones(len(obj_target_orien))]
+        ot = obj_target_orien
+        pi = math.pi
+        obj_target_semi_orien = [ot, ot-pi/100, ot+pi/100,
+                ot-pi/80, ot+pi/80, ot-pi/60, ot+pi/60,
+                ot-pi/40, ot+pi/40, ot-pi/20, ot+pi/20,
+                ot-pi/10, ot+pi/10, ot-pi/5, ot+pi/5]
 
         # check pushing in a tilted line
         for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):

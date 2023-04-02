@@ -8,7 +8,9 @@ from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
-from robot_brain.global_variables import DT
+from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
+from dashboard.app import stop_dash_server
+from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 
 import pybullet as p
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -22,15 +24,13 @@ def main(conn=None):
 
     robot_type = "pointRobot-vel-v7"
 
+    env = gym.make(robot_type, dt=DT, render=True)
 
     kgraph = KGraph()
 
-
     # try the same task multiple times
-    for i in range(4):
+    for i in range(8):
         print(f'starting environment: {i}')
-
-        env = gym.make(robot_type, dt=DT, render=True)
 
         action = np.zeros(env.n())
 
@@ -60,14 +60,15 @@ def main(conn=None):
                 "robot_type": robot_type,
                 "obstacles_in_env": True,
                 "default_action": np.zeros(2),
-                "task": [("robot", State(pos=np.array([-4.12, 0.9, 0])))],
+                "task": [("robot", State(pos=np.array([0, 4, 0])))],
                 "obstacles": surrounded,
                 "env": env,
+                "n_env": i,
                 "kgraph": kgraph,
                 }, ob)
 
         try:
-            for _ in range(1500):
+            for _ in range(10000):
 
                 ob, _, _, _ = env.step(action)
 
@@ -82,11 +83,15 @@ def main(conn=None):
                     ob, _, _, _ = env.step(action)
                     brain.update(ob)
 
-        except ValueError as exc:
-            print(f'exception in the environment {exc} try again')
+        except StopIteration as exc:
+
+            print(f"Tear down this environment, we're done here because {exc}")
             continue
 
-        print('enought try again')
+        print('times is up, try again')
+
+        if CREATE_SERVER_DASHBOARD:
+            stop_dash_server(brain.dash_app)
 
     if USER_INPUT_MODE:
         conn.send({"request_action": False, "kill_child": True})

@@ -14,7 +14,7 @@ class KGraph(Graph):
     Knowledge graph.
     """
     def __init__(self):
-        print('kgraph is now created')
+        print('CEATE KGRAPH ONLYL ONCE, SHOULD BE ONECE ONCE CONCE')
         Graph.__init__(self)
 
     def add_object(self, obj: Obstacle):
@@ -24,19 +24,26 @@ class KGraph(Graph):
         assert obj.type in [MOVABLE, UNMOVABLE], f"added obstacle must have type MOVABLE or UNMOVABLE and is {obj.type}"
         #TODO check if the object is not already in the kgraph
 
-
         obj_node = ObstacleNode(self.unique_node_iden(), obj.name, obj)
         self.add_node(obj_node)
 
-        print('added node to the kgraph')
-        self.visualise(save=False)
 
-    def obj_info(self, obj):
-        """ return the type of the obj if known. """
+    def print_kgraph_info(self):
+        """ print info of the kgraph. """
+        print(f"info on kgraph nodes, n_nodes= {len(self.nodes)}")
         for node in self.nodes:
-            if node.obstacle.name == obj.name:
-                print(f'yes i know that {obj.name} is of type {node.obstacle.type}')
+            print(f'node name: {node.obstacle.name}, iden: {node.iden}, type: {node.obstacle.type}')
+        print(" ")
+
+    def get_object_type(self, obj_name: str) -> int:
+        """ return the type of the object if known. """
+
+
+        for node in self.nodes:
+            if node.obstacle.name == obj_name:
                 return node.obstacle.type
+
+        return None
 
 
 # T5HIS IS SOME STUFF TO INITIALISE THE kgRAPH LATER

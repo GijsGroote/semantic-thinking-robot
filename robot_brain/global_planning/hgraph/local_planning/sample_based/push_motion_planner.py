@@ -185,7 +185,7 @@ class PushMotionPlanner(MotionPlanner):
         if planning_time < 1.5: # be picky
             return (len(self.shortest_paths) > 10 and
                     self.shortest_paths.peekitem(0)[0] * 1.05 > self.shortest_paths.peekitem(9)[0])
-        elif planning_time < 8: # be less picky
+        elif planning_time < 15: # be less picky
             return (len(self.shortest_paths) > 5 and
                     self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0])
         elif len(self.shortest_paths) > 0: # beg for anything

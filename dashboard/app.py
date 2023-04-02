@@ -29,9 +29,9 @@ class Dashboard:
         </head>
         <body>
         <div id="no_data_found_div">
-        
+
         </div>
-        
+
         <style type="text/css">
             body {
                 display: block;
@@ -39,7 +39,7 @@ class Dashboard:
                 background-color: """ + FIG_BG_COLOR + """;
                 height: 450px;
             }
-        
+
             #no_data_found_div {
                 position: absolute;
                 top: calc(50% - 33px);
@@ -53,9 +53,9 @@ class Dashboard:
                 animation: spin 2s linear infinite;
                 margin: auto;
                 background-color: """ + FIG_BG_COLOR+ """;
-        
+
             }
-        
+
             @keyframes spin {
                 0% {
                     transform: rotate(0deg);
@@ -151,7 +151,7 @@ class Dashboard:
         register_callbacks(self.app)
 
 
-def start_dash_server():
+def start_dash_server(n_env: int):
     # change working directory
     os.chdir(PROJECT_PATH+"environments/")
 
@@ -167,7 +167,7 @@ def start_dash_server():
     def run():
         app.scripts.config.serve_locally = False
         app.run_server(
-            port=DASHBOARD_PORT_PID,
+            port=DASHBOARD_PORT_PID+n_env,
             debug=False,
             processes=4,
             threaded=False
@@ -176,9 +176,8 @@ def start_dash_server():
     # Run on a separate process so that it doesn"t block
     app.server_process = multiprocessing.Process(target=run)
     app.server_process.start()
-    return app.server_process 
+    return app.server_process
 
 def stop_dash_server(dash_app):
     """ kills the process, thereby terminating the dash server. """
     dash_app.kill()
-

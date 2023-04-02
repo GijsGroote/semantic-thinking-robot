@@ -79,13 +79,19 @@ class HGraph(Graph):
         """ create start and target nodes and adds them to the hgraph. """
 
         self.kgraph = kgraph
+        self.kgraph.print_kgraph_info()
         self.task = task
         self.obstacles = obstacles
 
-        for obj in self.obstacles:
-            obj_type = kgraph.obj_info(obj)
-            
+        # update object type from kgraph
+        for obj in self.obstacles.values():
+            obj_type = kgraph.get_object_type(obj.name)
 
+            if obj_type is None:
+                pass
+            else:
+
+                obj.type = obj_type
 
         #  add robot as start_state
         self.robot_node = ObstacleNode(ROBOT_IDEN, self.robot.name, self.robot)
@@ -187,6 +193,7 @@ class HGraph(Graph):
         self.current_edge = self.hypothesis[self.edge_pointer]
         self.current_node = self.get_node(self.current_edge.source)
 
+        self.visualise(save=False)
 
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
@@ -293,6 +300,8 @@ class HGraph(Graph):
                 # there already appears to be such an edge
                 self.create_ident_edge(temp_edge)
 
+        self.visualise(save=False)
+
 
         knowledge_graph = False
 
@@ -319,6 +328,9 @@ class HGraph(Graph):
             check_obj_movable = False
             if self.get_node(target_node_iden).obstacle.type == UNKNOWN:
                 check_obj_movable = True
+
+            
+            print(f'I want to know why are the {source_node_iden} and {target_node_iden} these guys?')
 
             edge = PushActionEdge(
                     iden=self.unique_edge_iden(),
@@ -376,6 +388,7 @@ class HGraph(Graph):
                 edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
 
             elif isinstance(edge, PushActionEdge):
+                edge.path_estimator.visualise(save=False)
 
                 edge.motion_planner = self.create_push_motion_planner(
                         obstacles=self.obstacles,
@@ -390,13 +403,14 @@ class HGraph(Graph):
         try:
             error_triggered = False
 
-            edge.path_estimator.visualise(save=False)
             print(f'motion planner for obj {self.get_node(edge.source).obstacle.name} from {current_state.get_2d_pose()}  to {self.get_node(edge.to).obstacle.state.get_2d_pose()}')
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
 
         except PlanningTimeElapsedException as exc:
             error_triggered = True
             add_node_list = []
+
+            edge.motion_planner.visualise(save=False)
             self.handle_planning_time_elapsed_exception(exc, edge)
 
         if error_triggered:
@@ -475,10 +489,12 @@ class HGraph(Graph):
         # connect to robot if a failed empty edge points to this node
         for temp_edge in self.edges:
             if temp_edge.status == EDGE_FAILED and temp_edge.to == edge.source:
-                self.add_edge(EmptyEdge(
+                temp = EmptyEdge(
                     self.unique_edge_iden(),
-                    self.robot_node.iden,
-                    self.get_node(edge.source).iden))
+                    self.self.current_subtask["start_node"].iden,
+                    self.get_node(edge.source).iden)
+                print(f'empty edge is created with iden {temp.iden} ik sproei')
+                self.add_edge(temp)
 
         push_ident_edge = PushIdentificationEdge(iden=self.unique_edge_iden(),
                 source=edge.source,
@@ -530,10 +546,13 @@ class HGraph(Graph):
         self.add_node(robot_node_copy)
 
         # add emptyEdge
-        self.add_edge(EmptyEdge(
+        temp = EmptyEdge(
             self.unique_edge_iden(),
             edge.source,
-            robot_node_copy.iden))
+            robot_node_copy.iden)
+
+        print(f'empty edge is created with iden {temp.iden} jij sproeit')
+        self.add_edge(temp)
 
         # create driving edge
         self.create_drive_edge(robot_node_copy.iden, best_push_pose_against_obstacle_node.iden)
@@ -545,11 +564,12 @@ class HGraph(Graph):
         """ add edges/nodes to remove a obstacle. """
 
         # find which obstacle is blocking
-        obst_keys = self.in_obstacle(add_node_list)
+        obst_keys = self.in_object(add_node_list, self.get_node(edge.to).obstacle)
 
         print(f'creating edge to remove obstacle {obst_keys}')
 
         if len(obst_keys) == 0:
+            edge.motion_planner.visualise(save=False)
             warnings.warn(f"could not find obstacle at {add_node_list[0]}, do not create edges to remove obstacle")
             return
 
@@ -576,10 +596,14 @@ class HGraph(Graph):
             self.add_node(blocking_obst_start_node)
 
         # rewire current node toward blocking obstacle start node
-        self.add_edge(EmptyEdge(
+        temp = EmptyEdge(
             self.unique_edge_iden(),
             self.get_node(edge.source).iden,
-            blocking_obst_start_node.iden))
+            blocking_obst_start_node.iden)
+
+        self.add_edge(temp)
+
+        print(f'empty edge is created with iden {temp.iden} oei')
 
         # find state that is not overlapping with planned path
         # TODO: the find_free_state_for_blocking_obstacle could raise an assertionerror, fix that
@@ -615,8 +639,8 @@ class HGraph(Graph):
         """ create push motion planner. """
 
     @abstractmethod
-    def in_obstacle(self, pose_2ds: list) -> list:
-        """ return the obstacle keys at pose_2ds. """
+    def in_object(self, pose_2ds: list, obj: Obstacle) -> list:
+        """ return the obstacle keys at pose_2ds that are in collision with obj. """
 
     @abstractmethod
     def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
