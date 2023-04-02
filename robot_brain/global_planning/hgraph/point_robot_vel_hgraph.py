@@ -279,7 +279,6 @@ class PointRobotVelHGraph(HGraph):
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
-        print('hey')
         # pretend that the object is unmovable
         blocking_obj_type = blocking_obj.type
         blocking_obj.type = UNMOVABLE
@@ -287,14 +286,12 @@ class PointRobotVelHGraph(HGraph):
         # configuration space for the robot
         path_estimator_robot = self.create_drive_path_estimator(self.obstacles)
 
-        print('hey2')
         # find reachable position around the object
         reachable_xy_positions = []
         (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
         obj_xy_position = blocking_obj.state.get_xy_position()
         blocking_obj_orien = to_interval_zero_to_two_pi(blocking_obj.state.get_2d_pose()[2])
 
-        print('hey3')
         # find reachable positions around blocking object
         for temp_orien in np.linspace(0, 2*math.pi, 8):
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
@@ -304,23 +301,24 @@ class PointRobotVelHGraph(HGraph):
 
             if xy_position_in_free_space is not None:
                 try:
-                    path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
-                    reachable_xy_positions.append(xy_position_in_free_space)
+                    path = path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
+                    reachable_xy_positions.append((len(path), xy_position_in_free_space))
 
                 except NoPathExistsException:
-
-                    print('hey4')
                     pass
 
         blocking_obj.type = blocking_obj_type
 
-        print('hey5')
 
         if len(reachable_xy_positions) == 0:
             raise NoTargetPositionFoundException(f"no positions where reachable around object {blocking_obj.name}")
+        reachable_xy_positions.sort()
+        reachable_xy_positions = reachable_xy_positions[1, :]
+
         # configuration space for the object
         objects_and_path = copy.deepcopy(self.obstacles)
 
+        # This operation takes quite some time.
         for (i, robot_xy_position_in_path) in enumerate(path):
             objects_and_path['path_position_'+str(i)] = Obstacle('path_position_'+str(i),
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
@@ -329,16 +327,16 @@ class PointRobotVelHGraph(HGraph):
         path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
 
         # create the orientations
-        obj_target_orien = []
+        obj_target_oriens = []
         for robot_xy_pos in reachable_xy_positions:
 
-            obj_target_orien.append(math.atan2(robot_xy_pos[0]-obj_xy_position[0],\
+            obj_target_oriens.append(math.atan2(robot_xy_pos[0]-obj_xy_position[0],\
                     robot_xy_pos[1]-obj_xy_position[1]))
 
 
         # check pushing in a straight line
         for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):
-            for temp_orien in obj_target_orien:
+            for temp_orien in obj_target_oriens:
                 temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
                 temp_x = float(obj_xy_position[0] - np.sin(temp_orien)*blocking_obj_to_target_dist)
@@ -351,12 +349,14 @@ class PointRobotVelHGraph(HGraph):
                     return State(pos=np.array([temp_2d_pose[0], temp_2d_pose[1], 0]),
                             ang_p=np.array([0, 0, temp_2d_pose[2]]))
 
-        ot = obj_target_orien
+        ot = obj_target_oriens
         pi = math.pi
-        obj_target_semi_orien = [ot, ot-pi/100, ot+pi/100,
-                ot-pi/80, ot+pi/80, ot-pi/60, ot+pi/60,
-                ot-pi/40, ot+pi/40, ot-pi/20, ot+pi/20,
-                ot-pi/10, ot+pi/10, ot-pi/5, ot+pi/5]
+        obj_target_semi_orien = []
+
+        for temp_orien in obj_target_oriens:
+            for orien_addition in [pi/100, pi/80, pi/60, pi/40, pi/20, pi/10, pi/5]:
+                obj_target_oriens.append(temp_orien + orien_addition)
+                obj_target_oriens.append(temp_orien - orien_addition)
 
         # check pushing in a tilted line
         for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):

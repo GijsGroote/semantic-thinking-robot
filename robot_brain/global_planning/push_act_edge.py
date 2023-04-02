@@ -21,8 +21,6 @@ class PushActionEdge(ActionEdge):
     def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
-        print(f'so far from target {self.push_obst.state.position_euclidean(self.get_current_view())}')
-
         return self.push_obst.state.position_euclidean(self.get_current_view()) < 0.9
 
     def respond(self) -> np.ndarray:

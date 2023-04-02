@@ -486,14 +486,13 @@ class HGraph(Graph):
 
         self.add_node(model_node)
 
-        # connect to robot if a failed empty edge points to this node
+        # connect to start subtask node if a failed empty edge points to this node
         for temp_edge in self.edges:
             if temp_edge.status == EDGE_FAILED and temp_edge.to == edge.source:
                 temp = EmptyEdge(
                     self.unique_edge_iden(),
-                    self.self.current_subtask["start_node"].iden,
+                    self.current_subtask["start_node"].iden,
                     self.get_node(edge.source).iden)
-                print(f'empty edge is created with iden {temp.iden} ik sproei')
                 self.add_edge(temp)
 
         push_ident_edge = PushIdentificationEdge(iden=self.unique_edge_iden(),
@@ -551,7 +550,6 @@ class HGraph(Graph):
             edge.source,
             robot_node_copy.iden)
 
-        print(f'empty edge is created with iden {temp.iden} jij sproeit')
         self.add_edge(temp)
 
         # create driving edge
@@ -602,8 +600,6 @@ class HGraph(Graph):
             blocking_obst_start_node.iden)
 
         self.add_edge(temp)
-
-        print(f'empty edge is created with iden {temp.iden} oei')
 
         # find state that is not overlapping with planned path
         # TODO: the find_free_state_for_blocking_obstacle could raise an assertionerror, fix that

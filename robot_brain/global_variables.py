@@ -21,7 +21,7 @@ def in_grid(x:float, y:float) -> bool:
     inside the grid boundaries, otherwise False. """
     return abs(x)<=GRID_X_SIZE/2 and abs(y)<=GRID_Y_SIZE
 
-POINT_ROBOT_RADIUS = 0.20
+POINT_ROBOT_RADIUS = 0.15
 BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
 

@@ -5,6 +5,7 @@ import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
+from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.random_objects import RandomObject
 
@@ -20,6 +21,9 @@ def main():
             min_dimension=0.2,
             max_dimension=2.0,
             max_weight=1000)
+
+    kgraph = KGraph()
+
 
     robot_type = "pointRobot-vel-v7"
     env = gym.make(robot_type, dt=DT, render=True)
@@ -61,17 +65,18 @@ def main():
             "obstacles_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": task,
+            "kgraph": kgraph,
             "obstacles": obstacles,
             "env": env
         }, ob)
 
         brain.update(ob)
 
-        for _ in range(250):
+        for _ in range(12250):
 
-            # action[0:2] = brain.respond()
+            action[0:2] = brain.respond()
             ob, reward, done, info = env.step(action)
-            # brain.update(ob)
+            brain.update(ob)
 
 if __name__ == "__main__":
     main()

@@ -28,6 +28,12 @@ def main(conn=None):
 
     kgraph = KGraph()
 
+    for box_string in ["simpleBox2", "simpleBox4", "simpleBox5", "simpleBox6"]:
+        kgraph.add_object(Obstacle(name=box_string,
+                                state=State,
+                                properties=surrounded[box_string],
+                                obj_type=UNMOVABLE))
+
     # try the same task multiple times
     for i in range(8):
         print(f'starting environment: {i}')
@@ -81,6 +87,7 @@ def main(conn=None):
                 else:
                     action[0:2] = brain.respond()
                     ob, _, _, _ = env.step(action)
+                    print(f'action {action}')
                     brain.update(ob)
 
         except StopIteration as exc:
