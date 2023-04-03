@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import torch
-from robot_brain.object import Object
+# from robot_brain.object import Object
 from robot_brain.global_variables import TORCH_DEVICE
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
@@ -145,7 +145,7 @@ def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
 
     return (scaled_x % scaled_y) == 0
 
-def circle_in_box_object(xy_pos: np.ndarray, obj: Object, radius: float) -> bool:
+def circle_in_box_object(xy_pos: np.ndarray, obj, radius: float) -> bool:
     """ Return True if the circle overlaps with the box object. """
     cos_ol = math.cos(obj.state.ang_p[2])*obj.properties.width()/2
     sin_ol = math.sin(obj.state.ang_p[2])*obj.properties.width()/2
@@ -176,11 +176,11 @@ def circle_in_box_object(xy_pos: np.ndarray, obj: Object, radius: float) -> bool
     else:
         return False
 
-def circle_in_cylinder_object(xy_pos, obj: Object, radius: float) -> bool:
+def circle_in_cylinder_object(xy_pos, obj, radius: float) -> bool:
     """ Return True if the circle overlaps with the cylinder objacle. """
     return np.linalg.norm(xy_pos-obj.state.get_xy_position()) <= obj.properties.radius() + radius
 
-def box_in_cylinder_object(cylinder_obj: Object, box_obj: Object):
+def box_in_cylinder_object(cylinder_obj, box_obj):
     box_obj_orien = box_obj.state.ang_p[2]
 
     cos_rl = math.cos(box_obj_orien)*box_obj.properties.width()/2
@@ -220,7 +220,7 @@ def box_in_cylinder_object(cylinder_obj: Object, box_obj: Object):
 
     return False
 
-def box_in_box_object(in_this_box_obj: Object, box_obj: Object):
+def box_in_box_object(in_this_box_obj, box_obj):
 
     box_obj_orien = box_obj.state.get_2d_pose()[2]
 

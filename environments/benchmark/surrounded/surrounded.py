@@ -10,7 +10,7 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
 from dashboard.app import stop_dash_server
-from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 
 import pybullet as p
 from motion_planning_env.box_obstacle import BoxObstacle

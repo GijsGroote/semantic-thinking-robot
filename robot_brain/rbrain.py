@@ -5,9 +5,12 @@ import pandas as pd
 from dashboard.app import start_dash_server, stop_dash_server
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
+from robot_brain.object import Object
 pd.options.plotting.backend = "plotly"
 from robot_brain.state import State
-from robot_brain.obstacle import Obstacle, MOVABLE, UNMOVABLE, UNKNOWN
+
+
+from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
@@ -64,7 +67,7 @@ class RBrain:
             else:
                 raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
-            self.robot = Obstacle(
+            self.robot = Object(
                 name=stat_world_info["robot_type"],
                 state=State(
                     pos=ob["joint_state"]["position"],
@@ -118,7 +121,7 @@ class RBrain:
             )
 
             try:
-                self.obstacles[key] = Obstacle(name=key,
+                self.obstacles[key] = Object(name=key,
                             state=s_temp,
                             properties=stat_world_info["obstacles"][key])
 
@@ -172,7 +175,7 @@ class RBrain:
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
 
-            assert isinstance(obstacle, Obstacle), \
+            assert isinstance(obstacle, Object), \
                     f"the obstacle should be of type Ostacle and in {type(obstacle)}"
 
             task["subtask_"+str(task_nmr)] = (obstacle, target)

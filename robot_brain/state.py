@@ -4,6 +4,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
+
 class State:
     """
     State describing the linear and angular position and velocity in the environment.
