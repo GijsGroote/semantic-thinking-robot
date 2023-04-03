@@ -3,9 +3,9 @@ import numpy as np
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED
-from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.obstacle import Obstacle
+from robot_brain.object import Object
 from robot_brain.state import State
 
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
@@ -26,24 +26,24 @@ def main():
     """ This HGraph is a handcoded version that represents pushing an object to a target
     location. Thus  a task with a single subtask in it. """
 
-    robot_obst = Obstacle("robot", State(), "empty")
+    robot_obst = Object("robot", State(), "empty")
     hgraph = PointRobotVelHGraph(robot_obst, "env")
 
     # robot
-    robot_node = ObstacleNode(0, "robot", robot_obst)
+    robot_node = ObjectNode(0, "robot", robot_obst)
     hgraph.add_start_node(robot_node)
 
 
-    robot_target_node = ObstacleNode(1, "robot_target", robot_obst)
+    robot_target_node = ObjectNode(1, "robot_target", robot_obst)
     hgraph.add_target_node(robot_target_node)
 #
 
-    robot_model_node1 = ObstacleNode(2, "robot_model_1", robot_obst)
+    robot_model_node1 = ObjectNode(2, "robot_model_1", robot_obst)
     hgraph.add_node(robot_model_node1)
-    robot_model_node2 = ObstacleNode(3, "robot_model_2", robot_obst)
+    robot_model_node2 = ObjectNode(3, "robot_model_2", robot_obst)
     hgraph.add_node(robot_model_node2)
 
-    # green_box green_box_start_node = ObstacleNode(1, "box", Obstacle("box", State(), "empty"))
+    # green_box green_box_start_node = ObjectNode(1, "box", Object("box", State(), "empty"))
     class controller:
         def __init__(self, name):
             self.name = name

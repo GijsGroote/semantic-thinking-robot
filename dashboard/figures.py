@@ -5,7 +5,6 @@ import numpy as np
 from numpy import dstack
 from robot_brain.global_variables import FIG_BG_COLOR
 
-
 pd.options.plotting.backend = "plotly"
 
 no_data_found_dict = {
@@ -139,7 +138,6 @@ def create_mpc_plot(df):
     # scale the axis
     fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
                      row=1, col=1)
-
     fig.update_xaxes(range=[df["time"][0], max(15, df["time"][df.index[-1]] + 1)],
                      title_text="Time [sec]",
                      row=2, col=1)

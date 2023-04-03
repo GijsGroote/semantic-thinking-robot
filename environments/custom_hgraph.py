@@ -3,9 +3,9 @@ import numpy as np
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED
-from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.obstacle import Obstacle
+from robot_brain.object import Object
 from robot_brain.state import State
 
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
@@ -28,18 +28,18 @@ def main():
     """ This HGraph is a handcoded version that represents pushing an object to a target
     location. Thus  a task with a single subtask in it. """
 
-    robot_obst = Obstacle("robot", State(), "empty")
+    robot_obst = Object("robot", State(), "empty")
     hgraph = PointRobotVelHGraph(robot_obst, "env")
 
     # robot
-    robot_node = ObstacleNode(0, "robot", robot_obst)
+    robot_node = ObjectNode(0, "robot", robot_obst)
 
     hgraph.add_start_node(robot_node)
 
     # green_box
-    green_box_start_node = ObstacleNode(1, "box", Obstacle("box", State(), "empty"))
+    green_box_start_node = ObjectNode(1, "box", Object("box", State(), "empty"))
     hgraph.add_start_node(green_box_start_node)
-    green_box_target_node = ObstacleNode(2, "box_target", Obstacle("box", State(), "empty"))
+    green_box_target_node = ObjectNode(2, "box_target", Object("box", State(), "empty"))
     hgraph.add_target_node(green_box_target_node)
 
     class controller:
@@ -62,10 +62,10 @@ def main():
     # push_box_edge.status = EDGE_COMPLETED
     #
     # model node
-    green_box_model_node = ObstacleNode(
+    green_box_model_node = ObjectNode(
             hgraph.unique_node_iden(),
             "box_model",
-            Obstacle("box", State(), "empty"))
+            Object("box", State(), "empty"))
 
     hgraph.add_node(green_box_model_node)
 
@@ -99,10 +99,10 @@ def main():
     hgraph.add_edge(drive_to_box_edge)
     # hgraph.hypothesis.append(drive_to_box_edge)
 
-    robot_model_node = ObstacleNode(
+    robot_model_node = ObjectNode(
             hgraph.unique_node_iden(),
             "robot_model",
-            Obstacle("robot_model", State(), "empty"))
+            Object("robot_model", State(), "empty"))
 
     hgraph.add_node(robot_model_node)
     #
@@ -123,15 +123,15 @@ def main():
     drive_to_box_edge.source = robot_model_node.iden
     # #
     # best pose node
-    # best_push_node = ObstacleNode(
+    # best_push_node = ObjectNode(
     #         hgraph.unique_node_iden(),
     #         "best_push_position",
-    #         Obstacle("-", State(), "empty"))
+    #         Object("-", State(), "empty"))
     #
     # hgraph.add_node(best_push_node)
 
 
-    # robot_copy_node = ObstacleNode(9, "robot_copy", robot_obst)
+    # robot_copy_node = ObjectNode(9, "robot_copy", robot_obst)
     # hgraph.add_node(robot_copy_node)
 
     # robot drive to best push pose
@@ -153,10 +153,10 @@ def main():
 
     # push_box_edge.source = best_push_node.iden
     #
-    robot_model2_node = ObstacleNode(
+    robot_model2_node = ObjectNode(
             hgraph.unique_node_iden(),
             "robot_model2",
-            Obstacle("robot_copy_model", State(), "empty"))
+            Object("robot_copy_model", State(), "empty"))
 
     # hgraph.add_node(robot_model2_node)
     #

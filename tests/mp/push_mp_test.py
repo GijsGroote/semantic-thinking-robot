@@ -4,7 +4,7 @@ import numpy as np
 from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_planner import PushMotionPlanner
 from motion_planning_env.box_obstacle import BoxObstacle
 from robot_brain.state import State
-from robot_brain.obstacle import Obstacle
+from robot_brain.object import Object
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
         import RectangleObstaclePathEstimator
 

@@ -18,4 +18,3 @@ class NoTargetPositionFoundException(Exception):
 
 class PushAnUnmovableObjectException(Exception):
     """ A unmovable object was insuccesfully pushed. """
-

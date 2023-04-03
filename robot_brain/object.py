@@ -1,14 +1,15 @@
 from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
+from robot_brain.state import State
 
 FREE = 0
 MOVABLE = 1
 UNKNOWN = 2
 UNMOVABLE= 3
 
-class Obstacle:
+class Object:
     """
-    Obstacle class.
+    Object class.
     """
     def __init__(self, name, state, properties, obj_type=None):
         self.name = name
@@ -22,7 +23,7 @@ class Obstacle:
                 "position": [0, 0, 0],
                 "geometry": {"length": 1, "width": 1, "height": 1},
             }
-            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict)
+            properties = BoxObstacle(name="None-Type-Object", content_dict=box_dict)
 
         self.properties = properties
 
@@ -40,14 +41,15 @@ class Obstacle:
     # name setter
     @name.setter
     def name(self, val):
+        assert isinstance(val, str), f"name should be a string and is {type(val)}"
         self._name = val
 
-    # obstacle getter
+    # properties getter
     @property
     def properties(self) -> FreeCollisionObstacle:
         return self._properties
 
-    # property setter
+    # properties setter
     @properties.setter
     def properties(self, val: FreeCollisionObstacle):
         assert isinstance(val, FreeCollisionObstacle), f"properties should be an FreeCollisionObstacle and is {type(val)}"
@@ -63,7 +65,6 @@ class Obstacle:
     def type(self, val):
         if val in [UNKNOWN, MOVABLE, UNMOVABLE]:
             self._type = val
-
         else:
             raise ValueError(f"the type {val} is not allowed")
 
@@ -75,5 +76,5 @@ class Obstacle:
     # state setter
     @state.setter
     def state(self, state):
-        # TODO: input sanitization
+        assert isinstance(state, State), f"state should be of type State and is {type(state)}"
         self._state = state

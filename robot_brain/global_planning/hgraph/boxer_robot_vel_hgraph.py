@@ -10,7 +10,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obs
     RectangleObstaclePathEstimator,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
-from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.edge import Edge
 import math

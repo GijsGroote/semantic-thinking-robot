@@ -15,9 +15,9 @@ from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
-from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
-from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
 from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
@@ -94,7 +94,7 @@ class HGraph(Graph):
                 obj.type = obj_type
 
         #  add robot as start_state
-        self.robot_node = ObstacleNode(ROBOT_IDEN, self.robot.name, self.robot)
+        self.robot_node = ObjectNode(ROBOT_IDEN, self.robot.name, self.robot)
         # self.current_node = self.robot_node
         self.add_start_node(self.robot_node)
 
@@ -103,7 +103,7 @@ class HGraph(Graph):
                 iden_start_node = ROBOT_IDEN
             else:
                 iden_start_node = self.unique_node_iden()
-                self.add_start_node(ObstacleNode(
+                self.add_start_node(ObjectNode(
                     iden_start_node,
                     obst_temp.name,
                     obst_temp,
@@ -111,10 +111,10 @@ class HGraph(Graph):
                     ))
 
             iden_target_node = self.unique_node_iden()
-            self.add_target_node(ObstacleNode(
+            self.add_target_node(ObjectNode(
                 iden_target_node,
                 obst_temp.name+"_target",
-                Obstacle(obst_temp.name, target, obst_temp.properties),
+                Object(obst_temp.name, target, obst_temp.properties),
                 subtask_name
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
@@ -452,7 +452,7 @@ class HGraph(Graph):
     def create_drive_ident_edge(self, edge: DriveActionEdge):
         """ create a system identification edge. """
 
-        model_node = ObstacleNode(
+        model_node = ObjectNode(
                 self.unique_node_iden(),
                 self.robot.name+"_model",
                 self.robot,
@@ -478,7 +478,7 @@ class HGraph(Graph):
     def create_push_ident_edge(self, edge: PushActionEdge):
         """ create a system identification edge for pushing. """
 
-        model_node = ObstacleNode(
+        model_node = ObjectNode(
                 self.unique_node_iden(),
                 self.get_node(edge.source).name+"_model",
                 self.get_node(edge.source).obstacle,
@@ -526,10 +526,10 @@ class HGraph(Graph):
             return
 
 
-        best_push_pose_against_obstacle_node = ObstacleNode(
+        best_push_pose_against_obstacle_node = ObjectNode(
                 self.unique_node_iden(),
                 "best_push_pose_against_"+self.get_node(edge.to).obstacle.name,
-                Obstacle(name=self.robot.name,
+                Object(name=self.robot.name,
                     state=best_push_pose_against_obstacle_state,
                     properties=self.robot.properties),
                 self.get_node(edge.source).subtask_name)
@@ -537,7 +537,7 @@ class HGraph(Graph):
         self.add_node(best_push_pose_against_obstacle_node)
 
         # add robot node
-        robot_node_copy = ObstacleNode(
+        robot_node_copy = ObjectNode(
                 self.unique_node_iden(),
                 self.robot.name+"_copy",
                 self.robot,
@@ -585,7 +585,7 @@ class HGraph(Graph):
                 blocking_obst_start_node = temp_node
 
         if blocking_obst_start_node is None:
-            blocking_obst_start_node = ObstacleNode(
+            blocking_obst_start_node = ObjectNode(
                 self.unique_node_iden(),
                 blocking_obst.name,
                 blocking_obst,
@@ -605,10 +605,10 @@ class HGraph(Graph):
         # TODO: the find_free_state_for_blocking_obstacle could raise an assertionerror, fix that
         target_state = self.find_free_state_for_blocking_obstacle(blocking_obst, edge.motion_planner.shortest_path)
 
-        blocking_obst_target_node = ObstacleNode(
+        blocking_obst_target_node = ObjectNode(
                 self.unique_node_iden(),
                 obst_keys[0]+"_target",
-                Obstacle(obst_keys[0],
+                Object(obst_keys[0],
                     target_state,
                     blocking_obst.properties),
                 self.get_node(edge.to).subtask_name)
@@ -635,7 +635,7 @@ class HGraph(Graph):
         """ create push motion planner. """
 
     @abstractmethod
-    def in_object(self, pose_2ds: list, obj: Obstacle) -> list:
+    def in_object(self, pose_2ds: list, obj: Object) -> list:
         """ return the obstacle keys at pose_2ds that are in collision with obj. """
 
     @abstractmethod
@@ -643,7 +643,7 @@ class HGraph(Graph):
         """ return a starting state to start pushing the obstacle. """
 
     @abstractmethod
-    def find_free_state_for_blocking_obstacle(self, blocking_obst: Obstacle, path: list) -> State:
+    def find_free_state_for_blocking_obstacle(self, blocking_obst: Object, path: list) -> State:
         """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
 
     def in_blacklist(self, edge_type: list) -> bool:
@@ -1283,8 +1283,8 @@ class HGraph(Graph):
         self.nodes.append(node)
 
     def add_start_node(self, node):
-        if not isinstance(node, ObstacleNode):
-            raise TypeError("ObstacleNode's are only allowed as starting node in HGraph")
+        if not isinstance(node, ObjectNode):
+            raise TypeError("ObjectNode's are only allowed as starting node in HGraph")
         self.add_node(node)
         self.start_nodes.append(node)
 

@@ -1,8 +1,8 @@
 import os
-import numpy as np
-import json
-from pygments import highlight, lexers, formatters
 from pathlib import Path
+import json
+import numpy as np
+from pygments import highlight, lexers, formatters
 
 from robot_brain.global_planning.edge import Edge
 from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS
@@ -23,9 +23,9 @@ class HLogger:
         """ create dictionary with placeholder for every subtask in the task. """
         assert isinstance(task, dict), f"task should be a dictionary and is a {type(task)}"
 
-        for (subtask_name, (obst, target_state)) in task.items():
+        for (subtask_name, (obj, target_state)) in task.items():
             self.data["subtasks"][subtask_name] = {
-                    "obstacle_name": obst.name,
+                    "obj_name": obj.name,
                     "target_state_pos_2d": target_state.get_2d_pose().tolist(),
                     "completed": False,
                     "num_hypotheses": 0,

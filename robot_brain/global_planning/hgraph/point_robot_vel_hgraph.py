@@ -11,7 +11,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle, UNMOVABLE, FREE
+from robot_brain.object import Object, UNMOVABLE, FREE
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS, in_grid
 from robot_brain.state import State
@@ -34,10 +34,10 @@ from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsExce
 
 from helper_functions.geometrics import (
         which_side_point_to_line,
-        box_in_cylinder_obstacle,
-        box_in_box_obstacle,
-        circle_in_box_obstacle,
-        circle_in_cylinder_obstacle,
+        box_in_cylinder_object,
+        box_in_box_object,
+        circle_in_box_object,
+        circle_in_cylinder_object,
         to_interval_zero_to_two_pi
         )
 
@@ -57,12 +57,12 @@ class PointRobotVelHGraph(HGraph):
         HGraph.__init__(self, robot, env)
         self.robot_order = 2
 
-    def create_drive_path_estimator(self, obstacles) -> PathEstimator:
+    def create_drive_path_estimator(self, objects) -> PathEstimator:
         occ_graph = CircleObstaclePathEstimator(
                 cell_size=0.1,
                 grid_x_length = GRID_X_SIZE,
                 grid_y_length = GRID_Y_SIZE,
-                obstacles= obstacles,
+                objects= objects,
                 obst_cart_2d= self.robot.state.get_xy_position(),
                 obst_name = self.robot.name,
                 obst_radius= POINT_ROBOT_RADIUS)
@@ -71,7 +71,7 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_push_path_estimator(self, push_obstacle, obstacles):
+    def create_push_path_estimator(self, push_obstacle, objects):
 
         if isinstance(push_obstacle.properties, BoxObstacle):
 
@@ -79,7 +79,7 @@ class PointRobotVelHGraph(HGraph):
                     cell_size = 0.1,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
-                    obstacles= obstacles,
+                    objects= objects,
                     obst_cart_2d = push_obstacle.state.get_xy_position(),
                     obst_name = push_obstacle.name,
                     n_orientations = 3,
@@ -92,7 +92,7 @@ class PointRobotVelHGraph(HGraph):
             occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
-                    obstacles= obstacles,
+                    objects= objects,
                     obst_cart_2d= self.robot.state.get_xy_position(),
                     obst_name = push_obstacle.name,
                     obst_radius= push_obstacle.properties.radius())
@@ -103,7 +103,7 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_drive_motion_planner(self, obstacles, path_estimator=None) -> DriveMotionPlanner:
+    def create_drive_motion_planner(self, objects, path_estimator=None) -> DriveMotionPlanner:
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
@@ -112,7 +112,7 @@ class PointRobotVelHGraph(HGraph):
                 search_size=0.25,
                 path_estimator=path_estimator)
 
-    def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
+    def create_push_motion_planner(self, objects, push_obstacle, path_estimator=None) -> PushMotionPlanner:
         if isinstance(push_obstacle.properties, BoxObstacle):
             include_orien = True
         elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
@@ -149,7 +149,7 @@ class PointRobotVelHGraph(HGraph):
                 min_dist = sys.maxsize
                 closest_obj_key = None
 
-                for temp_obj in self.obstacles.values():
+                for temp_obj in self.objects.values():
 
                     # exclude the obj
                     if temp_obj.name == obj.name:
@@ -171,13 +171,13 @@ class PointRobotVelHGraph(HGraph):
         obj_keys = []
         for pose_2d in pose_2ds:
             xy_pos = np.array([pose_2d[0], pose_2d[1]])
-            for obj in self.obstacles.values():
+            for obj in self.objects.values():
                 if isinstance(obj.properties, BoxObstacle):
-                    if circle_in_box_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                    if circle_in_box_object(xy_pos, obj, POINT_ROBOT_RADIUS):
                         obj_keys.append(obj.name)
 
                 elif isinstance(obj.properties, CylinderObstacle):
-                    if circle_in_cylinder_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                    if circle_in_cylinder_object(xy_pos, obj, POINT_ROBOT_RADIUS):
                         obj_keys.append(obj.name)
 
                 else:
@@ -189,16 +189,16 @@ class PointRobotVelHGraph(HGraph):
         blocking_obj_keys = []
         for pose_2d in pose_2ds:
 
-            for temp_obj in self.obstacles.values():
+            for temp_obj in self.objects.values():
                 if temp_obj.name == obj.name:
                     continue
 
                 if isinstance(temp_obj.properties, BoxObstacle):
-                    if box_in_box_obstacle(pose_2d, temp_obj, obj):
+                    if box_in_box_object(temp_obj, obj):
                         blocking_obj_keys.append(temp_obj.name)
 
                 elif isinstance(temp_obj.properties, CylinderObstacle):
-                    if box_in_cylinder_obstacle(pose_2d, temp_obj, obj):
+                    if box_in_cylinder_object(temp_obj, obj):
                         blocking_obj_keys.append(temp_obj.name)
 
                 else:
@@ -212,16 +212,16 @@ class PointRobotVelHGraph(HGraph):
         for pose_2d in pose_2ds:
             xy_pos = np.array([pose_2d[0], pose_2d[1]])
 
-            for temp_obj in self.obstacles.values():
+            for temp_obj in self.objects.values():
                 if temp_obj.name == obj.name:
                     continue
 
                 if isinstance(temp_obj.properties, BoxObstacle):
-                    if circle_in_box_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                    if circle_in_box_object(xy_pos, temp_obj, obj.properties.radius()):
                         blocking_obj_keys.append(temp_obj.name)
 
                 elif isinstance(temp_obj.properties, CylinderObstacle):
-                    if circle_in_cylinder_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                    if circle_in_cylinder_object(xy_pos, temp_obj, obj.properties.radius()):
                         blocking_obj_keys.append(temp_obj.name)
 
                 else:
@@ -254,7 +254,7 @@ class PointRobotVelHGraph(HGraph):
             best_robot_pose_orien = math.atan2(-(clost_obst_xy_position[0]-obst_xy_position[0]),\
                     clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
 
-        path_estimator = self.create_drive_path_estimator(self.obstacles)
+        path_estimator = self.create_drive_path_estimator(self.objects)
 
         bo = best_robot_pose_orien
         pi = math.pi
@@ -284,7 +284,7 @@ class PointRobotVelHGraph(HGraph):
         blocking_obj.type = UNMOVABLE
 
         # configuration space for the robot
-        path_estimator_robot = self.create_drive_path_estimator(self.obstacles)
+        path_estimator_robot = self.create_drive_path_estimator(self.objects)
 
         # find reachable position around the object
         reachable_xy_positions = []
@@ -316,7 +316,7 @@ class PointRobotVelHGraph(HGraph):
         reachable_xy_positions = reachable_xy_positions[1, :]
 
         # configuration space for the object
-        objects_and_path = copy.deepcopy(self.obstacles)
+        objects_and_path = copy.deepcopy(self.objects)
 
         # This operation takes quite some time.
         for (i, robot_xy_position_in_path) in enumerate(path):

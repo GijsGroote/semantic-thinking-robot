@@ -1,22 +1,21 @@
 import numpy as np
 import pytest
-from robot_brain.obstacle import Obstacle
-from robot_brain.global_planning.obstacle_node import ObstacleNode
+from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.object import Object
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.state import State
 
 def test_object_set_node():
-    ob1 = Obstacle("tree", State(pos=np.array([0, 1, 2])), "empty")
-    obst_node_1 = ObstacleNode(1, "P", ob1)
-
+    ob1 = Object("tree", State(pos=np.array([0, 1, 2])), "empty")
+    obst_node_1 = ObjectNode(1, "P", ob1)
 
     # test of assertionError was thrown when objectSet does not contain only objects
     with pytest.raises(AssertionError):
-        ObstacleNode(1, "P", State())
+        ObjectNode(1, "P", State())
 
     # test of assertionError was thrown when objectSet is not a list
     with pytest.raises(AssertionError):
-        ObstacleNode(1, "P", 2)
+        ObjectNode(1, "P", 2)
 
 # # TODO make this test about the changeofstatenode
 # def test_conf_set_node():
@@ -29,11 +28,11 @@ def test_object_set_node():
 #
 #     # test of assertionError was thrown when confSet does not contain only objects
 #     with pytest.raises(AssertionError):
-#         ObstacleNode(1, "P", [conf1, State()])
+#         ObjectNode(1, "P", [conf1, State()])
 #
 #     # test of assertionError was thrown when confSet is not a list
 #     with pytest.raises(AssertionError):
-# ObstacleNode(1, "P", 2)
+# ObjectNode(1, "P", 2)
 #
 # def test_change_of_conf_set_node():
 #     conf1 = Configuration()
@@ -61,4 +60,4 @@ def test_object_set_node():
 #
 #     # test of assertionError was thrown when changeOfConfSet is not a list
 #     with pytest.raises(AssertionError):
-#         ObstacleNode(1, "P", 2)
+#         ObjectNode(1, "P", 2)
