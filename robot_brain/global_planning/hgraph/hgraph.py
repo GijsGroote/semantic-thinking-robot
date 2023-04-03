@@ -120,7 +120,7 @@ class HGraph(Graph):
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
 
-        self.visualise(save=False)
+        # self.visualise(save=False)
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
         if LOG_METRICS:
@@ -193,7 +193,7 @@ class HGraph(Graph):
         self.current_edge = self.hypothesis[self.edge_pointer]
         self.current_node = self.get_node(self.current_edge.source)
 
-        self.visualise(save=False)
+        # self.visualise(save=False)
 
         # check if the first edge is planned.
         if not self.current_edge.ready_for_execution():
@@ -388,7 +388,7 @@ class HGraph(Graph):
                 edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
 
             elif isinstance(edge, PushActionEdge):
-                edge.path_estimator.visualise(save=False)
+                # edge.path_estimator.visualise(save=False)
 
                 edge.motion_planner = self.create_push_motion_planner(
                         obstacles=self.obstacles,
