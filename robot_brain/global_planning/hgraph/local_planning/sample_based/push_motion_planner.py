@@ -26,7 +26,7 @@ class PushMotionPlanner(MotionPlanner):
         path_estimator: PathEstimator,
         include_orien= False):
 
-        MotionPlanner.__init__(self, grid_x_length, grid_y_length, obstacle,
+        MotionPlanner.__init__(self, grid_x_length, grid_y_length, obj,
                 step_size, search_size, path_estimator, include_orien)
 
         self.start_time = None

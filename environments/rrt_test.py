@@ -37,7 +37,7 @@ def main():
     robot_properties = CylinderObstacle(name="cylinder_robot", content_dict=cylinder_dict)
 
 
-    obst = Obstacle(
+    obst = Object(
         name="test_test_test",
         state=State(),
         properties=robot_properties,

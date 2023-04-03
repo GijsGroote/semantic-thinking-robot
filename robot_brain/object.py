@@ -75,6 +75,6 @@ class Object:
 
     # state setter
     @state.setter
-    def state(self, state):
-        assert isinstance(state, State), f"state should be of type State and is {type(state)}"
-        self._state = state
+    def state(self, val):
+        assert isinstance(val, State), f"val should be of type State and is {type(val)}"
+        self._state = val

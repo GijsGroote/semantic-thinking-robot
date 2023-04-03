@@ -20,12 +20,12 @@ def test_init():
         "geometry": {"length": 1.4, "width": 1.4, "height": 0.3},
     }
 
-    box_obst = Obstacle("box", State(), BoxObstacle(name="box", content_dict=box_dict))
+    box_obst = Object("box", State(), BoxObstacle(name="box", content_dict=box_dict))
 
     pmp = PushMotionPlanner(
         grid_x_length= 10,
         grid_y_length= 10,
-        obstacle= box_obst,
+        obj = box_obst,
         step_size= 0.4,
         search_size= 0.5,
         path_estimator = RectangleObstaclePathEstimator(0.1, 8, 8, {}, np.array([0,0]), "obst_name", 0.5, 0.5, 3),

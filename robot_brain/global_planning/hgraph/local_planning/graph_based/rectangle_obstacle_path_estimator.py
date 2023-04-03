@@ -23,13 +23,13 @@ from robot_brain.state import State
 from robot_brain.exceptions import NoPathExistsException
 
 class RectangleObstaclePathEstimator(PathEstimator):
-    """ The configuration grid map for rectangular obstacles. """
+    """ The configuration grid map for rectangular objects. """
 
     def __init__(self,
         cell_size: float,
         grid_x_length: float,
         grid_y_length: float,
-        obstacles: dict,
+        objects: dict,
         obst_cart_2d: np.ndarray,
         obst_name: str,
         obst_x_length: float,
@@ -39,7 +39,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         orientation = 0.0):
 
         PathEstimator.__init__(self, cell_size, grid_x_length, grid_y_length,
-                obstacles, obst_cart_2d, obst_name, n_orientations, single_orientation, orientation)
+                objects, obst_cart_2d, obst_name, n_orientations, single_orientation, orientation)
         self._obst_x_length = obst_x_length
         self._obst_y_length = obst_y_length
 
@@ -51,9 +51,9 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
         self.setup()
 
-    def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
-        """ For a circular obstacle set all overlapping with grid
-        cells (representing the obstacle) to a integer value. """
+    def _setup_circle_object(self, obst: Object, val: int, r_orien: float, r_orien_idx: int):
+        """ For a circular object set all overlapping with grid
+        cells (representing the object) to a integer value. """
 
         # cos_rl = cos(orientation_of_obst) * obst_length_in_x / 2
         cos_rl = math.cos(r_orien)*self.obst_y_length/2
@@ -64,7 +64,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         obst_xy = obst.state.get_xy_position()
         max_obst_obst_distance= (math.sqrt(self.obst_x_length**2 + self.obst_y_length**2))/2 + obst.properties.radius()
 
-        # only search around obstacle
+        # only search around object
         (obst_clearance_x_min, obst_clearance_y_min) = self._cart_2d_to_c_idx_or_grid_edge(
                 obst_xy[0]-max_obst_obst_distance, obst_xy[1]-max_obst_obst_distance)
         (obst_clearance_x_max, obst_clearance_y_max) = self._cart_2d_to_c_idx_or_grid_edge(
@@ -72,13 +72,13 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
-                #  closeby  cells are always in collision with the obstacle
+                #  closeby  cells are always in collision with the object
                 if (np.linalg.norm(self._c_idx_to_cart_2d(x_idx, y_idx)-obst_xy) <= \
                 obst.properties.radius() + min(self.obst_x_length, self.obst_y_length) / 2):
                     self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
-               # corner points of the obstacle
+               # corner points of the object
                 a = self._c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
 
@@ -93,7 +93,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
                 obst_r = obst.properties.radius()
 
-                # check if the edges of the obst overlap with the obstacle
+                # check if the edges of the obst overlap with the object
                 if minimal_distance_point_to_line(obst_xy, a, b) <= obst_r:
                     self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
@@ -110,11 +110,11 @@ class RectangleObstaclePathEstimator(PathEstimator):
                     self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
-    def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
-        """ For a rectangular obstacle set all overlapping with grid cells
-        (representing the obstacle) to a integer value. """
+    def _setup_rectangular_object(self, obst: Object, val: int, r_orien: float, r_orien_idx: int):
+        """ For a rectangular object set all overlapping with grid cells
+        (representing the object) to a integer value. """
 
-        # obstacle space or some other space, Gijs Groote 4 oct 2022.
+        # object space or some other space, Gijs Groote 4 oct 2022.
         cos_rl = math.cos(r_orien)*self.obst_y_length/2
         sin_rl = math.sin(r_orien)*self.obst_y_length/2
         cos_rw = math.cos(r_orien)*self.obst_x_length/2
@@ -124,7 +124,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
         cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
         sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
-        # corner points of the obstacle
+        # corner points of the object
         obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
         obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
         obst_c = np.array([obst.state.pos[0]+sin_ol-cos_ow, obst.state.pos[1]-cos_ol-sin_ow])
@@ -134,7 +134,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         max_obst_to_obst_y_distance = abs(cos_rl) + abs(sin_rw) + abs(cos_ol) + abs(sin_ow)
         obst_cart_2d = obst.state.get_xy_position()
 
-        # only search around obstacle
+        # only search around object
         (x_min, y_min) = self._cart_2d_to_c_idx_or_grid_edge(obst_cart_2d[0]\
                 -max_obst_to_obst_x_distance, obst_cart_2d[1]-max_obst_to_obst_y_distance)
         (x_max, y_max) = self._cart_2d_to_c_idx_or_grid_edge(obst_cart_2d[0]\
@@ -149,7 +149,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         for x_idx in range(obst_clearance_x_min, obst_clearance_x_max+1):
             for y_idx in range(obst_clearance_y_min, obst_clearance_y_max+1):
 
-                # if the center of the obst is in the obstacle, then they are in collision
+                # if the center of the obst is in the object, then they are in collision
                 # NOTE: this assumes the 3 points to form a rectangle
                 # if the obstect is rotated it could form a diamond shape instead of a rectangle
                 if point_in_rectangle(np.array(self._c_idx_to_cart_2d(x_idx, y_idx)),
@@ -157,7 +157,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                     self.grid_map[x_idx, y_idx, r_orien_idx] = val
                     continue
 
-                # corner points of the obstacle
+                # corner points of the object
                 a = self._c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
 
@@ -170,7 +170,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                 d =  self._c_idx_to_cart_2d(x_idx, y_idx) \
                         + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
 
-                # check if the edges of the obstacle overlap with the obstacle
+                # check if the edges of the object overlap with the object
                 # TODO: this cannot every be efficient, replace with a more efficient rectangle overlapping with rectangle algorithm, Gijs 2 oct 2022.
                 if (do_intersect(a, b, obst_a, obst_b) or
                     do_intersect(a, b, obst_b, obst_c) or
@@ -238,7 +238,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
         pose_2d_target[2] = to_interval_zero_to_two_pi(pose_2d_target[2])
 
         if self.occupancy(pose_2d_start) == UNMOVABLE:
-            raise NoPathExistsException("Target state in obstacle space")
+            raise NoPathExistsException("Target state in object space")
 
         if self.occupancy(pose_2d_start) != FREE:
             warnings.warn("the start position is in movable or unkown space")
@@ -288,7 +288,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                         # only compare unvisited cells
                         if visited[p_idx] != 2:
 
-                            # path cannot go through obstacles
+                            # path cannot go through objects
                             if self._p_idx_to_occupancy(*p_idx) != UNMOVABLE:
 
                                 # put cell in the queue if not already in there
@@ -409,7 +409,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
 
         fig = go.Figure(data=trace)
 
-        # put the obstacle on the map
+        # put the object on the map
         r_orien = orien_idx/self.n_orientations*2*math.pi
 
         cos_rl = math.cos(r_orien)*self.obst_y_length/2
@@ -453,8 +453,8 @@ class RectangleObstaclePathEstimator(PathEstimator):
             line_color="black",
             )
 
-        # add the obstacles over the gridmap
-        for obst in self.obstacles.values():
+        # add the objects over the gridmap
+        for obst in self.objects.values():
 
             # add the name of the obstect
             fig.add_trace(go.Scatter(
@@ -500,7 +500,7 @@ class RectangleObstaclePathEstimator(PathEstimator):
                     mode='lines'))
 
             else:
-                raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
+                raise TypeError(f"Could not recognise object type: {obst.properties.type()}")
 
         fig.update_layout(
                 height=900,

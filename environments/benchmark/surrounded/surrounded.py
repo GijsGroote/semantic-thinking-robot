@@ -18,7 +18,7 @@ from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.benchmark.surrounded.objects import surrounded
 
-USER_INPUT_MODE = True
+USER_INPUT_MODE = False
 
 def main(conn=None):
 
@@ -29,8 +29,8 @@ def main(conn=None):
     kgraph = KGraph()
 
     for box_string in ["simpleBox2", "simpleBox4", "simpleBox5", "simpleBox6"]:
-        kgraph.add_object(Obstacle(name=box_string,
-                                state=State,
+        kgraph.add_object(Object(name=box_string,
+                                state=State(),
                                 properties=surrounded[box_string],
                                 obj_type=UNMOVABLE))
 
@@ -64,10 +64,10 @@ def main(conn=None):
             brain.setup({
                 "dt": DT,
                 "robot_type": robot_type,
-                "obstacles_in_env": True,
+                "objects_in_env": True,
                 "default_action": np.zeros(2),
                 "task": [("robot", State(pos=np.array([0, 4, 0])))],
-                "obstacles": surrounded,
+                "objects": surrounded,
                 "env": env,
                 "n_env": i,
                 "kgraph": kgraph,

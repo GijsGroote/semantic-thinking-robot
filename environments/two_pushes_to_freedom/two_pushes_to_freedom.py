@@ -21,8 +21,8 @@ def main():
 
     n_steps = 10000
 
-    # add obstacles
-    obstacles = {blocking_object1.name(): blocking_object1,
+    # add objects
+    objects = {blocking_object1.name(): blocking_object1,
             blocking_object2.name(): blocking_object2,
             center_wall.name(): center_wall,
             wall1.name(): wall1,
@@ -64,10 +64,10 @@ def main():
     brain.setup({
         "dt": DT,
         "robot_type": robot_type,
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([-5, 3.5, 0])))],
-        "obstacles": obstacles,
+        "objects": objects,
         "env": env
     }, ob)
 

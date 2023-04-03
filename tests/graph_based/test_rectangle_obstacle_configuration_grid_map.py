@@ -23,7 +23,7 @@ def objects_set1():
             }
     cylinder_obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
     cylinder_state = State(pos=np.array([5,5,0]))
-    cylinder_object = Obstacle("simple_cylinder", cylinder_state, cylinder_obstacle)
+    cylinder_object = Object("simple_cylinder", cylinder_state, cylinder_obstacle)
 
     sphere_dict = {
             "type": "sphere",
@@ -32,7 +32,7 @@ def objects_set1():
             }
     sphere_obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
     sphere_state = State(pos=np.array([8,1,0]))
-    sphere_object = Obstacle("simple_sphere", sphere_state, sphere_obstacle)
+    sphere_object = Object("simple_sphere", sphere_state, sphere_obstacle)
 
     box_dict = {
             "type": "box",
@@ -41,7 +41,7 @@ def objects_set1():
             }
     box_obstacle = BoxObstacle(name="simple_box", content_dict=box_dict)
     box_state = State(pos=np.array([1,1,0]), vel=np.array([1,0,2]))
-    box_object = Obstacle("simple_box", box_state, box_obstacle)
+    box_object = Object("simple_box", box_state, box_obstacle)
 
     objects = {"simple_box": box_object,
             "simple_cylinder": cylinder_object,
@@ -190,7 +190,7 @@ def test_position_to_cell_or_grid_edge():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 1., "height": 0.3},
 #             }
-#     cylinder_object = Obstacle("simple_cylinder", State(pos=np.array([0, 0, 0])), "urdf")
+#     cylinder_object = Object("simple_cylinder", State(pos=np.array([0, 0, 0])), "urdf")
 #     cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
 #
 #     sphere_dict= {
@@ -198,7 +198,7 @@ def test_position_to_cell_or_grid_edge():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 1.},
 #             }
-#     sphere_object = Obstacle("simple_sphere",  State(pos=np.array([2,-1,0])), "urdf")
+#     sphere_object = Object("simple_sphere",  State(pos=np.array([2,-1,0])), "urdf")
 #     sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
 #
 #     objects = {"cylinder": cylinder_object,
@@ -218,7 +218,7 @@ def test_position_to_cell_or_grid_edge():
 #             "geometry": {"length": 3, "width": 1, "height": 0.3},
 #             }
 #
-#     box_object = Obstacle("simple_box", State(pos=np.array([0,0,0]), ang_p=np.array([0,0,np.pi/2])), "urdf")
+#     box_object = Object("simple_box", State(pos=np.array([0,0,0]), ang_p=np.array([0,0,np.pi/2])), "urdf")
 #     box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
 #
 #     objects = {"box": box_object}
@@ -242,7 +242,7 @@ def test_position_to_cell_or_grid_edge():
 #             "geometry": {"length": 2, "width": 1., "height": 0.3},
 #             }
 #
-#     box_object = Obstacle("simple_box", State(pos=np.array([0,0,0])), "urdf")
+#     box_object = Object("simple_box", State(pos=np.array([0,0,0])), "urdf")
 #
 #     box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
 #
@@ -270,7 +270,7 @@ def test_position_to_cell_or_grid_edge():
 #             "urdf": os.path.join(os.path.dirname(__file__), "./obst_data/duck/duck.urdf"),
 #         }
 #     }
-#     urdf_object = Obstacle("duck", State(pos=np.array([-15, 0, 0])), "urdf")
+#     urdf_object = Object("duck", State(pos=np.array([-15, 0, 0])), "urdf")
 #     urdf_object.obstacle = UrdfObstacle(name="duck", content_dict=urdf_duck_dict)
 #     
 #     cylinder_dict = {
@@ -278,7 +278,7 @@ def test_position_to_cell_or_grid_edge():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 3., "height": 0.3},
 #             }
-#     cylinder_object = Obstacle("simple_cylinder", State(pos=np.array([15, 0, 0]), ang_p=np.array([math.pi/2, 0.5, 0,5])), "urdf")
+#     cylinder_object = Object("simple_cylinder", State(pos=np.array([15, 0, 0]), ang_p=np.array([math.pi/2, 0.5, 0,5])), "urdf")
 #     cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
 #
 #     sphere_dict= {
@@ -286,7 +286,7 @@ def test_position_to_cell_or_grid_edge():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 2.},
 #             }
-#     sphere_object = Obstacle("simple_sphere",  State(pos=np.array([-5,-10,0])), "urdf")
+#     sphere_object = Object("simple_sphere",  State(pos=np.array([-5,-10,0])), "urdf")
 #     sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
 #
 #     box_dict = {
@@ -294,7 +294,7 @@ def test_position_to_cell_or_grid_edge():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"width": 3, "length": 8, "height": 0.3},
 #             }
-#     box_object = Obstacle("simple_box", State(pos=np.array([-10,0,0]), ang_p=np.array([0,0,0])), "urdf")
+#     box_object = Object("simple_box", State(pos=np.array([-10,0,0]), ang_p=np.array([0,0,0])), "urdf")
 #
 #     box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
 #

@@ -10,12 +10,12 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from robot_brain.object import Object, MOVABLE, UNKNOWN, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
-# TODO: make the path estimator focussed on an obstacle (and not the robot)
+# TODO: make the path estimator focussed on an object (and not the robot)
 # see the variables r_idx that stand for robot idx
 class PathEstimator(ABC):
     """ With as internal structure a configuration grid map, the path estimator
-    represents the environment in obstacle space free space, movable obstacle
-    space and unknown obstacle space and includes
+    represents the environment in object space free space, movable object
+    space and unknown object space and includes
     the dimensions or the robot.
 
     The center represents the origin, an configuration grid map can only
@@ -26,7 +26,7 @@ class PathEstimator(ABC):
             cell_size: float,
             grid_x_length: float,
             grid_y_length: float,
-            obstacles: dict,
+            objects: dict,
             obst_cart_2d: np.ndarray,
             obst_name: str,
             n_orientations: int,
@@ -41,9 +41,9 @@ class PathEstimator(ABC):
         self._cell_size = cell_size
         self._grid_x_length = grid_x_length
         self._grid_y_length = grid_y_length
-        self._obstacles = obstacles
+        self._objects = objects
         assert obst_cart_2d.shape in  ((2,), (2,1)), \
-                f"obstacle position should be of shape (2,), it's: {obst_cart_2d.shape}"
+                f"object position should be of shape (2,), it's: {obst_cart_2d.shape}"
         self._obst_cart_2d = obst_cart_2d
         self.obst_name = obst_name
 
@@ -62,7 +62,7 @@ class PathEstimator(ABC):
 
     def setup(self):
         """
-        Setup the gridmap for a number of obstacles.
+        Setup the gridmap for a number of objects.
 
         indices in the grid_map indicat the following:
             0 -> free space
@@ -78,39 +78,39 @@ class PathEstimator(ABC):
             else:
                 r_orien = 2*math.pi*r_orien_idx/self.n_orientations
 
-            # setup movable obstacles
-            for obst in self.obstacles.values():
-                # checking for an obstacle, exclude itself from the list
+            # setup movable objects
+            for obst in self.objects.values():
+                # checking for an object, exclude itself from the list
                 if obst.name == self.obst_name:
                     continue
                 if obst.type==MOVABLE:
-                    self._setup_obstacle(obst, MOVABLE, r_orien, r_orien_idx)
+                    self._setup_object(obst, MOVABLE, r_orien, r_orien_idx)
 
-            # setup unknown obstacles
-            for obst in self.obstacles.values():
+            # setup unknown objects
+            for obst in self.objects.values():
                 if obst.name == self.obst_name:
                     continue
                 if obst.type==UNKNOWN:
-                    self._setup_obstacle(obst, UNKNOWN, r_orien, r_orien_idx)
+                    self._setup_object(obst, UNKNOWN, r_orien, r_orien_idx)
 
-            # setup unmovable obstacles
-            for obst in self.obstacles.values():
-                # checking for an obstacle, exclude itself from the list
+            # setup unmovable objects
+            for obst in self.objects.values():
+                # checking for an object, exclude itself from the list
                 if obst.name == self.obst_name:
                     continue
                 if obst.type==UNMOVABLE:
-                    self._setup_obstacle(obst, UNMOVABLE, r_orien, r_orien_idx)
+                    self._setup_object(obst, UNMOVABLE, r_orien, r_orien_idx)
 
-    def _setup_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_object(self, obst: Object, val: int, r_orien: float, r_orien_idx: int):
         """ Set the obstect overlapping with grid cells to a integer value. """
 
         if isinstance(obst.properties, CylinderObstacle):
             # "obstects" x-axis is parallel to the global z-axis (normal situation)
             if not (math.isclose(math.sin(obst.state.ang_p[0]), 0, abs_tol=0.01) and
                     math.isclose(math.sin(obst.state.ang_p[1]), 0, abs_tol=0.01)):
-                warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
+                warnings.warn(f"object {obst.name} is not in correct orientation (up is not up)")
 
-            self._setup_circle_obstacle(obst, val, r_orien, r_orien_idx)
+            self._setup_circle_object(obst, val, r_orien, r_orien_idx)
 
         elif isinstance(obst.properties, BoxObstacle):
             # "obstects" x-axis is parallel to the global z-axis (normal situation)
@@ -118,19 +118,19 @@ class PathEstimator(ABC):
                     math.isclose(obst.state.ang_p[0], 2*math.pi, abs_tol=0.01)) and
                     math.isclose(obst.state.ang_p[1], 0, abs_tol=0.01) or
                     math.isclose(obst.state.ang_p[1], 2*math.pi, abs_tol=0.01)):
-                warnings.warn(f"obstacle {obst.name} is not in correct orientation (up is not up)")
+                warnings.warn(f"object {obst.name} is not in correct orientation (up is not up)")
 
-            self._setup_rectangular_obstacle(obst, val, r_orien, r_orien_idx)
+            self._setup_rectangular_object(obst, val, r_orien, r_orien_idx)
 
         else:
-            raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
+            raise TypeError(f"Could not recognise object type: {obst.properties.type()}")
 
     @abstractmethod
-    def _setup_rectangular_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_rectangular_object(self, obst: Object, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod
-    def _setup_circle_obstacle(self, obst: Obstacle, val: int, r_orien: float, r_orien_idx: int):
+    def _setup_circle_object(self, obst: Object, val: int, r_orien: float, r_orien_idx: int):
         pass
 
     @abstractmethod
@@ -227,14 +227,14 @@ class PathEstimator(ABC):
         self._grid_map = val
 
     @property
-    def obstacles(self):
-        return self._obstacles
+    def objects(self):
+        return self._objects
 
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), \
-        f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles
+    @objects.setter
+    def objects(self, val):
+        assert isinstance(val, dict), \
+        f"val should be a dictionary and is {type(val)}"
+        self._objects = val
 
     @property
     def obst_cart_2d(self):

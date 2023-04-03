@@ -33,7 +33,7 @@ class KGraph(Graph):
         """ print info of the kgraph. """
         print(f"info on kgraph nodes, n_nodes= {len(self.nodes)}")
         for node in self.nodes:
-            print(f'node name: {node.object.name}, iden: {node.iden}, type: {node.object.type}')
+            print(f'node name: {node.obj.name}, iden: {node.iden}, type: {node.obj.type}')
         print(" ")
 
     def get_object_type(self, obj_name: str) -> int:
@@ -41,8 +41,8 @@ class KGraph(Graph):
 
 
         for node in self.nodes:
-            if node.object.name == obj_name:
-                return node.object.type
+            if node.obj.name == obj_name:
+                return node.obj.type
 
         return None
 

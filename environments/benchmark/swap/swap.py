@@ -50,8 +50,8 @@ def main(conn=None):
             "dt": DT,
             "robot_type": "boxer_robot",
             "target_state": State(),
-            "obstacles_in_env": True,
-            "obstacles": swap,
+            "objects_in_env": True,
+            "objects": swap,
         }, ob)
 
     for _ in range(1000):

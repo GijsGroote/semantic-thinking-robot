@@ -40,12 +40,12 @@ def main():
         brain.setup({
             "dt": DT,
             "robot_type": robot_type,
-            "obstacles_in_env": True,
+            "objects_in_env": True,
             "default_action": np.zeros(2),
             "task": [
                 (blockade_obstacles["simpleBox"].name(), State(pos=np.array([3, 0, 0]))),
                 ],
-            "obstacles": blockade_obstacles,
+            "objects": blockade_obstacles,
             "env": env,
             "n_env": i,
             "kgraph": kgraph,

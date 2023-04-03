@@ -49,7 +49,7 @@ def test_start_warning_not_raised():
 def test_target_warning_raised():
     " shortest_path should raise a warning for the target state. """
     # box on target pose
-    box_obst = Obstacle(box.name(), State(pos=np.array([-3.0, 4.0, 0.1])), box)
+    box_obst = Object(box.name(), State(pos=np.array([-3.0, 4.0, 0.1])), box)
     box_obst.type = UNKNOWN
 
     rect_conf_grid_map = RectangleObstaclePathEstimator(
@@ -80,7 +80,7 @@ def test_target_warning_raised():
         circle_conf_grid_map.search_path(np.array([0,0]), np.array([-3,4]))
 
     # box on start pose
-    box_obst = Obstacle(box.name(), State(pos=np.array([.0, 0, 0.1])), box)
+    box_obst = Object(box.name(), State(pos=np.array([.0, 0, 0.1])), box)
     box_obst.type = MOVABLE 
 
     rect_conf_grid_map = RectangleObstaclePathEstimator(

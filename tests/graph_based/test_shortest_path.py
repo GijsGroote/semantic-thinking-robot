@@ -78,12 +78,12 @@ def test_shortest_path_circ():
 def test_shortest_path_with_obstacles():
     obstacles = {}
 
-    obstacles[box.name()] = Obstacle(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
+    obstacles[box.name()] = Object(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
     obstacles[box.name()].type = UNMOVABLE
-    obstacles[sphere.name()] = Obstacle(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), sphere)
+    obstacles[sphere.name()] = Object(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), sphere)
 
     obstacles[sphere.name()].type = UNMOVABLE
-    obstacles[cylinder.name()] = Obstacle(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
+    obstacles[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
     obstacles[cylinder.name()].type = UNMOVABLE
 
     occ_map = RectangleObstaclePathEstimator(

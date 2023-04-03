@@ -6,7 +6,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.state import State
-from robot_brain.obstacle import Obstacle, UNMOVABLE
+from robot_brain.object import Object, UNMOVABLE
 from robot_brain.global_planning.hgraph.local_planning.graph_based.\
     circle_obstacle_path_estimator import CircleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.\
@@ -32,10 +32,10 @@ class RandomObject():
         self.movable_obst_dicts = {}
         self.unmovable_obst_dicts = {}
 
-        self.init_obstacles = {}
-        self.target_obstacles =  {}
+        self.init_objects = {}
+        self.target_objects =  {}
         self.movable_added = False
-        self.unmovable_obstacles = {}
+        self.unmovable_objects = {}
         self._clear_obstacle_dicts()
 
         self.min_dimension = min_dimension
@@ -45,36 +45,36 @@ class RandomObject():
 
         self.n_subtasks = None
 
-    def create_random_obstacles(self,
-            n_unmovable_obstacles: int,
-            n_movable_obstacles: int,
+    def create_random_objects(self,
+            n_unmovable_objects: int,
+            n_movable_objects: int,
             n_subtasks: int):
-        """ create movable and unmovable obstacles randomly. """
+        """ create movable and unmovable objects randomly. """
 
-        assert n_subtasks <= n_movable_obstacles, "number of subtasks cannot exceed the number of movable obstacles"
+        assert n_subtasks <= n_movable_objects, "number of subtasks cannot exceed the number of movable obstacles"
         self.n_subtasks = n_subtasks
 
         # create unmovable obstacle info dict
-        for _ in range(n_unmovable_obstacles):
+        for _ in range(n_unmovable_objects):
             if random.choice([True, False]):
                 self._create_unmovable_random_box()
             else:
                 self._create_unmovable_random_cylinder()
 
-         # create movable obstacles info dict
-        for _ in range(n_movable_obstacles):
+         # create movable objects info dict
+        for _ in range(n_movable_objects):
             if random.choice([True, False]):
                 self._create_movable_random_box()
             else:
                 self._create_movable_random_cylinder()
 
     def reshuffle_env(self) -> dict:
-        """ reshuffles initial states for all obstacles. """
+        """ reshuffles initial states for all objects. """
 
         self._clear_obstacle_dicts()
-        obstacles = {}
+        objects = {}
 
-        # reshuffle unmovable obstacles
+        # reshuffle unmovable objects
         for (obst_key, obst_dict) in self.unmovable_obst_dicts.items():
 
             if obst_dict["type"] == "box":
@@ -83,7 +83,7 @@ class RandomObject():
                         0.5*obst_dict["geometry"]["height"]]
                 obst_dict["orientation"] = [0, 0, p2d[2]]
                 obst = BoxObstacle(name=obst_key, content_dict=obst_dict)
-                obstacles[obst_key] = obst
+                objects[obst_key] = obst
 
             elif obst_dict["type"] == "cylinder":
                 xy_pos = self._get_random_xy_position()
@@ -91,36 +91,36 @@ class RandomObject():
                         0.5*obst_dict["geometry"]["height"]]
                 obst_dict["orientation"] = [0, 0, 0]
                 obst = CylinderObstacle(name=obst_key, content_dict=obst_dict)
-                obstacles[obst_key] = obst
+                objects[obst_key] = obst
 
             else:
                 raise ValueError(f"unknown type: {obst_dict['type']}")
 
-            # keep track of all unmovable obstacles
-            temp_obst = Obstacle("inside_setup_random_env",
+            # keep track of all unmovable objects
+            temp_obst = Object("inside_setup_random_env",
                 State(pos=np.array(obst_dict["position"]),
                     ang_p=np.array(obst_dict["orientation"])),
                 obst)
             temp_obst.type = UNMOVABLE
-            self.unmovable_obstacles[obst_key] = temp_obst
+            self.unmovable_objects[obst_key] = temp_obst
 
-        # reshuffle movable obstacles
+        # reshuffle movable objects
         for (obst_key, obst_dict) in self.movable_obst_dicts.items():
             obst = self._create_movable_init_obstacle(obst_key, obst_dict)
-            obstacles[obst_key] = obst
+            objects[obst_key] = obst
 
-            # keep track of all movable obstacles
-            temp_obst = Obstacle("inside_setup_random_env",
+            # keep track of all movable objects
+            temp_obst = Object("inside_setup_random_env",
                     State(pos=np.array(obst_dict["position"]),
                         ang_p=np.array(obst_dict["orientation"])),
                     obst)
             temp_obst.type = UNMOVABLE
-            self.init_obstacles[obst_key] = temp_obst
+            self.init_objects[obst_key] = temp_obst
 
-        return obstacles
+        return objects
 
     def create_task(self) -> list:
-        """ creates a task for the obstacles in the environment. """
+        """ creates a task for the objects in the environment. """
 
         task = []
         movable_obst_list = list(self.movable_obst_dicts.copy().items())
@@ -133,14 +133,14 @@ class RandomObject():
             target_state = State(pos=np.array(obst_dict["position"]),
                         ang_p=np.array(obst_dict["orientation"]))
 
-            temp_obst = Obstacle("inside_setup_random_env",
+            temp_obst = Object("inside_setup_random_env",
                     target_state,
                     obst)
             temp_obst.type = UNMOVABLE
             # keep track of all target states
-            self.target_obstacles[obst_key] = temp_obst
+            self.target_objects[obst_key] = temp_obst
 
-            self.init_obstacles[obst_key] = Obstacle("inside_setup_random_env",
+            self.init_objects[obst_key] = Object("inside_setup_random_env",
                 State(pos=np.array(obst_dict["position"]),
                     ang_p=np.array(obst_dict["orientation"])),
                 obst)
@@ -151,10 +151,10 @@ class RandomObject():
 
         return task
 
-    def _create_unmovable_obstacles(self):
-        """ creates unmovable obstacles from unmovable obstacles dicts. """
+    def _create_unmovable_objects(self):
+        """ creates unmovable objects from unmovable obstacles dicts. """
 
-        self.unmovable_obstacles = {}
+        self.unmovable_objects = {}
 
         for (key, obst_dict) in self.unmovable_obst_dicts.items():
 
@@ -166,21 +166,21 @@ class RandomObject():
             else:
                 raise ValueError(f"unknown type: {obst_dict['type']}")
 
-            temp_obst = Obstacle("must_be_in_RandomObject_class",
+            temp_obst = Object("must_be_in_RandomObject_class",
                 State(pos=np.array(obst_dict["position"]),
                     ang_p=np.array(obst_dict["orientation"])),
                 obst)
             temp_obst.type = UNMOVABLE
 
-            self.unmovable_obstacles[key] = temp_obst
+            self.unmovable_objects[key] = temp_obst
 
     def _create_movable_init_obstacle(self, obst_key: str, obst_dict: dict) -> FreeCollisionObstacle:
         """ create movable obstacle in free space (thus also not in movable space). """
         if obst_dict["type"] == "box":
-            return self._create_box_obstacle_free(obst_key, obst_dict, self.init_obstacles)
+            return self._create_box_obstacle_free(obst_key, obst_dict, self.init_objects)
 
         elif obst_dict["type"] == "cylinder":
-            return self._create_cylinder_obstacle_free(obst_key, obst_dict, self.init_obstacles)
+            return self._create_cylinder_obstacle_free(obst_key, obst_dict, self.init_objects)
 
         else:
             raise ValueError(f"unknown type: {obst_dict['type']}")
@@ -188,16 +188,16 @@ class RandomObject():
     def _create_movable_target_state(self, obst_key: str, obst_dict: dict) -> FreeCollisionObstacle:
         """ create movable obstacle in free space (thus also not in movable space). """
         if obst_dict["type"] == "box":
-            return self._create_box_obstacle_free(obst_key, obst_dict, self.target_obstacles)
+            return self._create_box_obstacle_free(obst_key, obst_dict, self.target_objects)
 
         elif obst_dict["type"] == "cylinder":
-            return self._create_cylinder_obstacle_free(obst_key, obst_dict, self.target_obstacles)
+            return self._create_cylinder_obstacle_free(obst_key, obst_dict, self.target_objects)
 
         else:
             raise ValueError(f"unknown type: {obst_dict['type']}")
 
-    def _create_box_obstacle_free(self, obst_key: str, obst_dict: dict, obstacles_dict: dict) -> BoxObstacle:
-        """ create an occupancy graph with the unmovable and movable obstacles. """
+    def _create_box_obstacle_free(self, obst_key: str, obst_dict: dict, objects_dict: dict) -> BoxObstacle:
+        """ create an occupancy graph with the unmovable and movable objects. """
 
         rand_orientation = random.random()*2*math.pi
 
@@ -205,7 +205,7 @@ class RandomObject():
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,
-            obstacles = {**self.unmovable_obstacles, **obstacles_dict},
+            objects = {**self.unmovable_obstacles, **obstacles_dict},
             obst_cart_2d = np.array([0,0]),
             obst_name = "must_be_in_RandomObject_class",
             obst_x_length = obst_dict["geometry"]["length"],
@@ -225,14 +225,14 @@ class RandomObject():
         obst_dict["orientation"] = [0, 0, p2d[2]]
         return BoxObstacle(name=obst_key, content_dict=obst_dict)
 
-    def _create_cylinder_obstacle_free(self, obst_key: str, obst_dict: dict, obstacles_dict: dict) -> CylinderObstacle:
-        """ create an occupancy graph with the unmovable and movable obstacles. """
+    def _create_cylinder_obstacle_free(self, obst_key: str, obst_dict: dict, objects_dict: dict) -> CylinderObstacle:
+        """ create an occupancy graph with the unmovable and movable objects. """
 
         occupancy_graph = CircleObstaclePathEstimator(
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,
-            obstacles = {**self.unmovable_obstacles, **obstacles_dict},
+            objects = {**self.unmovable_obstacles, **obstacles_dict},
             obst_cart_2d = np.array([0,0]),
             obst_name = "must_be_in_RandomObject_class",
             obst_radius = obst_dict["geometry"]["radius"])
@@ -254,7 +254,7 @@ class RandomObject():
 
     def _create_unmovable_random_box(self):
         """ return movable box with random propeties. """
-        assert not self.movable_added, "first create unmovable obstacle, then create unmovable obstacles."
+        assert not self.movable_added, "first create unmovable obstacle, then create unmovable objects."
         self._create_random_box(False, random.random()*self.max_weight)
 
     def _create_movable_random_cylinder(self):
@@ -264,7 +264,7 @@ class RandomObject():
 
     def _create_unmovable_random_cylinder(self):
         """ return movable cylinder with random propeties. """
-        assert not self.movable_added, "first create unmovable obstacle, then create unmovable obstacles."
+        assert not self.movable_added, "first create unmovable obstacle, then create unmovable objects."
         self._create_random_cylinder(False, random.random()*self.max_weight)
 
     def _create_random_box(self, movable: bool, mass: float):
@@ -316,10 +316,10 @@ class RandomObject():
 
     def _clear_obstacle_dicts(self):
         """ clears the dictionaries. """
-        self.init_obstacles = {}
-        self.target_obstacles = {}
+        self.init_objects = {}
+        self.target_objects = {}
         self.movable_added = False
-        self.unmovable_obstacles = {}
+        self.unmovable_objects = {}
 
     def _get_random_2d_pose(self) -> list:
         """ return a random 2d pose in boundaries, exluding close to origin. """

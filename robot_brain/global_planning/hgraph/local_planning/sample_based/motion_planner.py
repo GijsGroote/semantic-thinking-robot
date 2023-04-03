@@ -45,7 +45,7 @@ class MotionPlanner(ABC):
 
         self.grid_x_length = grid_x_length
         self.grid_y_length = grid_y_length
-        self.obstacle = obstacle
+        self.obj = obj
 
         assert step_size < search_size,\
                 "step size must be smaller than search size,"\
@@ -66,11 +66,11 @@ class MotionPlanner(ABC):
         if isinstance(path_estimator, PathEstimator):
             if isinstance(obj.properties, CylinderObstacle):
                 assert isinstance(path_estimator, CircleObstaclePathEstimator),\
-                    "obstacle is CylinderObstacle, conf_grid_map should be of "\
+                    "object is CylinderObstacle, conf_grid_map should be of "\
                     f"type CircleObstaclePathEstimator and is {type(path_estimator)}"
             elif isinstance(obj.properties, BoxObstacle):
                 assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
-                    "obstacle is BoxObstacle, conf_grid_map should be of type"\
+                    "object is BoxObstacle, conf_grid_map should be of type"\
                     f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
             self.path_estimator = path_estimator
         else:
@@ -509,7 +509,7 @@ class MotionPlanner(ABC):
     def obj(self, val):
         assert isinstance(val, Object),\
                 f"val must be of type Object and is {type(val)}"
-        self._obj = val 
+        self._obj = val
 
     @property
     def step_size(self):

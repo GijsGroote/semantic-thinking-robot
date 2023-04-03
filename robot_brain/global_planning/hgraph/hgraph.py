@@ -172,16 +172,16 @@ class HGraph(Graph):
             while not self.is_reachable(self.current_subtask["start_node"].iden, self.current_subtask["target_node"].iden):
 
                 # the objects should be the same between an edge
-                assert start_node.obstacle.name == target_node.obstacle.name,\
-                f"obstacle: {start_node.name} in start_node should be equal to obstacle: {target_node.name} in target_node"
+                assert start_node.obj.name == target_node.obj.name,\
+                f"object: {start_node.name} in start_node should be equal to object: {target_node.name} in target_node"
 
                 # driving action
-                if target_node.obstacle.properties == self.robot.properties:
+                if target_node.obj.properties == self.robot.properties:
                     self.create_drive_edge(start_node.iden, target_node.iden)
 
                 # pushing action
                 # TODO make more sure that this requires a pushing action
-                elif target_node.obstacle.properties != self.robot.properties:
+                elif target_node.obj.properties != self.robot.properties:
                     self.create_push_edge(start_node.iden, target_node.iden)
 
                 else:
@@ -242,12 +242,12 @@ class HGraph(Graph):
 
         # add ghost pose
         if isinstance(self.current_edge, PushActionEdge):
-            self.env.add_target_ghost(self.get_node(self.current_edge.to).obstacle.properties.name(),
-            self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
+            self.env.add_target_ghost(self.get_node(self.current_edge.to).obj.properties.name(),
+            self.get_node(self.current_edge.to).obj.state.get_2d_pose())
 
         elif isinstance(self.current_edge, DriveActionEdge):
             self.env.add_robot_target_ghost(self.robot.name,
-                    self.get_node(self.current_edge.to).obstacle.state.get_2d_pose())
+                    self.get_node(self.current_edge.to).obj.state.get_2d_pose())
 
 
         self.current_edge.set_executing_status()
@@ -326,7 +326,7 @@ class HGraph(Graph):
 
 
             check_obj_movable = False
-            if self.get_node(target_node_iden).obstacle.type == UNKNOWN:
+            if self.get_node(target_node_iden).obj.type == UNKNOWN:
                 check_obj_movable = True
 
             
@@ -337,7 +337,7 @@ class HGraph(Graph):
                     source=source_node_iden,
                     to=target_node_iden,
                     robot_obst=self.robot,
-                    push_obst=start_node.obstacle,
+                    push_obst=start_node.obj,
                     verb="pushing",
                     controller=controller,
                     model_name=model_name,
@@ -359,11 +359,11 @@ class HGraph(Graph):
             edge.path_estimator = self.create_drive_path_estimator(self.objects)
 
         elif isinstance(edge, PushActionEdge):
-            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.objects)
+            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obj, self.objects)
 
         try:
             edge.path_estimator.search_path(
-                self.get_node(edge.source).obstacle.state, self.get_node(edge.to).obstacle.state)
+                self.get_node(edge.source).obj.state, self.get_node(edge.to).obj.state)
             edge.set_path_exist_status()
 
         except NoPathExistsException as exc:
@@ -376,7 +376,7 @@ class HGraph(Graph):
         """ Search for a path from start to target for an edge. """
 
         self.go_to_loop(SEARCHING_LOOP)
-        # if a new edge is added (moving a obstacle to clear a path), a replanning of the hypothesis
+        # if a new edge is added (moving a object to clear a path), a replanning of the hypothesis
         # happened. Copy the old hypothesis, add new edges an that is the new hypothesis. Store
         # the failed hypothesis in the logs
 
@@ -392,19 +392,19 @@ class HGraph(Graph):
 
                 edge.motion_planner = self.create_push_motion_planner(
                         objects=self.objects,
-                        push_obstacle=self.get_node(edge.source).obstacle,
+                        push_obj=self.get_node(edge.source).obj,
                         path_estimator=edge.path_estimator)
 
         if isinstance(edge, DriveActionEdge):
             current_state = self.robot.state
         elif isinstance(edge, PushActionEdge):
-            current_state = self.get_node(edge.source).obstacle.state
+            current_state = self.get_node(edge.source).obj.state
 
         try:
             error_triggered = False
 
-            print(f'motion planner for obj {self.get_node(edge.source).obstacle.name} from {current_state.get_2d_pose()}  to {self.get_node(edge.to).obstacle.state.get_2d_pose()}')
-            (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obstacle.state)
+            print(f'motion planner for obj {self.get_node(edge.source).obj.name} from {current_state.get_2d_pose()}  to {self.get_node(edge.to).obj.state.get_2d_pose()}')
+            (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obj.state)
 
         except PlanningTimeElapsedException as exc:
             error_triggered = True
@@ -422,7 +422,7 @@ class HGraph(Graph):
 
         # take care of blocking object
         if len(add_node_list) > 0:
-            self.create_remove_obstacle_edge(add_node_list, edge)
+            self.create_remove_object_edge(add_node_list, edge)
             return
 
         edge.set_path_is_planned_status()
@@ -481,7 +481,7 @@ class HGraph(Graph):
         model_node = ObjectNode(
                 self.unique_node_iden(),
                 self.get_node(edge.source).name+"_model",
-                self.get_node(edge.source).obstacle,
+                self.get_node(edge.source).obj,
                 self.get_node(edge.source).subtask_name)
 
         self.add_node(model_node)
@@ -515,10 +515,10 @@ class HGraph(Graph):
         assert self.current_node is not None and self.current_edge is not None,\
                 f"current_node: {self.current_node} and/or current_edge: {self.current_edge} cannot be None"
 
-        # create and add best push pose against obstacle node
+        # create and add best push pose against object node
         try:
-            best_push_pose_against_obstacle_state = self.find_push_pose_againts_obstacle_state(
-                self.nodes[edge.to].obstacle,
+            best_push_pose_against_object_state = self.find_push_pose_againts_object_state(
+                self.nodes[edge.to].obj,
                 edge.path)
 
         except NoBestPushPositionException as exc:
@@ -526,15 +526,15 @@ class HGraph(Graph):
             return
 
 
-        best_push_pose_against_obstacle_node = ObjectNode(
+        best_push_pose_against_object_node = ObjectNode(
                 self.unique_node_iden(),
-                "best_push_pose_against_"+self.get_node(edge.to).obstacle.name,
+                "best_push_pose_against_"+self.get_node(edge.to).obj.name,
                 Object(name=self.robot.name,
-                    state=best_push_pose_against_obstacle_state,
+                    state=best_push_pose_against_object_state,
                     properties=self.robot.properties),
                 self.get_node(edge.source).subtask_name)
 
-        self.add_node(best_push_pose_against_obstacle_node)
+        self.add_node(best_push_pose_against_object_node)
 
         # add robot node
         robot_node_copy = ObjectNode(
@@ -553,32 +553,32 @@ class HGraph(Graph):
         self.add_edge(temp)
 
         # create driving edge
-        self.create_drive_edge(robot_node_copy.iden, best_push_pose_against_obstacle_node.iden)
+        self.create_drive_edge(robot_node_copy.iden, best_push_pose_against_object_node.iden)
 
         # rewire edge
-        edge.source = best_push_pose_against_obstacle_node.iden
+        edge.source = best_push_pose_against_object_node.iden
 
-    def create_remove_obstacle_edge(self, add_node_list: list, edge: ActionEdge):
-        """ add edges/nodes to remove a obstacle. """
+    def create_remove_object_edge(self, add_node_list: list, edge: ActionEdge):
+        """ add edges/nodes to remove a obj. """
 
-        # find which obstacle is blocking
-        obst_keys = self.in_object(add_node_list, self.get_node(edge.to).obstacle)
+        # find which object is blocking
+        obst_keys = self.in_object(add_node_list, self.get_node(edge.to).obj)
 
-        print(f'creating edge to remove obstacle {obst_keys}')
+        print(f'creating edge to remove object {obst_keys}')
 
         if len(obst_keys) == 0:
             edge.motion_planner.visualise(save=False)
-            warnings.warn(f"could not find obstacle at {add_node_list[0]}, do not create edges to remove obstacle")
+            warnings.warn(f"could not find object at {add_node_list[0]}, do not create edges to remove obj")
             return
 
-        # only look at the first blocking obstacle, ignore others
+        # only look at the first blocking obj, ignore others
         if len(obst_keys) > 1:
             warnings.warn(f"multiple objects are blocking, but only {obst_keys[0]} is moved")
 
 
         blocking_obst = self.objects[obst_keys[0]]
 
-        # add obstacle start node if not yet present
+        # add object start node if not yet present
         blocking_obst_start_node = None
         for temp_node in self.nodes:
             if temp_node.name == blocking_obst.name:
@@ -593,7 +593,7 @@ class HGraph(Graph):
                 )
             self.add_node(blocking_obst_start_node)
 
-        # rewire current node toward blocking obstacle start node
+        # rewire current node toward blocking object start node
         temp = EmptyEdge(
             self.unique_edge_iden(),
             self.get_node(edge.source).iden,
@@ -602,8 +602,8 @@ class HGraph(Graph):
         self.add_edge(temp)
 
         # find state that is not overlapping with planned path
-        # TODO: the find_free_state_for_blocking_obstacle could raise an assertionerror, fix that
-        target_state = self.find_free_state_for_blocking_obstacle(blocking_obst, edge.motion_planner.shortest_path)
+        # TODO: the find_free_state_for_blocking_object could raise an assertionerror, fix that
+        target_state = self.find_free_state_for_blocking_object(blocking_obst, edge.motion_planner.shortest_path)
 
         blocking_obst_target_node = ObjectNode(
                 self.unique_node_iden(),
@@ -623,7 +623,7 @@ class HGraph(Graph):
         """ create drive path estimator. """
 
     @abstractmethod
-    def create_push_path_estimator(self, push_obstacle, objects) -> PathEstimator:
+    def create_push_path_estimator(self, push_obj, objects) -> PathEstimator:
         """ create push path estimator. """
 
     @abstractmethod
@@ -631,20 +631,20 @@ class HGraph(Graph):
         """ create drive motion planner. """
 
     @abstractmethod
-    def create_push_motion_planner(self, objects, push_obstacle, path_estimator=None):
+    def create_push_motion_planner(self, objects, push_obj, path_estimator=None):
         """ create push motion planner. """
 
     @abstractmethod
     def in_object(self, pose_2ds: list, obj: Object) -> list:
-        """ return the obstacle keys at pose_2ds that are in collision with obj. """
+        """ return the object keys at pose_2ds that are in collision with obj. """
 
     @abstractmethod
-    def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
-        """ return a starting state to start pushing the obstacle. """
+    def find_push_pose_againts_object_state(self, blocking_obst, path) -> State:
+        """ return a starting state to start pushing the object. """
 
     @abstractmethod
-    def find_free_state_for_blocking_obstacle(self, blocking_obst: Object, path: list) -> State:
-        """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+    def find_free_state_for_blocking_object(self, blocking_obst: Object, path: list) -> State:
+        """ return a state where the object can be pushed toward so it is not blocking the path. """
 
     def in_blacklist(self, edge_type: list) -> bool:
         """ checks if the edge is already in the blacklist. """
@@ -665,7 +665,7 @@ class HGraph(Graph):
 
         edge_type = [
                 edge.to,
-                self.get_node(edge.to).obstacle.name,
+                self.get_node(edge.to).obj.name,
                 type(edge),
                 edge.controller.name,
                 edge.controller.system_model.name]
@@ -745,10 +745,10 @@ class HGraph(Graph):
         #TODO: give a reason why this edge has failed for the logger
 
 
-        self.update_object_type_to_unmovable(self.get_node(edge.to).obstacle.properties.name)
+        self.update_object_type_to_unmovable(self.get_node(edge.to).obj.properties.name)
         self.fail_edge(edge)
 
-        self.kgraph.add_object(self.get_node(edge.to).obstacle)
+        self.kgraph.add_object(self.get_node(edge.to).obj)
 
 
     def update_object_type_to_unmovable(self, obj_name: str):
@@ -758,9 +758,9 @@ class HGraph(Graph):
 
         for node in self.nodes:
 
-            if node.obstacle.properties.name == obj_name:
+            if node.obj.properties.name == obj_name:
                 print(f'node {node.iden} will now be marked fail')
-                node.obstacle.type = UNMOVABLE
+                node.obj.type = UNMOVABLE
                 node.status = NODE_UNFEASIBLE
 
                 outgoing_edges = []
@@ -878,17 +878,17 @@ class HGraph(Graph):
             # find a new subtask
             unfinished_target_nodes = [target_node for target_node in self.target_nodes if target_node.status == NODE_INITIALISED]
 
-            obstacle_target_node = None
+            object_target_node = None
             robot_target_node = None
 
-            # first obstacle subtasks then robot target position
+            # first object subtasks then robot target position
             for unfinished_target_node in unfinished_target_nodes:
                 if unfinished_target_node.name == self.robot.name + "_target":
                     robot_target_node = unfinished_target_node
                 else:
-                    obstacle_target_node = unfinished_target_node
+                    object_target_node = unfinished_target_node
 
-            if obstacle_target_node is None:
+            if object_target_node is None:
                 if robot_target_node is None:
                     self.end_failed_task()
                     raise StopIteration("No more subtasks, No Solution Found!")
@@ -896,8 +896,8 @@ class HGraph(Graph):
                 subtask_start_node = self.get_start_node(self.get_start_iden_from_target_iden(robot_target_node.iden))
                 subtask_target_node = robot_target_node
             else:
-                subtask_start_node = self.get_start_node(self.get_start_iden_from_target_iden(obstacle_target_node.iden))
-                subtask_target_node = obstacle_target_node
+                subtask_start_node = self.get_start_node(self.get_start_iden_from_target_iden(object_target_node.iden))
+                subtask_target_node = object_target_node
 
             self.current_subtask = {
                     "start_node": subtask_start_node,
@@ -993,35 +993,35 @@ class HGraph(Graph):
             return self.find_source_node(edge_to_list[0].source)
 
     def find_corresponding_start_node(self, target_node):
-        """ find the obstacle node that should directly be connected to this node. """
+        """ find the object node that should directly be connected to this node. """
 
-        # check target obstacle, find the equivalent start node obstacle
-        if target_node.obstacle.properties == self.robot.properties:
+        # check target obj, find the equivalent start node.obj
+        if target_node.obj.properties == self.robot.properties:
             return self.robot_node
         else:
             for temp_node in self.nodes:
-                # TODO: if a obstacle is in the way (and auto generated as node) and a subtask, this might not succeed
-                if temp_node.obstacle.properties == target_node.obstacle.properties and\
+                # TODO: if a object is in the way (and auto generated as node) and a subtask, this might not succeed
+                if temp_node.obj.properties == target_node.obj.properties and\
                         temp_node.iden != target_node.iden and\
                         target_node.subtask_name == self.current_subtask["name"]:
                     return temp_node
 
-        # all corresponding nodes should be generated in setup function or remove_blocking_obstacle function
+        # all corresponding nodes should be generated in setup function or remove_blocking_object function
         raise ValueError(f'for target node {target_node.name} no start node was found')
 
-    def find_push_state_against_obstacle(self, obstacle) -> State:
-        """ find a push position (state) next to the obstacle. """
-        if isinstance(obstacle.properties, BoxObstacle):
-            pos = obstacle.state.pos
+    def find_push_state_against_object(self, obj) -> State:
+        """ find a push position (state) next to the object. """
+        if isinstance(obj.properties, BoxObstacle):
+            pos = obj.state.pos
 
             # TODO: this is not generic enough, working now ha
             return State(pos=np.array([pos[0]+2.2, pos[1], pos[2]]))
 
             # TODO this for box
 
-        if isinstance(obstacle.properties, (CylinderObstacle, SphereObstacle)):
+        if isinstance(obj.properties, (CylinderObstacle, SphereObstacle)):
 
-            pos = obstacle.state.pos
+            pos = obj.state.pos
 
             # TODO: this is not generic enough, working now ha
             return State(pos=np.array([pos[0]+2.2, pos[1], pos[2]]))
@@ -1120,7 +1120,7 @@ class HGraph(Graph):
 
                     if not self.in_blacklist([
                         target_iden,
-                        self.get_node(target_iden).obstacle.name,
+                        self.get_node(target_iden).obj.name,
                         edge_type,
                         controller.name,
                         model_name]):

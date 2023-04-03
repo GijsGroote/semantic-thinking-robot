@@ -47,7 +47,7 @@ def test_grid_map_shape():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 3., "height": 0.3},
 #             }
-#     cylinder_object = Obstacle("simple_cylinder", State(pos=np.array([15, 0, 0])), "urdf")
+#     cylinder_object = Object("simple_cylinder", State(pos=np.array([15, 0, 0])), "urdf")
 #     cylinder_object.obstacle = CylinderObstacle(name="simple_cylinder", content_dict=cylinder_dict)
 #
 #     sphere_dict= {
@@ -55,7 +55,7 @@ def test_grid_map_shape():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"radius": 2.},
 #             }
-#     sphere_object = Obstacle("simple_sphere",  State(pos=np.array([-5,-10,0])), "urdf")
+#     sphere_object = Object("simple_sphere",  State(pos=np.array([-5,-10,0])), "urdf")
 #     sphere_object.obstacle = SphereObstacle(name="simple_sphere", content_dict=sphere_dict)
 #
 #     box_dict = {
@@ -63,7 +63,7 @@ def test_grid_map_shape():
 #             "position": [1.0, 1.0, 1.0],
 #             "geometry": {"width": 3, "length": 8, "height": 0.3},
 #             }
-#     box_object = Obstacle("simple_box", State(pos=np.array([-10,0,0]), ang_p=np.array([0,0,1])), "urdf")
+#     box_object = Object("simple_box", State(pos=np.array([-10,0,0]), ang_p=np.array([0,0,1])), "urdf")
 #
 #     box_object.obstacle =  BoxObstacle(name="simple_box", content_dict=box_dict)
 #

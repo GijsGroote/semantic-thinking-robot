@@ -107,7 +107,7 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                object=self.robot,
+                obj=self.robot,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator)
@@ -275,7 +275,7 @@ class PointRobotVelHGraph(HGraph):
 
         raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
 
-    def find_free_state_for_blocking_object(self, blocking_obj: Obstacle, path: list) -> State:
+    def find_free_state_for_blocking_object(self, blocking_obj: Object, path: list) -> State:
         """ return a state where the object can be pushed toward so it is not blocking the path. """
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
@@ -302,7 +302,7 @@ class PointRobotVelHGraph(HGraph):
             if xy_position_in_free_space is not None:
                 try:
                     path = path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
-                    reachable_xy_positions.append((len(path), xy_position_in_free_space))
+                    reachable_xy_positions.append([len(path), *xy_position_in_free_space])
 
                 except NoPathExistsException:
                     pass
@@ -313,14 +313,15 @@ class PointRobotVelHGraph(HGraph):
         if len(reachable_xy_positions) == 0:
             raise NoTargetPositionFoundException(f"no positions where reachable around object {blocking_obj.name}")
         reachable_xy_positions.sort()
-        reachable_xy_positions = reachable_xy_positions[1, :]
+        reachable_xy_positions = np.array(reachable_xy_positions).reshape((len(reachable_xy_positions), 3))
+        reachable_xy_positions = reachable_xy_positions[:, 1:3].reshape((len(reachable_xy_positions), 2))
 
         # configuration space for the object
         objects_and_path = copy.deepcopy(self.objects)
 
         # This operation takes quite some time.
         for (i, robot_xy_position_in_path) in enumerate(path):
-            objects_and_path['path_position_'+str(i)] = Obstacle('path_position_'+str(i),
+            objects_and_path['path_position_'+str(i)] = Object('path_position_'+str(i),
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
                     self.robot.properties, obj_type=UNMOVABLE)
 
@@ -374,7 +375,7 @@ class PointRobotVelHGraph(HGraph):
 
         raise NoTargetPositionFoundException
 
-    def get_min_max_dimension_from_object(self, obj: Obstacle) -> Tuple[float, float]:
+    def get_min_max_dimension_from_object(self, obj: Object) -> Tuple[float, float]:
         """ return the minimal and maximal dimensions for a box or cylinder object. """
 
         # retrieve min and max dimension of the object
@@ -475,7 +476,7 @@ class PointRobotVelHGraph(HGraph):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
 
-        source_state = self.get_node(push_edge.source).object.state
+        source_state = self.get_node(push_edge.source).obj.state
         controller.setup(system_model, self.robot.state, source_state, source_state)
 
 
