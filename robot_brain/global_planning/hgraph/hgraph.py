@@ -59,7 +59,7 @@ class HGraph(Graph):
         self.in_loop = SEARCHING_LOOP  # hgraph can be in the execution or search loop
         self.task = None               # task in form [(obst_name, target_state),..]
         self.robot_node = None         # node containing the robot itself
-        self.obstacles = {}            # dictionary with all obstacles
+        self.objects = {}              # dictionary with all objects 
         self.start_nodes = []          # starting nodes one for every subtask and one for the robot
         self.target_nodes = []         # target nodes one for every subtask
         self.start_to_target_iden = [] # identifier mapping from start to target node and vise versa
@@ -75,16 +75,16 @@ class HGraph(Graph):
         if LOG_METRICS:
             self.logger = HLogger()
 
-    def setup(self, task, obstacles, kgraph):
+    def setup(self, task, objects, kgraph):
         """ create start and target nodes and adds them to the hgraph. """
 
         self.kgraph = kgraph
         self.kgraph.print_kgraph_info()
         self.task = task
-        self.obstacles = obstacles
+        self.objects = objects
 
         # update object type from kgraph
-        for obj in self.obstacles.values():
+        for obj in self.objects.values():
             obj_type = kgraph.get_object_type(obj.name)
 
             if obj_type is None:
@@ -171,7 +171,7 @@ class HGraph(Graph):
 
             while not self.is_reachable(self.current_subtask["start_node"].iden, self.current_subtask["target_node"].iden):
 
-                # the obstacles should be the same between an edge
+                # the objects should be the same between an edge
                 assert start_node.obstacle.name == target_node.obstacle.name,\
                 f"obstacle: {start_node.name} in start_node should be equal to obstacle: {target_node.name} in target_node"
 
@@ -356,10 +356,10 @@ class HGraph(Graph):
 
         # path estimation
         if isinstance(edge, DriveActionEdge):
-            edge.path_estimator = self.create_drive_path_estimator(self.obstacles)
+            edge.path_estimator = self.create_drive_path_estimator(self.objects)
 
         elif isinstance(edge, PushActionEdge):
-            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.obstacles)
+            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obstacle, self.objects)
 
         try:
             edge.path_estimator.search_path(
@@ -385,13 +385,13 @@ class HGraph(Graph):
         if edge.motion_planner is None:
             # motion planning
             if isinstance(edge, DriveActionEdge):
-                edge.motion_planner = self.create_drive_motion_planner(self.obstacles, edge.path_estimator)
+                edge.motion_planner = self.create_drive_motion_planner(self.objects, edge.path_estimator)
 
             elif isinstance(edge, PushActionEdge):
                 # edge.path_estimator.visualise(save=False)
 
                 edge.motion_planner = self.create_push_motion_planner(
-                        obstacles=self.obstacles,
+                        objects=self.objects,
                         push_obstacle=self.get_node(edge.source).obstacle,
                         path_estimator=edge.path_estimator)
 
@@ -573,10 +573,10 @@ class HGraph(Graph):
 
         # only look at the first blocking obstacle, ignore others
         if len(obst_keys) > 1:
-            warnings.warn(f"multiple obstacles are blocking, but only {obst_keys[0]} is moved")
+            warnings.warn(f"multiple objects are blocking, but only {obst_keys[0]} is moved")
 
 
-        blocking_obst = self.obstacles[obst_keys[0]]
+        blocking_obst = self.objects[obst_keys[0]]
 
         # add obstacle start node if not yet present
         blocking_obst_start_node = None
@@ -619,19 +619,19 @@ class HGraph(Graph):
         print(f'push that thing to state: {target_state.get_2d_pose()}')
 
     @abstractmethod
-    def create_drive_path_estimator(self, obstacles) -> PathEstimator:
+    def create_drive_path_estimator(self, objects) -> PathEstimator:
         """ create drive path estimator. """
 
     @abstractmethod
-    def create_push_path_estimator(self, push_obstacle, obstacles) -> PathEstimator:
+    def create_push_path_estimator(self, push_obstacle, objects) -> PathEstimator:
         """ create push path estimator. """
 
     @abstractmethod
-    def create_drive_motion_planner(self, obstacles, path_estimator):
+    def create_drive_motion_planner(self, objects, path_estimator):
         """ create drive motion planner. """
 
     @abstractmethod
-    def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None):
+    def create_push_motion_planner(self, objects, push_obstacle, path_estimator=None):
         """ create push motion planner. """
 
     @abstractmethod
@@ -776,7 +776,7 @@ class HGraph(Graph):
                     self.fail_edge(outgoing_edge)
 
 
-        for obj in self.obstacles.values():
+        for obj in self.objects.values():
             if obj.properties.name == obj_name:
                 obj.type = UNMOVABLE
 
@@ -1472,14 +1472,14 @@ class HGraph(Graph):
         self._hypothesis = hyp
 
     @property
-    def obstacles(self):
-        return self._obstacles
+    def objects(self):
+        return self._objects
 
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict),\
-                f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles
+    @objects.setter
+    def objects(self, objects):
+        assert isinstance(objects, dict),\
+                f"objects should be a dictionary and is {type(objects)}"
+        self._objects = objects
 
     @property
     def robot_order(self):

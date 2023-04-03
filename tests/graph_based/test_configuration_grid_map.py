@@ -7,7 +7,7 @@ from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstac
 
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 
-from robot_brain.obstacle import Obstacle, UNMOVABLE, UNKNOWN, MOVABLE
+from robot_brain.object import Object, UNMOVABLE, UNKNOWN, MOVABLE
 from tests.graph_based.obstacle_data.boxes import box
 from robot_brain.state import State
 

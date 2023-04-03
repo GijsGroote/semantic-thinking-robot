@@ -7,7 +7,7 @@ import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.object import Object, MOVABLE, UNKNOWN, UNMOVABLE
 from helper_functions.geometrics import check_floats_divisible
 
 # TODO: make the path estimator focussed on an obstacle (and not the robot)

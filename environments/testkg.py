@@ -16,7 +16,7 @@ def main():
     kgraph = KGraph()
     obst = Object('Object1', State(), "empty")
 
-    # 5 nodes, robot obstacle and 3 neutral
+    # 5 nodes, robot object and 3 neutral
     node1 = ObjectNode(1, "point_robot", obst)
     node2 = ObjectNode(2, "green_box", obst)
     node3 = ChangeOfStateNode(3, "robot_and_green_wall", [])

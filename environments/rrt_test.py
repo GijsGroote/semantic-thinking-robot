@@ -2,7 +2,7 @@
 import numpy as np
 from sortedcontainers import SortedDict
 from abc import abstractmethod
-from robot_brain.obstacle import Obstacle
+from robot_brain.object import Object
 from motion_planning_env.cylinder_obstacle import CylinderObstacle 
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
@@ -46,8 +46,8 @@ def main():
     dmp = DriveMotionPlanner(
             grid_x_length = 10.0,
             grid_y_length = 10.0,
-            obstacles = {},
-            obstacle = obst,
+            objects = {},
+            object = obst,
             step_size = 0.5,
             search_size = 1)
 

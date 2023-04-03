@@ -29,14 +29,14 @@ class RBrain:
 
     def __init__(self):
         # TODO: these should be private, en make some getters
-        self.obstacles = {} # obstacle information dictionary
+        self.objects = {} # object information dictionary
         self.robot = None  # Player information
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
         self.hgraph = None
         self.kgraph = None
-        self.obstacles_in_env = None
+        self.objects_in_env = None
         self.dash_app = None
 
 
@@ -87,13 +87,13 @@ class RBrain:
             self.default_action = stat_world_info["default_action"]
 
 
-        if "obstacles_in_env" in stat_world_info:
-            self.obstacles_in_env = stat_world_info["obstacles_in_env"]
-            if self.obstacles_in_env:
-                self.setup_obstacles(stat_world_info, ob)
+        if "objects_in_env" in stat_world_info:
+            self.objects_in_env = stat_world_info["objects_in_env"]
+            if self.objects_in_env:
+                self.setup_objects(stat_world_info, ob)
         else:
             raise AttributeError(
-                "there was no indication if this environment has obstacles"
+                "there was no indication if this environment has objects"
             )
 
         if "task" in stat_world_info:
@@ -101,15 +101,15 @@ class RBrain:
         else:
             warnings.warn("no task was set")
 
-    def setup_obstacles(self, stat_world_info, ob):
-        """ save obstacles and their dimensions. """
+    def setup_objects(self, stat_world_info, ob):
+        """ save objects and their dimensions. """
 
         assert (
             "obstacleSensor" in ob.keys()
         ), "no obstacle sensor found in initial observation"
         assert (
-            "obstacles" in stat_world_info
-        ), "no obstacle dict found in static world info"
+            "objects" in stat_world_info
+        ), "no object dict found in static world info"
 
         for key, val in ob["obstacleSensor"].items():
 
@@ -121,18 +121,18 @@ class RBrain:
             )
 
             try:
-                self.obstacles[key] = Object(name=key,
+                self.objects[key] = Object(name=key,
                             state=s_temp,
-                            properties=stat_world_info["obstacles"][key])
+                            properties=stat_world_info["objects"][key])
 
             except KeyError as exc:
                 raise KeyError(
-                    f"the obstacle {key} was returned from the\
-                     obstacle sensor but not from the given obstacles"
+                    f"the object {key} was returned from the\
+                     object sensor but not from the given objects"
                 ) from exc
 
             # objects are classified as unknown
-            self.obstacles[key].type = UNKNOWN
+            self.objects[key].type = UNKNOWN
 
     def setup_hgraph(self, stat_world_info):
         """
@@ -165,30 +165,30 @@ class RBrain:
                 stop_dash_server(self.dash_app)
 
         task = {}
-        for (task_nmr, (obstacle_key, target)) in enumerate(stat_world_info["task"]):
+        for (task_nmr, (object_key, target)) in enumerate(stat_world_info["task"]):
 
-            if obstacle_key == "robot":
-                obstacle = self.robot
+            if object_key == "robot":
+                object = self.robot
             else:
-                obstacle = self.obstacles[obstacle_key]
+                object = self.objects[object_key]
 
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
 
-            assert isinstance(obstacle, Object), \
-                    f"the obstacle should be of type Ostacle and in {type(obstacle)}"
+            assert isinstance(object, Object), \
+                    f"the object should be of type Ostacle and in {type(object)}"
 
-            task["subtask_"+str(task_nmr)] = (obstacle, target)
+            task["subtask_"+str(task_nmr)] = (object, target)
 
         self.hgraph.setup(
                 task=task,
-                obstacles=self.obstacles,
+                objects=self.objects,
                 kgraph=stat_world_info["kgraph"])
 
 
     def update(self, ob):
         """
-        Update all obstacle states.
+        Update all object states.
         :param ob:
         :return:
         """
@@ -203,15 +203,15 @@ class RBrain:
         self.robot.state.ang_p = ob["joint_state"]["position"][2]
         self.robot.state.ang_v = ob["joint_state"]["velocity"][2]
 
-        # update obstacles
-        if "obstacleSensor" in ob.keys():
+        # update objects
+        if "objectSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                if key in self.obstacles:
-                    # if key in self.obstacle.keys():
-                    self.obstacles[key].state.pos = val["pose"]["position"]
-                    self.obstacles[key].state.vel = val["twist"]["linear"]
-                    self.obstacles[key].state.ang_p = val["pose"]["orientation"]
-                    self.obstacles[key].state.ang_v = val["twist"]["angular"]
+                if key in self.objects:
+                    # if key in self.object.keys():
+                    self.objects[key].state.pos = val["pose"]["position"]
+                    self.objects[key].state.vel = val["twist"]["linear"]
+                    self.objects[key].state.ang_p = val["pose"]["orientation"]
+                    self.objects[key].state.ang_v = val["twist"]["angular"]
 
     def respond(self):
         """
@@ -245,12 +245,12 @@ class RBrain:
             raise Exception("Unable to respond")
 
     @property
-    def obstacles(self):
-        return self._obstacles
+    def objects(self):
+        return self._objects
 
 
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), \
-                f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles
+    @objects.setter
+    def objects(self, objects):
+        assert isinstance(objects, dict), \
+                f"objects should be a dictionary and is {type(objects)}"
+        self._objects = objects

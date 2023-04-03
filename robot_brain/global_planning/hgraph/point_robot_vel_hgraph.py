@@ -71,33 +71,33 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_push_path_estimator(self, push_obstacle, objects):
+    def create_push_path_estimator(self, push_obj, objects):
 
-        if isinstance(push_obstacle.properties, BoxObstacle):
+        if isinstance(push_obj.properties, BoxObstacle):
 
             occ_graph = RectangleObstaclePathEstimator(
                     cell_size = 0.1,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
                     objects= objects,
-                    obst_cart_2d = push_obstacle.state.get_xy_position(),
-                    obst_name = push_obstacle.name,
+                    obst_cart_2d = push_obj.state.get_xy_position(),
+                    obst_name = push_obj.name,
                     n_orientations = 3,
                     single_orientation = False,
-                    obst_x_length = push_obstacle.properties.length(),
-                    obst_y_length = push_obstacle.properties.width())
+                    obst_x_length = push_obj.properties.length(),
+                    obst_y_length = push_obj.properties.width())
 
 
-        elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
+        elif isinstance(push_obj.properties, (CylinderObstacle, SphereObstacle)):
             occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
                     objects= objects,
                     obst_cart_2d= self.robot.state.get_xy_position(),
-                    obst_name = push_obstacle.name,
-                    obst_radius= push_obstacle.properties.radius())
+                    obst_name = push_obj.name,
+                    obst_radius= push_obj.properties.radius())
         else:
-            raise ValueError("Unknown obstacle encountered during estimating a path")
+            raise ValueError("Unknown object encountered during estimating a path")
 
         occ_graph.setup()
 
@@ -107,23 +107,23 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obstacle=self.robot,
+                object=self.robot,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator)
 
-    def create_push_motion_planner(self, objects, push_obstacle, path_estimator=None) -> PushMotionPlanner:
-        if isinstance(push_obstacle.properties, BoxObstacle):
+    def create_push_motion_planner(self, objects, push_obj, path_estimator=None) -> PushMotionPlanner:
+        if isinstance(push_obj.properties, BoxObstacle):
             include_orien = True
-        elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
+        elif isinstance(push_obj.properties, (CylinderObstacle, SphereObstacle)):
             include_orien = False
         else:
-            raise ValueError("Unknown obstacle encountered during estimating a path")
+            raise ValueError("Unknown object encountered during estimating a path")
 
         return PushMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obstacle=push_obstacle,
+                obj=push_obj,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator,
@@ -181,7 +181,7 @@ class PointRobotVelHGraph(HGraph):
                         obj_keys.append(obj.name)
 
                 else:
-                    raise ValueError(f"obstacle unknown: {type(obj)}")
+                    raise ValueError(f"object unknown: {type(obj)}")
 
         return obj_keys
 
@@ -202,7 +202,7 @@ class PointRobotVelHGraph(HGraph):
                         blocking_obj_keys.append(temp_obj.name)
 
                 else:
-                    raise ValueError(f"obstacle unknown: {type(obj)}")
+                    raise ValueError(f"object unknown: {type(obj)}")
 
         return blocking_obj_keys
 
@@ -225,12 +225,12 @@ class PointRobotVelHGraph(HGraph):
                         blocking_obj_keys.append(temp_obj.name)
 
                 else:
-                    raise ValueError(f"obstacle unknown: {type(obj)}")
+                    raise ValueError(f"object unknown: {type(obj)}")
 
         return blocking_obj_keys
 
-    def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
-        """ return a starting state to start pushing the obstacle. """
+    def find_push_pose_againts_object_state(self, blocking_obst, path) -> State:
+        """ return a starting state to start pushing the object. """
 
         obst_xy_position = path[0][0:2]
 
@@ -241,7 +241,7 @@ class PointRobotVelHGraph(HGraph):
         else:
             raise ValueError(f"path is shorter than 2 samples, its: {len(path)}")
 
-        # retrieve min and max dimension of the obstacle
+        # retrieve min and max dimension of the object
         (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obst)
 
         # orientation where the robot should stand to push
@@ -275,8 +275,8 @@ class PointRobotVelHGraph(HGraph):
 
         raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
 
-    def find_free_state_for_blocking_obstacle(self, blocking_obj: Obstacle, path: list) -> State:
-        """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+    def find_free_state_for_blocking_object(self, blocking_obj: Obstacle, path: list) -> State:
+        """ return a state where the object can be pushed toward so it is not blocking the path. """
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
         # pretend that the object is unmovable
@@ -475,7 +475,7 @@ class PointRobotVelHGraph(HGraph):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
 
-        source_state = self.get_node(push_edge.source).obstacle.state
+        source_state = self.get_node(push_edge.source).object.state
         controller.setup(system_model, self.robot.state, source_state, source_state)
 
 
@@ -526,29 +526,29 @@ class PointRobotVelHGraph(HGraph):
         """ create push model for MPPI pointrobot. """
         def model(x, u):
 
-            # width square obstacle
+            # width square object
             H = 2
 
             # point a in the center of the pushed against edge
             xa = x[:,2]+torch.sin(x[:,4])*H/2
             ya = x[:,3]-torch.cos(x[:,4])*H/2
 
-            # line parallel to the obstacle edge being pushed against
+            # line parallel to the object edge being pushed against
             a_abc = torch.tan(math.pi/2-x[:,4])
             b_abc = x[:,2]+H/2*torch.sin(x[:,4])-torch.tan(math.pi/2-x[:,4])*(x[:,3]-H/2*torch.cos(x[:,4]))
 
 
-            # line from center robot to center obstacle
+            # line from center robot to center object
             a_ro = (x[:,0]-x[:,2])/(x[:,1]-x[:,3])
             b_ro = x[:,2]-(x[:,0]-x[:,2])/(x[:,1]-x[:,3])*x[:,3]
 
             yb = (b_ro-b_abc)/(a_abc-a_ro)
             xb = a_abc*yb+b_abc
 
-            # st is the distance from pushing point to the centerline of the obstacle perpendicular to the edge which is pushed against
+            # st is the distance from pushing point to the centerline of the object perpendicular to the edge which is pushed against
             st=1.2*torch.sqrt((xa-xb)**2+(ya-yb)**2)
 
-            # obstacle rotating clockwise (positive) or anti-clockwise (negative)
+            # object rotating clockwise (positive) or anti-clockwise (negative)
             st = which_side_point_to_line(
                     x[:,2:4],
                     torch.stack((xa, ya), dim=-1),
@@ -573,29 +573,29 @@ class PointRobotVelHGraph(HGraph):
         """ create push model for MPPI pointrobot. """
         def model(x, u):
 
-            # width square obstacle
+            # width square object
             H = 2
 
             # point a in the center of the pushed against edge
             xa = x[:,2]+torch.sin(x[:,4])*H/2
             ya = x[:,3]-torch.cos(x[:,4])*H/2
 
-            # line parallel to the obstacle edge being pushed against
+            # line parallel to the object edge being pushed against
             a_abc = torch.tan(math.pi/2-x[:,4])
             b_abc = x[:,2]+H/2*torch.sin(x[:,4])-torch.tan(math.pi/2-x[:,4])*(x[:,3]-H/2*torch.cos(x[:,4]))
 
 
-            # line from center robot to center obstacle
+            # line from center robot to center object
             a_ro = (x[:,0]-x[:,2])/(x[:,1]-x[:,3])
             b_ro = x[:,2]-(x[:,0]-x[:,2])/(x[:,1]-x[:,3])*x[:,3]
 
             yb = (b_ro-b_abc)/(a_abc-a_ro)
             xb = a_abc*yb+b_abc
 
-            # st is the distance from pushing point to the centerline of the obstacle perpendicular to the edge which is pushed against
+            # st is the distance from pushing point to the centerline of the object perpendicular to the edge which is pushed against
             st=1.2*torch.sqrt((xa-xb)**2+(ya-yb)**2)
 
-            # obstacle rotating clockwise (positive) or anti-clockwise (negative)
+            # object rotating clockwise (positive) or anti-clockwise (negative)
             st = which_side_point_to_line(
                     x[:,2:4],
                     torch.stack((xa, ya), dim=-1),

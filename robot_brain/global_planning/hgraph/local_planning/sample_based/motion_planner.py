@@ -11,7 +11,9 @@ import numpy as np
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.obstacle import Obstacle, FREE, UNMOVABLE, MOVABLE, UNKNOWN
+
+from robot_brain.object import Object, FREE, UNMOVABLE, MOVABLE, UNKNOWN
+
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator\
@@ -35,7 +37,7 @@ class MotionPlanner(ABC):
     """
     def __init__(self, grid_x_length: float,
             grid_y_length: float,
-            obstacle: Obstacle,
+            obj: Object,
             step_size: float,
             search_size: float,
             path_estimator: PathEstimator,
@@ -62,11 +64,11 @@ class MotionPlanner(ABC):
             self.orien_sorted = SortedDict({})
 
         if isinstance(path_estimator, PathEstimator):
-            if isinstance(obstacle.properties, CylinderObstacle):
+            if isinstance(obj.properties, CylinderObstacle):
                 assert isinstance(path_estimator, CircleObstaclePathEstimator),\
                     "obstacle is CylinderObstacle, conf_grid_map should be of "\
                     f"type CircleObstaclePathEstimator and is {type(path_estimator)}"
-            elif isinstance(obstacle.properties, BoxObstacle):
+            elif isinstance(obj.properties, BoxObstacle):
                 assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
                     "obstacle is BoxObstacle, conf_grid_map should be of type"\
                     f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
@@ -500,14 +502,14 @@ class MotionPlanner(ABC):
         self._grid_y_length = val
 
     @property
-    def obstacle(self):
-        return self._obstacle
+    def obj(self):
+        return self._obj
 
-    @obstacle.setter
-    def obstacle(self, obstacle):
-        assert isinstance(obstacle, Obstacle),\
-                f"obstacle must be of type Obstacle and is {type(obstacle)}"
-        self._obstacle = obstacle
+    @obj.setter
+    def obj(self, val):
+        assert isinstance(val, Object),\
+                f"val must be of type Object and is {type(val)}"
+        self._obj = val 
 
     @property
     def step_size(self):

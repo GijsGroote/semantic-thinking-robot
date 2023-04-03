@@ -7,7 +7,7 @@ from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.rbrain import State
 # from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-# make obstacles in seperate file
+# make objects in seperate file
 # from MotionPlanningEnv.sphereObstacle import SphereObstacle
 # from MotionPlanningEnv.boxObstacle import BoxObstacle
 

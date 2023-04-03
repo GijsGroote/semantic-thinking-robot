@@ -20,7 +20,7 @@ user_input_mode = False
 
 def main(conn=None):
     """
-    Point robot and obstacles which can interact with each other in the environment.
+    Point robot and objects which can interact with each other in the environment.
 
     Semantic brain goal: find out how interachtin with the objects goes
 
@@ -39,16 +39,16 @@ def main(conn=None):
 
     n_steps = 10000
 
-    obstacles = {box.name(): box,
+    objects = {box.name(): box,
             box2.name(): box2,
             # sphere.name(): sphere,
             cylinder.name(): cylinder}
 
-    # add obstacles
-    env.add_obstacle(box)
-    env.add_obstacle(box2)
-    # env.add_obstacle(sphere)
-    env.add_obstacle(cylinder)
+    # add objects
+    env.add_object(box)
+    env.add_object(box2)
+    # env.add_object(sphere)
+    env.add_object(cylinder)
 
     # add sensors
     sensor = ObstacleSensor()
@@ -61,7 +61,7 @@ def main(conn=None):
     brain.setup({
         "dt": DT,
         "robot_type": robot_type,
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [
             (box.name(), State(pos=np.array([2, -3.31, 0.1]))),
@@ -74,7 +74,7 @@ def main(conn=None):
             # ("robot", State(pos=np.array([4,-2,0]))),
             # ("robot", State(pos=np.array([-4, -4, 0]))),
             ],
-        "obstacles": obstacles,
+        "objects": objects,
         "env": env
     }, ob)
 

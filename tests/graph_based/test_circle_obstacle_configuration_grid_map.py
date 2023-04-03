@@ -5,7 +5,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 
-from robot_brain.obstacle import Obstacle
+from robot_brain.object import Object
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 

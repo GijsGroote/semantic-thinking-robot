@@ -15,7 +15,7 @@ from environments.objects.cylinders import cylinder
 
 def main():
     """
-    Point robot and obstacles which can interact with each other in the environment.
+    Point robot and objects which can interact with each other in the environment.
 
     Semantic brain goal: find out how interachtin with the objects goes
 
@@ -30,12 +30,12 @@ def main():
 
     n_steps = 10000
 
-    obstacles = {box.name(): box,
+    objects = {box.name(): box,
             sphere.name(): sphere,
             cylinder.name(): cylinder}
 
 
-    # add obstacles
+    # add objects
     env.add_obstacle(box)
     env.add_obstacle(sphere)
     env.add_obstacle(cylinder)
@@ -51,7 +51,7 @@ def main():
     brain.setup({
         "dt": DT,
         "robot_type": "pointRobot-vel-v7",
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([1.12, 1, 0]))),
             ("robot", State(pos=np.array([-1.3212, 0, 0]))),
@@ -60,7 +60,7 @@ def main():
             ("robot", State(pos=np.array([-1.3212, 5, 0]))),
             ("robot", State(pos=np.array([0, -1.2, 0]))),
             ],
-        "obstacles": obstacles
+        "objects": objects
     }, ob)
 
 

@@ -105,13 +105,13 @@ def main():
     brain.setup({
         "dt": DT,
         "robot_type": robot_type,
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.zeros(2),
         "task": [
             ("robot", State(pos=np.array([4.12, 1.9, 0]))),
             # ("simpleBox3", State(pos=np.array([0.92, 3.2, 0])))
             ],
-        "obstacles": surrounded,
+        "objects": surrounded,
         "env": env
         }, ob)
 

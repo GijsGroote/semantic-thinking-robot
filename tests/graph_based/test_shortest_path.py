@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from robot_brain.obstacle import Obstacle, UNMOVABLE
+from robot_brain.object import Object, UNMOVABLE
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator

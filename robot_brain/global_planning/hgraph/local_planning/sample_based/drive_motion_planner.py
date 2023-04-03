@@ -6,7 +6,7 @@ import math
 from sortedcontainers import SortedDict
 import numpy as np
 
-from robot_brain.obstacle import Obstacle, UNKNOWN, MOVABLE
+from robot_brain.object import Object, UNKNOWN, MOVABLE
 from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
 from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
@@ -21,7 +21,7 @@ class DriveMotionPlanner(MotionPlanner):
     def __init__(self,
         grid_x_length: float,
         grid_y_length: float,
-        obstacle: Obstacle,
+        obj: Object,
         step_size: float,
         search_size: float,
         path_estimator: PathEstimator,
