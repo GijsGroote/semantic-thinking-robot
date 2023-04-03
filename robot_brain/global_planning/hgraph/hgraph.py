@@ -95,7 +95,7 @@ class HGraph(Graph):
 
         #  add robot as start_state
         self.robot_node = ObstacleNode(ROBOT_IDEN, self.robot.name, self.robot)
-        self.current_node = self.robot_node
+        # self.current_node = self.robot_node
         self.add_start_node(self.robot_node)
 
         for (subtask_name, (obst_temp, target)) in task.items():
@@ -119,8 +119,8 @@ class HGraph(Graph):
                 ))
             self.start_to_target_iden.append((iden_start_node, iden_target_node))
 
-        # self.update_subtask()
 
+        self.visualise(save=False)
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
         if LOG_METRICS:

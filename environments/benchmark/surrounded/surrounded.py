@@ -18,7 +18,7 @@ from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.benchmark.surrounded.objects import surrounded
 
-USER_INPUT_MODE = False
+USER_INPUT_MODE = True
 
 def main(conn=None):
 
