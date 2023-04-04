@@ -53,8 +53,8 @@ class PointRobotVelHGraph(HGraph):
     """
     Hypothesis graph for a Point Robot accepting velocity input.
     """
-    def __init__(self, robot, env):
-        HGraph.__init__(self, robot, env)
+    def __init__(self, robot_obj: Object):
+        HGraph.__init__(self, robot_obj)
         self.robot_order = 2
 
     def create_drive_path_estimator(self, objects) -> PathEstimator:
@@ -63,8 +63,8 @@ class PointRobotVelHGraph(HGraph):
                 grid_x_length = GRID_X_SIZE,
                 grid_y_length = GRID_Y_SIZE,
                 objects= objects,
-                obst_cart_2d= self.robot.state.get_xy_position(),
-                obst_name = self.robot.name,
+                obst_cart_2d= self.robot_node.object.state.get_xy_position(),
+                obst_name = self.robot_node.object.name,
                 obst_radius= POINT_ROBOT_RADIUS)
 
         occ_graph.setup()
@@ -93,7 +93,7 @@ class PointRobotVelHGraph(HGraph):
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
                     objects= objects,
-                    obst_cart_2d= self.robot.state.get_xy_position(),
+                    obst_cart_2d= self.robot_node.object.state.get_xy_position(),
                     obst_name = push_obj.name,
                     obst_radius= push_obj.properties.radius())
         else:
@@ -107,7 +107,7 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obj=self.robot,
+                obj=self.robot_node.object,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator)
@@ -133,7 +133,7 @@ class PointRobotVelHGraph(HGraph):
         """ return the object keys at pose_2ds that are in collision with object obj. """
         blocking_obj_keys = []
 
-        if obj.name == self.robot.name:
+        if obj.name == self.robot_node.object.name:
             blocking_obj_keys = self.robot_in_object(pose_2ds)
         elif isinstance(obj.properties, BoxObstacle):
             blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
@@ -229,30 +229,30 @@ class PointRobotVelHGraph(HGraph):
 
         return blocking_obj_keys
 
-    def find_push_pose_againts_object_state(self, blocking_obst, path) -> State:
+    def find_best_push_state_againts_object(self, blocking_obj, path) -> State:
         """ return a starting state to start pushing the object. """
 
-        obst_xy_position = path[0][0:2]
+        obj_xy_position = path[0][0:2]
 
         if len(path)>4:
-            clost_obst_xy_position = path[3][0:2]
+            clost_obj_xy_position = path[3][0:2]
         elif len(path)>=2:
-            clost_obst_xy_position = path[1][0:2]
+            clost_obj_xy_position = path[1][0:2]
         else:
             raise ValueError(f"path is shorter than 2 samples, its: {len(path)}")
 
         # retrieve min and max dimension of the object
-        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obst)
+        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
 
         # orientation where the robot should stand to push
-        if (clost_obst_xy_position[1]-obst_xy_position[1]) == 0:
-            if clost_obst_xy_position[0] < obst_xy_position[0]:
+        if (clost_obj_xy_position[1]-obn_xy_position[1]) == 0:
+            if clost_obj_xy_position[0] < obj_xy_position[0]:
                 best_robot_pose_orien = math.pi/2
             else:
                 best_robot_pose_orien = -math.pi/2
         else:
-            best_robot_pose_orien = math.atan2(-(clost_obst_xy_position[0]-obst_xy_position[0]),\
-                    clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
+            best_robot_pose_orien = math.atan2(-(clost_obj_xy_position[0]-obj_xy_position[0]),\
+                    clost_obj_xy_position[1]-obj_xy_position[1]) + math.pi
 
         path_estimator = self.create_drive_path_estimator(self.objects)
 
@@ -266,14 +266,14 @@ class PointRobotVelHGraph(HGraph):
         for temp_orien in try_these_orien:
             temp_orien = to_interval_zero_to_two_pi(temp_orien)
 
-            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obst_xy_position,
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obj_xy_position,
                     min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator)
 
             if xy_position_in_free_space is not None:
 
                 return State(pos=np.array([*xy_position_in_free_space, 0]))
 
-        raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
+        raise NoBestPushPositionException(f"could not find a push position against object {blocking_obj.name}")
 
     def find_free_state_for_blocking_object(self, blocking_obj: Object, path: list) -> State:
         """ return a state where the object can be pushed toward so it is not blocking the path. """
@@ -301,7 +301,7 @@ class PointRobotVelHGraph(HGraph):
 
             if xy_position_in_free_space is not None:
                 try:
-                    path = path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
+                    path = path_estimator_robot.search_path(self.robot_node.object.state.get_xy_position(), xy_position_in_free_space)
                     reachable_xy_positions.append([len(path), *xy_position_in_free_space])
 
                 except NoPathExistsException:
@@ -323,7 +323,7 @@ class PointRobotVelHGraph(HGraph):
         for (i, robot_xy_position_in_path) in enumerate(path):
             objects_and_path['path_position_'+str(i)] = Object('path_position_'+str(i),
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
-                    self.robot.properties, obj_type=UNMOVABLE)
+                    self.robot_node.object.properties, obj_type=UNMOVABLE)
 
         path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
 
@@ -389,12 +389,12 @@ class PointRobotVelHGraph(HGraph):
 
         return (min_obj_dimension, max_obj_dimension)
 
-    def _find_first_xy_position_in_free_space(self, obst_xy_position: np.ndarray, dist_from_obj_min: float, dist_from_obj_max: float,
+    def _find_first_xy_position_in_free_space(self, obj_xy_position: np.ndarray, dist_from_obj_min: float, dist_from_obj_max: float,
                                     orien: float,  path_estimator: PathEstimator) -> np.ndarray:
         """ return the first pose that is in free space if no
             pose_2d is in free space, nothing is returned.
 
-            obst_xy_position:    objects position is xy coordinates
+            obj_xy_position:    objects position is xy coordinates
             dist_from_obj_min:  min distance from object
             dist_from_obj_max:  maximal distance from object
             orien:              orientation between line where points to check lie, and positive y axis.
@@ -403,8 +403,8 @@ class PointRobotVelHGraph(HGraph):
         """
         for xy_pos_temp in np.linspace(dist_from_obj_min, dist_from_obj_max, 50):
 
-            temp_xy_position = [obst_xy_position[0] - np.sin(orien)*xy_pos_temp,
-                    obst_xy_position[1] + np.cos(orien) * xy_pos_temp]
+            temp_xy_position = [obj_xy_position[0] - np.sin(orien)*xy_pos_temp,
+                    obj_xy_position[1] + np.cos(orien) * xy_pos_temp]
 
             if path_estimator.occupancy(temp_xy_position) == FREE:
                 return temp_xy_position
@@ -441,6 +441,12 @@ class PointRobotVelHGraph(HGraph):
 
         return controllers_and_models
 
+    def create_drive_controller(self, target_iden: int) -> Tuple[Controller, str]:
+        """ randomly select a driving controller that is not on the blacklist. """
+
+    def create_push_controller(self, target_iden: int) -> Tuple[Controller, str]:
+        """ create push controller. """
+
     def create_drive_model(self, model_name: str) -> SystemModel:
         """ return the corresponding drive model. """
 
@@ -470,14 +476,14 @@ class PointRobotVelHGraph(HGraph):
     def setup_drive_controller(self, controller, system_model):
 
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
-        controller.setup(system_model, self.robot.state, self.robot.state)
+        controller.setup(system_model, self.robot_node.object.state, self.robot_node.object.state)
 
     def setup_push_controller(self, controller, system_model, push_edge):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
 
         source_state = self.get_node(push_edge.source).obj.state
-        controller.setup(system_model, self.robot.state, source_state, source_state)
+        controller.setup(system_model, self.robot_node.object.state, source_state, source_state)
 
 
     ##### DRIVE MPPI #####

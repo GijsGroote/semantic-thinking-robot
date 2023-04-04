@@ -1,6 +1,5 @@
 import warnings
 import time
-import random
 import numpy as np
 import pandas as pd
 from motion_planning_env.box_obstacle import BoxObstacle
@@ -11,10 +10,10 @@ from robot_brain.state import State
 from robot_brain.object import Object
 from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
-from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 
-# is_doing states
+from robot_brain.global_planning.kgraph.kgraph import KGraph
+from robot_brain.global_planning.hgraph.halgorithm import HypothesisAlgorithm
+
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
 
@@ -29,17 +28,13 @@ class RBrain:
     def __init__(self):
         # TODO: these should be private, en make some getters
         self.objects = {} # object information dictionary
-        self.robot = None  # Player information
+        self.robot_obj = None  # Player information
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
-        self.hgraph = None
-        self.kgraph = None
+        self.halgorithm = None
         self.objects_in_env = None
         self.dash_app = None
-
-        # give seed to make task repetable 
-        random.seed(10)
 
 
     def setup(self, stat_world_info, ob):
@@ -69,7 +64,7 @@ class RBrain:
             else:
                 raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
-            self.robot = Object(
+            self.robot_obj = Object(
                 name=stat_world_info["robot_type"],
                 state=State(
                     pos=ob["joint_state"]["position"],
@@ -99,7 +94,7 @@ class RBrain:
             )
 
         if "task" in stat_world_info:
-            self.setup_hgraph(stat_world_info)
+            self.setup_halgorithm(stat_world_info)
         else:
             warnings.warn("no task was set")
 
@@ -136,9 +131,9 @@ class RBrain:
             # objects are classified as unknown
             self.objects[key].type = UNKNOWN
 
-    def setup_hgraph(self, stat_world_info):
+    def setup_halgorithm(self, stat_world_info):
         """
-        Setup Hypothesis graph initialised with the task.
+        Setup hypothesis algorithm initialised with the task.
 
         2 types pointRobot-vel-v7
                 boxerRobot-vel-v7
@@ -146,16 +141,7 @@ class RBrain:
         of robots are allowed.
         """
 
-        if stat_world_info["robot_type"] == "pointRobot-vel-v7":
-            self.hgraph = PointRobotVelHGraph(self.robot, stat_world_info["env"])
-
-        elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
-            self.hgraph = BoxerRobotVelHGraph(self.robot, stat_world_info["env"])
-
-        else:
-            raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
-
-
+        self.halgorithm = HypothesisAlgorithm(self.robot_obj, stat_world_info["env"])
         self.is_doing = IS_EXECUTING
 
         # halt if there are no subtask
@@ -166,44 +152,48 @@ class RBrain:
                 self.hgraph.visualise()
                 stop_dash_server(self.dash_app)
 
+        # create a task
         task = {}
         for (task_nmr, (object_key, target)) in enumerate(stat_world_info["task"]):
 
             if object_key == "robot":
-                object = self.robot
+                obj = self.robot_obj
             else:
-                object = self.objects[object_key]
+                obj = self.objects[object_key]
 
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
 
-            assert isinstance(object, Object), \
-                    f"the object should be of type Ostacle and in {type(object)}"
+            assert isinstance(obj, Object), \
+                    f"the obj should be of type Object and is {type(obj)}"
 
-            task["subtask_"+str(task_nmr)] = (object, target)
+            task["subtask_"+str(task_nmr)] = (obj, target)
 
-        self.hgraph.setup(
+        if "kgraph" in stat_world_info:
+            kgraph = stat_world_info["kgraph"]
+        else:
+            kgraph = KGraph()
+
+        self.halgorithm.setup(
+                kgraph=kgraph,
                 task=task,
-                objects=self.objects,
-                kgraph=stat_world_info["kgraph"])
-
+                objects=self.objects)
 
     def update(self, ob):
         """
-        Update all object states.
+        Update all objects states.
         :param ob:
         :return:
         """
         # update robot
-        # TODO: make this to better thingy if that is there
         pos = ob["joint_state"]["position"][0:2]
         vel = ob["joint_state"]["velocity"][0:2]
 
-        self.robot.state.pos = np.array([pos[0], pos[1], 0])
-        self.robot.state.vel = np.array([vel[0], vel[1], 0])
+        self.robot_obj.state.pos = np.array([pos[0], pos[1], 0])
+        self.robot_obj.state.vel = np.array([vel[0], vel[1], 0])
 
-        self.robot.state.ang_p = ob["joint_state"]["position"][2]
-        self.robot.state.ang_v = ob["joint_state"]["velocity"][2]
+        self.robot_obj.state.ang_p = ob["joint_state"]["position"][2]
+        self.robot_obj.state.ang_v = ob["joint_state"]["velocity"][2]
 
         # update objects
         if "objectSensor" in ob.keys():
@@ -220,19 +210,18 @@ class RBrain:
         Respond to request with the latest action.
         """
         if self.is_doing is IS_EXECUTING:
-            if self.hgraph is not None:
+            if self.halgorithm is not None:
                 try:
-                    return self.hgraph.respond()
+                    return self.halgorithm.respond()
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 
                     print(f"Halt because: {exc}")
 
-
-                    self.hgraph.visualise(save=False) # make this save=True
+                    self.halgorithm.visualise(save=False) # make this save=True
 
                     if CREATE_SERVER_DASHBOARD:
-                        self.hgraph.visualise()
+                        self.halgorithm.visualise()
                         time.sleep(2) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 

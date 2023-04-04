@@ -1,4 +1,4 @@
-## Dashboard for Monitoring the RBrain
+## Dashboard for Monitoring the Robot Environment and the Hypothesis Algorithm
 
 ### Folder and File structure
 * app.py contains the server application to run the dashboard
