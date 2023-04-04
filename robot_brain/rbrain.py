@@ -1,15 +1,14 @@
 import warnings
 import time
+import random
 import numpy as np
 import pandas as pd
-from dashboard.app import start_dash_server, stop_dash_server
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
-from robot_brain.object import Object
 pd.options.plotting.backend = "plotly"
+from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
-
-
+from robot_brain.object import Object
 from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
@@ -38,6 +37,9 @@ class RBrain:
         self.kgraph = None
         self.objects_in_env = None
         self.dash_app = None
+
+        # give seed to make task repetable 
+        random.seed(10)
 
 
     def setup(self, stat_world_info, ob):

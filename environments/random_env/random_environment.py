@@ -29,22 +29,22 @@ def main():
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
 
-    # TODO: Do not yet give the obstacles a locaaation
-    rand_obj_generator.create_random_obstacles(
-            n_unmovable_obstacles = 3,
-            n_movable_obstacles = 10,
+    # TODO: Do not yet give the objects a locaaation
+    rand_obj_generator.create_random_objects(
+            n_unmovable_objects = 3,
+            n_movable_objects = 10,
             n_subtasks = 2)
 
     for n_env in range(4):
         print(f"create environment number: {n_env}")
 
-        obstacles = rand_obj_generator.reshuffle_env()
+        objects = rand_obj_generator.reshuffle_env()
         task = rand_obj_generator.create_task()
         env.reset()
 
-        # add obstacles to environment
-        for obstacle in obstacles.values():
-            env.add_obstacle(obstacle)
+        # add objects to environment
+        for obj in objects.values():
+            env.add_obstacle(obj)
 
         sensor = ObstacleSensor()
         sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
@@ -53,7 +53,7 @@ def main():
 
         # for subtask in task:
         #     print(subtask)
-        #     print(obstacles)
+        #     print(objects)
         #     env.add_target_ghost(subtask[0], subtask[1].get_2d_pose())
 
         # add sensors
@@ -62,11 +62,11 @@ def main():
         brain.setup({
             "dt": DT,
             "robot_type": robot_type,
-            "obstacles_in_env": True,
+            "objects_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": task,
             "kgraph": kgraph,
-            "obstacles": obstacles,
+            "objects": objects,
             "env": env
         }, ob)
 

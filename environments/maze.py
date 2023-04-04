@@ -11,7 +11,6 @@ from environments.objects.boxes import box
 from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
-
 def main():
     """
     Point robot and objects which can interact with each other in the environment.
