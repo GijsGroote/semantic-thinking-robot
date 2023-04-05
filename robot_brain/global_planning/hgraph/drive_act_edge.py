@@ -2,7 +2,7 @@ import numpy as np
 
 
 
-from robot_brain.global_planning.action_edge import ActionEdge
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
 from robot_brain.state import State
 

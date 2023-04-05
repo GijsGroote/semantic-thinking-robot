@@ -1,6 +1,6 @@
 import numpy as np
 
-from robot_brain.global_planning.action_edge import ActionEdge
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 from robot_brain.state import State
 from robot_brain.exceptions import PushAnUnmovableObjectException
 

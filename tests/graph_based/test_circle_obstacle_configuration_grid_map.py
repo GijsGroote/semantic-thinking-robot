@@ -7,9 +7,9 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 
 from robot_brain.object import Object
 from robot_brain.state import State
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
 
 def test_occupancy_map_arguements():

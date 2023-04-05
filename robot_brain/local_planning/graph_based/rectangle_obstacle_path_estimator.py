@@ -16,7 +16,7 @@ from helper_functions.geometrics import (
         to_interval_zero_to_two_pi,
         )
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.object import Object, FREE, UNKNOWN, MOVABLE, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State

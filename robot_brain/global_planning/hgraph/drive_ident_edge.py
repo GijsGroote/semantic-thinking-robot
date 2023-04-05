@@ -1,4 +1,4 @@
-from robot_brain.global_planning.identification_edge import IdentificationEdge
+from robot_brain.global_planning.hgraph.identification_edge import IdentificationEdge
 from robot_brain.controller.controller import Controller
 
 class DriveIdentificationEdge(IdentificationEdge):

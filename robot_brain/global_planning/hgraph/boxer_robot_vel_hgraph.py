@@ -6,11 +6,11 @@ from casadi import vertcat
 from robot_brain.controller.drive.mpc.mpc_3th_order import DriveMpc3thOrder
 from robot_brain.controller.drive.mppi.mppi_3th_order import DriveMppi3thOrder
 import torch
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import (
+from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import (
     RectangleObstaclePathEstimator,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
-from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.edge import Edge
 import math

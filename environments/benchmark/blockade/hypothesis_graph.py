@@ -1,7 +1,7 @@
 from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGraph
 from robot_brain.global_planning.state_node import StateNode
-from robot_brain.global_planning.object_node import ObjectNode
-from robot_brain.global_planning.edge import Edge
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
+from robot_brain.global_planning.hgraph.edge import Edge
 
 
 def main(stage):

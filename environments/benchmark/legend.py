@@ -2,7 +2,7 @@ from robot_brain.global_planning.hgraph.boxer_robot_hgraph import BoxerRobotHGra
 import numpy as np
 from robot_brain.object import Object
 from robot_brain.state import State
-from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.edge import Edge
 

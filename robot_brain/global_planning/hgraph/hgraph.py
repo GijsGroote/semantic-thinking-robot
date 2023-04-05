@@ -21,19 +21,19 @@ from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
-from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
-from robot_brain.global_planning.drive_ident_edge import DriveIdentificationEdge
+from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
-from robot_brain.global_planning.drive_act_edge import DriveActionEdge
-from robot_brain.global_planning.push_ident_edge import PushIdentificationEdge
-from robot_brain.global_planning.push_act_edge import PushActionEdge
-from robot_brain.global_planning.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.global_planning.identification_edge import IdentificationEdge
-from robot_brain.global_planning.empty_edge import EmptyEdge
+from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
+from robot_brain.global_planning.hgraph.push_ident_edge import PushIdentificationEdge
+from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.global_planning.hgraph.identification_edge import IdentificationEdge
+from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 from robot_brain.system_model import SystemModel

@@ -4,7 +4,7 @@ import pytest
 
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
-from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph

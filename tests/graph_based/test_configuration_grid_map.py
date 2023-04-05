@@ -1,11 +1,11 @@
 import pytest
 import warnings
 import numpy as np
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.object import Object, UNMOVABLE, UNKNOWN, MOVABLE
 from tests.graph_based.obstacle_data.boxes import box
@@ -113,7 +113,7 @@ def test_target_warning_raised():
 
 
 
-# from robot_brain.global_planning.hgraph.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotPathEstimator
+# from robot_brain.local_planning.graph_based.circular_robot_occupancy_map import CircleRobotPathEstimator
 # def test_occupancy_map_arguements():
 #     occ_map = CircleRobotPathEstimator(1, 100, 200, {}, 5)
 #

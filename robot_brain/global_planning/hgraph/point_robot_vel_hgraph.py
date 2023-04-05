@@ -18,15 +18,15 @@ from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
 from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
 from robot_brain.controller.push.mppi.mppi_4th_order import PushMppi4thOrder
 from robot_brain.system_model import SystemModel
-from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
-from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
-from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_planner import PushMotionPlanner
+from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
+from robot_brain.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
+from robot_brain.local_planning.sample_based.push_motion_planner import PushMotionPlanner
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 

@@ -6,17 +6,16 @@ import math
 from sortedcontainers import SortedDict
 import numpy as np
 
-from robot_brain.object import Object, UNKNOWN, MOVABLE
-from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
+from robot_brain.object import Object
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.global_variables import KNOWN_OBSTACLE_COST, UNKNOWN_OBSTACLE_COST
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.exceptions import PlanningTimeElapsedException
 from helper_functions.geometrics import to_interval_zero_to_two_pi
 
-class DriveMotionPlanner(MotionPlanner):
-    """ Motion planner, using a double rapid randomly tree star (RRT*)
-    to search a path for the object to track. """
+class PushMotionPlanner(MotionPlanner):
+    """ Motion planner for pushing. using a double rapid randomly tree star (RRT*) to search a path for the obstacle to track. """
 
     def __init__(self,
         grid_x_length: float,
@@ -25,13 +24,12 @@ class DriveMotionPlanner(MotionPlanner):
         step_size: float,
         search_size: float,
         path_estimator: PathEstimator,
-        include_orien=False):
+        include_orien= False):
 
         MotionPlanner.__init__(self, grid_x_length, grid_y_length, obj,
                 step_size, search_size, path_estimator, include_orien)
 
         self.start_time = None
-
 
     def _create_random_sample(self) -> list:
         """ randomly generate sample inside grid boundaries. """
@@ -45,8 +43,7 @@ class DriveMotionPlanner(MotionPlanner):
 
     def _check_connecitvity(self, sample1: tuple, sample2: tuple) -> bool:
         """ check if 2 samples can be connected using a local planner. """
-        # TODO: The drive motion planner is always able to connect two samples
-        # As long as you pick only a holonomic robot
+        # The drive motion planner is always able to connect two samples
         return True
 
     def _connect_to_cheapest_sample(self, sample: list, close_samples_keys: list, in_space_id: int) -> int:
@@ -62,16 +59,16 @@ class DriveMotionPlanner(MotionPlanner):
 
             # add cost or an additional subtask
             close_sample_add_node_cost = 0
-            if in_space_id == MOVABLE and self.path_estimator.occupancy(np.array(close_sample["pose"])) != MOVABLE:
-                close_sample_add_node_cost = KNOWN_OBSTACLE_COST
+            if in_space_id == 2: # movable space
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 2:
+                    close_sample_add_node_cost = KNOWN_OBSTACLE_COST
 
-            elif in_space_id == UNKNOWN and self.path_estimator.occupancy(np.array(close_sample["pose"])) != UNKNOWN:
-                close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
+            elif in_space_id == 3: # unkown space
+                if self.path_estimator.occupancy(np.array(close_sample["pose"])) != 3:
+                    close_sample_add_node_cost = UNKNOWN_OBSTACLE_COST
 
             close_sample_total_cost = close_sample["cost_to_source"] +\
-                    self._distance(close_sample["pose"], sample) + close_sample_add_node_cost
-
-
+                    self._distance(close_sample, sample) + close_sample_add_node_cost
 
             if close_sample_total_cost < closest_sample_total_cost:
                 closest_sample_add_node_cost = close_sample_add_node_cost
@@ -81,6 +78,9 @@ class DriveMotionPlanner(MotionPlanner):
         add_node = False
         if closest_sample_add_node_cost > 0:
             add_node = True
+
+        if closest_sample_key is None:
+            raise ValueError("closest sample key is None which should be impossible")
 
         # add new sample
         return self._add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
@@ -133,9 +133,10 @@ class DriveMotionPlanner(MotionPlanner):
             self.shortest_paths[cheapest_path_cost] = {"sample1_key": sample_key,
                     "sample2_key": cheapest_path_cost_sample_key}
 
+
+
     def _project_to_connectivity_graph(self, sample: list, project_to_sample_key: int) -> list:
         """ projects the sample closer to the closest existing sample in the connectivity graphs. """
-
         # TODO: using vectors speeds up, convert sin/cos calculation to vector calculation
         project_to_sample = self.samples[project_to_sample_key]
 
@@ -169,7 +170,8 @@ class DriveMotionPlanner(MotionPlanner):
 
             else:
                 # update the existing shortest path found shortest path
-                shortest_path_key = sample["cost_to_source"] + self._distance(sample, next_sample) + next_sample["cost_to_source"]
+                shortest_path_key = sample["cost_to_source"] + self._distance(sample, next_sample) +\
+                        next_sample["cost_to_source"]
                 self.shortest_paths.pop(shortest_path_key)
 
                 new_shortest_path_key = next_sample_new_cost + next_sample["cost_to_source"]
@@ -180,20 +182,24 @@ class DriveMotionPlanner(MotionPlanner):
 
         planning_time = time.time() - self.start_time_search
 
-        if planning_time < 0.5: # be picky
-            return len(self.shortest_paths) > 10 and self.shortest_paths.peekitem(0)[0] * 1.05 > self.shortest_paths.peekitem(9)[0]
-        elif planning_time < 3: # be less picky
-            return len(self.shortest_paths) > 5 and self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0]
+        if planning_time < 1.5: # be picky
+            return (len(self.shortest_paths) > 10 and
+                    self.shortest_paths.peekitem(0)[0] * 1.05 > self.shortest_paths.peekitem(9)[0])
+        elif planning_time < 15: # be less picky
+            return (len(self.shortest_paths) > 5 and
+                    self.shortest_paths.peekitem(0)[0] * 1.10 > self.shortest_paths.peekitem(4)[0])
         elif len(self.shortest_paths) > 0: # beg for anything
             return True
+
         else:
             raise PlanningTimeElapsedException("It takes to long to find a path, halt.")
-
 
     def _extract_shortest_path(self) -> Tuple[list, list]:
         """ Finds the shortest path after sampling. """
         if len(self.shortest_paths) == 0:
             raise ValueError("start to target tree is not connected")
+        
+        print('in push motin planner, extracting shortest path')
 
         shortest_path_samples = self.shortest_paths.values()[0]
         sample1 = self.samples[shortest_path_samples["sample1_key"]]
@@ -209,9 +215,7 @@ class DriveMotionPlanner(MotionPlanner):
         reversed_path = []
 
         add_node_list = []
-
         while source_sample["prev_sample_key"] != self.source_tree_key:
-
             if source_sample["add_node"]:
                 add_node_list.append(source_sample["pose"])
 

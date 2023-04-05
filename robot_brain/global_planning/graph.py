@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.edge import Edge
-from robot_brain.global_planning.action_edge import EDGE_FAILED
+from robot_brain.global_planning.hgraph.action_edge import EDGE_FAILED
 
 
 class Graph(ABC):

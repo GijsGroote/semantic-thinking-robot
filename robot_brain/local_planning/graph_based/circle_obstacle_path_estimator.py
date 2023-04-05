@@ -10,7 +10,7 @@ from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from helper_functions.geometrics import minimal_distance_point_to_line, point_in_rectangle
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State

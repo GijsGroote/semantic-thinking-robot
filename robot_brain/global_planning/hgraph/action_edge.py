@@ -2,8 +2,8 @@ import numpy as np
 from abc import abstractmethod
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.edge import Edge
-from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.state import State
 

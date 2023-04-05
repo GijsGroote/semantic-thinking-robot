@@ -8,8 +8,8 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.urdf_obstacle import UrdfObstacle
 
-from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 from robot_brain.object import Object
 from robot_brain.state import State
 
