@@ -21,6 +21,7 @@ from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
 from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
 from robot_brain.controller.push.mppi.mppi_4th_order import PushMppi4thOrder
 from robot_brain.system_model import SystemModel
@@ -58,6 +59,7 @@ class PointRobotVelHGraph(HGraph):
         self.robot_order = 2
 
     def create_drive_path_estimator(self, objects) -> PathEstimator:
+        """ create drive path estimator. """
         occ_graph = CircleObstaclePathEstimator(
                 cell_size=0.1,
                 grid_x_length = GRID_X_SIZE,
@@ -71,7 +73,10 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_push_path_estimator(self, push_obj, objects):
+    def create_push_path_estimator(self, push_obj: Object, objects: dict ) -> PathEstimator:
+        """ create push path estimator. """
+        assert isinstance(push_obj, Object), f"push_obj should be Object and is {type(push_obj)}"
+        assert isinstance(objects, dict), f"objects should be dict and is {type(objects)}"
 
         if isinstance(push_obj.properties, BoxObstacle):
 
@@ -103,7 +108,11 @@ class PointRobotVelHGraph(HGraph):
 
         return occ_graph
 
-    def create_drive_motion_planner(self, objects, path_estimator=None) -> DriveMotionPlanner:
+    def create_drive_motion_planner(self, objects: dict, path_estimator: PathEstimator):
+        """ create drive motion planner. """
+        assert isinstance(objects, dict), f"objects should be dict and is {type(objects)}"
+        assert isinstance(path_estimator, PathEstimator), f"path_estimator should be PathEstimator and is {type(path_estimator)}"
+
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
@@ -112,13 +121,18 @@ class PointRobotVelHGraph(HGraph):
                 search_size=0.25,
                 path_estimator=path_estimator)
 
-    def create_push_motion_planner(self, objects, push_obj, path_estimator=None) -> PushMotionPlanner:
+    def create_push_motion_planner(self, objects: dict, push_obj: Object, path_estimator: PathEstimator) -> PushMotionPlanner:
+        """ create push manipulation planner. """
+        assert isinstance(objects, dict), f"objects should be dict and is {type(objects)}"
+        assert isinstance(push_obj, Object), f"objects should be Object and is {type(push_obj)}"
+        assert isinstance(path_estimator, PathEstimator), f"path_estimator should be PathEstimator and is {type(path_estimator)}"
+
         if isinstance(push_obj.properties, BoxObstacle):
             include_orien = True
         elif isinstance(push_obj.properties, (CylinderObstacle, SphereObstacle)):
             include_orien = False
         else:
-            raise ValueError("Unknown object encountered during estimating a path")
+            raise ValueError("Unknown object encountered during creation of PushMotionPlanner")
 
         return PushMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
@@ -129,8 +143,13 @@ class PointRobotVelHGraph(HGraph):
                 path_estimator=path_estimator,
                 include_orien=include_orien)
 
-    def in_object(self, pose_2ds, obj) -> list:
-        """ return the object keys at pose_2ds that are in collision with object obj. """
+    def in_object(self, pose_2ds: list, obj: Object) -> list:
+        """ return the object keys at pose_2ds that are in collision with obj. """
+        assert isinstance(pose_2ds, list), f"pose_2ds should be a list and is {type(pose_2ds)}"
+        for temp in pose_2ds:
+            assert isinstance(temp, float), f"pose_2ds should contain only float an contains a: {type(temp)}"
+        assert isinstance(obj, Object), f"obj should be a Object and is {type(Object)}"
+
         blocking_obj_keys = []
 
         if obj.name == self.robot_node.object.name:
@@ -229,8 +248,14 @@ class PointRobotVelHGraph(HGraph):
 
         return blocking_obj_keys
 
-    def find_best_push_state_againts_object(self, blocking_obj, path) -> State:
-        """ return a starting state to start pushing the object. """
+    def find_best_push_state_againts_object(self, blocking_obj: Object, path: list) -> State:
+        """ return a state to push against blocking_obj to later push blocking_obj over path. """
+        assert isinstance(blocking_obj, Object), f"blocking_obj should be Object and is {type(blocking_obj)}"
+        assert isinstance(path, list), f"path should be an list and is {type(path)}"
+        for temp_tuple in path:
+            assert isinstance(temp_tuple, tuple), f"path should contain only tuple and contains a: {type(temp_tuple)}"
+            for temp in temp_tuple:
+                assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
 
         obj_xy_position = path[0][0:2]
 
@@ -277,6 +302,13 @@ class PointRobotVelHGraph(HGraph):
 
     def find_free_state_for_blocking_object(self, blocking_obj: Object, path: list) -> State:
         """ return a state where the object can be pushed toward so it is not blocking the path. """
+        assert isinstance(blocking_obj, Object), f"blocking_obj should be Object and is {type(blocking_obj)}"
+        assert isinstance(path, list), f"path should be an list and is {type(path)}"
+        for temp_tuple in path:
+            assert isinstance(temp_tuple, tuple), f"path should contain only tuple and contains a: {type(temp_tuple)}"
+            for temp in temp_tuple:
+                assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
+
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
         # pretend that the object is unmovable
@@ -417,6 +449,9 @@ class PointRobotVelHGraph(HGraph):
 
     def find_compatible_models(self, controllers: list) -> list:
         """ find every compatible model for every drive controller. """
+        assert isinstance(controllers, list), f"controllers should be list and is {type(controllers)}"
+        for temp_controller in controllers:
+            assert isinstance(temp_controller, Controller), f"controllers should contain only Controller and contains a: {type(temp_controller)}"
 
         controllers_and_models = []
 
@@ -443,9 +478,41 @@ class PointRobotVelHGraph(HGraph):
 
     def create_drive_controller(self, target_iden: int) -> Tuple[Controller, str]:
         """ randomly select a driving controller that is not on the blacklist. """
+        assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
+
+        controllers = self.get_drive_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
+
+
+        # filter the blacklisted edges
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                DriveActionEdge,
+                controllers_and_model_names,
+                target_iden)
+
+        (controller, model_names) = random.choice(controllers_and_model_names_filtered)
+        model_name = random.choice(model_names)
+
+        return (controller, model_name)
 
     def create_push_controller(self, target_iden: int) -> Tuple[Controller, str]:
         """ create push controller. """
+        assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
+
+        controllers = self.get_push_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
+
+        # filter the blacklisted edges
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                PushActionEdge,
+                controllers_and_model_names,
+                target_iden)
+
+        (controller, model_names) = random.choice(controllers_and_model_names_filtered)
+        model_name = random.choice(model_names)
+
+        return (controller, model_name)
+
 
     def create_drive_model(self, model_name: str) -> SystemModel:
         """ return the corresponding drive model. """
@@ -462,7 +529,10 @@ class PointRobotVelHGraph(HGraph):
         return [self.create_mppi_push_controller_4th_order(),
                 self.create_mppi_push_controller_5th_order()]
 
-    def create_push_model(self, model_name: str):
+    def create_push_model(self, model_name: str) -> SystemModel:
+        """ create the requested push system model. """
+        assert isinstance(model_name, str), f"model_name should be str and is {type(model_name)}"
+
         if model_name == PUSH_MPPI_MODEL:
             return self.create_mppi_push_model()
         elif model_name == PUSH_MPPI_MODEL2:
@@ -473,14 +543,19 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"model name unknown: {model_name}")
 
 
-    def setup_drive_controller(self, controller, system_model):
-
+    def setup_drive_controller(self, controller: DriveController, system_model: SystemModel):
+        """ setup drive controller """
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
+        assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
+
         controller.setup(system_model, self.robot_node.object.state, self.robot_node.object.state)
 
-    def setup_push_controller(self, controller, system_model, push_edge):
+    def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_edge: PushActionEdge):
+        """ setup push controller """
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
+        assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
+        assert isinstance(edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
 
         source_state = self.get_node(push_edge.source).obj.state
         controller.setup(system_model, self.robot_node.object.state, source_state, source_state)

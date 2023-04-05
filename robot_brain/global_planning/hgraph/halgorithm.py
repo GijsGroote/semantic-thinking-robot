@@ -196,6 +196,95 @@ class HypothesisAlgorithm():
 
 
     ##########################################
+    ### path estimation and planning #########
+    ##########################################
+    def estimate_path(self, edge):
+        """ estimate path existance for edge. """
+
+        self.go_to_loop(SEARCHING_LOOP)
+
+        assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
+
+        # path estimation
+        if isinstance(edge, DriveActionEdge):
+            edge.path_estimator = self.create_drive_path_estimator(self.objects)
+
+        elif isinstance(edge, PushActionEdge):
+            edge.path_estimator = self.create_push_path_estimator(self.get_node(edge.to).obj, self.objects)
+
+        try:
+            edge.path_estimator.search_path(
+                self.get_node(edge.source).obj.state, self.get_node(edge.to).obj.state)
+            edge.set_path_exist_status()
+
+        except NoPathExistsException as exc:
+            self.handle_no_path_exists_exception(exc, edge)
+
+        if CREATE_SERVER_DASHBOARD:
+            edge.path_estimator.visualise()
+
+
+    def search_path(self, edge):
+        """ search for a path from start to target for an edge. """
+        # TODO: find a fix for what would happen if the start configuration of the robot is in obstacle space
+
+        assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
+
+        if edge.motion_planner is None:
+
+            # motion planning
+            if isinstance(edge, DriveActionEdge):
+                edge.motion_planner = self.create_drive_motion_planner(self.objects, edge.path_estimator)
+
+            elif isinstance(edge, PushActionEdge):
+                # edge.path_estimator.visualise(save=False)
+
+                edge.motion_planner = self.create_push_motion_planner(
+                        objects=self.objects,
+                        push_obj=self.get_node(edge.source).obj,
+                        path_estimator=edge.path_estimator)
+
+        if isinstance(edge, DriveActionEdge):
+            current_state = self.robot.state
+        elif isinstance(edge, PushActionEdge):
+            current_state = self.get_node(edge.source).obj.state
+
+        try:
+            error_triggered = False
+
+            print(f'motion planner for obj {self.get_node(edge.source).obj.name} from {current_state.get_2d_pose()}  to {self.get_node(edge.to).obj.state.get_2d_pose()}')
+            (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.get_node(edge.to).obj.state)
+
+        except PlanningTimeElapsedException as exc:
+            error_triggered = True
+            add_node_list = []
+
+            edge.motion_planner.visualise(save=False)
+            self.handle_planning_time_elapsed_exception(exc, edge)
+
+        if error_triggered:
+            return self.search_hypothesis()
+
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+            edge.motion_planner.visualise()
+
+        # take care of blocking object
+        if len(add_node_list) > 0:
+            self.create_remove_object_edge(add_node_list, edge)
+            return
+
+        edge.set_path_is_planned_status()
+
+        # for pushing, goto best push position
+        if isinstance(edge, PushActionEdge):
+            self.create_drive_to_best_push_position_edge(edge)
+
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+            edge.motion_planner.visualise()
+
+    ##########################################
     ### handling exceptions ##################
     ##########################################
 
@@ -222,6 +311,24 @@ class HypothesisAlgorithm():
 
         update all nodes in hgraph, and update kgraph
         that have that store obj_name. """
+
+
+
+    ##########################################
+    ### checking / validating  ###############
+    ##########################################
+    def hypothesis_completed(self) -> bool:
+        """ returns true if the hypothesis is completed, otherwise false. """
+
+    def is_current_subtask_connected(self) -> bool:
+        """ check if the current subtask has a path from
+        source node -> target node via non-failed edges. """
+
+    def check_for_loops(self) -> bool:
+        """ returns true if the hgraph contains no loops. """
+        # TODO: implement this function
+
+    # TODO: WHihc validation functions should the also be?
 
     ##########################################
     ### timing ###############################
