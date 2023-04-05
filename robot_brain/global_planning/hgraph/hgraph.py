@@ -74,22 +74,22 @@ class HGraph(Graph):
     ##########################################
     def add_node(self, node):
         """ add regular node that is not a start or target node. """
-        if isinstance(node, ChangeOfStateNode):
-            raise TypeError("ChangeOfStateNode's are not allowed in HGraph")
+        assert isinstance(node, ObjectNode), f"node should be of type ObjectNode and is {type(node)}"
+        assert isinstance(node.object, Object), f"node.object should of type Object and is {type(node.object)}"
         self.nodes.append(node)
 
     def add_start_node(self, node):
         """ add starting node. """
-        if not isinstance(node, ObjectNode):
-            raise TypeError("ObjectNode's are only allowed as starting node in HGraph")
         self.add_node(node)
         self.start_nodes.append(node)
 
-    def fail_edge(self, edge: Edge):
-        """ fail edge and corresponding identification and empty edges. """
-
     def get_start_node(self, iden) -> Node:
         """ return start node by identifier. """
+        assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
+        for temp_start_node in self.start_nodes:
+            if temp_start_node.iden == iden:
+                return temp_start_node
+        raise ValueError(f"start node with iden {iden} does not exist")
 
     def add_target_node(self, node):
         """ add target node. """
@@ -100,9 +100,19 @@ class HGraph(Graph):
 
     def get_target_node(self, iden) -> Node:
         """ return target node by identifier. """
+        assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
+
+        for temp_target_node in self.start_nodes:
+            if temp_target_node.iden == iden:
+                return temp_target_node
+        raise ValueError(f"target node with iden {iden} does not exist")
+
 
     def get_start_iden_from_target_iden(self, target_iden):
         """ returns the starting node identifier from a target node identifier. """
+
+    def fail_edge(self, edge: Edge):
+        """ fail edge and corresponding identification and empty edges. """
 
     ##########################################
     ### path estimation and planning #########
