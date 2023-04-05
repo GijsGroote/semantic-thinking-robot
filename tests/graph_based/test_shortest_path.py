@@ -3,15 +3,15 @@ import numpy as np
 
 from robot_brain.object import Object, UNMOVABLE
 from robot_brain.state import State
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
-from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import RectangleObjectPathEstimator
+from robot_brain.local_planning.graph_based.circle_object_path_estimator import CircleObjectPathEstimator
 
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
 from tests.graph_based.obstacle_data.cylinders import cylinder
 
 def test_shortest_path_rect():
-    occ_map = RectangleObstaclePathEstimator(
+    occ_map = RectangleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -46,7 +46,7 @@ def test_shortest_path_rect():
         assert path == expected_path
 
 def test_shortest_path_circ():
-    occ_map = CircleObstaclePathEstimator(
+    occ_map = CircleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -84,7 +84,7 @@ def test_shortest_path_with_objects():
     objects[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
     objects[cylinder.name()].type = UNMOVABLE
 
-    occ_map = RectangleObstaclePathEstimator(
+    occ_map = RectangleObjectPathEstimator(
             cell_size=2,
             grid_x_length=10,
             grid_y_length=10,

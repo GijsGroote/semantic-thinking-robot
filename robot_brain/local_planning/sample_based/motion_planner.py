@@ -16,10 +16,10 @@ from robot_brain.object import Object, FREE, UNMOVABLE, MOVABLE, UNKNOWN
 
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator\
-        import RectangleObstaclePathEstimator
-from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator\
-        import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator\
+        import RectangleObjectPathEstimator
+from robot_brain.local_planning.graph_based.circle_object_path_estimator\
+        import CircleObjectPathEstimator
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 
@@ -65,13 +65,13 @@ class MotionPlanner(ABC):
 
         if isinstance(path_estimator, PathEstimator):
             if isinstance(obj.properties, CylinderObstacle):
-                assert isinstance(path_estimator, CircleObstaclePathEstimator),\
+                assert isinstance(path_estimator, CircleObjectPathEstimator),\
                     "object is CylinderObstacle, conf_grid_map should be of "\
-                    f"type CircleObstaclePathEstimator and is {type(path_estimator)}"
+                    f"type CircleObjectPathEstimator and is {type(path_estimator)}"
             elif isinstance(obj.properties, BoxObstacle):
-                assert isinstance(path_estimator, RectangleObstaclePathEstimator),\
+                assert isinstance(path_estimator, RectangleObjectPathEstimator),\
                     "object is BoxObstacle, conf_grid_map should be of type"\
-                    f" RectangleObstaclePathEstimator and is {type(path_estimator)}"
+                    f" RectangleObjectPathEstimator and is {type(path_estimator)}"
             self.path_estimator = path_estimator
         else:
             raise ValueError("Incorrect or No PathEstimator provided")

@@ -8,9 +8,9 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from robot_brain.state import State
 from robot_brain.object import Object, UNMOVABLE
 from robot_brain.global_planning.hgraph.local_planning.graph_based.\
-    circle_obstacle_path_estimator import CircleObstaclePathEstimator
+    circle_object_path_estimator import CircleObjectPathEstimator
 from robot_brain.global_planning.hgraph.local_planning.graph_based.\
-    rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+    rectangle_object_path_estimator import RectangleObjectPathEstimator
 
 from helper_functions.figures import get_random_color
 
@@ -201,7 +201,7 @@ class RandomObject():
 
         rand_orientation = random.random()*2*math.pi
 
-        occupancy_graph = RectangleObstaclePathEstimator(
+        occupancy_graph = RectangleObjectPathEstimator(
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,
@@ -228,7 +228,7 @@ class RandomObject():
     def _create_cylinder_obstacle_free(self, obst_key: str, obst_dict: dict, objects_dict: dict) -> CylinderObstacle:
         """ create an occupancy graph with the unmovable and movable objects. """
 
-        occupancy_graph = CircleObstaclePathEstimator(
+        occupancy_graph = CircleObjectPathEstimator(
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,

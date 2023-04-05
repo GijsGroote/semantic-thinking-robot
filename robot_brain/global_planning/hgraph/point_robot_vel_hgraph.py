@@ -18,8 +18,8 @@ from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
 from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
-from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_object_path_estimator import CircleObjectPathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import RectangleObjectPathEstimator
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
 from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
@@ -60,13 +60,13 @@ class PointRobotVelHGraph(HGraph):
 
     def create_drive_path_estimator(self, objects) -> PathEstimator:
         """ create drive path estimator. """
-        occ_graph = CircleObstaclePathEstimator(
+        occ_graph = CircleObjectPathEstimator(
                 cell_size=0.1,
                 grid_x_length = GRID_X_SIZE,
                 grid_y_length = GRID_Y_SIZE,
                 objects= objects,
-                obst_cart_2d= self.robot_node.object.state.get_xy_position(),
-                obst_name = self.robot_node.object.name,
+                obst_cart_2d= self.robot_node.obj.state.get_xy_position(),
+                obst_name = self.robot_node.obj.name,
                 obst_radius= POINT_ROBOT_RADIUS)
 
         occ_graph.setup()
@@ -80,7 +80,7 @@ class PointRobotVelHGraph(HGraph):
 
         if isinstance(push_obj.properties, BoxObstacle):
 
-            occ_graph = RectangleObstaclePathEstimator(
+            occ_graph = RectangleObjectPathEstimator(
                     cell_size = 0.1,
                     grid_x_length = GRID_X_SIZE,
                     grid_y_length = GRID_Y_SIZE,
@@ -94,11 +94,11 @@ class PointRobotVelHGraph(HGraph):
 
 
         elif isinstance(push_obj.properties, (CylinderObstacle, SphereObstacle)):
-            occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
+            occ_graph = CircleObjectPathEstimator(cell_size=0.1,
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
                     objects= objects,
-                    obst_cart_2d= self.robot_node.object.state.get_xy_position(),
+                    obst_cart_2d= self.robot_node.obj.state.get_xy_position(),
                     obst_name = push_obj.name,
                     obst_radius= push_obj.properties.radius())
         else:
@@ -116,7 +116,7 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obj=self.robot_node.object,
+                obj=self.robot_node.obj,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator)
@@ -152,7 +152,7 @@ class PointRobotVelHGraph(HGraph):
 
         blocking_obj_keys = []
 
-        if obj.name == self.robot_node.object.name:
+        if obj.name == self.robot_node.obj.name:
             blocking_obj_keys = self.robot_in_object(pose_2ds)
         elif isinstance(obj.properties, BoxObstacle):
             blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
@@ -333,7 +333,7 @@ class PointRobotVelHGraph(HGraph):
 
             if xy_position_in_free_space is not None:
                 try:
-                    path = path_estimator_robot.search_path(self.robot_node.object.state.get_xy_position(), xy_position_in_free_space)
+                    path = path_estimator_robot.search_path(self.robot_node.obj.state.get_xy_position(), xy_position_in_free_space)
                     reachable_xy_positions.append([len(path), *xy_position_in_free_space])
 
                 except NoPathExistsException:
@@ -355,7 +355,7 @@ class PointRobotVelHGraph(HGraph):
         for (i, robot_xy_position_in_path) in enumerate(path):
             objects_and_path['path_position_'+str(i)] = Object('path_position_'+str(i),
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
-                    self.robot_node.object.properties, obj_type=UNMOVABLE)
+                    self.robot_node.obj.properties, obj_type=UNMOVABLE)
 
         path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
 
@@ -548,7 +548,7 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
         assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
 
-        controller.setup(system_model, self.robot_node.object.state, self.robot_node.object.state)
+        controller.setup(system_model, self.robot_node.obj.state, self.robot_node.obj.state)
 
     def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_edge: PushActionEdge):
         """ setup push controller """
@@ -558,7 +558,7 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
 
         source_state = self.get_node(push_edge.source).obj.state
-        controller.setup(system_model, self.robot_node.object.state, source_state, source_state)
+        controller.setup(system_model, self.robot_node.obj.state, source_state, source_state)
 
 
     ##### DRIVE MPPI #####

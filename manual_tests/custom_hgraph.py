@@ -52,7 +52,7 @@ def main():
                     source=green_box_start_node.iden,
                     to=green_box_target_node.iden,
                     robot_obst=robot_obst,
-                    push_obst=green_box_start_node.object,
+                    push_obst=green_box_start_node.obj,
                     verb="pushing",
                     controller=controller("mpc"),
                     model_name="model_name")

@@ -22,7 +22,7 @@ from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.exceptions import NoPathExistsException
 
-class RectangleObstaclePathEstimator(PathEstimator):
+class RectangleObjectPathEstimator(PathEstimator):
     """ The configuration grid map for rectangular objects. """
 
     def __init__(self,

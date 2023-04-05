@@ -5,8 +5,8 @@ from robot_brain.local_planning.sample_based.push_motion_planner import PushMoti
 from motion_planning_env.box_obstacle import BoxObstacle
 from robot_brain.state import State
 from robot_brain.object import Object
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator\
-        import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator\
+        import RectangleObjectPathEstimator
 
 def test_init():
 
@@ -28,7 +28,7 @@ def test_init():
         obj = box_obst,
         step_size= 0.4,
         search_size= 0.5,
-        path_estimator = RectangleObstaclePathEstimator(0.1, 8, 8, {}, np.array([0,0]), "obst_name", 0.5, 0.5, 3),
+        path_estimator = RectangleObjectPathEstimator(0.1, 8, 8, {}, np.array([0,0]), "obst_name", 0.5, 0.5, 3),
         include_orien=True)
 
     pmp.search_path(State(), State(pos=np.array([3,3,10])))

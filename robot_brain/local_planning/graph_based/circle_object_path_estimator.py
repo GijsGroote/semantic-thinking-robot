@@ -16,7 +16,7 @@ from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 from robot_brain.state import State
 from robot_brain.exceptions import NoPathExistsException
 
-class CircleObstaclePathEstimator(PathEstimator):
+class CircleObjectPathEstimator(PathEstimator):
     """ The configuration grid map for circular objects. """
 
     def __init__(self,

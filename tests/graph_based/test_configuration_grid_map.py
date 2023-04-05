@@ -1,9 +1,9 @@
 import pytest
 import warnings
 import numpy as np
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import RectangleObjectPathEstimator
 
-from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_object_path_estimator import CircleObjectPathEstimator
 
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
@@ -15,7 +15,7 @@ from robot_brain.state import State
 def test_start_warning_not_raised():
     " shortest_path should not raise a warning. """
 
-    circle_conf_grid_map = CircleObstaclePathEstimator(
+    circle_conf_grid_map = CircleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -29,7 +29,7 @@ def test_start_warning_not_raised():
         warnings.simplefilter("error")
         circle_conf_grid_map.search_path(np.array([0,0]), np.array([-3,4]))
 
-    rect_conf_grid_map = RectangleObstaclePathEstimator(
+    rect_conf_grid_map = RectangleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -52,7 +52,7 @@ def test_target_warning_raised():
     box_obst = Object(box.name(), State(pos=np.array([-3.0, 4.0, 0.1])), box)
     box_obst.type = UNKNOWN
 
-    rect_conf_grid_map = RectangleObstaclePathEstimator(
+    rect_conf_grid_map = RectangleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -66,7 +66,7 @@ def test_target_warning_raised():
     with pytest.warns(Warning):
        rect_conf_grid_map.search_path(np.array([0,0,0]), np.array([-3,4,0]))
 
-    circle_conf_grid_map = CircleObstaclePathEstimator(
+    circle_conf_grid_map = CircleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -83,7 +83,7 @@ def test_target_warning_raised():
     box_obst = Object(box.name(), State(pos=np.array([.0, 0, 0.1])), box)
     box_obst.type = MOVABLE 
 
-    rect_conf_grid_map = RectangleObstaclePathEstimator(
+    rect_conf_grid_map = RectangleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
@@ -99,7 +99,7 @@ def test_target_warning_raised():
 
 
     # box on start pose 
-    circle_conf_grid_map = CircleObstaclePathEstimator(
+    circle_conf_grid_map = CircleObjectPathEstimator(
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,

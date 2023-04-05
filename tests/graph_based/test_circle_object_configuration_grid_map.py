@@ -7,13 +7,13 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 
 from robot_brain.object import Object
 from robot_brain.state import State
-from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_object_path_estimator import CircleObjectPathEstimator
 
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
 
 def test_occupancy_map_arguements():
-    occ_map = CircleObstaclePathEstimator(1, 100, 200, {}, np.array([0, 0]), "robot",  5)
+    occ_map = CircleObjectPathEstimator(1, 100, 200, {}, np.array([0, 0]), "robot",  5)
 
     assert 1 == occ_map.cell_size
     assert 100 == occ_map.grid_x_length
@@ -21,12 +21,12 @@ def test_occupancy_map_arguements():
     assert 5 == occ_map.obst_radius
 
 def test_grid_map_shape():
-    occ_map = CircleObstaclePathEstimator(1, 100, 200, {}, np.array([0,0]), "robot", 5)
+    occ_map = CircleObjectPathEstimator(1, 100, 200, {}, np.array([0,0]), "robot", 5)
     assert (100, 200) == occ_map.grid_map.shape
 
 
 # def test_shortest_path():
-#     occ_map = CircleObstaclePathEstimator(
+#     occ_map = CircleObjectPathEstimator(
 #             cell_size=1,
 #             grid_x_length=100,
 #             grid_y_length=200,
@@ -72,7 +72,7 @@ def test_grid_map_shape():
 #             "sphere": sphere_object,
 #             "box": box_object}
 #
-#     occ_map = CircleObstaclePathEstimator(1, 40, 60, objects, 2, np.array([0,0]))
+#     occ_map = CircleObjectPathEstimator(1, 40, 60, objects, 2, np.array([0,0]))
 #     occ_map.setup()
 #
 #     assert False

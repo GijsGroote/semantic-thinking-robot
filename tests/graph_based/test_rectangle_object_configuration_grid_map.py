@@ -9,7 +9,7 @@ from motion_planning_env.sphere_obstacle import SphereObstacle
 from motion_planning_env.urdf_obstacle import UrdfObstacle
 
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import RectangleObjectPathEstimator
 from robot_brain.object import Object
 from robot_brain.state import State
 
@@ -50,7 +50,7 @@ def objects_set1():
     return objects
 
 def test_occupancy_map_arguements():
-    occ_map = RectangleObstaclePathEstimator(1.0, 100, 200, {}, 
+    occ_map = RectangleObjectPathEstimator(1.0, 100, 200, {}, 
             obst_cart_2d=np.array([1,2]), 
             obst_name="robot",
             n_orientations=360,
@@ -65,7 +65,7 @@ def test_occupancy_map_arguements():
     assert 360 == occ_map.n_orientations
 
 def test_occupancy_exceptions():
-    occ_map = RectangleObstaclePathEstimator(1.0, 100, 200, {},
+    occ_map = RectangleObjectPathEstimator(1.0, 100, 200, {},
             obst_cart_2d=np.array([1,2]), obst_name="robot",
             n_orientations=360, obst_x_length=10, obst_y_length=6)
     # x_index to large
@@ -98,7 +98,7 @@ def test_occupancy_exceptions():
 
 def test_c_idx_to_cart_2d_even():
     # test even grid_x_length and grid_y_length
-    occ_map = RectangleObstaclePathEstimator(0.5, 4, 4, {},
+    occ_map = RectangleObjectPathEstimator(0.5, 4, 4, {},
             obst_cart_2d=np.array([1,2]),
             obst_name="robot",
             n_orientations=1,
@@ -110,7 +110,7 @@ def test_c_idx_to_cart_2d_even():
 
 def test_c_idx_to_cart_2d_uneven():
     # test uneven grid_x_length and grid_y_length
-    occ_map = RectangleObstaclePathEstimator(1.0, 3, 3, {},
+    occ_map = RectangleObjectPathEstimator(1.0, 3, 3, {},
             obst_cart_2d=np.array([1,2]),
             obst_name="robot", 
             n_orientations=1,
@@ -121,7 +121,7 @@ def test_c_idx_to_cart_2d_uneven():
     assert (0, 1) == occ_map._c_idx_to_cart_2d(1, 2)
 
 def test_c_idx_to_cart_2d_out_of_bounds():
-    occ_map = RectangleObstaclePathEstimator(1.0, 4, 7, {},
+    occ_map = RectangleObjectPathEstimator(1.0, 4, 7, {},
             obst_cart_2d=np.array([1,2]),
             obst_name="robot",
             n_orientations=1,
@@ -137,7 +137,7 @@ def test_c_idx_to_cart_2d_out_of_bounds():
         occ_map._c_idx_to_cart_2d(-1, 0)
 
 def test_cart_2d_to_c_idx_in_cell():
-    occ_map = RectangleObstaclePathEstimator(30, 90, 90, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=1, obst_x_length=1, obst_y_length=1)
+    occ_map = RectangleObjectPathEstimator(30, 90, 90, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=1, obst_x_length=1, obst_y_length=1)
     assert (2, 2) == occ_map._cart_2d_to_c_idx(15.01, 15.01)
     assert (2, 2) == occ_map._cart_2d_to_c_idx(44.99, 15.01)
 
@@ -152,7 +152,7 @@ def test_cart_2d_to_c_idx_in_cell():
     assert (0, 2) == occ_map._cart_2d_to_c_idx(-44.99, 44.99,)
 
 def test_cart_2d_to_c_idx_on_boundary():
-    occ_map = RectangleObstaclePathEstimator(5.0, 30, 40, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
+    occ_map = RectangleObjectPathEstimator(5.0, 30, 40, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
 
     assert (0,0) == occ_map._cart_2d_to_c_idx(-15, -17.5)
     assert (1,0) == occ_map._cart_2d_to_c_idx(-10, -17.5)
@@ -164,7 +164,7 @@ def test_cart_2d_to_c_idx_on_boundary():
     assert (5,7) == occ_map._cart_2d_to_c_idx(12.5, 15)
 
 def test_cart_2d_to_c_idx_out_of_bounds():
-    occ_map = RectangleObstaclePathEstimator(1, 100, 150, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
+    occ_map = RectangleObjectPathEstimator(1, 100, 150, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
     with pytest.raises(IndexError):
         occ_map._cart_2d_to_c_idx(50.1, 3)
     with pytest.raises(IndexError):
@@ -175,7 +175,7 @@ def test_cart_2d_to_c_idx_out_of_bounds():
         occ_map._cart_2d_to_c_idx(-1, 75.01)
 
 def test_position_to_cell_or_grid_edge():
-    occ_map = RectangleObstaclePathEstimator(1.0, 6, 6, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
+    occ_map = RectangleObjectPathEstimator(1.0, 6, 6, {}, obst_cart_2d=np.array([1,2]), obst_name="robot", n_orientations=4, obst_x_length=1, obst_y_length=10)
 
     assert (0,0) == occ_map._cart_2d_to_c_idx_or_grid_edge(-5, -5)
     assert (5,5) == occ_map._cart_2d_to_c_idx_or_grid_edge(5, 5)
@@ -183,7 +183,7 @@ def test_position_to_cell_or_grid_edge():
     assert (3,4) == occ_map._cart_2d_to_c_idx_or_grid_edge(0.1, 1.543)
 
 # def test_occupancy_map_circular_objects():
-#     occ_map = RectangleObstaclePathEstimator(1, 5, 4, 2, 1, 1)
+#     occ_map = RectangleObjectPathEstimator(1, 5, 4, 2, 1, 1)
 #
 #     cylinder_dict = {
 #             "type": "cylinder",
@@ -210,7 +210,7 @@ def test_position_to_cell_or_grid_edge():
 ############### MANUAL MANUAL MANUAL INSPECTION TESTS, SHOULD BE COMMENTED OUT##################
 ################################################################################################
 # def test_rectange_small():
-#     occ_map = RectangleObstaclePathEstimator(0.1, 6, 10, 3, 1, 4)
+#     occ_map = RectangleObjectPathEstimator(0.1, 6, 10, 3, 1, 4)
 #
 #     box_dict = {
 #             "type": "box",
@@ -234,7 +234,7 @@ def test_position_to_cell_or_grid_edge():
 #
 #
 # def test_rectange_please():
-#     occ_map = RectangleObstaclePathEstimator(1, 5, 6, 1, 2, 8)
+#     occ_map = RectangleObjectPathEstimator(1, 5, 6, 1, 2, 8)
 #
 #     box_dict = {
 #             "type": "box",
@@ -304,7 +304,7 @@ def test_position_to_cell_or_grid_edge():
 #             "duck_urdf": urdf_object,
 #             "box": box_object}
 #
-#     occ_map = RectangleObstaclePathEstimator(1.0, 40, 60, objects, obst_cart_2d=np.array([1,2]), n_orientations=1, obst_x_length=1, obst_y_length=5)
+#     occ_map = RectangleObjectPathEstimator(1.0, 40, 60, objects, obst_cart_2d=np.array([1,2]), n_orientations=1, obst_x_length=1, obst_y_length=5)
 #     occ_map.setup()
 #
 #     print("printint the shortest path")

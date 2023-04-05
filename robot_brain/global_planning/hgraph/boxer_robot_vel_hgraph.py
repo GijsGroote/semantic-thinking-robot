@@ -6,8 +6,8 @@
 # from robot_brain.controller.drive.mpc.mpc_3th_order import DriveMpc3thOrder
 # from robot_brain.controller.drive.mppi.mppi_3th_order import DriveMppi3thOrder
 # import torch
-# from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import (
-#     RectangleObstaclePathEstimator,
+# from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import (
+#     RectangleObjectPathEstimator,
 # )
 # from robot_brain.global_planning.kgraph.kgraph import KGraph
 # from robot_brain.global_planning.hgraph.object_node import ObjectNode
@@ -28,7 +28,7 @@
 #     
 #     def estimate_robot_path_existance(self, target_state, obstacles):
 #
-#         occ_graph = RectangleObstaclePathEstimator(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 1.2, 0.6)
+#         occ_graph = RectangleObjectPathEstimator(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 1.2, 0.6)
 #         
 #         # temp fix for negative angles
 #         start = self.robot.state.get_2d_pose()

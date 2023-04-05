@@ -77,7 +77,7 @@ class HGraph(Graph):
     def add_node(self, node: ObjectNode):
         """ add regular node that is not a start or target node. """
         assert isinstance(node, ObjectNode), f"node should be of type ObjectNode and is {type(node)}"
-        assert isinstance(node.object, Object), f"node.object should of type Object and is {type(node.object)}"
+        assert isinstance(node.obj, Object), f"node.obj should of type Object and is {type(node.obj)}"
         self.nodes.append(node)
 
     def add_start_node(self, node: ObjectNode):
