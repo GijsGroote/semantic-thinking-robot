@@ -25,7 +25,7 @@ from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.hgraph.object_node import ObjectNode
-from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
+from robot_brain.global_planning.kgraph.change_of_state_node import ChangeOfStateNode
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
 from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificationEdge

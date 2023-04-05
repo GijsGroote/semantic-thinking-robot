@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from robot_brain.global_planning.hgraph.object_node import ObjectNode
 from robot_brain.object import Object
-from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
+from robot_brain.global_planning.kgraph.change_of_state_node import ChangeOfStateNode
 from robot_brain.state import State
 
 def test_object_set_node():

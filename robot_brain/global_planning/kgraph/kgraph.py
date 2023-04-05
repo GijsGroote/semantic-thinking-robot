@@ -4,10 +4,9 @@ from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
 
 from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
-
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
-from robot_brain.global_planning.object_node import ObjectNode
-from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
+from robot_brain.global_planning.hgraph.object_node import ObjectNode
+from robot_brain.global_planning.kgraph.change_of_state_node import ChangeOfStateNode
 
 
 class KGraph(Graph):
