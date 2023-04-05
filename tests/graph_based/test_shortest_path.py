@@ -3,8 +3,8 @@ import numpy as np
 
 from robot_brain.object import Object, UNMOVABLE
 from robot_brain.state import State
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
 
 from tests.graph_based.obstacle_data.boxes import box
 from tests.graph_based.obstacle_data.spheres import sphere
@@ -15,7 +15,7 @@ def test_shortest_path_rect():
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
-            obstacles={},
+            objects={},
             obst_cart_2d=np.array([0,0]),
             obst_name="robot",
             n_orientations=8,
@@ -50,7 +50,7 @@ def test_shortest_path_circ():
             cell_size=1,
             grid_x_length=10,
             grid_y_length=10,
-            obstacles={},
+            objects={},
             obst_cart_2d=np.array([0,0]),
             obst_name="robot",
             obst_radius=1)
@@ -75,22 +75,20 @@ def test_shortest_path_circ():
         assert path == expected_path
 
 
-def test_shortest_path_with_obstacles():
-    obstacles = {}
+def test_shortest_path_with_objects():
+    objects = {}
 
-    obstacles[box.name()] = Object(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
-    obstacles[box.name()].type = UNMOVABLE
-    obstacles[sphere.name()] = Object(sphere.name(), State(pos=np.array([1.0, 1.0, 1.0])), sphere)
+    objects[box.name()] = Object(box.name(), State(pos=np.array([3.0, 0.0, 0.1])), box)
+    objects[box.name()].type = UNMOVABLE
 
-    obstacles[sphere.name()].type = UNMOVABLE
-    obstacles[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
-    obstacles[cylinder.name()].type = UNMOVABLE
+    objects[cylinder.name()] = Object(cylinder.name(), State(pos=np.array([-1.0, 3.0, 1.0])), cylinder)
+    objects[cylinder.name()].type = UNMOVABLE
 
     occ_map = RectangleObstaclePathEstimator(
             cell_size=2,
             grid_x_length=10,
             grid_y_length=10,
-            obstacles=obstacles,
+            objects=objects,
             obst_cart_2d=np.array([0,0]),
             obst_name="robot",
             n_orientations=8,

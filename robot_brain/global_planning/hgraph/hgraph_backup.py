@@ -649,6 +649,7 @@ class HGraph(Graph):
     def in_blacklist(self, edge_type: list) -> bool:
         """ checks if the edge is already in the blacklist. """
 
+
         if edge_type[0] in self.blacklist:
             for blacked_edge_type in self.blacklist[edge_type[0]]:
                 if blacked_edge_type==edge_type:

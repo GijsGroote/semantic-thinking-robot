@@ -260,7 +260,7 @@ def test_position_to_cell_or_grid_edge():
 #     assert False
 #
 # 
-# def test_rectange_cylinder_cube_obstacles():
+# def test_rectange_cylinder_cube_objects():
 #         
 #     urdf_duck_dict= {
 #         "type": "urdf",

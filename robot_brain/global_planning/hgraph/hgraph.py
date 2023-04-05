@@ -64,8 +64,8 @@ class HGraph(Graph):
 
         self.start_nodes = []
         self.target_nodes = []
-        self.current_node = None
-        self.current_edge = None
+        self._current_node = None
+        self._current_edge = None
 
         # blocklist containing banned edges
         self.blocklist = {}
