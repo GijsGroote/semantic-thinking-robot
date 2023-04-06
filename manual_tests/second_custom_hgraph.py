@@ -26,21 +26,21 @@ def main():
     """ This HGraph is a handcoded version that represents pushing an object to a target
     location. Thus  a task with a single subtask in it. """
 
-    robot_obst = Object("robot", State(), "empty")
-    hgraph = PointRobotVelHGraph(robot_obst, "env")
+    robot_obj = Object("robot", State(), "empty")
+    hgraph = PointRobotVelHGraph(robot_obj, "env")
 
     # robot
-    robot_node = ObjectNode(0, "robot", robot_obst)
+    robot_node = ObjectNode(0, "robot", robot_obj)
     hgraph.add_start_node(robot_node)
 
 
-    robot_target_node = ObjectNode(1, "robot_target", robot_obst)
+    robot_target_node = ObjectNode(1, "robot_target", robot_obj)
     hgraph.add_target_node(robot_target_node)
 #
 
-    robot_model_node1 = ObjectNode(2, "robot_model_1", robot_obst)
+    robot_model_node1 = ObjectNode(2, "robot_model_1", robot_obj)
     hgraph.add_node(robot_model_node1)
-    robot_model_node2 = ObjectNode(3, "robot_model_2", robot_obst)
+    robot_model_node2 = ObjectNode(3, "robot_model_2", robot_obj)
     hgraph.add_node(robot_model_node2)
 
     # green_box green_box_start_node = ObjectNode(1, "box", Object("box", State(), "empty"))
@@ -54,7 +54,7 @@ def main():
             hgraph.unique_edge_iden(),
             robot_model_node1.iden,
             robot_target_node.iden,
-            robot_obst,
+            robot_obj,
             "driving",
             controller("MPC"),
             "LTI model")
@@ -80,7 +80,7 @@ def main():
             hgraph.unique_edge_iden(),
             robot_model_node2.iden,
             robot_target_node.iden,
-            robot_obst,
+            robot_obj,
             "driving",
             controller("MPC"),
             "LTI model")

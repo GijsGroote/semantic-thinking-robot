@@ -110,6 +110,9 @@ class HypothesisAlgorithm():
         # add robot node by default
         self.hgraph.add_start_node(self.hgraph.robot_node)
 
+        # TODO: every subtask receives 2 nodes (start, target for robot) if it is for driving.
+        # TODO: every subtask receives 3 nodes (robot, start obj, target obj) if it is for pushing
+
         # create start and target nodes for every subtask
         for (subtask_name, (temp_obj, target)) in task.items():
             # start node

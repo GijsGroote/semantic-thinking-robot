@@ -7,7 +7,7 @@ class ObjectNode(Node):
     Object node.
     """
 
-    def __init__(self, iden, name, obj, subtask_name=None):
+    def __init__(self, iden, name, obj, subtask_name):
         Node.__init__(self, iden)
         self.name = name
         self.obj = obj

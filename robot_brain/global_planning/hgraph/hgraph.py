@@ -36,7 +36,7 @@ from robot_brain.global_planning.hgraph.identification_edge import Identificatio
 from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.local_planning.sample_based.push_motion_planner import PushMotionPlanner
-from robot_brain.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner 
+from robot_brain.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
 from robot_brain.controller.drive.drive_controller import DriveController
 from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
@@ -47,7 +47,10 @@ from robot_brain.exceptions import (
         NoBestPushPositionException,
         FaultDetectedException,
         PushAnUnmovableObjectException,
+        LoopDetectedException,
+        TwoEdgesPointToSameNodeException,
         )
+
 from logger.hlogger import HLogger
 
 ROBOT_IDEN = 0
@@ -57,13 +60,16 @@ class HGraph(Graph):
     Hypothesis graph.
     """
     def __init__(self, robot_obj: Object):
+        if not isinstance(robot_obj, Object):
+            raise AttributeError(f"robot_obj should be of type Object and is {type(robot_obj)}")
+
         Graph.__init__(self)
 
-        # node containing the robot itself
-        self.robot_node = ObjectNode(ROBOT_IDEN, robot_obj.name, robot_obj)
+        # create and add node containing the robot itself
+        self.robot_obj = robot_obj
 
-        self.start_nodes = []
-        self.target_nodes = []
+        self.start_nodes = {}
+        self.target_nodes = {}
         self._current_node = None
         self._current_edge = None
 
@@ -78,12 +84,17 @@ class HGraph(Graph):
         """ add regular node that is not a start or target node. """
         assert isinstance(node, ObjectNode), f"node should be of type ObjectNode and is {type(node)}"
         assert isinstance(node.obj, Object), f"node.obj should of type Object and is {type(node.obj)}"
-        self.nodes.append(node)
+        assert not node.iden in self.nodes, f"node.iden: {node.iden}, is already present in self.nodes"
+
+        self.nodes[node.iden] = node
+        assert self.is_valid_check()
 
     def add_start_node(self, node: ObjectNode):
         """ add starting node. """
+        assert not node.iden in self.start_nodes, f"node.iden: {node.iden}, is already present in self.start_nodes"
+
         self.add_node(node)
-        self.start_nodes.append(node)
+        self.start_nodes[node.iden] = node
 
     def get_start_node(self, iden: int) -> Node:
         """ return start node by identifier. """
@@ -95,10 +106,9 @@ class HGraph(Graph):
 
     def add_target_node(self, node: ObjectNode):
         """ add target node. """
-        if isinstance(node, ChangeOfStateNode):
-            raise TypeError("ChangeOfStateNode's are not allowed as target node in HGraph")
+        assert not node.iden in self.target_nodes, f"node.iden: {node.iden}, is already present in self.target_nodes"
         self.add_node(node)
-        self.target_nodes.append(node)
+        self.target_nodes[node.iden] = node
 
     def get_target_node(self, iden: int) -> Node:
         """ return target node by identifier. """
@@ -109,6 +119,55 @@ class HGraph(Graph):
                 return temp_target_node
         raise ValueError(f"target node with iden {iden} does not exist")
 
+
+    def get_source_node(self, node_iden) -> Node:
+        """ find the source node which points to this node via 0 or more edges. """
+
+        # TODO: make the get source node function
+
+        assert (self.get_node(node_iden).status == NODE_INITIALISED or\
+                self.get_node(node_iden).status == NODE_COMPLETED), \
+                f"node {node_iden} has status {self.get_node(node_iden).status}"
+        assert self.current_subtask is not None,\
+                "current subtask is none"
+
+        if node_iden == ROBOT_IDEN:
+            return self.robot_node
+
+        edge_to_list = [edge for edge in self.edges if\
+                edge.to == node_iden and\
+                edge.status != EDGE_FAILED and\
+                (self.get_node(edge.source) != NODE_UNFEASIBLE or\
+                self.get_node(edge.source) != NODE_FAILED) and\
+                self.get_node(edge.to).subtask_name == self.current_subtask["name"]]
+
+        # no edges pointing toward this node -> return
+        if len(edge_to_list) == 0:
+            return self.get_node(node_iden)
+
+        # remove this visualiseation please
+        if len(edge_to_list) > 1:
+            self.visualise(save=False)
+            raise ValueError
+
+        # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
+        assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
+
+        if edge_to_list[0].to == edge_to_list[0].source:
+            edge = edge_to_list[0]
+
+        assert not edge_to_list[0].to == edge_to_list[0].source, "self loop detected"
+
+        if self.recursion_depth == 900:
+            self.visualise(save=False)
+            raise ValueError
+        self.recursion_depth +=1
+
+
+        if self.get_node(edge_to_list[0].source).status in [NODE_UNFEASIBLE, NODE_FAILED]:
+            return self.get_node(node_iden)
+        else:
+            return self.find_source_node(edge_to_list[0].source)
 
     def fail_edge(self, edge: Edge):
         """
@@ -178,6 +237,45 @@ class HGraph(Graph):
     def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_edge: PushActionEdge):
         """ setup push controller """
 
+    def filter_control_and_model_names(self, edge_class: str, control_and_models: list, target_iden: int) -> list:
+        """ removes the controllers and edges that are on the blocklist from control_and_models. """
+        assert edge_class in [DriveActionEdge, PushActionEdge]
+                # f"edge should be an DriveActionEdge or PushActionEdge and is {type(edge_class)}"
+        assert isinstance(control_and_models, list), f"control_and_models should be an list and is {type(control_and_models)}"
+        for (temp_controller, temp_model_name_list) in control_and_models:
+            assert isinstance(temp_controller, Controller)
+            assert isinstance(temp_model_name_list, list)
+            for temp_model_name in temp_model_name_list:
+                assert isinstance(temp_model_name, str)
+        assert isinstance(target_iden, int), f"target_iden should be an int and is {type(target_iden)}"
+
+        controller_and_model_names_filtered = []
+        # filter out blocked combinations of control methods with system models
+
+        if target_iden in self.blocklist:
+            for (controller, model_names) in control_and_models:
+
+                model_names_filtered = []
+                for model_name in model_names:
+
+                    if not self.in_blocklist((
+                        target_iden,
+                        self.get_node(target_iden).obj.name,
+                        edge_class,
+                        controller.name,
+                        model_name)):
+                        model_names_filtered.append(model_name)
+
+                if len(model_names_filtered) > 0:
+                    controller_and_model_names_filtered.append((controller, model_names_filtered))
+        else:
+            controller_and_model_names_filtered = control_and_models
+
+        if len(controller_and_model_names_filtered) == 0:
+            raise RunnoutOfControlMethodsException("All possible edges are on the blocklist")
+
+        return controller_and_model_names_filtered
+
     def update_system_model(self, ident_edge: IdentificationEdge):
         """ update system model of the corresponding edge. """
         assert isinstance(ident_edge, IdentificationEdge), f"ident_edge should be IdentificationEdge and is {type(ident_edge)}"
@@ -237,12 +335,58 @@ class HGraph(Graph):
 
         return False
 
+    def is_valid_check(self) -> bool:
+        """
+        for edges and nodes in the same subtask:
+            check if there are no loops
+            check if there are not multiple non-failing edges pointing toward the same node
+        """
+        print(f'{self.edges}, checking valid')
+        print(f'and now the nodes {self.nodes}')
+        for temp_node in self.nodes.values():
+            node_points_to_temp_node = temp_node
+
+            while node_points_to_temp_node:
+
+                # find edges pointing toward temp_node
+                edge_points_to_temp_node_list = [edge for edge in self.edges.values() if\
+                        edge.to == node_points_to_temp_node.iden and\
+                        edge.status != EDGE_FAILED and\
+                        self.get_node(edge.to).subtask_name == temp_node.subtask_name and\
+                        self.get_node(edge.source).subtask_name == temp_node.subtask_name]
+
+                print(f'from {temp_node.iden} back, these point {edge_points_to_temp_node_list}')
+
+                if len(edge_points_to_temp_node_list) == 0:
+                    break
+                if len(edge_points_to_temp_node_list) > 1:
+                    raise TwoEdgesPointToSameNodeException()
+
+                node_points_to_temp_node = self.get_node(edge_points_to_temp_node_list[0].source)
+
+
+                if node_points_to_temp_node.iden == temp_node.iden:
+                    raise LoopDetectedException()
+
+        return True
+
     def in_blocklist(self, para_edge_blocked: tuple) -> bool:
-        """ checks if the edge is already in the blocklist. """
-        assert isinstance(para_edge_blocked, tuple), f"edge_blocked should be list and is {type(edge_blocked)}"
+        """
+        checks if the edge is already in the blocklist.
+        para_edge_blocked is a tuple containing:
+        (
+            node identifier the edge point to: edge.to,
+            object name: self.get_node(edge.to).obj.name,
+            edge class: type(edge),
+            controller name: edge.controller.name,
+            system model name: edge.controller.system_model.name
+        )
+
+        """
+        assert isinstance(para_edge_blocked, tuple), f"para_edge_blocked should be list and is {type(para_edge_blocked)}"
         assert isinstance(para_edge_blocked[0], int)
         assert isinstance(para_edge_blocked[1], str)
-        assert isinstance(para_edge_blocked[2], Edge)
+        assert isinstance(para_edge_blocked[2], ActionEdge)
         assert isinstance(para_edge_blocked[3], str)
         assert isinstance(para_edge_blocked[4], str)
 
@@ -293,7 +437,7 @@ class HGraph(Graph):
     @current_node.setter
     def current_node(self, node) -> ObjectNode:
         assert isinstance(node, Node), f"node should be a Node and is {type(node)}"
-        assert node in self.nodes, "node should be in self.nodes"
+        assert node.iden in self.nodes, "node should be in self.nodes"
         assert node.ready_for_execution(),\
                 f"node.ready_for_execution() should be True and is: {node.ready_for_execution()}"
         self._current_node = node

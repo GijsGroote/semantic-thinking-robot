@@ -28,11 +28,11 @@ def main():
     """ This HGraph is a handcoded version that represents pushing an object to a target
     location. Thus  a task with a single subtask in it. """
 
-    robot_obst = Object("robot", State(), "empty")
-    hgraph = PointRobotVelHGraph(robot_obst, "env")
+    robot_obj = Object("robot", State(), "empty")
+    hgraph = PointRobotVelHGraph(robot_obj, "env")
 
     # robot
-    robot_node = ObjectNode(0, "robot", robot_obst)
+    robot_node = ObjectNode(0, "robot", robot_obj)
 
     hgraph.add_start_node(robot_node)
 
@@ -51,7 +51,7 @@ def main():
                     iden=hgraph.unique_edge_iden(),
                     source=green_box_start_node.iden,
                     to=green_box_target_node.iden,
-                    robot_obst=robot_obst,
+                    robot_obj=robot_obj,
                     push_obst=green_box_start_node.obj,
                     verb="pushing",
                     controller=controller("mpc"),
@@ -90,7 +90,7 @@ def main():
             hgraph.unique_edge_iden(),
             robot_node.iden,
             green_box_start_node.iden,
-            robot_obst,
+            robot_obj,
             "driving",
             controller("MPC"),
             "LTI model")
@@ -131,7 +131,7 @@ def main():
     # hgraph.add_node(best_push_node)
 
 
-    # robot_copy_node = ObjectNode(9, "robot_copy", robot_obst)
+    # robot_copy_node = ObjectNode(9, "robot_copy", robot_obj)
     # hgraph.add_node(robot_copy_node)
 
     # robot drive to best push pose
@@ -139,7 +139,7 @@ def main():
     #         hgraph.unique_edge_iden(),
     #         robot_copy_node.iden,
     #         best_push_node.iden,
-    #         robot_obst,
+    #         robot_obj,
     #         "driving",
     #         controller("MPC"),
     #         "LTI model")

@@ -7,7 +7,7 @@ from robot_brain.exceptions import PushAnUnmovableObjectException
 class PushActionEdge(ActionEdge):
     """ Push action edge controls all pushing actions. """
 
-    def __init__(self, iden, source, to, robot_obst, push_obst, verb, controller, model_name, check_obj_movable):
+    def __init__(self, iden, source, to, robot_obj, push_obst, verb, controller, model_name, check_obj_movable):
 
         self.check_obj_movable = check_obj_movable
 
@@ -15,7 +15,7 @@ class PushActionEdge(ActionEdge):
             self.start_counter = 0
             self.obj_start_2d_pose = push_obst.state.get_2d_pose()
 
-        ActionEdge.__init__(self, iden, source, to, robot_obst, verb, controller, model_name)
+        ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, model_name)
         self.push_obst = push_obst
 
     def view_completed(self) -> bool:
@@ -37,4 +37,4 @@ class PushActionEdge(ActionEdge):
         if self.view_completed():
             self.increment_current_view()
 
-        return self.controller.respond(self.robot_obst.state, self.push_obst.state)
+        return self.controller.respond(self.robot_obj.state, self.push_obst.state)

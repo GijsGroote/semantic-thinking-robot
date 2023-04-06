@@ -1,6 +1,7 @@
 import math
 import sys
 import copy
+import random
 
 from typing import Tuple
 import torch
@@ -27,6 +28,7 @@ from robot_brain.controller.push.mppi.mppi_4th_order import PushMppi4thOrder
 from robot_brain.system_model import SystemModel
 from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
+from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
 from robot_brain.local_planning.sample_based.push_motion_planner import PushMotionPlanner
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
@@ -65,8 +67,8 @@ class PointRobotVelHGraph(HGraph):
                 grid_x_length = GRID_X_SIZE,
                 grid_y_length = GRID_Y_SIZE,
                 objects= objects,
-                obst_cart_2d= self.robot_node.obj.state.get_xy_position(),
-                obst_name = self.robot_node.obj.name,
+                obst_cart_2d= self.robot_obj.state.get_xy_position(),
+                obst_name = self.robot_obj.name,
                 obst_radius= POINT_ROBOT_RADIUS)
 
         occ_graph.setup()
@@ -98,7 +100,7 @@ class PointRobotVelHGraph(HGraph):
                     grid_x_length= GRID_X_SIZE,
                     grid_y_length= GRID_Y_SIZE,
                     objects= objects,
-                    obst_cart_2d= self.robot_node.obj.state.get_xy_position(),
+                    obst_cart_2d= self.robot_obj.state.get_xy_position(),
                     obst_name = push_obj.name,
                     obst_radius= push_obj.properties.radius())
         else:
@@ -116,7 +118,7 @@ class PointRobotVelHGraph(HGraph):
         return DriveMotionPlanner(
                 grid_x_length=GRID_X_SIZE,
                 grid_y_length=GRID_Y_SIZE,
-                obj=self.robot_node.obj,
+                obj=self.robot_obj,
                 step_size=0.2,
                 search_size=0.25,
                 path_estimator=path_estimator)
@@ -152,7 +154,7 @@ class PointRobotVelHGraph(HGraph):
 
         blocking_obj_keys = []
 
-        if obj.name == self.robot_node.obj.name:
+        if obj.name == self.robot_obj.name:
             blocking_obj_keys = self.robot_in_object(pose_2ds)
         elif isinstance(obj.properties, BoxObstacle):
             blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
@@ -333,7 +335,7 @@ class PointRobotVelHGraph(HGraph):
 
             if xy_position_in_free_space is not None:
                 try:
-                    path = path_estimator_robot.search_path(self.robot_node.obj.state.get_xy_position(), xy_position_in_free_space)
+                    path = path_estimator_robot.search_path(self.robot_obj.state.get_xy_position(), xy_position_in_free_space)
                     reachable_xy_positions.append([len(path), *xy_position_in_free_space])
 
                 except NoPathExistsException:
@@ -355,7 +357,7 @@ class PointRobotVelHGraph(HGraph):
         for (i, robot_xy_position_in_path) in enumerate(path):
             objects_and_path['path_position_'+str(i)] = Object('path_position_'+str(i),
                     State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
-                    self.robot_node.obj.properties, obj_type=UNMOVABLE)
+                    self.robot_obj.properties, obj_type=UNMOVABLE)
 
         path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
 
@@ -483,7 +485,6 @@ class PointRobotVelHGraph(HGraph):
         controllers = self.get_drive_controllers()
         controllers_and_model_names = self.find_compatible_models(controllers)
 
-
         # filter the blacklisted edges
         controllers_and_model_names_filtered = self.filter_control_and_model_names(
                 DriveActionEdge,
@@ -548,7 +549,7 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
         assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
 
-        controller.setup(system_model, self.robot_node.obj.state, self.robot_node.obj.state)
+        controller.setup(system_model, self.robot_obj.state, self.robot_obj.state)
 
     def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_edge: PushActionEdge):
         """ setup push controller """
@@ -558,7 +559,7 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
 
         source_state = self.get_node(push_edge.source).obj.state
-        controller.setup(system_model, self.robot_node.obj.state, source_state, source_state)
+        controller.setup(system_model, self.robot_obj.state, source_state, source_state)
 
 
     ##### DRIVE MPPI #####

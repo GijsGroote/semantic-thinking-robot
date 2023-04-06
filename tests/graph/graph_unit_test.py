@@ -13,7 +13,7 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.state import State
 
 @pytest.fixture
-def create_hgraph():
+def hgraph():
     robot = Object(
             "point_robot",
             State(),
@@ -31,7 +31,7 @@ box_dict = {
 prop = BoxObstacle(name="None-Type-Object", content_dict=box_dict)
 
 
-def test_is_instance(hgraph=create_hgraph):
+def test_is_instance(hgraph):
 
     obj = Object(name="obj",
             state=State(),
@@ -39,7 +39,8 @@ def test_is_instance(hgraph=create_hgraph):
 
     obj_node = ObjectNode(iden=2,
             name="P",
-            obj=obj)
+            obj=obj,
+            subtask_name="subtask")
 
     change_of_state_node = ChangeOfStateNode(2, "P", [])
     k_graph = KGraph()
@@ -51,10 +52,10 @@ def test_is_instance(hgraph=create_hgraph):
     assert isinstance(k_graph, KGraph)
     assert isinstance(k_graph, Graph)
 
-# def test_adding_nodes(hgraph=create_hgraph):
-#     node1 = ObjectNode(1, "P", Object("node1", State(), prop))
-#     node2 = ObjectNode(2, "P", Object("node1", State(), prop))
-#     node3 = ObjectNode(3, "P", Object("node1", State(), prop))
+# def test_adding_nodes(hgraph):
+#     node1 = ObjectNode(1, "P", Object("node1", State(), prop), "subtask")
+#     node2 = ObjectNode(2, "P", Object("node1", State(), prop), "subtask")
+#     node3 = ObjectNode(3, "P", Object("node1", State(), prop), "subtask")
 #
 #     kgraph = KGraph()
 #
@@ -64,7 +65,7 @@ def test_is_instance(hgraph=create_hgraph):
 #
 #     assert len(hgraph.nodes) == 3
 
-# def test_allowed_node_types(hgraph=create_hgraph):
+# def test_allowed_node_types(hgraph):
 #     kgraph = KGraph()
 #
 #     obj = Object(name="obj",
@@ -73,7 +74,7 @@ def test_is_instance(hgraph=create_hgraph):
 #
 #     obj_node = ObjectNode(iden=2,
 #             name="P",
-#             obj=obj)
+#             obj=obj, "subtask")
 #
 #     change_of_state_node = ChangeOfStateNode(6, "wutwat", [])
 #     # allowed

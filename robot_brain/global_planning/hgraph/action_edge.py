@@ -17,10 +17,10 @@ EDGE_PATH_IS_PLANNED = "path_is_planned"
 class ActionEdge(Edge):
     """ Parent class for all actions. """
 
-    def __init__(self, iden, source, to, robot_obst, verb, controller, model_name):
+    def __init__(self, iden, source, to, robot_obj, verb, controller, model_name):
         Edge.__init__(self, iden, source, to, verb, controller)
         self.status = EDGE_INITIALISED
-        self.robot_obst = robot_obst
+        self.robot_obj = robot_obj
         self.model_name = model_name
 
         self._motion_planner = None

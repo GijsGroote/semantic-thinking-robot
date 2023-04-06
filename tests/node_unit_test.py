@@ -7,15 +7,15 @@ from robot_brain.state import State
 
 def test_object_set_node():
     ob1 = Object("tree", State(pos=np.array([0, 1, 2])), "empty")
-    obst_node_1 = ObjectNode(1, "P", ob1)
+    obst_node_1 = ObjectNode(1, "P", ob1, "subtask")
 
     # test of assertionError was thrown when objectSet does not contain only objects
     with pytest.raises(AssertionError):
-        ObjectNode(1, "P", State())
+        ObjectNode(1, "P", State(), "subtask")
 
     # test of assertionError was thrown when objectSet is not a list
     with pytest.raises(AssertionError):
-        ObjectNode(1, "P", 2)
+        ObjectNode(1, "P", 2, "subtask")
 
 # # TODO make this test about the changeofstatenode
 # def test_conf_set_node():

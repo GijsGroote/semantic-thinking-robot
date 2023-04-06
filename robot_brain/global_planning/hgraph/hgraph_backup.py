@@ -280,7 +280,7 @@ class HGraph(Graph):
             edge = DriveActionEdge(iden=self.unique_edge_iden(),
                     source=source_node_iden,
                     to=target_node_iden,
-                    robot_obst=self.robot,
+                    robot_obj=self.robot,
                     verb="driving",
                     controller=controller,
                     model_name=model_name)
@@ -336,7 +336,7 @@ class HGraph(Graph):
                     iden=self.unique_edge_iden(),
                     source=source_node_iden,
                     to=target_node_iden,
-                    robot_obst=self.robot,
+                    robot_obj=self.robot,
                     push_obst=start_node.obj,
                     verb="pushing",
                     controller=controller,

@@ -35,7 +35,7 @@ def main():
     kgraph.add_edge(DriveActionEdge(iden=1,
         source=1,
         to=3,
-        robot_obst="robot",
+        robot_obj="robot",
         verb="MPC, LTI model1",
         controller=controller("mpc"),
         model_name="LTI ss"))
@@ -43,7 +43,7 @@ def main():
     kgraph.add_edge(DriveActionEdge(iden=2,
         source=1,
         to=4,
-        robot_obst="robot",
+        robot_obj="robot",
         verb="MPC, LTI model2",
         controller=controller("mpc"),
         model_name="LTI ss"))
@@ -51,7 +51,7 @@ def main():
     kgraph.add_edge(DriveActionEdge(iden=3,
         source=1,
         to=5,
-        robot_obst="robot",
+        robot_obj="robot",
         verb="MPPI, nonlinear model1",
         controller=controller("mppi"),
         model_name="LTI ss2"))
@@ -59,7 +59,7 @@ def main():
     kgraph.add_edge(DriveActionEdge(iden=4,
         source=2,
         to=7,
-        robot_obst="robot",
+        robot_obj="robot",
         verb="MPC, LTI model3",
         controller=controller("mpc"),
         model_name="LTI ss3"))
@@ -67,7 +67,7 @@ def main():
     kgraph.add_edge(DriveActionEdge(iden=4,
         source=2,
         to=6,
-        robot_obst="robot",
+        robot_obj="robot",
         verb="MPPI, nonlinear model2",
         controller=controller("mpc"),
         model_name="LTI ss3"))

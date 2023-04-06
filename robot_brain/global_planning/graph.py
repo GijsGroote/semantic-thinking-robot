@@ -10,8 +10,8 @@ class Graph(ABC):
     Graph defining interface for HGraph and KGraph.
     """
     def __init__(self):
-        self._nodes = []
-        self._edges = []
+        self._nodes = {}
+        self._edges = {}
 
         self.err_counter = 0
 
@@ -32,51 +32,33 @@ class Graph(ABC):
         return self._edges
 
     def add_edge(self, edge):
+        """ add edge to dictionary of edges. """
+        assert isinstance(edge, Edge), f"edge should be Edge and is {type(edge)}"
+        assert edge.source in self.nodes, f"edge.source: {edge.source} does not exist"
+        assert edge.to in self.nodes, f"edge.to: {edge.to} does not exist"
 
-        if not isinstance(edge, Edge):
-            raise TypeError("Only an Edge is allowed as edge")
+        self.edges[edge.iden] = edge
+        assert self.is_valid_check()
 
-        source_exists = False
-        to_exists = False
-        for node in self.nodes:
-            if edge.source == node.iden:
-                source_exists = True
-            if edge.to == node.iden:
-                to_exists = True
-
-        if not source_exists:
-            raise IndexError(f"edge.source identifyer: {edge.source} does not exist")
-        if not to_exists:
-            raise IndexError(f"edge.to identifyer: {edge.to} does not exist")
-
-        self._edges.append(edge)
+    @abstractmethod
+    def is_valid_check(self) -> bool:
+        """ check if graph is valid. """
 
     def get_node(self, iden) -> Node:
         """ return  node by id, raises error if the identifyer does not exist. """
-        node_list = [node for node in self.nodes if node.iden == iden]
-        if len(node_list) == 0:
-            raise IndexError(f"a node with identifyer {iden} does not exist.")
-        else:
-            return node_list[0]
+        assert iden in self.nodes
+        return self.nodes[iden]
 
     def get_edge(self, iden) -> Edge:
         """ return  edge by id, raises error if the identifyer does not exist. """
-        edge_list = [edge for edge in self.edges if edge.iden == iden]
-        if len(edge_list) == 0:
-            raise IndexError(f"a edge with identifyer {iden} does not exist.")
-        else:
-            return edge_list[0]
-
+        assert iden in self.edges
+        return self.edges[iden]
 
     def unique_node_iden(self) -> int:
         """ return a unique identifyer for a node. """
         iden = 0
-        existing_idens = []
 
-        for node in self.nodes:
-            existing_idens.append(node.iden)
-
-        while iden in existing_idens:
+        while iden in self.nodes:
             iden += 1
 
         return iden
@@ -84,13 +66,11 @@ class Graph(ABC):
     def unique_edge_iden(self) -> int:
         """ return a unique identifyer for an edge. """
         iden = 0
-        existing_idens = []
 
-        for edge in self.edges:
-            existing_idens.append(edge.iden)
-
-        while iden in existing_idens:
+        while iden in self.edges:
             iden += 1
+
+        print(f"return iden {iden}")
 
         return iden
 
@@ -129,3 +109,5 @@ class Graph(ABC):
         for temp_edge in self.edges:
             if temp_edge.status != EDGE_FAILED and temp_edge.to == node_iden:
                 return temp_edge
+
+

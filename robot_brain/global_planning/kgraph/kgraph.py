@@ -112,6 +112,14 @@ class KGraph(Graph):
         else:
             net.show("delete2.html")
 
+    def is_valid_check(self) -> bool:
+        """
+        #TODO: this methods
+        for edges and nodes in the same subtask:
+            check if there are no loops
+            check if there are not multiple non-failing edges pointing toward the same node
+        """
+        return True
 
     def add_node(self, node):
         self.nodes.append(node)
