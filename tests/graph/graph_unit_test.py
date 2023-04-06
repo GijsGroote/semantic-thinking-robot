@@ -13,7 +13,7 @@ from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.state import State
 
 @pytest.fixture
-def hgraph():
+def create_hgraph():
     robot = Object(
             "point_robot",
             State(),
@@ -31,7 +31,7 @@ box_dict = {
 prop = BoxObstacle(name="None-Type-Object", content_dict=box_dict)
 
 
-def test_is_instance(hgraph):
+def test_is_instance(hgraph=create_hgraph):
 
     obj = Object(name="obj",
             state=State(),
@@ -51,7 +51,7 @@ def test_is_instance(hgraph):
     assert isinstance(k_graph, KGraph)
     assert isinstance(k_graph, Graph)
 
-# def test_adding_nodes(hgraph):
+# def test_adding_nodes(hgraph=create_hgraph):
 #     node1 = ObjectNode(1, "P", Object("node1", State(), prop))
 #     node2 = ObjectNode(2, "P", Object("node1", State(), prop))
 #     node3 = ObjectNode(3, "P", Object("node1", State(), prop))
@@ -64,7 +64,7 @@ def test_is_instance(hgraph):
 #
 #     assert len(hgraph.nodes) == 3
 
-# def test_allowed_node_types(hgraph):
+# def test_allowed_node_types(hgraph=create_hgraph):
 #     kgraph = KGraph()
 #
 #     obj = Object(name="obj",

@@ -53,3 +53,12 @@ def test_adding_nodes():
     hgraph.add_node(node3)
 
     assert len(hgraph.nodes) == 3
+
+def test_loop_detection():
+
+
+def test_wrong_current_node():
+
+def test_wrong_current_edge():
+
+
