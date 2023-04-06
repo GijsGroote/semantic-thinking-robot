@@ -81,7 +81,7 @@ class HGraph(Graph):
     ### adding/editing edges and nodes #######
     ##########################################
     def add_node(self, node: ObjectNode):
-        """ add regular node that is not a start or target node. """
+        """ add node to the dictionary of nodes. """
         assert isinstance(node, ObjectNode), f"node should be of type ObjectNode and is {type(node)}"
         assert isinstance(node.obj, Object), f"node.obj should of type Object and is {type(node.obj)}"
         assert not node.iden in self.nodes, f"node.iden: {node.iden}, is already present in self.nodes"
@@ -323,6 +323,8 @@ class HGraph(Graph):
         assert isinstance(source_node_iden, int), f"source_node_iden should be an int and is {type(source_node_iden)}"
         assert isinstance(target_node_iden, int), f"target_node_iden should be an int and is {type(target_node_iden)}"
 
+
+        # TODO: these reachable nodes should go over edges that all have the same subtask.
         reachable_from_start = [source_node_iden]
 
         while len(reachable_from_start) > 0:
@@ -341,8 +343,6 @@ class HGraph(Graph):
             check if there are no loops
             check if there are not multiple non-failing edges pointing toward the same node
         """
-        print(f'{self.edges}, checking valid')
-        print(f'and now the nodes {self.nodes}')
         for temp_node in self.nodes.values():
             node_points_to_temp_node = temp_node
 
@@ -354,8 +354,6 @@ class HGraph(Graph):
                         edge.status != EDGE_FAILED and\
                         self.get_node(edge.to).subtask_name == temp_node.subtask_name and\
                         self.get_node(edge.source).subtask_name == temp_node.subtask_name]
-
-                print(f'from {temp_node.iden} back, these point {edge_points_to_temp_node_list}')
 
                 if len(edge_points_to_temp_node_list) == 0:
                     break

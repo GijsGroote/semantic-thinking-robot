@@ -7,6 +7,9 @@ succesfully been traversed, a subtask is completed. When all subtask are complet
 the task is completed.
 """
 
+
+
+
 from abc import abstractmethod
 import random
 import time
@@ -57,6 +60,20 @@ from logger.hlogger import HLogger
 
 EXECUTION_LOOP = "executing"
 SEARCHING_LOOP = "searching"
+
+"""
+
+    SOME IMPORTANT NOTES:
+
+    start/target nodes have a subtask
+    regular nodes do not have a subtask
+    edges have a subtask
+
+
+
+"""
+
+
 
 class HypothesisAlgorithm():
     """ Algorithm generating hypothesis that could complete a task, one subtask at a time. """
