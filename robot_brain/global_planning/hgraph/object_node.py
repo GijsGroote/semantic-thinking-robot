@@ -17,6 +17,8 @@ class ObjectNode(Node):
         return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
                 f"<br>With Object: {self.obj.name}<br>2d pos = {self.obj.state.get_2d_pose()}<br>type = {self.obj.type}"
 
+ # name setter getter        
+
     @property
     def obj(self):
         return self._obj
@@ -25,3 +27,12 @@ class ObjectNode(Node):
     def obj(self, val):
         assert isinstance(val, Object), f"object should be an Object and is {type(val)}"
         self._obj = val
+
+    @property
+    def subtask_name(self):
+        return self._subtask_name
+
+    @subtask_name.setter
+    def subtask_name(self, val):
+        assert isinstance(val, str), f"subtask_name should be a str and is {type(val)}"
+        self._subtask_name = val

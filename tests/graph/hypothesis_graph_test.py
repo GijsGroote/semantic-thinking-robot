@@ -89,7 +89,8 @@ def test_loop_detection(hgraph, box_obstacle):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller1,
-            model_name=model_name1)
+            model_name=model_name1,
+            subtask_name="subtask1")
 
     hgraph.add_edge(edge1)
 
@@ -99,7 +100,8 @@ def test_loop_detection(hgraph, box_obstacle):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller2,
-            model_name=model_name2)
+            model_name=model_name2,
+            subtask_name="subtask1")
 
     hgraph.add_edge(edge2)
 
@@ -109,7 +111,8 @@ def test_loop_detection(hgraph, box_obstacle):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller3,
-            model_name=model_name3)
+            model_name=model_name3,
+            subtask_name="subtask1")
 
     # introduce a loop in graph
     with pytest.raises(LoopDetectedException):
@@ -131,7 +134,9 @@ def test_multiple_edges_point_to_a_node(hgraph):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller1,
-            model_name=model_name1)
+            model_name=model_name1,
+            subtask_name="subtask1")
+
     hgraph.add_edge(edge1)
 
     edge2 = DriveActionEdge(iden=hgraph.unique_edge_iden(),
@@ -140,8 +145,8 @@ def test_multiple_edges_point_to_a_node(hgraph):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller2,
-            model_name=model_name2)
-
+            model_name=model_name2,
+            subtask_name="subtask1")
 
     with pytest.raises(TwoEdgesPointToSameNodeException):
         hgraph.add_edge(edge2)
@@ -181,7 +186,9 @@ def test_wrong_current_edge(hgraph, box_obstacle):
             robot_obj=hgraph.robot_obj,
             verb="driving",
             controller=controller1,
-            model_name=model_name1)
+            model_name=model_name1,
+            subtask_name="subtask1")
+
 
     edge1.path_estimator = hgraph.create_drive_path_estimator({})
     edge1.path_estimator.search_path(State(), State(pos=np.array([1,1,0])))

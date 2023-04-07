@@ -1,46 +1,46 @@
 import numpy as np
 from robot_brain.global_planning.edge import Edge
 
+from robot_brain.controller.controller import Controller
+
+from robot_brain.object import Object
 
 from robot_brain.global_planning.edge import EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
 
 class IdentificationEdge(Edge):
     """ parent class for every system identification edge. """
 
-     # TODO: the controller here makes no sense!
-    def __init__(self, iden, source, to, verb, controller, model_for_edge_iden, sys_model_name: str):
-        Edge.__init__(self, iden, source, to, verb, controller)
-        print(f"edge {iden} created it is at status {EDGE_INITIALISED}")
+    def __init__(self, iden: int,
+            source: int,
+            to: int,
+            verb: str,
+            controller: Controller,
+            model_for_edge_iden: int,
+            subtask_name: str):
+
+        Edge.__init__(self, iden, source, to, verb, controller, subtask_name)
         self.status = EDGE_INITIALISED
         self.model_for_edge_iden = model_for_edge_iden
 
-        self.counter = 0 # temp fix
-
     def respond(self) -> np.ndarray:
         """ respond to the current state. """
-
-        print("iden edge responding atm")
-
-        self.counter += 1
-        # how does the system identifier respond?
         return np.array([0, 0])
 
     def view_completed(self) -> bool:
         """ view is completed if the test push time is over. """
-        return self.counter >= 1
+        return True # the identification edge is always ready mate
 
     def completed(self) -> bool:
         """ returns true if the edge is completed, otherwise false. """
-        # wait 50 time steps
-        return self.counter >= 1
+        return True
 
     def increment_current_view(self):
-        """"""
+        """ empty docstring """
         # TODO: implement this
         return
 
     def get_current_view(self):
-        """"""
+        """ emtpy docstring """
         # TODO: implement this
         return
 

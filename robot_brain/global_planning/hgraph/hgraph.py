@@ -5,53 +5,37 @@ new configuration. Implemented actions are nonprehensile pushing and robot drivi
 """
 
 from abc import abstractmethod
-import random
-import time
 from typing import Tuple
-import warnings
-import numpy as np
 from pyvis.network import Network
 
-from motion_planning_env.box_obstacle import BoxObstacle
-from motion_planning_env.sphere_obstacle import SphereObstacle
-from motion_planning_env.cylinder_obstacle import CylinderObstacle
+from robot_brain.object import Object
+from robot_brain.state import State
+
+from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.local_planning.sample_based.push_motion_planner import PushMotionPlanner
+
+from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
 from robot_brain.global_planning.graph import Graph
-from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
-from robot_brain.global_planning.kgraph.kgraph import KGraph
-
-from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.hgraph.object_node import ObjectNode
-from robot_brain.global_planning.kgraph.change_of_state_node import ChangeOfStateNode
-from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
-from robot_brain.state import State
-from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificationEdge
-from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
-from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
-from robot_brain.global_planning.hgraph.push_ident_edge import PushIdentificationEdge
-from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
-from robot_brain.global_planning.hgraph.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
-from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
-from robot_brain.global_planning.hgraph.identification_edge import IdentificationEdge
+from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
+from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_FAILED
 from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
+from robot_brain.global_planning.hgraph.identification_edge import IdentificationEdge
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge, EDGE_PATH_EXISTS
+from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
+from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
+
 from robot_brain.controller.push.push_controller import PushController
-from robot_brain.local_planning.sample_based.push_motion_planner import PushMotionPlanner
-from robot_brain.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
 from robot_brain.controller.drive.drive_controller import DriveController
-from robot_brain.system_model import SystemModel
 from robot_brain.controller.controller import Controller
+from robot_brain.system_model import SystemModel
+
 from robot_brain.exceptions import (
         RunnoutOfControlMethodsException,
-        NoPathExistsException,
-        PlanningTimeElapsedException,
-        NoBestPushPositionException,
-        FaultDetectedException,
-        PushAnUnmovableObjectException,
         LoopDetectedException,
         TwoEdgesPointToSameNodeException,
         )
-
-from logger.hlogger import HLogger
 
 ROBOT_IDEN = 0
 
@@ -75,7 +59,6 @@ class HGraph(Graph):
 
         # blocklist containing banned edges
         self.blocklist = {}
-        print("Hyp Graph created")
 
     ##########################################
     ### adding/editing edges and nodes #######
@@ -110,14 +93,25 @@ class HGraph(Graph):
         self.add_node(node)
         self.target_nodes[node.iden] = node
 
-    def get_target_node(self, iden: int) -> Node:
-        """ return target node by identifier. """
+    def get_target_node_from_start_node_iden(self, iden: int) -> Node:
+        """ return target node that corresponds to start node identifier. """
         assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
+        assert iden in self.start_nodes, "iden is not in in start_nodes"
 
-        for temp_target_node in self.start_nodes:
-            if temp_target_node.iden == iden:
+        for temp_target_node in self.target_nodes.values():
+            if temp_target_node.obj.properties == self.start_nodes[iden].obj.properties:
                 return temp_target_node
-        raise ValueError(f"target node with iden {iden} does not exist")
+        raise ValueError("target node could not be found from starting node iden")
+
+    def get_start_node_from_target_node_iden(self, iden: int) -> Node:
+        """ return start node that corresponds to target node identifier. """
+        assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
+        assert iden in self.target_nodes, "iden is not in in target_nodes"
+
+        for temp_start_node in self.start_nodes.values():
+            if temp_start_node.obj.properties == self.target_nodes[iden].obj.properties:
+                return temp_start_node
+        raise ValueError("start node could not be found from target node iden")
 
 
     def get_source_node(self, node_iden) -> Node:
@@ -144,11 +138,6 @@ class HGraph(Graph):
         # no edges pointing toward this node -> return
         if len(edge_to_list) == 0:
             return self.get_node(node_iden)
-
-        # remove this visualiseation please
-        if len(edge_to_list) > 1:
-            self.visualise(save=False)
-            raise ValueError
 
         # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
         assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
@@ -590,5 +579,3 @@ class HGraph(Graph):
             net.write_html(name=PROJECT_PATH+"dashboard/data/hypothesis_graph.html")
         else:
             net.show("delete.html")
-
-

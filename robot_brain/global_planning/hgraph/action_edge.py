@@ -6,6 +6,7 @@ from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
 from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 
 from robot_brain.state import State
+from robot_brain.object import Object
 
 from robot_brain.global_planning.edge import EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
 from robot_brain.global_variables import DT
@@ -17,8 +18,16 @@ EDGE_PATH_IS_PLANNED = "path_is_planned"
 class ActionEdge(Edge):
     """ Parent class for all actions. """
 
-    def __init__(self, iden, source, to, robot_obj, verb, controller, model_name):
-        Edge.__init__(self, iden, source, to, verb, controller)
+    def __init__(self, iden: int,
+            source: int,
+            to: int,
+            robot_obj: Object,
+            verb: str,
+            controller: Controller,
+            subtask_name: str,
+            model_name: str):
+
+        Edge.__init__(self, iden, source, to, verb, controller, subtask_name)
         self.status = EDGE_INITIALISED
         self.robot_obj = robot_obj
         self.model_name = model_name
