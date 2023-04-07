@@ -17,6 +17,9 @@ from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
 
+x = 5
+
+
 user_input_mode = False
 
 def main(conn=None):
