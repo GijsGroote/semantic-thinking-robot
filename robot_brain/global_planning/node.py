@@ -20,7 +20,7 @@ class Node(ABC):
 
     @abstractmethod
     def to_string(self):
-        pass
+        """ create a human readable format of this object. """
 
     @property
     def iden(self):

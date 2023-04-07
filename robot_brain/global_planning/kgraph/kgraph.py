@@ -1,20 +1,19 @@
-import os
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
 
 from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
-from robot_brain.global_planning.hgraph.object_node import ObjectNode
-from robot_brain.global_planning.kgraph.change_of_state_node import ChangeOfStateNode
 
+from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.global_planning.kgraph.empty_node import EmptyNode
+from robot_brain.global_planning.kgraph.feedback_edge import FeedbackEdge
 
 class KGraph(Graph):
     """
     Knowledge graph.
     """
     def __init__(self):
-        print('CEATE KGRAPH ONLYL ONCE, SHOULD BE ONECE ONCE CONCE')
         Graph.__init__(self)
 
     def add_object(self, obj: Object):
@@ -27,38 +26,35 @@ class KGraph(Graph):
         obj_node = ObjectNode(self.unique_node_iden(), obj.name, obj)
         self.add_node(obj_node)
 
-
     def print_kgraph_info(self):
         """ print info of the kgraph. """
         print(f"info on kgraph nodes, n_nodes= {len(self.nodes)}")
-        for node in self.nodes:
+        for node in self.nodes.values():
             print(f'node name: {node.obj.name}, iden: {node.iden}, type: {node.obj.type}')
         print(" ")
 
     def get_object_type(self, obj_name: str) -> int:
         """ return the type of the object if known. """
 
-
-        for node in self.nodes:
+        for node in self.nodes.values():
             if node.obj.name == obj_name:
                 return node.obj.type
 
         return None
 
+    def is_valid_check(self) -> bool:
+        """
+        #TODO: this methods
+        for edges and nodes in the same subtask:
+            check if there are no loops
+            check if there are not multiple non-failing edges pointing toward the same node
+        """
+        return True
 
-# T5HIS IS SOME STUFF TO INITIALISE THE kgRAPH LATER
-##  temp KGraph
-            # kgraph = KGraph()
-            # # the robot
-            # node1 = ObjectSetNode(1, "robot", [])
-            # kgraph.add_node(node1)
-            # node2 = ChangeOfConfSetNode(2, "position", [])
-            # kgraph.add_node(node2)
-            # kgraph.add_edge(Edge("id", 1, 2, "MPC", "PEM"))
-            #
-            # self.kgraph = kgraph
-            # self.kgraph.visualise(
-            #     path="/home/gijs/Documents/semantic-thinking-robot/dashboard/data/knowledge_graph.html"
+    def add_node(self, node: ObjectNode):
+        """ add node to the dictionary of nodes. """
+        assert not node.name in self.nodes, f"node.name: {node.name} already exist in self.nodes"
+        self.nodes[node.name] = node
 
     def visualise(self, save=True):
         """"
@@ -111,15 +107,3 @@ class KGraph(Graph):
             net.write_html(name=PROJECT_PATH+"dashboard/data/knowledge_graph.html")
         else:
             net.show("delete2.html")
-
-    def is_valid_check(self) -> bool:
-        """
-        #TODO: this methods
-        for edges and nodes in the same subtask:
-            check if there are no loops
-            check if there are not multiple non-failing edges pointing toward the same node
-        """
-        return True
-
-    def add_node(self, node):
-        self.nodes.append(node)

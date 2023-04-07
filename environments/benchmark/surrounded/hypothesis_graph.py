@@ -1,6 +1,6 @@
 from robot_brain.global_planning.hgraph.hgraph import HGraph
 from robot_brain.state_node import StateNode
-from robot_brain.global_planning.hgraph.object_node import ObjectNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.edge import Edge
 
 hgraph = HGraph()

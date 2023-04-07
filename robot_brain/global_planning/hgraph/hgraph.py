@@ -17,7 +17,7 @@ from robot_brain.local_planning.sample_based.push_motion_planner import PushMoti
 from robot_brain.global_variables import FIG_BG_COLOR, PROJECT_PATH
 
 from robot_brain.global_planning.graph import Graph
-from robot_brain.global_planning.hgraph.object_node import ObjectNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_FAILED
 from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
@@ -113,65 +113,23 @@ class HGraph(Graph):
                 return temp_start_node
         raise ValueError("start node could not be found from target node iden")
 
-
-    def get_source_node(self, node_iden) -> Node:
-        """ find the source node which points to this node via 0 or more edges. """
-
-        # TODO: make the get source node function
-
-        assert (self.get_node(node_iden).status == NODE_INITIALISED or\
-                self.get_node(node_iden).status == NODE_COMPLETED), \
-                f"node {node_iden} has status {self.get_node(node_iden).status}"
-        assert self.current_subtask is not None,\
-                "current subtask is none"
-
-        if node_iden == ROBOT_IDEN:
-            return self.robot_node
-
-        edge_to_list = [edge for edge in self.edges if\
-                edge.to == node_iden and\
-                edge.status != EDGE_FAILED and\
-                (self.get_node(edge.source) != NODE_UNFEASIBLE or\
-                self.get_node(edge.source) != NODE_FAILED) and\
-                self.get_node(edge.to).subtask_name == self.current_subtask["name"]]
-
-        # no edges pointing toward this node -> return
-        if len(edge_to_list) == 0:
-            return self.get_node(node_iden)
-
-        # TODO: multiple edges cannot be pointing (at least not in the same subtask), do a dubble check
-        assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
-
-        if edge_to_list[0].to == edge_to_list[0].source:
-            edge = edge_to_list[0]
-
-        assert not edge_to_list[0].to == edge_to_list[0].source, "self loop detected"
-
-        if self.recursion_depth == 900:
-            self.visualise(save=False)
-            raise ValueError
-        self.recursion_depth +=1
-
-
-        if self.get_node(edge_to_list[0].source).status in [NODE_UNFEASIBLE, NODE_FAILED]:
-            return self.get_node(node_iden)
-        else:
-            return self.find_source_node(edge_to_list[0].source)
-
     def fail_edge(self, edge: Edge):
         """
         fail edge and incoming/outgoing emtpy edges
-        for an action edge fail corresponding identification edge.
+        or an action edge fail corresponding identification edge.
+        all failed edges are in the same subtask
         """
 
         edge.status = EDGE_FAILED
 
         # fail incoming/outgoing emtpy edges
-        if isinstance(self.get_incoming_edge(edge.source), EmptyEdge):
-            self.get_incoming_edge(edge.source).status = EDGE_FAILED
-        for outgoing_edge in self.get_outgoing_edges(edge.to):
-            if isinstance(outgoing_edge, EmptyEdge):
-                outgoing_edge.status = EDGE_FAILED
+        for temp_incoming_edge in self.get_incoming_edges(edge.source):
+            if isinstance(temp_incoming_edge, EmptyEdge) and temp_incoming_edge.subtask_name == edge.subtask_name:
+                temp_incoming_edge.status = EDGE_FAILED
+
+        for temp_outgoing_edge in self.get_outgoing_edges(edge.to):
+            if isinstance(temp_outgoing_edge, EmptyEdge) and temp_outgoing_edge.subtask_name == edge.subtask_name:
+                temp_outgoing_edge.status = EDGE_FAILED
 
         if isinstance(edge, ActionEdge):
             # fail corresponding identification edge

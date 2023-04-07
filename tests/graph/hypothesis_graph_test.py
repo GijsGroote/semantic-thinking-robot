@@ -4,7 +4,7 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
 from robot_brain.state import State
 from robot_brain.object import Object
-from robot_brain.global_planning.hgraph.object_node import ObjectNode
+from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
 from robot_brain.exceptions import LoopDetectedException, TwoEdgesPointToSameNodeException

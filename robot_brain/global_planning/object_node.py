@@ -1,3 +1,7 @@
+"""
+TODO Create module docstring.
+"""
+
 from robot_brain.global_planning.node import Node
 from robot_brain.object import Object
 
@@ -17,7 +21,6 @@ class ObjectNode(Node):
         return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
                 f"<br>With Object: {self.obj.name}<br>2d pos = {self.obj.state.get_2d_pose()}<br>type = {self.obj.type}"
 
- # name setter getter        
 
     @property
     def obj(self):

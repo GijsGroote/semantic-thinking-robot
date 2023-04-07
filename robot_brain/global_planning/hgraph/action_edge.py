@@ -1,5 +1,5 @@
-import numpy as np
 from abc import abstractmethod
+import numpy as np
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.edge import Edge
 from robot_brain.local_planning.sample_based.motion_planner import MotionPlanner
@@ -14,6 +14,7 @@ from robot_brain.global_variables import DT
 EDGE_PATH_EXISTS = "path_exists"
 EDGE_HAS_SYSTEM_MODEL = "has_system_model"
 EDGE_PATH_IS_PLANNED = "path_is_planned"
+
 
 class ActionEdge(Edge):
     """ Parent class for all actions. """
@@ -153,8 +154,40 @@ class ActionEdge(Edge):
 
     def set_failed_status(self):
         """ from any status the status can be come FAILED. """
-        print(f'edge has failed ')
         self.status = EDGE_FAILED
+
+
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, val):
+        assert val in [EDGE_INITIALISED, EDGE_COMPLETED,
+                EDGE_EXECUTING, EDGE_FAILED, EDGE_PATH_EXISTS,
+                EDGE_HAS_SYSTEM_MODEL, EDGE_PATH_IS_PLANNED], f"invalid status: {val}"
+        self._status = val
+
+
+
+    @property
+    def robot_obj(self):
+        return self._robot_obj
+
+    @robot_obj.setter
+    def robot_obj(self, obj):
+        assert isinstance(obj, Object), f"robot_obj should be an Object and is {type(obj)}"
+        self._robot_obj = obj
+
+    @property
+    def model_name(self):
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, val):
+        assert isinstance(val, str), f"model_name should be a str and is {type(val)}"
+        self._model_name = val
 
     @property
     def path_estimator(self):

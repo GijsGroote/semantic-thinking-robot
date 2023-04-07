@@ -78,3 +78,23 @@ class IdentificationEdge(Edge):
 
         print(f'edge {self.iden} status is completed')
         self.status = EDGE_COMPLETED
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, val):
+        assert val in [EDGE_INITIALISED, EDGE_COMPLETED,
+                EDGE_EXECUTING, EDGE_FAILED], f"invalid status: {val}"
+        self._status = val
+
+    @property
+    def model_for_edge_iden(self):
+        return self._model_for_edge_iden
+
+    @model_for_edge_iden.setter
+    def model_for_edge_iden(self, val):
+        assert isinstance(val, str)
+        self._model_for_edge_iden = val
+
