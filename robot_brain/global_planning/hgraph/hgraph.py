@@ -43,19 +43,18 @@ class HGraph(Graph):
     """
     Hypothesis graph.
     """
-    def __init__(self, robot_obj: Object):
-        if not isinstance(robot_obj, Object):
-            raise AttributeError(f"robot_obj should be of type Object and is {type(robot_obj)}")
+    def __init__(self, robot_obj: Object, robot_order: int):
 
         Graph.__init__(self)
 
         # create and add node containing the robot itself
         self.robot_obj = robot_obj
+        self.robot_order = robot_order
 
         self.start_nodes = {}
         self.target_nodes = {}
-        self._current_node = None
-        self._current_edge = None
+        self.c_node = None
+        self.c_edge = None
 
         # blocklist containing banned edges
         self.blocklist = {}
@@ -93,6 +92,14 @@ class HGraph(Graph):
         self.add_node(node)
         self.target_nodes[node.iden] = node
 
+    def get_start_node_from_target_node(self, target_node: ObjectNode) -> ObjectNode:
+        """ return start node from subtask with target_node_iden. """
+        assert isinstance(target_node, ObjectNode)
+        for temp_node in self.start_nodes.values():
+            if temp_node.subtask_name == target_node.subtask_name:
+                return temp_node
+        raise ValueError(f"corresponding start node not found from target node with iden: {target_node.iden}")
+
     def get_target_node_from_start_node_iden(self, iden: int) -> Node:
         """ return target node that corresponds to start node identifier. """
         assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
@@ -103,15 +110,45 @@ class HGraph(Graph):
                 return temp_target_node
         raise ValueError("target node could not be found from starting node iden")
 
-    def get_start_node_from_target_node_iden(self, iden: int) -> Node:
-        """ return start node that corresponds to target node identifier. """
-        assert isinstance(iden, int), f"iden should be of type int and is {type(iden)}"
-        assert iden in self.target_nodes, "iden is not in in target_nodes"
+    def get_connected_source_node(self, target_node: ObjectNode, subtask_name: str) -> ObjectNode:
+        """ find the node that points to the target_node over non-failing nodes and edges all in the same subtask. """
+        print(target_node)
+        print('waht are you')
+        assert isinstance(target_node, ObjectNode)
+        assert isinstance(subtask_name, str)
 
-        for temp_start_node in self.start_nodes.values():
-            if temp_start_node.obj.properties == self.target_nodes[iden].obj.properties:
-                return temp_start_node
-        raise ValueError("start node could not be found from target node iden")
+        incoming_edge_list = [edge for edge in self.edges.values() if\
+                edge.to == target_node.iden and\
+                edge.status != EDGE_FAILED and\
+                self.get_node(edge.source).status == NODE_INITIALISED and\
+                edge.subtask_name == subtask_name]
+
+        # no valid edges pointing toward this node -> return
+        if len(incoming_edge_list) == 0 or\
+                self.get_node(incoming_edge_list[0].source).status in [NODE_UNFEASIBLE, NODE_UNFEASIBLE]:
+            return target_node
+
+        else:
+            return self.get_connected_source_node(self.get_node(incoming_edge_list[0].source), subtask_name)
+
+    def get_connected_target_node(self, source_node: ObjectNode, subtask_name: str) -> ObjectNode:
+        """ find the node that points to the target_node over non-failing nodes and edges all in the same subtask. """
+        assert isinstance(source_node, ObjectNode)
+        assert isinstance(subtask_name, str)
+
+        outgoing_edge_list = [edge for edge in self.edges.values() if\
+                edge.source == source_node.iden and\
+                edge.status != EDGE_FAILED and\
+                self.get_node(edge.to).status == NODE_INITIALISED and\
+                edge.subtask_name == subtask_name]
+
+        # no valid edges pointing out of this node -> return
+        if len(outgoing_edge_list) == 0 or\
+                self.get_node(outgoing_edge_list[0].to).status in [NODE_UNFEASIBLE, NODE_UNFEASIBLE]:
+            return source_node
+
+        else:
+            return self.get_connected_source_node(self.get_node(outgoing_edge_list[0].to), subtask_name)
 
     def fail_edge(self, edge: Edge):
         """
@@ -133,7 +170,7 @@ class HGraph(Graph):
 
         if isinstance(edge, ActionEdge):
             # fail corresponding identification edge
-            for temp_edge in self.edges:
+            for temp_edge in self.edges.values():
                 if temp_edge.model_for_edge_iden == edge.iden and isinstance(temp_edge, IdentificationEdge):
                     self.fail_edge(temp_edge)
 
@@ -264,23 +301,25 @@ class HGraph(Graph):
     ### checking / validating  ###############
     ##########################################
 
-    def is_reachable(self, source_node_iden: int, target_node_iden: int) -> bool:
+    def is_reachable(self, source_node: ObjectNode, target_node: ObjectNode) -> bool:
         """ return true if there is a list of non-failed edges going from the start node
-        identifier to target node identifier, otherwise return false. """
-        assert isinstance(source_node_iden, int), f"source_node_iden should be an int and is {type(source_node_iden)}"
-        assert isinstance(target_node_iden, int), f"target_node_iden should be an int and is {type(target_node_iden)}"
+        to target node all in the same subtask, otherwise return false. """
+        assert isinstance(source_node, ObjectNode), f"source_node should be an ObjectNode and is {type(source_node)}"
+        assert isinstance(target_node, ObjectNode), f"target_node should be an ObjectNode and is {type(target_node)}"
+        assert source_node.subtask_name == target_node.subtask_name,\
+            f"source subtask_name: {source_node.subtask_name} is not equal to target subtask_name: {target_node.subtask_name}"
 
-
-        # TODO: these reachable nodes should go over edges that all have the same subtask.
-        reachable_from_start = [source_node_iden]
+        reachable_from_start = [source_node.iden]
 
         while len(reachable_from_start) > 0:
-            current_node_iden = reachable_from_start.pop(0)
+            temp_node_iden = reachable_from_start.pop(0)
 
-            for outgoing_node_iden in self.point_toward_nodes(current_node_iden):
-                if outgoing_node_iden == target_node_iden:
+            for outgoing_edge in self.get_outgoing_edges(temp_node_iden):
+                if outgoing_edge.to == target_node.iden:
                     return True
-                reachable_from_start.append(outgoing_node_iden)
+                elif outgoing_edge.subtask_name == source_node.subtask_name and\
+                        outgoing_edge.status != EDGE_FAILED:
+                    reachable_from_start.append(outgoing_edge.to)
 
         return False
 
@@ -309,9 +348,9 @@ class HGraph(Graph):
 
                 node_points_to_temp_node = self.get_node(edge_points_to_temp_node_list[0].source)
 
-
                 if node_points_to_temp_node.iden == temp_node.iden:
-                    raise LoopDetectedException()
+                    self.visualise(save=False)
+                    raise LoopDetectedException
 
         return True
 
@@ -375,34 +414,50 @@ class HGraph(Graph):
     ##########################################
     ### setters and getters ##################
     ##########################################
+
+    #TODO: all setters and getters from INIT
     @property
-    def current_node(self):
-        return self._current_node
+    def robot_order(self):
+        return self._robot_order
 
-    @current_node.setter
-    def current_node(self, node) -> ObjectNode:
-        assert isinstance(node, Node), f"node should be a Node and is {type(node)}"
-        assert node.iden in self.nodes, "node should be in self.nodes"
-        assert node.ready_for_execution(),\
-                f"node.ready_for_execution() should be True and is: {node.ready_for_execution()}"
-        self._current_node = node
+    @robot_order.setter
+    def robot_order(self, val):
+        assert isinstance(val, int),\
+                f"robot_order's type should be an int and is {type(val)}"
+        assert val > 0, f"robot order should be higher than 0 and is {val}"
+        self._robot_order = val
 
     @property
-    def current_edge(self) -> Edge:
-        return self._current_edge
+    def c_node(self):
+        return self._c_node
 
-    @current_edge.setter
-    def current_edge(self, edge: Edge):
-        assert isinstance(edge, Edge), f"edge should be an Edge and is {type(edge)}"
-        assert edge.ready_for_execution(),\
-                f"edge.ready_for_execution() should be True and is: {edge.ready_for_execution()}"
+    @c_node.setter
+    def c_node(self, node) -> ObjectNode:
+        assert isinstance(node, (Node, type(None))), f"node should be a Node or None and is {type(node)}"
+        if isinstance(node, Node):
+            assert node.iden in self.nodes, "node should be in self.nodes"
+        self._c_node = node
 
-        self._current_edge = edge
+    @property
+    def c_edge(self) -> Edge:
+        return self._c_edge
 
+    @c_edge.setter
+    def c_edge(self, edge: Edge):
+        assert isinstance(edge, (Edge, type(None))), f"edge should be an Edge or None and is {type(edge)}"
+        if isinstance(edge, Edge):
+            self.c_node = self.get_node(edge.source)
+        self._c_edge = edge
+
+
+    ##########################################
+    ### visualise functionality ##############
+    ##########################################
     def visualise(self, hypothesis=[], save=True):
         """"
         Visualising is for testing, creating the plot in the dashboard is in dashboard/figures
         """
+
         assert isinstance(hypothesis, list), f"hypothesis should be list and is {type(hypothesis)}"
         for temp_edge in hypothesis:
             assert isinstance(temp_edge, Edge), f"hypothesis should contain only Edge and contains a: {type(temp_edge)}"
@@ -415,11 +470,11 @@ class HGraph(Graph):
 
         net.set_edge_smooth('dynamic')
 
-        for node in self.start_nodes:
+        for node in self.start_nodes.values():
             if node.name == "pointRobot-vel-v7": # deltete this
                 node.name = "robot"
 
-            if node == self.current_node:
+            if node == self.c_node:
                 continue
             net.add_node(node.iden,
                     title = f"Starting Node: {node.name}<br>{node.to_string()}<br>",
@@ -438,12 +493,12 @@ class HGraph(Graph):
                         },
                     group = "start_nodes")
 
-        for node in self.target_nodes:
+        for node in self.target_nodes.values():
 
             if node.name == "pointRobot-vel-v7_target":
                 node.name = "robot_target"
 
-            if node == self.current_node:
+            if node == self.c_node:
                 continue
             net.add_node(node.iden,
                     title = f"Target Node: {node.name}<br>{node.to_string()}<br>",
@@ -460,8 +515,8 @@ class HGraph(Graph):
                         },
                     group = "target_nodes")
 
-        for node in self.nodes:
-            if node == self.current_node:
+        for node in self.nodes.values():
+            if node == self.c_node:
                 continue
 
             if node.name == "pointRobot-vel-v7_model":
@@ -485,12 +540,12 @@ class HGraph(Graph):
                     label = node.name,
                     group = node.__class__.__name__)
 
-        if self.current_node is not None:
-            net.add_node(self.current_node.iden,
-                    title = f"Current Node: {self.current_node.name}<br>{self.current_node.to_string()}<br>",
+        if self.c_node is not None:
+            net.add_node(self.c_node.iden,
+                    title = f"Current Node: {self.c_node.name}<br>{self.c_node.to_string()}<br>",
                     x=10.0,
                     y=10.0,
-                    label = self.current_node.name,
+                    label = self.c_node.name,
                     color= {
                         'border': '#fb4b50',
                         'background': '#fb7e81',
@@ -499,14 +554,14 @@ class HGraph(Graph):
                             'background': '#fcbcc4'
                             }
                         },
-                    group = "current_node")
+                    group = "c_node")
 
         # add edges
-        for edge in self.edges:
+        for edge in self.edges.values():
 
             value = 1.5
-            if edge in hypothesis:
-                value = 3
+            # if edge in hypothesis:
+            #     value = 3
 
             if edge.status == EDGE_INITIALISED:
                 color = "grey"

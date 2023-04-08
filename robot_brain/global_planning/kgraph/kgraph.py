@@ -1,9 +1,13 @@
 from pyvis.network import Network
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.node import Node
+from typing import Tuple
 
 from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
+from robot_brain.system_model import SystemModel
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.controller.controller import Controller
 
 from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.kgraph.empty_node import EmptyNode
@@ -16,22 +20,26 @@ class KGraph(Graph):
     def __init__(self):
         Graph.__init__(self)
 
-    def add_object(self, obj: Object):
-        """ adds new object to the kgraph. """
-        if not isinstance(obj, Object):
-            raise TypeError("Object's only")
-        assert obj.type in [MOVABLE, UNMOVABLE], f"added object must have type MOVABLE or UNMOVABLE and is {obj.type}"
-        #TODO check if the object is not already in the kgraph
-
-        obj_node = ObjectNode(self.unique_node_iden(), obj.name, obj)
-        self.add_node(obj_node)
-
     def print_kgraph_info(self):
         """ print info of the kgraph. """
         print(f"info on kgraph nodes, n_nodes= {len(self.nodes)}")
         for node in self.nodes.values():
             print(f'node name: {node.obj.name}, iden: {node.iden}, type: {node.obj.type}')
         print(" ")
+
+    def add_object(self, obj: Object):
+        """ adds new object to the kgraph. """
+        if not isinstance(obj, Object):
+            raise TypeError("Object's only")
+        assert obj.type in [MOVABLE, UNMOVABLE], f"added object must have type MOVABLE or UNMOVABLE and is {obj.type}"
+
+        # check if the object is not already in the kgraph
+        for temp_node in self.nodes.values():
+            if temp_node.obj.name == obj.name:
+                raise TypeError(f"object with name: {obj.name} is already in the KGraph")
+
+        obj_node = ObjectNode(self.unique_node_iden(), obj.name, obj, "no_subtask_name")
+        self.add_node(obj_node)
 
     def get_object_type(self, obj_name: str) -> int:
         """ return the type of the object if known. """
@@ -42,13 +50,24 @@ class KGraph(Graph):
 
         return None
 
+    def add_edge_review(self, edge: ActionEdge):
+        """ add a review edge to the KGraph. """
+        # TODO: make this function
+        pass
+
+    def action_suggestion(self, edge: ActionEdge) -> Tuple[Controller, SystemModel]:
+        """ add a review edge to the KGraph. """
+        # TODO: make this function
+        pass
+
     def is_valid_check(self) -> bool:
         """
-        #TODO: this methods
         for edges and nodes in the same subtask:
             check if there are no loops
             check if there are not multiple non-failing edges pointing toward the same node
         """
+
+        #TODO: this methods
         return True
 
     def add_node(self, node: ObjectNode):

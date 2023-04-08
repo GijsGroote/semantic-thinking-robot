@@ -57,8 +57,9 @@ class PointRobotVelHGraph(HGraph):
     Hypothesis graph for a Point Robot accepting velocity input.
     """
     def __init__(self, robot_obj: Object):
-        HGraph.__init__(self, robot_obj)
-        self.robot_order = 2
+        HGraph.__init__(self,
+                robot_obj=robot_obj,
+                robot_order=2)
 
     def create_drive_path_estimator(self, objects) -> PathEstimator:
         """ create drive path estimator. """
@@ -715,5 +716,6 @@ class PointRobotVelHGraph(HGraph):
             return x_next
 
         return SystemModel(model, PUSH_MPPI_MODEL_4TH_ORDER)
+    
 
-
+    # TODO Make all setters and getters that are in the INIT

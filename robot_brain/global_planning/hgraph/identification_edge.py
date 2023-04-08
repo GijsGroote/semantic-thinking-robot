@@ -15,8 +15,8 @@ class IdentificationEdge(Edge):
             to: int,
             verb: str,
             controller: Controller,
-            model_for_edge_iden: int,
-            subtask_name: str):
+            subtask_name: str,
+            model_for_edge_iden: int):
 
         Edge.__init__(self, iden, source, to, verb, controller, subtask_name)
         self.status = EDGE_INITIALISED
@@ -24,6 +24,7 @@ class IdentificationEdge(Edge):
 
     def respond(self) -> np.ndarray:
         """ respond to the current state. """
+
         return np.array([0, 0])
 
     def view_completed(self) -> bool:
@@ -57,6 +58,7 @@ class IdentificationEdge(Edge):
         """ checks if all parameters are set to execute this transition. """
         # assert self.status != EDGE_EXECUTING,\
         #         f"edge {self.iden} has status {self.status}"
+        print(f'heythere')
         return self.status in [EDGE_INITIALISED, EDGE_EXECUTING]
 
     def to_string(self):
@@ -73,10 +75,9 @@ class IdentificationEdge(Edge):
 
     def set_completed_status(self):
         assert self.status == EDGE_EXECUTING,\
-            f"before setting status to {EDGE_COMPLETED} the status"\
-            f"must be {EDGE_EXECUTING} and it's {self.status}"
+            f"before setting status to {EDGE_COMPLETED} the status "\
+            f"must be {EDGE_EXECUTING} and it is: {self.status}"
 
-        print(f'edge {self.iden} status is completed')
         self.status = EDGE_COMPLETED
 
     @property
@@ -95,6 +96,5 @@ class IdentificationEdge(Edge):
 
     @model_for_edge_iden.setter
     def model_for_edge_iden(self, val):
-        assert isinstance(val, str)
+        assert isinstance(val, int), f"model_for_edge_iden should be int and is: {type(val)}"
         self._model_for_edge_iden = val
-

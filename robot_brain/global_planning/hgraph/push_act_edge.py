@@ -16,8 +16,8 @@ class PushActionEdge(ActionEdge):
             push_obj: Object,
             verb: str,
             controller: Controller,
-            model_name: str,
             subtask_name: str,
+            model_name: str,
             check_obj_movable: bool):
 
         self.check_obj_movable = check_obj_movable
@@ -26,7 +26,8 @@ class PushActionEdge(ActionEdge):
             self.start_counter = 0
             self.obj_start_2d_pose = push_obj.state.get_2d_pose()
 
-        ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, model_name, subtask_name)
+        ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, subtask_name, model_name)
+
         self.push_obj = push_obj
 
     def view_completed(self) -> bool:

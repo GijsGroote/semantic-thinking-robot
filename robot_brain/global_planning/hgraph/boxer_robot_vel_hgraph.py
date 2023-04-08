@@ -1,5 +1,6 @@
 # import numpy as np
-# from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.object import Object
 # from robot_brain.global_variables import FIG_BG_COLOR, DT, TORCH_DEVICE
 #
 # from casadi import vertcat
@@ -16,33 +17,32 @@
 # import math
 # from robot_brain.state import State
 #
-# class BoxerRobotVelHGraph(HGraph):
-#     """
-#     Hypothesis graph for a Boxer Robot acceping velocity input.
-#     """
-#     def __init__(self, robot):
-#         HGraph.__init__(self)
-#         self.robot = robot
-#         self.robot_order = 3
-#         
-#     
+class BoxerRobotVelHGraph(HGraph):
+    """
+    Hypothesis graph for a Boxer Robot acceping velocity input.
+    """
+    def __init__(self, robot_obj: Object):
+        HGraph.__init__(self, robot_obj)
+        self.robot_order = 3
+
+#
 #     def estimate_robot_path_existance(self, target_state, obstacles):
 #
 #         occ_graph = RectangleObjectPathEstimator(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 1.2, 0.6)
-#         
+#
 #         # temp fix for negative angles
 #         start = self.robot.state.get_2d_pose()
 #         occ_graph.setup()
 #
 #         occ_graph.visualise()
 #         path = occ_graph.shortest_path(start, target_state.get_2d_pose())
-#         
+#
 #         return path
 #
 #     def get_driving_controllers(self) -> list:
 #         """ returns list with all possible driving controllers. """
 #
-#         # TODO: find banned controllers, find blacklist, ask Kgraph for advice, 
+#         # TODO: find banned controllers, find blacklist, ask Kgraph for advice,
 #         # fallback option is random select over all the availeble controllers
 #         return [self._create_mpc_driving_controller,
 #                 self._create_mppi_driving_controller]
@@ -56,11 +56,11 @@
 #         controller = DriveMppi3thOrder()
 #
 #         def dyn_model(x, u):
-#             
+#
 #             x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
 #
-#             x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
-#             x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
+#             x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0]
+#             x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0]
 #             x_next[:,2] = x[:,2] + DT*u[:,1]
 #
 #             return x_next
@@ -86,5 +86,5 @@
 #             return dx_next
 #
 #         controller.setup(dyn_model, self.robot.state, self.robot.state)
-#         
+#
 #         return controller

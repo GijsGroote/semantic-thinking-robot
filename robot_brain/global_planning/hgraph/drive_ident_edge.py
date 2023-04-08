@@ -10,7 +10,8 @@ class DriveIdentificationEdge(IdentificationEdge):
             to: int,
             verb: str,
             controller: Controller,
-            model_for_edge_iden: int, 
-            sys_model_name: str):
+            subtask_name: str,
+            model_for_edge_iden: int):
 
-        IdentificationEdge.__init__(self, iden, source, to, verb, controller, model_for_edge_iden, sys_model_name)
+
+        IdentificationEdge.__init__(self, iden, source, to, verb, controller, subtask_name, model_for_edge_iden)

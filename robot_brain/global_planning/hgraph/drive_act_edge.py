@@ -17,10 +17,10 @@ class DriveActionEdge(ActionEdge):
             robot_obj: Object,
             verb: str,
             controller: Controller,
-            model_name: str,
-            subtask_name: str):
+            subtask_name: str,
+            model_name: str):
 
-        ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, model_name, subtask_name)
+        ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, subtask_name, model_name)
 
     def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
