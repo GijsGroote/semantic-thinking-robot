@@ -50,10 +50,66 @@ class KGraph(Graph):
 
         return None
 
-    def add_edge_review(self, edge: ActionEdge):
+    def add_edge_review(self, obj: Object, edge: ActionEdge):
         """ add a review edge to the KGraph. """
-        # TODO: make this function
-        pass
+        assert isinstance(obj, Object)
+        assert isinstance(edge, ActionEdge)
+        assert self.ready_for_edge_review(edge)
+
+        if not self.object_in_kgraph(obj):
+            assert obj.type == MOVABLE
+            self.add_object(obj)
+
+        success_factor = self.calculate_successfactor(edge)
+
+        source_node = None
+        target_node = None
+        add_new_node = False
+
+        for temp_node in self.nodes.values():
+            if temp_node.obj.name == obj.name:
+                source_node = temp_node
+
+                if len(self.get_outgoing_edges(temp_node.iden)) > 0:
+                    target_node = self.get_outgoing_edges(temp_node.iden)[0].to
+                else:
+                    add_new_node = True
+                    target_node = EmptyNode(self.unique_node_iden(), temp_node.name)
+
+        # add new empty node later, because self.nodes cannot change in loop
+        if add_new_node:
+            self.add_node(target_node)
+
+        assert source_node is not None and target_node is not None
+
+        self.add_edge(FeedbackEdge(
+            iden=self.unique_edge_iden(),
+            source=source_node.iden,
+            to=target_node.iden,
+            success_factor=success_factor,
+            obj=obj,
+            verb=edge.verb,
+            controller=edge.controller,
+            model_name=edge.model_name))
+
+        self.visualise(save=False)
+
+
+    def object_in_kgraph(self, obj: Object) -> bool:
+        """ return true if there exist a node containing the object. """
+        for temp_node in self.nodes.values():
+            if temp_node.obj.name == obj.name:
+                return True
+        return False
+
+    def ready_for_edge_review(self, edge: ActionEdge) -> bool:
+        """ check if edge has all componentes to create a success factor. """
+        return True
+
+    def calculate_successfactor(self, edge) -> float:
+        """ calculate a successfactor. """
+        return 0.80
+
 
     def action_suggestion(self, edge: ActionEdge) -> Tuple[Controller, SystemModel]:
         """ add a review edge to the KGraph. """
@@ -72,8 +128,8 @@ class KGraph(Graph):
 
     def add_node(self, node: ObjectNode):
         """ add node to the dictionary of nodes. """
-        assert not node.name in self.nodes, f"node.name: {node.name} already exist in self.nodes"
-        self.nodes[node.name] = node
+        assert not node.iden in self.nodes, f"node.name: {node.name} already exist in self.nodes"
+        self.nodes[node.iden] = node
 
     def visualise(self, save=True):
         """"
@@ -87,7 +143,7 @@ class KGraph(Graph):
 
         net.set_edge_smooth('dynamic')
 
-        for node in self.nodes:
+        for node in self.nodes.values():
 
             net.add_node(node.iden,
                     title = f"Node: {node.name}<br>{node.to_string()}<br>",
@@ -106,7 +162,7 @@ class KGraph(Graph):
                         },
                     group = "nodes")
         # add edges
-        for edge in self.edges:
+        for edge in self.edges.values():
 
             value = 1.5
 

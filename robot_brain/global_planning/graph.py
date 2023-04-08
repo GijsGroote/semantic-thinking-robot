@@ -22,6 +22,9 @@ class Graph(ABC):
 
     def add_edge(self, edge):
         """ add edge to dictionary of edges. """
+        
+        for i in self.nodes.keys():
+            print(f"{i} fuck")
         assert isinstance(edge, Edge), f"edge should be Edge and is {type(edge)}"
         assert edge.source in self.nodes, f"edge.source: {edge.source} does not exist"
         assert edge.to in self.nodes, f"edge.to: {edge.to} does not exist"

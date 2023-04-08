@@ -743,10 +743,12 @@ class HypothesisAlgorithm():
         if isinstance(self.current_edge, IdentificationEdge):
             self.hgraph.update_system_model(self.current_edge)
 
+        # update KGraph
+        elif isinstance(self.current_edge, ActionEdge):
+            self.kgraph.add_edge_review(self.hgraph.get_node(self.current_edge.source).obj, self.current_edge)
+
         # complete current edge
         self.current_edge.set_completed_status()
-
-        # TODO: update KGraph
 
         if self.hypothesis_completed():
             # self.stop_timing()

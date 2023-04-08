@@ -71,6 +71,7 @@ class RBrain:
                     vel=ob["joint_state"]["velocity"],
                 ),
                 properties=robot_properties,
+                obj_type=MOVABLE
             )
         else:
             warnings.warn("robot type is not set")

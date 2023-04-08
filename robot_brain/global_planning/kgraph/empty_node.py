@@ -9,8 +9,9 @@ class EmptyNode(Node):
     Empty node.
     """
 
-    def __init__(self, iden):
+    def __init__(self, iden: int, name: str):
         Node.__init__(self, iden)
+        self.name = name + "_emtpy_node"
 
     def to_string(self):
-        return f"EmptyNode identifier: {self.iden}"
+        return f"EmptyNode identifier: {self.iden}, and name: {self.name}"
