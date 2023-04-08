@@ -349,7 +349,6 @@ class HGraph(Graph):
                 node_points_to_temp_node = self.get_node(edge_points_to_temp_node_list[0].source)
 
                 if node_points_to_temp_node.iden == temp_node.iden:
-                    self.visualise(save=False)
                     raise LoopDetectedException
 
         return True

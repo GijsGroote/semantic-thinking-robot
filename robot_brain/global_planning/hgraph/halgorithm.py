@@ -286,10 +286,8 @@ class HypothesisAlgorithm():
                 else:
                     ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
 
-                print('some bs8')
                 return self.make_ready_for_execution()
 
-        print('some bs')
 
 
     ##########################################
@@ -376,7 +374,7 @@ class HypothesisAlgorithm():
         n_failed_subtasks = 0
         n_unfeasible_subtasks = 0
 
-        for target_node in self.target_nodes:
+        for target_node in self.hgraph.target_nodes.values():
             if target_node.status == NODE_COMPLETED:
                 n_completed_subtasks += 1
             elif target_node.status == NODE_FAILED:
@@ -487,14 +485,15 @@ class HypothesisAlgorithm():
 
     def create_drive_to_best_push_position_edge(self, edge: PushActionEdge):
         """ add edges/nodes to drive toward the best push position. """
+        # TODO: Sunday
 
     def create_push_ident_edge(self, edge: PushActionEdge):
         """ create a system identification edge for pushing. """
-        # TODO: Saturday
+        # TODO: Sunday
 
     def create_push_edge(self, source_node_iden: int, target_node_iden: int):
         """ returns create push edge and adds created model node to hgraph. """
-        # TODO: Saturday
+        # TODO: Sunday
 
     def create_remove_object_edge(self, add_node_list: list, edge: ActionEdge):
         """ add edges/nodes to remove a obj. """
@@ -530,8 +529,6 @@ class HypothesisAlgorithm():
 
     def search_path(self, edge):
         """ search for a path from start to target for an edge. """
-        # TODO: find a fix for what would happen if the start configuration of the robot is in obstacle space
-
         assert isinstance(edge, ActionEdge), f"edge type must be ActionEdge and type is {type(edge)}"
 
         if edge.motion_planner is None:
@@ -540,8 +537,8 @@ class HypothesisAlgorithm():
             if isinstance(edge, DriveActionEdge):
                 edge.motion_planner = self.hgraph.create_drive_motion_planner(self.objects, edge.path_estimator)
 
+            # manipulation planning
             elif isinstance(edge, PushActionEdge):
-                # edge.path_estimator.visualise(save=False)
 
                 edge.motion_planner = self.hgraph.create_push_motion_planner(
                         objects=self.objects,
@@ -555,15 +552,12 @@ class HypothesisAlgorithm():
 
         try:
             error_triggered = False
-
-            print(f'motion planner for obj {self.hgraph.get_node(edge.source).obj.name} from {current_state.get_2d_pose()}  to {self.hgraph.get_node(edge.to).obj.state.get_2d_pose()}')
             (edge.path, add_node_list) = edge.motion_planner.search_path(current_state, self.hgraph.get_node(edge.to).obj.state)
 
         except PlanningTimeElapsedException as exc:
             error_triggered = True
             add_node_list = []
 
-            edge.motion_planner.visualise(save=False)
             self.handle_planning_time_elapsed_exception(exc, edge)
 
         if error_triggered:
@@ -594,15 +588,49 @@ class HypothesisAlgorithm():
 
     def handle_running_out_of_control_methods_exception(self, exc: RunnoutOfControlMethodsException, target_node_iden: int):
         """ handle a RunnoutOfControlMethodsException. """
-        # TODO: Saturday
+        assert isinstance(exc, RunnoutOfControlMethodsException)
+        assert isinstance(target_node_iden, int)
 
-    def handle_no_path_exists_exception(self, exc: NoPathExistsException, edge: Edge):
+        self.hgraph.get_node(target_node_iden).status = NODE_FAILED
+
+        # make outgoing edges unfeasible and remove from hypothesis
+        for temp_edge in self.hgraph.get_outgoing_edges(target_node_iden):
+            self.hgraph.fail_edge(temp_edge)
+            self.hgraph.add_to_blocklist(temp_edge)
+
+            if temp_edge in self.hypothesis:
+                self.hypothesis.remove(temp_edge)
+
+        self.log_exception(exc, edge)
+
+    def handle_no_path_exists_exception(self, exc: NoPathExistsException, edge: ActionEdge):
         """ handle a NoPathExistsException. """
-        # TODO: Saturday
+        assert isinstance(exc, NoPathExistsException)
+        assert isinstance(edge, ActionEdge)
 
-    def handle_planning_time_elapsed_exception(self, exc: PlanningTimeElapsedException, edge: Edge):
+        self.hgraph.get_node(edge.to).status = NODE_UNFEASIBLE
+        for outgoing_edge in self.hgraph.get_outgoing_edges(edge.to):
+            self.hgraph.fail_edge(outgoing_edge)
+
+        self.hgraph.fail_edge(edge)
+
+        self.log_exception(exc, edge)
+
+
+    def handle_planning_time_elapsed_exception(self, exc: PlanningTimeElapsedException, edge: ActionEdge):
         """ handle a PlanningTimeElapsedException. """
-        # TODO: Saturday
+        assert isinstance(exc, PlanningTimeElapsedException)
+        assert isinstance(edge, ActionEdge)
+
+        self.hgraph.add_to_blocklist(edge)
+        self.hgraph.fail_edge(edge)
+        self.current_edge = None
+
+        # remove all edges up to the failed edge from the current hypothesis.
+        self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
+        self.edge_pointer = 0
+
+        self.log_exception(exc, edge)
 
     def handle_no_push_position_found_exception(self, exc: NoBestPushPositionException):
         """ handle a NoBestPushPositionException. """
@@ -614,7 +642,19 @@ class HypothesisAlgorithm():
 
     def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):
         """ handle a PushAnUnmovableObjectException. """
-        # TODO: Saturday
+        # TODO: Sunday
+
+    def log_exception(self, exc: Exception, edge: Edge):
+        """ add to logger and visualise. """
+        assert isinstance(exc, Exception)
+
+        if LOG_METRICS:
+            self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+            edge.path_estimator.visualise()
+            edge.motion_planner.visualise()
 
     def update_object_type_to_unmovable(self, obj_name: str):
         """ TODO: this should update the KGRAPH and other places such as hgraph

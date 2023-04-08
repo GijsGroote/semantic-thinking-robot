@@ -218,7 +218,7 @@ class RBrain:
 
                     print(f"Halt because: {exc}")
 
-                    self.halgorithm.visualise(save=False) # make this save=True
+                    self.halgorithm.visualise()
 
                     if CREATE_SERVER_DASHBOARD:
                         self.halgorithm.visualise()
@@ -226,7 +226,6 @@ class RBrain:
                         stop_dash_server(self.dash_app)
 
                     raise exc
-                    # return self.default_action
             else:
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
