@@ -160,51 +160,57 @@ class CircleObjectPathEstimator(PathEstimator):
         c_idx_start =  self._cart_2d_to_c_idx(cart_2d_start[0], cart_2d_start[1])
         c_idx_target = self._cart_2d_to_c_idx(cart_2d_target[0], cart_2d_target[1])
 
-        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
-        visited = np.zeros(self.grid_map.shape).astype(int)
-        previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], 2)).astype(int)
+        # first try to plan only in free space, then also in movable and unknown space
+        for allowed_subspaces in [[FREE], [FREE, MOVABLE, UNKNOWN]]:
+            # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
+            visited = np.zeros(self.grid_map.shape).astype(int)
+            previous_cell = np.zeros((self.grid_map.shape[0], self.grid_map.shape[1], 2)).astype(int)
 
-        # set all cost to maximal size, except for the starting cell position
-        cost = sys.maxsize*np.ones(self.grid_map.shape)
-        cost[c_idx_start] = 0
+            # set all cost to maximal size, except for the starting cell position
+            cost = sys.maxsize*np.ones(self.grid_map.shape)
+            cost[c_idx_start] = 0
 
-        queue = []
-        queue.append(c_idx_start)
+            queue = []
+            queue.append(c_idx_start)
 
-        (x_max, y_max) = self.grid_map.shape
+            (x_max, y_max) = self.grid_map.shape
 
-        while len(queue) != 0:
-            c_idx_temp = queue.pop(0)
-            # set c_idx_temp to visited
-            visited[c_idx_temp] = 2
+            while len(queue) != 0:
+                c_idx_temp = queue.pop(0)
+                # set c_idx_temp to visited
+                visited[c_idx_temp] = 2
 
-            x_low = max(c_idx_temp[0]-1, 0)
-            x_high = min(c_idx_temp[0]+1, x_max-1)
-            y_low = max(c_idx_temp[1]-1, 0)
-            y_high = min(c_idx_temp[1]+1, y_max-1)
+                x_low = max(c_idx_temp[0]-1, 0)
+                x_high = min(c_idx_temp[0]+1, x_max-1)
+                y_low = max(c_idx_temp[1]-1, 0)
+                y_high = min(c_idx_temp[1]+1, y_max-1)
 
-            # loop though neighboring indexes
-            for x_idx in range(x_low, x_high+1):
-                for y_idx in range(y_low, y_high+1):
-                    c_idx = (x_idx, y_idx)
+                # loop though neighboring indexes
+                for x_idx in range(x_low, x_high+1):
+                    for y_idx in range(y_low, y_high+1):
+                        c_idx = (x_idx, y_idx)
 
-                    # only compare unvisited cells
-                    if visited[c_idx] != 2:
+                        # only compare unvisited cells
+                        if visited[c_idx] != 2:
 
-                        # path cannot go through objects
-                        if self._c_idx_to_occupancy(*c_idx) != UNMOVABLE:
+                            # path cannot go through objects
+                            if self._c_idx_to_occupancy(*c_idx) in allowed_subspaces:
 
-                            # put cell in the queue if not already in there
-                            if visited[c_idx] == 0:
-                                visited[c_idx] = 1
-                                queue.append(c_idx)
+                                # put cell in the queue if not already in there
+                                if visited[c_idx] == 0:
+                                    visited[c_idx] = 1
+                                    queue.append(c_idx)
 
-                            # update cost and previous cell if lower cost is found
-                            temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
-                            if temp_cost < cost[c_idx]:
+                                # update cost and previous cell if lower cost is found
+                                temp_cost = cost[c_idx_temp] + np.linalg.norm(c_idx_temp-np.array(c_idx))
+                                if temp_cost < cost[c_idx]:
 
-                                cost[c_idx] = temp_cost
-                                previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
+                                    cost[c_idx] = temp_cost
+                                    previous_cell[c_idx[0], c_idx[1], :] = c_idx_temp
+
+
+            if cost[c_idx_target] < sys.maxsize:
+                break
 
         # no shortest path was found
         if cost[c_idx_target] == sys.maxsize:

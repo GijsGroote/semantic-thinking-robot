@@ -7,44 +7,42 @@ succesfully been traversed, a subtask is completed. When all subtask are complet
 the task is completed.
 """
 
-from abc import abstractmethod
 import random
 import time
 from typing import Tuple
-import warnings
 import numpy as np
-from pyvis.network import Network
-
-from motion_planning_env.box_obstacle import BoxObstacle
-from motion_planning_env.sphere_obstacle import SphereObstacle
-from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.global_planning.graph import Graph
-from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
+from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
+from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
 from robot_brain.global_planning.kgraph.kgraph import KGraph
-
 from robot_brain.global_planning.node import Node, NODE_COMPLETED, NODE_UNFEASIBLE, NODE_INITIALISED, NODE_FAILED
 from robot_brain.global_planning.object_node import ObjectNode
-from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
-from robot_brain.state import State
-from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificationEdge
 from robot_brain.global_planning.edge import Edge, EDGE_INITIALISED, EDGE_COMPLETED, EDGE_EXECUTING, EDGE_FAILED
+from robot_brain.global_planning.hgraph.action_edge import (
+        ActionEdge,
+        EDGE_PATH_EXISTS,
+        EDGE_PATH_IS_PLANNED,
+        EDGE_HAS_SYSTEM_MODEL,
+        )
 from robot_brain.global_planning.hgraph.drive_act_edge import DriveActionEdge
-from robot_brain.global_planning.hgraph.push_ident_edge import PushIdentificationEdge
 from robot_brain.global_planning.hgraph.push_act_edge import PushActionEdge
-from robot_brain.global_planning.hgraph.action_edge import ActionEdge, EDGE_PATH_EXISTS, EDGE_PATH_IS_PLANNED, EDGE_HAS_SYSTEM_MODEL
-from robot_brain.local_planning.graph_based.path_estimator import PathEstimator
 from robot_brain.global_planning.hgraph.identification_edge import IdentificationEdge
+from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificationEdge
+from robot_brain.global_planning.hgraph.push_ident_edge import PushIdentificationEdge
 from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
 
-from robot_brain.global_planning.hgraph.hgraph import ROBOT_IDEN
-from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
+from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
+from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.state import State
+
+from robot_brain.controller.controller import Controller
 from robot_brain.controller.push.push_controller import PushController
 from robot_brain.controller.drive.drive_controller import DriveController
 from robot_brain.system_model import SystemModel
-from robot_brain.controller.controller import Controller
+
+from logger.hlogger import HLogger
 from robot_brain.exceptions import (
         RunnoutOfControlMethodsException,
         NoPathExistsException,
@@ -54,7 +52,6 @@ from robot_brain.exceptions import (
         PushAnUnmovableObjectException,
         MovableObjectDetectedException,
         )
-from logger.hlogger import HLogger
 
 EXECUTION_LOOP = "executing"
 SEARCHING_LOOP = "searching"

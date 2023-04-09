@@ -250,59 +250,66 @@ class RectangleObjectPathEstimator(PathEstimator):
         p_idx_start = self._pose_2d_to_p_idx(pose_2d_start)
         p_idx_target = self._pose_2d_to_p_idx(pose_2d_target)
 
-        # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
-        visited = np.zeros((self.grid_map.shape[0],
-            self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
-        previous_cell = np.zeros((self.grid_map.shape[0],
-            self.grid_map.shape[1], self.grid_map.shape[2], 3)).astype(int)
 
-        # set all cost to maximal size, except for the starting cell position
-        cost = sys.maxsize*np.ones(self.grid_map.shape)
-        cost[p_idx_start] = 0
+        # first try to plan only in free space, then also in movable and unknown space
+        for allowed_subspaces in [[FREE], [FREE, MOVABLE, UNKNOWN]]:
 
-        queue = []
-        queue.append(p_idx_start)
+            # a visited flag (0 for unvisited, 1 for in the queue, 2 for visited)
+            visited = np.zeros((self.grid_map.shape[0],
+                self.grid_map.shape[1], self.grid_map.shape[2])).astype(int)
+            previous_cell = np.zeros((self.grid_map.shape[0],
+                self.grid_map.shape[1], self.grid_map.shape[2], 3)).astype(int)
 
-        (x_max, y_max, orien_max) = self.grid_map.shape
+            # set all cost to maximal size, except for the starting cell position
+            cost = sys.maxsize*np.ones(self.grid_map.shape)
+            cost[p_idx_start] = 0
 
-        while len(queue) != 0:
-            cell_pose_temp = queue.pop(0)
+            queue = []
+            queue.append(p_idx_start)
 
-            # set cell_pose_temp to visited
-            visited[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2]] = 2
+            (x_max, y_max, orien_max) = self.grid_map.shape
 
-            x_low = max(cell_pose_temp[0]-1, 0)
-            x_high = min(cell_pose_temp[0]+1, x_max-1)
-            y_low = max(cell_pose_temp[1]-1, 0)
-            y_high = min(cell_pose_temp[1]+1, y_max-1)
-            orien_low = max(cell_pose_temp[2]-1, 0)
-            orien_high = min(cell_pose_temp[2]+1, orien_max-1)
+            while len(queue) != 0:
+                cell_pose_temp = queue.pop(0)
 
-            # loop though neighboring indexes
-            for x_idx in range(x_low, x_high+1):
-                for y_idx in range(y_low, y_high+1):
-                    for orien_idx in range(orien_low, orien_high+1):
+                # set cell_pose_temp to visited
+                visited[cell_pose_temp[0], cell_pose_temp[1], cell_pose_temp[2]] = 2
 
-                        p_idx = (x_idx, y_idx, orien_idx)
+                x_low = max(cell_pose_temp[0]-1, 0)
+                x_high = min(cell_pose_temp[0]+1, x_max-1)
+                y_low = max(cell_pose_temp[1]-1, 0)
+                y_high = min(cell_pose_temp[1]+1, y_max-1)
+                orien_low = max(cell_pose_temp[2]-1, 0)
+                orien_high = min(cell_pose_temp[2]+1, orien_max-1)
 
-                        # only compare unvisited cells
-                        if visited[p_idx] != 2:
+                # loop though neighboring indexes
+                for x_idx in range(x_low, x_high+1):
+                    for y_idx in range(y_low, y_high+1):
+                        for orien_idx in range(orien_low, orien_high+1):
 
-                            # path cannot go through objects
-                            if self._p_idx_to_occupancy(*p_idx) != UNMOVABLE:
+                            p_idx = (x_idx, y_idx, orien_idx)
 
-                                # put cell in the queue if not already in there
-                                if visited[p_idx] == 0:
-                                    visited[p_idx] = 1
-                                    queue.append(p_idx)
+                            # only compare unvisited cells
+                            if visited[p_idx] != 2:
 
-                                # update cost and previous cell is a lower cost to a cell is found
-                                temp_cost = cost[cell_pose_temp]\
-                                +np.linalg.norm(cell_pose_temp-np.array(p_idx))
-                                if temp_cost < cost[p_idx]:
+                                # path cannot go through objects
+                                if self._p_idx_to_occupancy(*p_idx) in allowed_subspaces:
 
-                                    cost[p_idx] = temp_cost
-                                    previous_cell[x_idx, y_idx, orien_idx, :] = cell_pose_temp
+                                    # put cell in the queue if not already in there
+                                    if visited[p_idx] == 0:
+                                        visited[p_idx] = 1
+                                        queue.append(p_idx)
+
+                                    # update cost and previous cell is a lower cost to a cell is found
+                                    temp_cost = cost[cell_pose_temp]\
+                                    +np.linalg.norm(cell_pose_temp-np.array(p_idx))
+                                    if temp_cost < cost[p_idx]:
+
+                                        cost[p_idx] = temp_cost
+                                        previous_cell[x_idx, y_idx, orien_idx, :] = cell_pose_temp
+
+            if cost[p_idx_target] < sys.maxsize:
+                break
 
         if cost[p_idx_target] == sys.maxsize:
             raise NoPathExistsException("Dijkstra algorithm is unable to connect start to target state")
