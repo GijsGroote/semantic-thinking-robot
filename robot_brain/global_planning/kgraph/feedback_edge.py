@@ -22,13 +22,22 @@ class FeedbackEdge(Edge):
             obj: Object,
             verb: str,
             controller: Controller,
-            model_name: str):
+            model_name: str,
+            edge_status):
 
         Edge.__init__(self, iden, source, to, verb, controller, "no_subtask")
         self.success_factor = success_factor
+        self.n_failed = 0
+        self.n_succes = 0
         self.obj = obj
+        self.status = EDGE_INITIALISED
         self.model_name = model_name
-
+        if edge_status == EDGE_COMPLETED:
+            self.n_succes = 1
+        elif edge_status == EDGE_FAILED:
+            self.n_failed = 1
+        else:
+            raise ValueError(f"incorrect edge_status encountered: {edge_status}")
 
     def completed(self) -> bool:
         pass
@@ -42,8 +51,9 @@ class FeedbackEdge(Edge):
         pass
 
     def to_string(self):
-        return f"Edge type: {type(self).__name__}<br> Edge identifier: {self.iden}"\
-                f"Controller: {self.controller.name}<br>System model: {self.system_model.name}"
+        return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>"\
+                f"Object: {self.obj.name},<br>Success Factor: {self.success_factor}<br>"\
+                f"Controller: {self.controller.name}<br>System model: {self.model_name}"
 
     @property
     def success_factor(self):

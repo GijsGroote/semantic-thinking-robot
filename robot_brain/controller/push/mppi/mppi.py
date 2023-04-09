@@ -58,15 +58,15 @@ class PushMppi(PushController):
         pass
 
     def _set_target_state(self):
-        self.controller.running_cost = self._running_cost 
+        self.controller.running_cost = self._running_cost
 
-    @abstractmethod 
+    @abstractmethod
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         pass
-    
+
     def visualise(self, save=True):
         """ create plot for the mppi controller. """
-        
+
         dt_counter = len(self.pred_error)-1
 
         # plot only last PLOT_N_TIMESTEPS data points
@@ -77,7 +77,7 @@ class PushMppi(PushController):
         else:
             time = np.arange(0, dt_counter+1, 1)
             pred_error = self.pred_error
-        
+
         # prediction error plot
         fig = px.line(
             x=time,

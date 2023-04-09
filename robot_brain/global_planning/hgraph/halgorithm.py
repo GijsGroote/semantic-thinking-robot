@@ -117,7 +117,7 @@ class HypothesisAlgorithm():
 
         # let KGraph help to update objects type
         for obj in self.objects.values():
-            obj_type = kgraph.get_object_type(obj.name)
+            obj_type = kgraph.get_object_type(obj)
 
             if obj_type is not None:
                 obj.type = obj_type
@@ -139,7 +139,6 @@ class HypothesisAlgorithm():
                     self.hgraph.unique_node_iden(),
                     temp_obj.name,
                     temp_obj,
-                    subtask_name
                     ))
 
             # target node
@@ -250,7 +249,13 @@ class HypothesisAlgorithm():
                     self.estimate_path(self.current_edge)
 
                 elif self.current_edge.status == EDGE_PATH_EXISTS:
-                    self.create_ident_edge(self.current_edge)
+                    # create no ident edge if controller already has a model
+                    if self.current_edge.controller.system_model.name is not None:
+                        self.current_edge.set_has_system_model_status()
+
+                    # create identification edge if model is lacking
+                    else:
+                        self.create_ident_edge(self.current_edge)
 
                 elif self.current_edge.status == EDGE_HAS_SYSTEM_MODEL:
                     self.search_path(self.current_edge)
@@ -451,12 +456,22 @@ class HypothesisAlgorithm():
     def create_drive_edge(self, source_node_iden: int, target_node_iden: int):
         """ create drive edge and adds created model node to hgraph. """
 
-        # TODO: the knowledge graph should come into play here
-        knowledge_graph = False
+        kgraph_suggestion = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
+        
+        if kgraph_suggestion is not None:
 
-        if knowledge_graph:
-            print("knowledge graph has a proposition")
-            # TODO: the knowledge graph should come into play here
+            edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
+                    source=source_node_iden,
+                    to=target_node_iden,
+                    robot_obj=self.robot_obj,
+                    verb="driving",
+                    controller=kgraph_suggestion,
+                    model_name=kgraph_suggestion.system_model.name,
+                    subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
+
+            self.hgraph.add_edge(edge)
+            self.add_edge_to_hypothesis(edge)
+
         else:
 
             exception_triggered = False
@@ -739,6 +754,9 @@ class HypothesisAlgorithm():
     def increment_edge(self):
         """ updates toward the next edge in the hypothesis. """
 
+        # complete current edge
+        self.current_edge.set_completed_status()
+
         # identification edge completed -> update a system model
         if isinstance(self.current_edge, IdentificationEdge):
             self.hgraph.update_system_model(self.current_edge)
@@ -746,9 +764,6 @@ class HypothesisAlgorithm():
         # update KGraph
         elif isinstance(self.current_edge, ActionEdge):
             self.kgraph.add_edge_review(self.hgraph.get_node(self.current_edge.source).obj, self.current_edge)
-
-        # complete current edge
-        self.current_edge.set_completed_status()
 
         if self.hypothesis_completed():
             # self.stop_timing()

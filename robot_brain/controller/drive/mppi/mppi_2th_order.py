@@ -7,12 +7,12 @@ import torch
 class DriveMppi2thOrder(Mppi):
     """ Mppi controller specific for 2th order systems
     it corresponds to the point robot which is driven by velocity input. """
-    
+
     def __init__(self):
         Mppi.__init__(self, order=2)
 
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
-        """ penalty function for input when the system is in a state, the running 
+        """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
         return (x[:,0] - torch.tensor([self.target_state.pos[0]], device=TORCH_DEVICE))**2 +\
@@ -32,4 +32,4 @@ class DriveMppi2thOrder(Mppi):
 
     def _calculate_prediction_error(self, current_state: State) -> float:
         """ return calculated prediction error. """
-        return self.y_predicted.pose_euclidean(current_state)
+        return self.y_predicted.position_euclidean(current_state)

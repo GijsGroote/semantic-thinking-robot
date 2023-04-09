@@ -20,11 +20,8 @@ class Graph(ABC):
     def add_node(self, node: ObjectNode):
         """ add node to the dictionary of nodes. """
 
-    def add_edge(self, edge):
+    def add_edge(self, edge: Edge):
         """ add edge to dictionary of edges. """
-        
-        for i in self.nodes.keys():
-            print(f"{i} fuck")
         assert isinstance(edge, Edge), f"edge should be Edge and is {type(edge)}"
         assert edge.source in self.nodes, f"edge.source: {edge.source} does not exist"
         assert edge.to in self.nodes, f"edge.to: {edge.to} does not exist"
@@ -36,15 +33,15 @@ class Graph(ABC):
     def is_valid_check(self) -> bool:
         """ check if graph is valid. """
 
-    def get_node(self, iden) -> Node:
+    def get_node(self, node_iden: int) -> Node:
         """ return  node by id, raises error if the identifyer does not exist. """
-        assert iden in self.nodes
-        return self.nodes[iden]
+        assert node_iden in self.nodes
+        return self.nodes[node_iden]
 
-    def get_edge(self, iden) -> Edge:
+    def get_edge(self, edge_iden: int) -> Edge:
         """ return  edge by id, raises error if the identifyer does not exist. """
-        assert iden in self.edges
-        return self.edges[iden]
+        assert edge_iden in self.edges
+        return self.edges[edge_iden]
 
     def unique_node_iden(self) -> int:
         """ return a unique identifyer for a node. """
@@ -62,7 +59,7 @@ class Graph(ABC):
 
         return iden
 
-    def get_outgoing_edges(self, node_iden) -> List[Edge]:
+    def get_outgoing_edges(self, node_iden: int) -> List[Edge]:
         """ returns all non-failing edges pointing out of node with node_iden. """
 
         outgoing_edges = []
@@ -73,7 +70,7 @@ class Graph(ABC):
 
         return outgoing_edges
 
-    def get_incoming_edges(self, node_iden) -> List[Edge]:
+    def get_incoming_edges(self, node_iden: int) -> List[Edge]:
         """ returns the non-failing edge pointing toward this node. """
 
         incoming_edges = []
