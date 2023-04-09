@@ -10,7 +10,7 @@ def main():
     execute_time = []
     search_time = []
     subtask_number = []
-    
+
     # collect date from json files
     for i in range(1, 9):
         subtask_number.append(i)
@@ -52,4 +52,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+

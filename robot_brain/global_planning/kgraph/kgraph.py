@@ -102,13 +102,13 @@ class KGraph(Graph):
         """ update the existing edge review with new feedback. """
 
         if edge.status == EDGE_COMPLETED:
-            feedback_edge.n_succes += 1
+            feedback_edge.n_success += 1
         elif edge.status == EDGE_FAILED:
             feedback_edge.n_failed += 1
         else:
             raise ValueError(f"incorrect edge_status encountered: {edge.status}")
 
-        b =1-(feedback_edge.n_succes/(feedback_edge.n_succes + feedback_edge.n_failed))
+        b =1-(feedback_edge.n_success/(feedback_edge.n_success + feedback_edge.n_failed))
         feedback_edge.success_factor = self.calculate_successfactor(edge)**b
 
         if CREATE_SERVER_DASHBOARD:

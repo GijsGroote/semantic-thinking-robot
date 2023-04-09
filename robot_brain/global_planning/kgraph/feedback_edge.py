@@ -28,12 +28,12 @@ class FeedbackEdge(Edge):
         Edge.__init__(self, iden, source, to, verb, controller, "no_subtask")
         self.success_factor = success_factor
         self.n_failed = 0
-        self.n_succes = 0
+        self.n_success = 0
         self.obj = obj
         self.status = EDGE_INITIALISED
         self.model_name = model_name
         if edge_status == EDGE_COMPLETED:
-            self.n_succes = 1
+            self.n_success = 1
         elif edge_status == EDGE_FAILED:
             self.n_failed = 1
         else:
@@ -53,7 +53,8 @@ class FeedbackEdge(Edge):
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>"\
                 f"Object: {self.obj.name},<br>Success Factor: {self.success_factor}<br>"\
-                f"Controller: {self.controller.name}<br>System model: {self.model_name}"
+                f"Controller: {self.controller.name}<br>System model: {self.model_name}"\
+                f"n_success: {self.n_success}<br>n_failed: {self.n_failed}"
 
     @property
     def success_factor(self):

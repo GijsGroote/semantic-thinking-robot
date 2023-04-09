@@ -33,7 +33,15 @@ from robot_brain.global_planning.hgraph.drive_ident_edge import DriveIdentificat
 from robot_brain.global_planning.hgraph.push_ident_edge import PushIdentificationEdge
 from robot_brain.global_planning.hgraph.empty_edge import EmptyEdge
 
-from robot_brain.global_variables import FIG_BG_COLOR, COLORS, PROJECT_PATH, LOG_METRICS, CREATE_SERVER_DASHBOARD, SAVE_LOG_METRICS
+from robot_brain.global_variables import (
+        FIG_BG_COLOR,
+        COLORS,
+        PROJECT_PATH,
+        LOG_METRICS,
+        CREATE_SERVER_DASHBOARD,
+        SAVE_LOG_METRICS,
+        EXPLORE_FACTOR)
+
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
 
@@ -65,7 +73,6 @@ SEARCHING_LOOP = "searching"
     edges have a subtask
 
 
-
 """
 
 class HypothesisAlgorithm():
@@ -80,8 +87,8 @@ class HypothesisAlgorithm():
         self.objects = {}               # dictionary with all objects
         self.hypothesis = []            # list of edges, current hypothesis to complete self.current_subtask
         self.edge_pointer = 0           # point toward the self.current_edge in self.hypothesis
-        self.current_edge = None
-        self.current_node = None
+        self.current_edge = None        # indicate the edge that is in the spotlight (executing or making ready for execution)
+        self.current_node = None        # node that has current_edge as outgoing edge
         self.current_subtask = None     # current subtask that the halgorithm tries to complete
         self.kgraph = None              # knowledge graph
 
@@ -92,7 +99,7 @@ class HypothesisAlgorithm():
         else:
             raise ValueError(f"robot name {robot_obj.name} not recognised")
 
-        if LOG_METRICS:
+        if LOG_METRICS or SAVE_LOG_METRICS:
             self.logger = HLogger()
 
         # give seed to make solutions to tasks repeatable
@@ -361,9 +368,6 @@ class HypothesisAlgorithm():
 
                     }
 
-            print(f'makign subtask heyhey {self.current_subtask}')
-
-            print(f'heyhey {subtask_start_node.iden} ha {subtask_target_node.iden}')
             return (subtask_start_node, subtask_target_node)
 
         else:
@@ -453,46 +457,57 @@ class HypothesisAlgorithm():
     def create_drive_edge(self, source_node_iden: int, target_node_iden: int):
         """ create drive edge and adds created model node to hgraph. """
 
-        kgraph_suggestion = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
-        
-        if kgraph_suggestion is not None:
+        suggested_controller = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
+
+        # if the kgraph suggestion is on the blocklist, neglect it
+        if suggested_controller is not None and self.hgraph.in_blocklist(
+                target_node_iden,
+                self.hgraph.get_node(target_node_iden).obj.name,
+                str(type(suggested_controller)),
+                suggested_controller.system_model.name):
+            suggested_controller = None
+
+        exception_triggered = False
+
+        try:
+            (controller, model_name) = self.hgraph.create_drive_controller(target_node_iden)
+
+        except RunnoutOfControlMethodsException as exc:
+            exception_triggered = True
+            self.handle_running_out_of_control_methods_exception(exc, target_node_iden)
+
+        if exception_triggered:
+            return self.search_hypothesis()
+
+
+        # take kgraph suggetion with some luck
+        if suggested_controller is not None and random.random() > EXPLORE_FACTOR:
 
             edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
                     source=source_node_iden,
                     to=target_node_iden,
                     robot_obj=self.robot_obj,
                     verb="driving",
-                    controller=kgraph_suggestion,
-                    model_name=kgraph_suggestion.system_model.name,
+                    controller=suggested_controller,
+                    model_name=suggested_controller.system_model.name,
                     subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
 
             self.hgraph.add_edge(edge)
             self.add_edge_to_hypothesis(edge)
+            return
 
-        else:
+        # take a randomly selected (controller, sytem_model)
+        edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
+                source=source_node_iden,
+                to=target_node_iden,
+                robot_obj=self.robot_obj,
+                verb="driving",
+                controller=controller,
+                model_name=model_name,
+                subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
 
-            exception_triggered = False
-            try:
-                (controller, model_name) = self.hgraph.create_drive_controller(target_node_iden)
-
-            except RunnoutOfControlMethodsException as exc:
-                exception_triggered = True
-                self.handle_running_out_of_control_methods_exception(exc, target_node_iden)
-
-            if exception_triggered:
-                return self.search_hypothesis()
-
-            edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
-                    source=source_node_iden,
-                    to=target_node_iden,
-                    robot_obj=self.robot_obj,
-                    verb="driving",
-                    controller=controller,
-                    model_name=model_name,
-                    subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
-
-            self.hgraph.add_edge(edge)
-            self.add_edge_to_hypothesis(edge)
+        self.hgraph.add_edge(edge)
+        self.add_edge_to_hypothesis(edge)
 
 
     def create_drive_to_best_push_position_edge(self, edge: PushActionEdge):
@@ -692,7 +707,6 @@ class HypothesisAlgorithm():
     ##########################################
     def go_to_loop(self, loop: str):
         """ go to the searching/execution loop. """
-
         if loop in [EXECUTION_LOOP, SEARCHING_LOOP]:
 
             self.in_loop = loop
@@ -706,7 +720,6 @@ class HypothesisAlgorithm():
             raise ValueError(f"unknown loop: {loop}")
 
     def stop_timing(self):
-        """ stop timing searching/executing. """
         """ stop timing searching/executing. """
         if LOG_METRICS:
             if self.current_subtask["now_timing"] is None:
@@ -730,11 +743,20 @@ class HypothesisAlgorithm():
     ##########################################
     def end_completed_task(self, success_ratio):
         """ finalise logs when a task completed. """
-        # TODO: saturday
+        if LOG_METRICS:
+            self.logger.complete_log_succes(success_ratio)
+            self.logger.print_logs()
+        if SAVE_LOG_METRICS:
+            self.logger.save_logs()
+
 
     def end_failed_task(self):
         """ finalise logs when a task failed to complete. """
-        # TODO: saturday
+        if LOG_METRICS:
+            self.logger.complete_log_failed()
+            self.logger.print_logs()
+        if SAVE_LOG_METRICS:
+            self.logger.save_logs()
 
 
     ##########################################
@@ -750,6 +772,7 @@ class HypothesisAlgorithm():
 
     def increment_edge(self):
         """ updates toward the next edge in the hypothesis. """
+        self.go_to_loop(SEARCHING_LOOP)
 
         # complete current edge
         self.current_edge.set_completed_status()
@@ -763,7 +786,7 @@ class HypothesisAlgorithm():
             self.kgraph.add_edge_review(self.hgraph.get_node(self.current_edge.source).obj, self.current_edge)
 
         if self.hypothesis_completed():
-            # self.stop_timing()
+            self.stop_timing()
             if LOG_METRICS:
                 self.logger.add_succesfull_hypothesis(self.hypothesis, self.current_subtask)
             self.hgraph.get_node(self.current_edge.to).status = NODE_COMPLETED

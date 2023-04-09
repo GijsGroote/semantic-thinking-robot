@@ -56,9 +56,6 @@ class IdentificationEdge(Edge):
 
     def ready_for_execution(self) -> bool:
         """ checks if all parameters are set to execute this transition. """
-        # assert self.status != EDGE_EXECUTING,\
-        #         f"edge {self.iden} has status {self.status}"
-        print(f'heythere')
         return self.status in [EDGE_INITIALISED, EDGE_EXECUTING]
 
     def to_string(self):

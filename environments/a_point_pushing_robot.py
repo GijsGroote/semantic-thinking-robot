@@ -24,10 +24,8 @@ def main():
     kgraph = KGraph()
 
     # try to solve the blockade task multiple times
-    for i in range(3):
+    for i in range(5):
         print(f'starting blockade environment: {i}')
-
-        kgraph.visualise(save=False)
 
         action = np.zeros(env.n())
         env.reset()
@@ -62,7 +60,7 @@ def main():
                 # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
                 ("robot", State(pos=np.array([-1.3212, 1, 0]))),
                 ("robot", State(pos=np.array([3.3212, 2.20, 0]))),
-                ("robot", State(pos=np.array([4,-2,0]))),
+                # ("robot", State(pos=np.array([4,-2,0]))),
                 ("robot", State(pos=np.array([-4, -4, 0]))),
                 ],
             "objects": objects,

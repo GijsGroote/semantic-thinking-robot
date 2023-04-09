@@ -5,12 +5,12 @@ from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
+
+from robot_brain.global_variables import POINT_ROBOT_RADIUS
 from robot_brain.state import State
-from robot_brain.object import Object, UNMOVABLE
-from robot_brain.global_planning.hgraph.local_planning.graph_based.\
-    circle_object_path_estimator import CircleObjectPathEstimator
-from robot_brain.global_planning.hgraph.local_planning.graph_based.\
-    rectangle_object_path_estimator import RectangleObjectPathEstimator
+from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+from robot_brain.local_planning.graph_based.circle_object_path_estimator import CircleObjectPathEstimator
+from robot_brain.local_planning.graph_based.rectangle_object_path_estimator import RectangleObjectPathEstimator
 
 from helper_functions.figures import get_random_color
 
@@ -29,8 +29,8 @@ class RandomObject():
 
         self.box_counter = 0
         self.cylinder_counter = 0
-        self.movable_obst_dicts = {}
-        self.unmovable_obst_dicts = {}
+        self.movable_obst_dicts = {}    # movable obstacle data (content_dict, thus not a FreeCollisionObstacle)
+        self.unmovable_obst_dicts = {}  # unmovable obstacle data
 
         self.init_objects = {}
         self.target_objects =  {}
@@ -119,6 +119,33 @@ class RandomObject():
 
         return objects
 
+    def create_drive_task(self, n_subtasks: int) -> list:
+        """ creates a driving task for the robot in the environment. """
+
+        task = []
+
+        # create configuration space for robot
+        occupancy_graph = CircleObjectPathEstimator(
+            cell_size = 0.25,
+            grid_x_length = self.grid_x_length,
+            grid_y_length = self.grid_y_length,
+            objects = self.unmovable_objects,
+            obst_cart_2d = np.array([0,0]),
+            obst_name = "must_be_in_RandomObject_class",
+            obst_radius = POINT_ROBOT_RADIUS)
+
+        pos = self._get_random_xy_position()
+
+        for _ in range(n_subtasks):
+            # search position in free space
+            # NOTE: potentially in the while loop forever
+            while occupancy_graph.occupancy(pos) != FREE:
+                pos = self._get_random_xy_position()
+
+            task.append(("robot", State(pos=np.array([pos[0], pos[1], 0]))))
+
+        return task
+
     def create_task(self) -> list:
         """ creates a task for the objects in the environment. """
 
@@ -205,7 +232,7 @@ class RandomObject():
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,
-            objects = {**self.unmovable_obstacles, **obstacles_dict},
+            objects = {**self.unmovable_objects, **objects_dict},
             obst_cart_2d = np.array([0,0]),
             obst_name = "must_be_in_RandomObject_class",
             obst_x_length = obst_dict["geometry"]["length"],
@@ -232,7 +259,7 @@ class RandomObject():
             cell_size = 0.25,
             grid_x_length = self.grid_x_length,
             grid_y_length = self.grid_y_length,
-            objects = {**self.unmovable_obstacles, **obstacles_dict},
+            objects = {**self.unmovable_objects, **objects_dict},
             obst_cart_2d = np.array([0,0]),
             obst_name = "must_be_in_RandomObject_class",
             obst_radius = obst_dict["geometry"]["radius"])

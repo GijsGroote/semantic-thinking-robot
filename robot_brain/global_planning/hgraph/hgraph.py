@@ -112,8 +112,6 @@ class HGraph(Graph):
 
     def get_connected_source_node(self, target_node: ObjectNode, subtask_name: str) -> ObjectNode:
         """ find the node that points to the target_node over non-failing nodes and edges all in the same subtask. """
-        print(target_node)
-        print('waht are you')
         assert isinstance(target_node, ObjectNode)
         assert isinstance(subtask_name, str)
 
@@ -242,12 +240,11 @@ class HGraph(Graph):
                 model_names_filtered = []
                 for model_name in model_names:
 
-                    if not self.in_blocklist((
+                    if not self.in_blocklist(
                         target_iden,
                         self.get_node(target_iden).obj.name,
-                        edge_class,
-                        controller.name,
-                        model_name)):
+                        str(type(controller)),
+                        model_name):
                         model_names_filtered.append(model_name)
 
                 if len(model_names_filtered) > 0:
@@ -353,35 +350,24 @@ class HGraph(Graph):
 
         return True
 
-    def in_blocklist(self, para_edge_blocked: tuple) -> bool:
-        """
-        checks if the edge is already in the blocklist.
-        para_edge_blocked is a tuple containing:
-        (
-            node identifier the edge point to: edge.to,
-            object name: self.get_node(edge.to).obj.name,
-            edge class: type(edge),
-            controller name: edge.controller.name,
-            system model name: edge.controller.system_model.name
-        )
+    def in_blocklist(self,
+            target_iden: int,
+            obj_name: str,
+            controller_type: str,
+            system_model_name: str) -> bool:
+        """ checks if the edge is already in the blocklist. """
+        assert isinstance(target_iden, int)
+        assert isinstance(obj_name, str)
+        assert isinstance(controller_type, str)
+        assert isinstance(system_model_name, str)
 
-        """
-        assert isinstance(para_edge_blocked, tuple), f"para_edge_blocked should be list and is {type(para_edge_blocked)}"
-        assert isinstance(para_edge_blocked[0], int)
-        assert isinstance(para_edge_blocked[1], str)
-        assert isinstance(para_edge_blocked[2], ActionEdge)
-        assert isinstance(para_edge_blocked[3], str)
-        assert isinstance(para_edge_blocked[4], str)
+        if target_iden in self.blocklist:
+            for blocked_dict in self.blocklist[target_iden]:
 
-        if para_edge_blocked[0] in self.blocklist:
-            for temp_para_edge in self.blocklist[para_edge_blocked[0]]:
-                tpe = temp_para_edge
-
-                if para_edge_blocked[0] == tpe[0] and\
-                    para_edge_blocked[1] == tpe[1] and\
-                    para_edge_blocked[2] == tpe[2] and\
-                    para_edge_blocked[3] == tpe[3] and\
-                    para_edge_blocked[4] == tpe[4]:
+                if target_iden == blocked_dict["target_iden"] and\
+                    obj_name == blocked_dict["obj_name"] and\
+                    controller_type == blocked_dict["controller_type"] and\
+                    system_model_name == blocked_dict["system_model_name"]:
                     return True
 
         return False
@@ -394,21 +380,25 @@ class HGraph(Graph):
         assert callable(edge.controller.system_model.model),\
                 "cannot add edge without callable system model"
 
-        edge_blocked = (
-                edge.to,
-                self.get_node(edge.to).obj.name,
-                type(edge),
-                edge.controller.name,
-                edge.controller.system_model.name)
+        edge_blocked_dict = {
+                "target_iden": edge.to,
+                "obj_name": self.get_node(edge.to).obj.name,
+                "controller_type": str(type(edge.controller)),
+                "system_model_name": edge.controller.system_model.name
+                }
 
-        assert not self.in_blocklist(edge_blocked),\
+        assert not self.in_blocklist(
+                edge_blocked_dict["target_iden"],
+                edge_blocked_dict["obj_name"],
+                edge_blocked_dict["controller_type"],
+                edge_blocked_dict["system_model_name"]),\
                 f"edge: {edge.iden} should not already be in blocklist"
 
-        # create blocklist on target node key
+        # create blocked dictionary on target node key
         if edge.to in self.blocklist:
-            self.blocklist[edge.to].append(edge_blocked)
+            self.blocklist[edge.to].append(edge_blocked_dict)
         else:
-            self.blocklist[edge.to] = [edge_blocked]
+            self.blocklist[edge.to] = [edge_blocked_dict]
 
     ##########################################
     ### setters and getters ##################

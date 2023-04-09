@@ -33,13 +33,14 @@ def main():
     rand_obj_generator.create_random_objects(
             n_unmovable_objects = 3,
             n_movable_objects = 10,
-            n_subtasks = 2)
+            n_subtasks = 0)
 
     for n_env in range(4):
         print(f"create environment number: {n_env}")
 
         objects = rand_obj_generator.reshuffle_env()
-        task = rand_obj_generator.create_task()
+        # task = rand_obj_generator.create_task()
+        task = rand_obj_generator.create_drive_task(n_subtasks=3)
         env.reset()
 
         # add objects to environment
@@ -51,13 +52,6 @@ def main():
         env.add_sensor(sensor)
         ob, reward, done, info = env.step(action)
 
-        # for subtask in task:
-        #     print(subtask)
-        #     print(objects)
-        #     env.add_target_ghost(subtask[0], subtask[1].get_2d_pose())
-
-        # add sensors
-
         brain = RBrain()
         brain.setup({
             "dt": DT,
@@ -67,16 +61,27 @@ def main():
             "task": task,
             "kgraph": kgraph,
             "objects": objects,
-            "env": env
+            "env": env,
+            "n_env": n_env
         }, ob)
 
         brain.update(ob)
 
-        for _ in range(12250):
 
-            action[0:2] = brain.respond()
-            ob, reward, done, info = env.step(action)
-            brain.update(ob)
+        try:
+            for _ in range(10000):
+
+                action[0:2] = brain.respond()
+                ob, _, _, _ = env.step(action)
+                brain.update(ob)
+
+        except StopIteration as exc:
+
+            print(f"Tear down this environment, we're done here because {exc}")
+            continue
+
+        print('times is up, try again')
+
 
 if __name__ == "__main__":
     main()
