@@ -1,6 +1,7 @@
 import os
 import glob
 import multiprocessing
+import webbrowser
 from dash import Dash, html, dcc
 from dashboard.callback import register_callbacks
 
@@ -172,6 +173,10 @@ def start_dash_server(n_env: int):
             processes=4,
             threaded=False
         )
+
+
+    # open dash in new browser tab 
+    webbrowser.open_new_tab(f"http://localhost:{DASHBOARD_PORT_PID+n_env}")
 
     # Run on a separate process so that it doesn"t block
     app.server_process = multiprocessing.Process(target=run)

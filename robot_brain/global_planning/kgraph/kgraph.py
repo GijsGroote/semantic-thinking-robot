@@ -109,7 +109,7 @@ class KGraph(Graph):
             raise ValueError(f"incorrect edge_status encountered: {edge.status}")
 
         b =1-(feedback_edge.n_success/(feedback_edge.n_success + feedback_edge.n_failed))
-        feedback_edge.success_factor = self.calculate_successfactor(edge)**b
+        feedback_edge.success_factor = self.calculate_successfactor(edge)**max(0.01, b)
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()

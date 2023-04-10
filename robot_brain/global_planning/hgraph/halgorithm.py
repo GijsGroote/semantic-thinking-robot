@@ -153,10 +153,13 @@ class HypothesisAlgorithm():
                 subtask_name
                 ))
 
+
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
         if LOG_METRICS:
             self.logger.setup(task)
+
+        self.update_subtask() # update subtask to correctly time
 
     ##########################################
     ### execution loop #########
@@ -170,7 +173,6 @@ class HypothesisAlgorithm():
                 self.increment_edge()
 
             try:
-
                 return self.current_edge.respond()
 
             except MovableObjectDetectedException as exc:
@@ -743,8 +745,8 @@ class HypothesisAlgorithm():
     ##########################################
     def end_completed_task(self, success_ratio):
         """ finalise logs when a task completed. """
+        self.logger.complete_log_succes(success_ratio)
         if LOG_METRICS:
-            self.logger.complete_log_succes(success_ratio)
             self.logger.print_logs()
         if SAVE_LOG_METRICS:
             self.logger.save_logs()

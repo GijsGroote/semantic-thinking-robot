@@ -1,4 +1,5 @@
 import os
+import glob
 from pathlib import Path
 import json
 import numpy as np
@@ -6,7 +7,7 @@ from pygments import highlight, lexers, formatters
 
 from robot_brain.global_planning.edge import Edge
 from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS
-
+from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 class HLogger:
     """ Logger class which collects and outputs/saves data of the hypothesis graph. """
 
@@ -56,8 +57,15 @@ class HLogger:
                 "total_time" : subtask["search_time"] + subtask["execute_time"],
                 }
 
+        # prediction error
+        pe_list = []
+
         for (edge_nmr, edge) in enumerate(hypothesis):
             hypothesis_log["edges"]["edge_"+str(edge_nmr)] = edge.create_log()
+            if isinstance(edge, ActionEdge):
+                pe_list.append(np.round(np.average(edge.controller.pred_error), decimals=8))
+
+        hypothesis_log["avg_pred_error"] = np.average(pe_list)
 
         hypothesis_key = "hypothesis_"+str(len(self.data["subtasks"][subtask_name]["hypotheses"])+1)
 
@@ -89,8 +97,15 @@ class HLogger:
                 "total_time" : subtask["search_time"] + subtask["execute_time"],
                 }
 
+        # prediction error
+        pe_list = []
+
         for (edge_nmr, edge) in enumerate(hypothesis):
             hypothesis_log["edges"]["edge_"+str(edge_nmr)] = edge.create_log()
+            if isinstance(edge, ActionEdge):
+                pe_list.append(np.round(np.average(edge.controller.pred_error), decimals=8))
+
+        hypothesis_log["avg_pred_error"] = np.average(pe_list)
 
         hypothesis_key = "hypothesis_"+str(len(self.data["subtasks"][subtask_name]["hypotheses"])+1)
 
@@ -98,14 +113,25 @@ class HLogger:
 
     def complete_log_succes(self, success_ratio: float):
         """ finish up log after succesfully finishing task. """
-
         self.data["hypothesis_success_ratio"] = success_ratio
         self.data["completed"] = True
+        self.compute_prediction_error()
         self.compute_total_time()
 
     def complete_log_failed(self):
         """ finish up log after a failing to complete a task. """
+        self.compute_prediction_error()
         self.compute_total_time()
+
+    def compute_prediction_error(self):
+        """ compute average prediction error for the task. """
+        average_pe_list = []
+        for subtask in self.data["subtasks"].values():
+            for hyp in subtask["hypotheses"].values():
+                if "avg_pred_error" in hyp:
+                    average_pe_list.append(hyp["avg_pred_error"])
+
+        self.data["total_avg_prediction_error"] = np.average(average_pe_list)
 
     def compute_total_time(self):
         """ sum up the time spend in the execution/searching loop for every hypothesis. """
@@ -146,15 +172,22 @@ class HLogger:
         """ converts the logs to JSON and saves it under a unique new name. """
 
         if SAVE_LOG_METRICS:
+
             dir_path = PROJECT_PATH+"logger/logs"
             unique_id_num = len([entry for entry in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, entry))])+1
+            if 0 <= unique_id_num <= 9:
+                unique_id_str = "00"+str(unique_id_num)
+            elif 10 <= unique_id_num <= 99:
+                unique_id_str = "0"+str(unique_id_num)
+            else:
+                unique_id_str = str(unique_id_num)
 
-            unique_dir_path = dir_path+"/task_log_"+str(unique_id_num)+".json"
+            unique_dir_path = dir_path+"/task_log_"+unique_id_str+".json"
 
             # if file exist, add _v2 to the name
             if Path(unique_dir_path).is_file():
                 unique_dir_path = unique_dir_path[0:-5] + "_v2.json"
 
+
             with open(unique_dir_path, "x") as outfile:
                 json.dump(self.data, outfile)
-

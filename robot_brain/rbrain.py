@@ -223,7 +223,7 @@ class RBrain:
 
                     if CREATE_SERVER_DASHBOARD:
                         self.halgorithm.visualise()
-                        time.sleep(2) # give the dashboard some time to process visualising the hgraph
+                        time.sleep(1) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 
                     raise exc

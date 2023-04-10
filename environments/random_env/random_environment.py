@@ -7,7 +7,7 @@ from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
-from environments.random_env.random_objects import RandomObject
+from environments.random_env.rand_objects import RandomObject
 
 def main():
     """
