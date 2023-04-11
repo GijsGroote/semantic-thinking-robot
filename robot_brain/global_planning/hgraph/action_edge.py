@@ -144,6 +144,7 @@ class ActionEdge(Edge):
         assert self.status == EDGE_PATH_IS_PLANNED,\
         f"before setting status to {EDGE_EXECUTING} the status must"\
         f"be {EDGE_PATH_IS_PLANNED} and it's {self.status}"
+
         self.status = EDGE_EXECUTING
 
     def set_completed_status(self):

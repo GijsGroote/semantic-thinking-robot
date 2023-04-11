@@ -132,30 +132,36 @@ class HypothesisAlgorithm():
         for (subtask_name, (temp_obj, target)) in task.items():
 
             # robot start node
-            self.hgraph.add_start_node(ObjectNode(
-                self.hgraph.unique_node_iden(),
-                self.robot_obj.name,
-                self.robot_obj,
-                subtask_name
-                ))
+            self.hgraph.add_start_node(
+                    ObjectNode(
+                        iden=self.hgraph.unique_node_iden(),
+                        name=self.robot_obj.name,
+                        obj=self.robot_obj,
+                        subtask_name=subtask_name))
 
             # start object node
             if temp_obj != self.robot_obj:
-                self.hgraph.add_start_node(ObjectNode(
-                    self.hgraph.unique_node_iden(),
-                    temp_obj.name,
-                    temp_obj,
-                    subtask_name
-                    ))
+                self.hgraph.add_start_node(
+                        ObjectNode(
+                            iden=self.hgraph.unique_node_iden(),
+                            name=temp_obj.name,
+                            obj=temp_obj,
+                            subtask_name=subtask_name))
 
             # target node
+            obj_type = UNKNOWN
+            # the robot is movable by default
+            if temp_obj == self.robot_obj:
+                obj_type = MOVABLE
+
             self.hgraph.add_target_node(ObjectNode(
                 self.hgraph.unique_node_iden(),
                 temp_obj.name+"_target",
                 Object(
-                    temp_obj.name,
-                    target,
-                    temp_obj.properties),
+                    name=temp_obj.name,
+                    state=target,
+                    properties=temp_obj.properties,
+                    obj_type=obj_type),
                 subtask_name
                 ))
 
@@ -169,6 +175,7 @@ class HypothesisAlgorithm():
     ##########################################
     def respond(self) -> np.ndarray:
         """ interface into the hypothesis algorithm, eventually input for the robot is returned. """
+
 
         if self.in_loop == EXECUTION_LOOP:
 
@@ -188,15 +195,16 @@ class HypothesisAlgorithm():
 
             except PushAnMovableObjectException as exc:
                 self.handle_push_an_movable_object_exception(exc, self.current_edge)
+                return self.respond()
 
             except FaultDetectedException as exc:
-                # TODO: fault detection could be done here if fault -> raise FaultDetectedException('tsting this ')
-                pass
+                self.handle_fault_detected_exception(exc, self.current_edge)
 
             self.search_hypothesis()
             return self.respond()
 
         elif self.in_loop == SEARCHING_LOOP:
+
             self.search_hypothesis()
             return self.respond()
 
@@ -492,6 +500,9 @@ class HypothesisAlgorithm():
         # take kgraph suggetion with some luck
         if suggested_controller is not None and random.random() > EXPLORE_FACTOR:
 
+            # reset controller
+            self.hgraph.setup_drive_controller(suggested_controller, suggested_controller.system_model)
+
             edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
                     source=source_node_iden,
                     to=target_node_iden,
@@ -535,33 +546,46 @@ class HypothesisAlgorithm():
             self.handle_no_push_position_found_exception(exc)
             return
 
+        # create copy object node
+        object_copy_node = ObjectNode(
+                iden=self.hgraph.unique_node_iden(),
+                name=self.hgraph.get_node(edge.to).obj.name+"_copy",
+                obj=self.objects[self.hgraph.get_node(edge.to).obj.name],
+                subtask_name=self.hgraph.get_node(edge.source).subtask_name)
+        self.hgraph.add_node(object_copy_node)
+
         best_push_pose_against_object_node = ObjectNode(
-                self.hgraph.unique_node_iden(),
-                "best_push_pose_against_"+self.hgraph.get_node(edge.to).obj.name,
-                Object(name=self.robot_obj.name,
+                iden=self.hgraph.unique_node_iden(),
+                name="best_push_pose_against_"+self.hgraph.get_node(edge.to).obj.name,
+                obj=Object(name=self.robot_obj.name,
                     state=best_push_pose_against_object_state,
                     properties=self.robot_obj.properties,
                     obj_type=MOVABLE),
-                self.hgraph.get_node(edge.source).subtask_name)
-
+                subtask_name=self.hgraph.get_node(edge.source).subtask_name)
         self.hgraph.add_node(best_push_pose_against_object_node)
 
+        # connect best push pose node to object copy node
+        self.hgraph.add_edge(EmptyEdge(
+            iden=self.hgraph.unique_edge_iden(),
+            source=best_push_pose_against_object_node.iden,
+            to=object_copy_node.iden,
+            subtask_name=edge.subtask_name))
 
         # add robot node
         robot_start_node = self.hgraph.get_robot_start_node_in_subtask(edge.subtask_name)
 
         # add emptyEdge
         self.hgraph.add_edge(EmptyEdge(
-            self.hgraph.unique_edge_iden(),
-            edge.source,
-            robot_start_node.iden,
+            iden=self.hgraph.unique_edge_iden(),
+            source=edge.source,
+            to=robot_start_node.iden,
             subtask_name=edge.subtask_name))
 
         # create driving edge
         self.create_drive_edge(robot_start_node.iden, best_push_pose_against_object_node.iden)
 
         # rewire edge
-        edge.source = best_push_pose_against_object_node.iden
+        edge.source = object_copy_node.iden
 
     def create_push_ident_edge(self, edge: PushActionEdge):
         """ create a system identification edge for pushing. """
@@ -633,17 +657,22 @@ class HypothesisAlgorithm():
         # take kgraph suggetion with some luck
         if suggested_controller is not None and random.random() > EXPLORE_FACTOR:
 
+
+
             edge = PushActionEdge(
                     iden=self.hgraph.unique_edge_iden(),
                     source=source_node_iden,
                     to=target_node_iden,
-                    robot_obj=self.hgraph.get_robot_start_node_in_subtask(self.hgraph.get_node(target_node_iden).subtask_name),
+                    robot_obj=self.robot_obj,
                     push_obj=push_obj,
                     verb="pushing",
                     controller=suggested_controller,
                     model_name=suggested_controller.system_model.name,
                     check_obj_movable=False,
                     subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
+
+            # reset controller
+            self.hgraph.setup_push_controller(suggested_controller, suggested_controller.system_model, edge)
 
             self.hgraph.add_edge(edge)
             self.add_edge_to_hypothesis(edge)
@@ -669,7 +698,10 @@ class HypothesisAlgorithm():
         """ add edges/nodes to remove a obj. """
         # TODO: Sunday
         # find which object is blocking
-        obst_keys = self.hgraph.in_object(add_node_list, self.hgraph.get_node(edge.to).obj)
+        obst_keys = self.hgraph.in_object(
+                add_node_list,
+                self.hgraph.get_node(edge.to).obj,
+                self.objects)
 
         print(f'creating edge to remove object {obst_keys}')
 
@@ -871,11 +903,11 @@ class HypothesisAlgorithm():
 
     def handle_fault_detected_exception(self, exc: FaultDetectedException, edge: Edge):
         """ handle a FaultDetectedException. """
-        # TODO: Sunday
+        print(f"hey and fault was detect!")
+        self.hgraph.fail_edge(edge)
 
     def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):
         """ handle a PushAnUnmovableObjectException. """
-        print(f"what tf are you {edge.push_obj.name}")
         self.update_object_type(edge.push_obj.name, UNMOVABLE)
         self.hgraph.fail_edge(edge)
         self.log_exception(exc, edge)
@@ -884,6 +916,7 @@ class HypothesisAlgorithm():
     def handle_push_an_movable_object_exception(self, exc: PushAnMovableObjectException, edge: PushActionEdge):
         """ handle a PushAnMovableObjectException. """
         self.update_object_type(edge.push_obj.name, MOVABLE)
+        edge.check_obj_movable = False
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -930,6 +963,7 @@ class HypothesisAlgorithm():
 
         # update kgraph
         self.kgraph.add_object(obj)
+
 
     ##########################################
     ### checking / validating  ###############

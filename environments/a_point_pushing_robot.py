@@ -23,7 +23,7 @@ def main():
     env = gym.make(robot_type, dt=DT, render=True)
     kgraph = KGraph()
 
-    for i in range(15):
+    for i in range(10):
         print(f'starting blockade environment: {i}')
 
         action = np.zeros(env.n())
@@ -54,7 +54,7 @@ def main():
             "task": [
                 (box.name(), State(pos=np.array([2, -3.31, 0.1]))),
                 # (box2.name(), State(pos=np.array([-3, 1.31, 0.1]))),
-                # (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
+                (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
                 # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
                 # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
                 # ("robot", State(pos=np.array([-0.3212, .1, 0]))),

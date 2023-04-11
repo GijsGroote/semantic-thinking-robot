@@ -5,7 +5,7 @@ from robot_brain.object import Object
 
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.hgraph.action_edge import ActionEdge
-from robot_brain.exceptions import PushAnUnmovableObjectException, PushAnMovableObjectException
+from robot_brain.exceptions import FaultDetectedException, PushAnUnmovableObjectException, PushAnMovableObjectException
 
 class PushActionEdge(ActionEdge):
     """ Push action edge controls all pushing actions. """
@@ -39,17 +39,19 @@ class PushActionEdge(ActionEdge):
         """ respond to the robot and obstacle state. """
         # detect if an object is movable or unmovable
         if self.check_obj_movable:
-            print(f'is {self.obj_start_2d_pose} equal?{self.push_obj.name}  {self.push_obj.state.get_2d_pose()}')
-
-            print(f"memory adres from push act edge{hex(id(self.push_obj))}")
             if not all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
                 raise PushAnMovableObjectException
 
             if self.start_counter == 50 and all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
                 raise PushAnUnmovableObjectException
 
-        if self.check_obj_movable:
             self.start_counter += 1
+
+        # fault detection
+        if self.push_obj.state.position_euclidean(self.get_current_view()) > 3.0:
+            raise FaultDetectedException("pushing object {self.push_obj.name} deviated to far from path")
+        if self.push_obj.state.position_euclidean(self.robot_obj.state) > 4.0:
+            raise FaultDetectedException(f"{self.robot_obj.name} deviated to far from pushable object {self.push_obj.name}")
 
         if self.view_completed():
             self.increment_current_view()

@@ -146,21 +146,25 @@ class PointRobotVelHGraph(HGraph):
                 path_estimator=path_estimator,
                 include_orien=include_orien)
 
-    def in_object(self, pose_2ds: list, obj: Object) -> list:
+    def in_object(self, pose_2ds: list, obj: Object, objects: dict) -> list:
         """ return the object keys at pose_2ds that are in collision with obj. """
         assert isinstance(pose_2ds, list), f"pose_2ds should be a list and is {type(pose_2ds)}"
-        for temp in pose_2ds:
-            assert isinstance(temp, float), f"pose_2ds should contain only float an contains a: {type(temp)}"
+        for temp_pose_2d in pose_2ds:
+            assert isinstance(temp_pose_2d, list), f"temp_pose_2d should be a list and is {type(temp_pose_2d)}"
+            for temp in temp_pose_2d:
+                assert isinstance(temp, (float, int)),\
+                        f"temp_pose_2d should contain only float or int and contains a: {type(temp)}"
         assert isinstance(obj, Object), f"obj should be a Object and is {type(Object)}"
+        assert isinstance(objects, dict), f"objects should be a dict and is {type(objects)}"
 
         blocking_obj_keys = []
 
         if obj.name == self.robot_obj.name:
-            blocking_obj_keys = self.robot_in_object(pose_2ds)
+            blocking_obj_keys = self.robot_in_object(pose_2ds, objects)
         elif isinstance(obj.properties, BoxObstacle):
-            blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
+            blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj, objects)
         elif isinstance(obj.properties, CylinderObstacle):
-            blocking_obj_keys = self.cylinder_obj_in_object(pose_2ds, obj)
+            blocking_obj_keys = self.cylinder_obj_in_object(pose_2ds, obj, objects)
         else:
             raise ValueError("unknown object")
 
@@ -189,11 +193,11 @@ class PointRobotVelHGraph(HGraph):
         return [*set(blocking_obj_keys)]
 
 
-    def robot_in_object(self, pose_2ds) -> list:
+    def robot_in_object(self, pose_2ds: list, objects: dict) -> list:
         obj_keys = []
         for pose_2d in pose_2ds:
             xy_pos = np.array([pose_2d[0], pose_2d[1]])
-            for obj in self.objects.values():
+            for obj in objects.values():
                 if isinstance(obj.properties, BoxObstacle):
                     if circle_in_box_object(xy_pos, obj, POINT_ROBOT_RADIUS):
                         obj_keys.append(obj.name)
@@ -207,11 +211,11 @@ class PointRobotVelHGraph(HGraph):
 
         return obj_keys
 
-    def box_obj_in_object(self, pose_2ds, obj) -> list:
+    def box_obj_in_object(self, pose_2ds: list, obj: Object, objects: dict) -> list:
         blocking_obj_keys = []
         for pose_2d in pose_2ds:
 
-            for temp_obj in self.objects.values():
+            for temp_obj in objects.values():
                 if temp_obj.name == obj.name:
                     continue
 
@@ -229,12 +233,12 @@ class PointRobotVelHGraph(HGraph):
         return blocking_obj_keys
 
 
-    def cylinder_obj_in_object(self, pose_2ds, obj) -> list:
+    def cylinder_obj_in_object(self, pose_2ds: list, obj: Object, objects: dict) -> list:
         blocking_obj_keys = []
         for pose_2d in pose_2ds:
             xy_pos = np.array([pose_2d[0], pose_2d[1]])
 
-            for temp_obj in self.objects.values():
+            for temp_obj in objects.values():
                 if temp_obj.name == obj.name:
                     continue
 
@@ -545,7 +549,6 @@ class PointRobotVelHGraph(HGraph):
             return self.create_mppi_push_model_4th_order()
         else:
             raise ValueError(f"model name unknown: {model_name}")
-
 
     def setup_drive_controller(self, controller: DriveController, system_model: SystemModel):
         """ setup drive controller """

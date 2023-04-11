@@ -7,6 +7,8 @@ from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
 from robot_brain.state import State
 
+from robot_brain.exceptions import FaultDetectedException
+
 class DriveActionEdge(ActionEdge):
     """ Drive action edge controls all driving actions. """
 
@@ -34,5 +36,10 @@ class DriveActionEdge(ActionEdge):
         """ respond to the current state. """
         if self.view_completed():
             self.increment_current_view()
+
+        # fault detection
+        if self.robot_obj.state.position_euclidean(self.get_current_view()) > 2.0:
+            raise FaultDetectedException("{self.robot_obj.name} deviated to far from path")
+        # TODO: experiment with the prediction error as well please
 
         return self.controller.respond(self.robot_obj.state)

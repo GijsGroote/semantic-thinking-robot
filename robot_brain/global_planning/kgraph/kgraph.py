@@ -73,7 +73,6 @@ class KGraph(Graph):
             (obj_node_in_kgraph, obj_node) = self.object_in_kgraph(obj)
 
             if not obj_node_in_kgraph:
-                print(f"adding the sweeeet coconut oil {obj.name}")
                 assert obj.type == MOVABLE
                 self.add_object(obj)
 

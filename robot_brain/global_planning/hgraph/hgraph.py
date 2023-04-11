@@ -292,8 +292,8 @@ class HGraph(Graph):
     ### finding specific configurations ######
     ##########################################
     @abstractmethod
-    def in_object(self, pose_2ds: list, obj: Object) -> list:
-        """ return the object keys at pose_2ds that are in collision with obj. """
+    def in_object(self, pose_2ds: list, obj: Object, objects: dict) -> list:
+        """ return the object keys from objects at pose_2ds that are in collision with obj. """
 
     @abstractmethod
     def find_best_push_state_againts_object(self, blocking_obj: Object, path: list) -> State:

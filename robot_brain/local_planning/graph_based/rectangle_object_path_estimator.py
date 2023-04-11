@@ -242,11 +242,21 @@ class RectangleObjectPathEstimator(PathEstimator):
 
         if self.occupancy(pose_2d_start) != FREE:
             # convert start position to closeby position
-            for temp_small_dist in [[0.2, 0, 0], [-0.2, 0, 0],
-                    [0, 0.2, 0], [0, -0.2, 0], [0.15, 0.15, 0],
-                    [-0.15, 0.15, 0], [0.15, -0.15, 0], [-0.15, -0.15, 0]]:
-                if self.occupancy(pose_2d_start+temp_small_dist) == FREE:
-                    pose_2d_start = pose_2d_start + temp_small_dist
+            # TODO: add a small dist orientation wise
+            for small_dist in [[0.2, 0.0], [-0.2, 0.0],
+                    [0.0, 0.2], [0.0, -0.2],
+                    [0.15, 0.15], [-0.15, 0.15],
+                    [0.15, -0.15], [-0.15, -0.15],
+                    [0.5, 0.0], [-0.5, 0.0],
+                    [0.0, 0.5], [0.0, -0.5],
+                    [0.5, 0.5], [-0.5, 0.5],
+                    [0.5, -0.5], [-0.5, -0.5]]:
+                closeby_pose_2d_start = pose_2d_start
+                closeby_pose_2d_start[0] += small_dist[0]
+                closeby_pose_2d_start[1] += small_dist[1]
+
+                if self.occupancy(closeby_pose_2d_start) == FREE:
+                    pose_2d_start = closeby_pose_2d_start
                     break
             warnings.warn("the start position is in movable or unkown space")
 
