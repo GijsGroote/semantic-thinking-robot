@@ -159,9 +159,6 @@ class HypothesisAlgorithm():
                 subtask_name
                 ))
 
-
-        if CREATE_SERVER_DASHBOARD:
-            self.visualise()
         if LOG_METRICS:
             self.logger.setup(task)
 
@@ -179,6 +176,7 @@ class HypothesisAlgorithm():
                 self.increment_edge()
 
             try:
+
                 return self.current_edge.respond()
 
             except MovableObjectDetectedException as exc:
@@ -583,8 +581,8 @@ class HypothesisAlgorithm():
                 self.hgraph.add_edge(EmptyEdge(
                     iden=self.hgraph.unique_edge_iden(),
                     source=self.current_subtask["start_node"].iden,
-                    to=self.hgraph.get_node(edge.source).iden),
-                    subtask_name=edge.subtask_name)
+                    to=self.hgraph.get_node(edge.source).iden,
+                    subtask_name=edge.subtask_name))
 
         push_ident_edge = PushIdentificationEdge(
                 iden=self.hgraph.unique_edge_iden(),
@@ -605,8 +603,10 @@ class HypothesisAlgorithm():
         assert isinstance(source_node_iden, int)
         assert isinstance(target_node_iden, int)
         assert not self.hgraph.is_reachable(self.hgraph.get_node(source_node_iden), self.hgraph.get_node(target_node_iden))
+        # TODO: pushing an unmovable object is not gut. then fail
 
-        push_obj = self.hgraph.get_node(target_node_iden).obj
+
+        push_obj = self.objects[self.hgraph.get_node(target_node_iden).obj.name]
         suggested_controller = self.kgraph.action_suggestion(push_obj)
         (check_obj_movable, _) = self.kgraph.object_in_kgraph(push_obj)
 
@@ -795,7 +795,6 @@ class HypothesisAlgorithm():
             return self.search_hypothesis()
 
         if CREATE_SERVER_DASHBOARD:
-            self.visualise()
             edge.motion_planner.visualise()
 
         # take care of blocking object
@@ -810,7 +809,6 @@ class HypothesisAlgorithm():
             self.create_drive_to_best_push_position_edge(edge)
 
         if CREATE_SERVER_DASHBOARD:
-            self.visualise()
             edge.motion_planner.visualise()
 
     ##########################################
@@ -882,6 +880,7 @@ class HypothesisAlgorithm():
         self.hgraph.fail_edge(edge)
         self.log_exception(exc, edge)
 
+
     def handle_push_an_movable_object_exception(self, exc: PushAnMovableObjectException, edge: PushActionEdge):
         """ handle a PushAnMovableObjectException. """
         self.update_object_type(edge.push_obj.name, MOVABLE)
@@ -909,6 +908,9 @@ class HypothesisAlgorithm():
         assert isinstance(object_type, int)
         assert object_type in [MOVABLE, UNMOVABLE]
 
+        self.objects[obj_name].type = object_type
+        obj = self.objects[obj_name]
+
         # update nodes
         for node in self.hgraph.nodes.values():
 
@@ -922,12 +924,12 @@ class HypothesisAlgorithm():
                             self.hgraph.fail_edge(temp_edge)
 
         # update objects
-        for obj in self.objects.values():
-            if obj.properties.name == obj_name:
-                obj.type = object_type
+        for temp_obj in self.objects.values():
+            if temp_obj.properties.name == obj_name:
+                temp_obj.type = object_type
 
         # update kgraph
-        # TODO: the kgraph should be updated to unmovable
+        self.kgraph.add_object(obj)
 
     ##########################################
     ### checking / validating  ###############

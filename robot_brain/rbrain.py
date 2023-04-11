@@ -197,7 +197,7 @@ class RBrain:
         self.robot_obj.state.ang_v = ob["joint_state"]["velocity"][2]
 
         # update objects
-        if "objectSensor" in ob.keys():
+        if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
                 if key in self.objects:
                     # if key in self.object.keys():

@@ -151,6 +151,11 @@ class CircleObjectPathEstimator(PathEstimator):
             raise NoPathExistsException("Target state in object space")
 
         if self.occupancy(cart_2d_start) != FREE:
+            # convert start position to closeby position
+            for temp_small_dist in [[0.2, 0], [-0.2, 0], [0, 0.2], [0, -0.2], [0.15, 0.15], [-0.15, 0.15], [0.15, -0.15], [-0.15, -0.15]]:
+                if self.occupancy(cart_2d_start+temp_small_dist) == FREE:
+                    cart_2d_start = cart_2d_start + temp_small_dist
+                    break
             warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
 
         if self.occupancy(cart_2d_target) != FREE:

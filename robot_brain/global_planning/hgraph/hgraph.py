@@ -178,7 +178,7 @@ class HGraph(Graph):
         if isinstance(edge, ActionEdge):
             # fail corresponding identification edge
             for temp_edge in self.edges.values():
-                if temp_edge.model_for_edge_iden == edge.iden and isinstance(temp_edge, IdentificationEdge):
+                if isinstance(temp_edge, IdentificationEdge) and temp_edge.model_for_edge_iden == edge.iden:
                     self.fail_edge(temp_edge)
 
     ##########################################

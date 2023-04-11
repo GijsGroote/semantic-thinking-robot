@@ -7,6 +7,8 @@ from robot_brain.global_planning.edge import Edge
 from robot_brain.global_planning.object_node import ObjectNode
 from robot_brain.global_planning.hgraph.action_edge import EDGE_FAILED
 
+from robot_brain.global_variables import CREATE_SERVER_DASHBOARD
+
 
 class Graph(ABC):
     """
@@ -28,6 +30,9 @@ class Graph(ABC):
 
         self.edges[edge.iden] = edge
         assert self.is_valid_check()
+
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
 
     @abstractmethod
     def is_valid_check(self) -> bool:

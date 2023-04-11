@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 from robot_brain.object import Object
 
@@ -24,10 +25,9 @@ class PushActionEdge(ActionEdge):
 
         if check_obj_movable:
             self.start_counter = 0
-            self.obj_start_2d_pose = push_obj.state.get_2d_pose()
+            self.obj_start_2d_pose = copy.deepcopy(push_obj.state.get_2d_pose())
 
         ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, subtask_name, model_name)
-
         self.push_obj = push_obj
 
     def view_completed(self) -> bool:
@@ -39,11 +39,14 @@ class PushActionEdge(ActionEdge):
         """ respond to the robot and obstacle state. """
         # detect if an object is movable or unmovable
         if self.check_obj_movable:
+            print(f'is {self.obj_start_2d_pose} equal?{self.push_obj.name}  {self.push_obj.state.get_2d_pose()}')
+
+            print(f"memory adres from push act edge{hex(id(self.push_obj))}")
             if not all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
-                raise PushAnMovableObjectException()
+                raise PushAnMovableObjectException
 
             if self.start_counter == 50 and all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
-                raise PushAnUnmovableObjectException()
+                raise PushAnUnmovableObjectException
 
         if self.check_obj_movable:
             self.start_counter += 1

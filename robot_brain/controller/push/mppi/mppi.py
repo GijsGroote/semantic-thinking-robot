@@ -51,7 +51,7 @@ class PushMppi(PushController):
 
     @abstractmethod
     def _calculate_prediction_error(self, obst_state: State) -> float:
-        pass
+        """ calculate prediction error. """
 
     @abstractmethod
     def _simulate(self, robot_state: State, obstacle_state: State, system_input: State) -> State:

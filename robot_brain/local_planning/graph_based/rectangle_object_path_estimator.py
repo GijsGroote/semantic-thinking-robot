@@ -241,6 +241,13 @@ class RectangleObjectPathEstimator(PathEstimator):
             raise NoPathExistsException("Target state in object space")
 
         if self.occupancy(pose_2d_start) != FREE:
+            # convert start position to closeby position
+            for temp_small_dist in [[0.2, 0, 0], [-0.2, 0, 0],
+                    [0, 0.2, 0], [0, -0.2, 0], [0.15, 0.15, 0],
+                    [-0.15, 0.15, 0], [0.15, -0.15, 0], [-0.15, -0.15, 0]]:
+                if self.occupancy(pose_2d_start+temp_small_dist) == FREE:
+                    pose_2d_start = pose_2d_start + temp_small_dist
+                    break
             warnings.warn("the start position is in movable or unkown space")
 
         if self.occupancy(pose_2d_target) != FREE:
