@@ -6,9 +6,8 @@ from robot_brain.state import State
 class EmptyEdge(Edge):
     """ Empty edge is the links in the hgraph, that does not have any action in the simulation environmnemt. """
 
-    def __init__(self, iden, source, to, subtask_name):
-        Edge.__init__(self, iden, source, to, "empty_edge", "controller?")
-        self.subtask_name = subtask_name
+    def __init__(self, iden:int , source: int, to: int, subtask_name: str):
+        Edge.__init__(self, iden, source, to, "empty_edge", "controller?", subtask_name)
         self.status = EDGE_INITIALISED
 
     def respond(self, state) -> np.ndarray:

@@ -50,7 +50,6 @@ class PushMppi4thOrder(PushMppi):
     def _simulate(self, robot_state: State, obstacle_state: State, system_input: np.ndarray) -> State:
         """ simulate one time step into the future. """
 
-        # TODO: simulate forward using both robot and obstacle state
         pose_2d = self.system_model.model(torch.reshape(
             torch.Tensor(np.append(robot_state.get_xy_position(),
                 obstacle_state.get_2d_pose(), axis=0)), (1,5)),
@@ -60,4 +59,4 @@ class PushMppi4thOrder(PushMppi):
 
     def _calculate_prediction_error(self, obst_state: State) -> float:
         """ return calculated prediction error. """
-        return self.y_predicted.pose_euclidean(obst_state)
+        return self.y_predicted.position_euclidean(obst_state)

@@ -225,9 +225,9 @@ class DriveMotionPlanner(MotionPlanner):
             if target_sample["add_node"]:
                 add_node_list.append(target_sample["pose"])
 
-            path.append(target_sample["pose"])
+            path.append(list(target_sample["pose"]))
             target_sample = self.samples[target_sample["prev_sample_key"]]
 
-        path.append(self.samples[self.target_tree_key]["pose"])
+        path.append(list(self.samples[self.target_tree_key]["pose"]))
 
         return (path, add_node_list)

@@ -75,7 +75,7 @@ class Graph(ABC):
 
         incoming_edges = []
 
-        for temp_edge in self.edges:
+        for temp_edge in self.edges.values():
             if  temp_edge.to == node_iden and temp_edge.status != EDGE_FAILED:
                 incoming_edges.append(temp_edge)
 

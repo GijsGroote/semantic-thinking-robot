@@ -22,6 +22,9 @@ class MovableObjectDetectedException(Exception):
 class PushAnUnmovableObjectException(Exception):
     """ A unmovable object was insuccesfully pushed. """
 
+class PushAnMovableObjectException(Exception):
+    """ A movable object was succesfully pushed. """
+
 class LoopDetectedException(Exception):
     """ A loop was detected in the HGraph."""
 

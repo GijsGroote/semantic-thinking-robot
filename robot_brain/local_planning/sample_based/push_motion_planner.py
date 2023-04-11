@@ -217,21 +217,21 @@ class PushMotionPlanner(MotionPlanner):
         add_node_list = []
         while source_sample["prev_sample_key"] != self.source_tree_key:
             if source_sample["add_node"]:
-                add_node_list.append(source_sample["pose"])
+                add_node_list.append(list(source_sample["pose"]))
 
-            reversed_path.append(source_sample["pose"])
+            reversed_path.append(list(source_sample["pose"]))
             source_sample = self.samples[source_sample["prev_sample_key"]]
 
-        reversed_path.append(self.samples[self.source_tree_key]["pose"])
+        reversed_path.append(list(self.samples[self.source_tree_key]["pose"]))
         path = list(reversed(reversed_path))
 
         while target_sample["prev_sample_key"] != self.target_tree_key:
             if target_sample["add_node"]:
                 add_node_list.append(target_sample["pose"])
 
-            path.append(target_sample["pose"])
+            path.append(list(target_sample["pose"]))
             target_sample = self.samples[target_sample["prev_sample_key"]]
 
-        path.append(self.samples[self.target_tree_key]["pose"])
+        path.append(list(self.samples[self.target_tree_key]["pose"]))
 
         return (path, add_node_list)

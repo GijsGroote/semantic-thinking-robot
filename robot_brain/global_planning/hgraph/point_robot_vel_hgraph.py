@@ -251,13 +251,14 @@ class PointRobotVelHGraph(HGraph):
 
         return blocking_obj_keys
 
-    def find_best_push_state_againts_object(self, blocking_obj: Object, path: list) -> State:
+    def find_best_push_state_againts_object(self, objects: dict, blocking_obj: Object, path: list) -> State:
         """ return a state to push against blocking_obj to later push blocking_obj over path. """
+        assert isinstance(objects, dict)
         assert isinstance(blocking_obj, Object), f"blocking_obj should be Object and is {type(blocking_obj)}"
         assert isinstance(path, list), f"path should be an list and is {type(path)}"
-        for temp_tuple in path:
-            assert isinstance(temp_tuple, tuple), f"path should contain only tuple and contains a: {type(temp_tuple)}"
-            for temp in temp_tuple:
+        for temp_list in path:
+            assert isinstance(temp_list, list), f"path should contain only tuple and contains a: {type(temp_list)}"
+            for temp in temp_list:
                 assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
 
         obj_xy_position = path[0][0:2]
@@ -273,7 +274,7 @@ class PointRobotVelHGraph(HGraph):
         (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
 
         # orientation where the robot should stand to push
-        if (clost_obj_xy_position[1]-obn_xy_position[1]) == 0:
+        if (clost_obj_xy_position[1]-obj_xy_position[1]) == 0:
             if clost_obj_xy_position[0] < obj_xy_position[0]:
                 best_robot_pose_orien = math.pi/2
             else:
@@ -282,7 +283,7 @@ class PointRobotVelHGraph(HGraph):
             best_robot_pose_orien = math.atan2(-(clost_obj_xy_position[0]-obj_xy_position[0]),\
                     clost_obj_xy_position[1]-obj_xy_position[1]) + math.pi
 
-        path_estimator = self.create_drive_path_estimator(self.objects)
+        path_estimator = self.create_drive_path_estimator(objects)
 
         bo = best_robot_pose_orien
         pi = math.pi
@@ -303,8 +304,9 @@ class PointRobotVelHGraph(HGraph):
 
         raise NoBestPushPositionException(f"could not find a push position against object {blocking_obj.name}")
 
-    def find_free_state_for_blocking_object(self, blocking_obj: Object, path: list) -> State:
+    def find_free_state_for_blocking_object(self, objects: dict, blocking_obj: Object, path: list) -> State:
         """ return a state where the object can be pushed toward so it is not blocking the path. """
+        assert isinstance(objects, dict)
         assert isinstance(blocking_obj, Object), f"blocking_obj should be Object and is {type(blocking_obj)}"
         assert isinstance(path, list), f"path should be an list and is {type(path)}"
         for temp_tuple in path:
@@ -319,7 +321,7 @@ class PointRobotVelHGraph(HGraph):
         blocking_obj.type = UNMOVABLE
 
         # configuration space for the robot
-        path_estimator_robot = self.create_drive_path_estimator(self.objects)
+        path_estimator_robot = self.create_drive_path_estimator(objects)
 
         # find reachable position around the object
         reachable_xy_positions = []
@@ -352,7 +354,7 @@ class PointRobotVelHGraph(HGraph):
         reachable_xy_positions = reachable_xy_positions[:, 1:3].reshape((len(reachable_xy_positions), 2))
 
         # configuration space for the object
-        objects_and_path = copy.deepcopy(self.objects)
+        objects_and_path = copy.deepcopy(objects)
 
         # This operation takes quite some time.
         for (i, robot_xy_position_in_path) in enumerate(path):
@@ -557,7 +559,7 @@ class PointRobotVelHGraph(HGraph):
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
         assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
-        assert isinstance(edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
+        assert isinstance(push_edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
 
         source_state = self.get_node(push_edge.source).obj.state
         controller.setup(system_model, self.robot_obj.state, source_state, source_state)

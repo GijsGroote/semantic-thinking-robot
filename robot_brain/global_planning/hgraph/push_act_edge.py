@@ -4,7 +4,7 @@ from robot_brain.object import Object
 
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.hgraph.action_edge import ActionEdge
-from robot_brain.exceptions import PushAnUnmovableObjectException
+from robot_brain.exceptions import PushAnUnmovableObjectException, PushAnMovableObjectException
 
 class PushActionEdge(ActionEdge):
     """ Push action edge controls all pushing actions. """
@@ -33,15 +33,17 @@ class PushActionEdge(ActionEdge):
     def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
-        return self.push_obj.state.position_euclidean(self.get_current_view()) < 0.9
+        return self.push_obj.state.position_euclidean(self.get_current_view()) < 1.0
 
     def respond(self) -> np.ndarray:
         """ respond to the robot and obstacle state. """
+        # detect if an object is movable or unmovable
         if self.check_obj_movable:
-            # I do assume that in 30 time steps the object should be moved if it is movable
-            if self.start_counter == 50:
-                if all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
-                    raise PushAnUnmovableObjectException()
+            if not all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
+                raise PushAnMovableObjectException()
+
+            if self.start_counter == 50 and all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
+                raise PushAnUnmovableObjectException()
 
         if self.check_obj_movable:
             self.start_counter += 1

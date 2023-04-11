@@ -53,7 +53,7 @@ class FeedbackEdge(Edge):
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>"\
                 f"Object: {self.obj.name},<br>Success Factor: {self.success_factor}<br>"\
-                f"Controller: {self.controller.name}<br>System model: {self.model_name}"\
+                f"Controller: {self.controller.name}<br>System model: {self.model_name}<br>"\
                 f"n_success: {self.n_success}<br>n_failed: {self.n_failed}"
 
     @property

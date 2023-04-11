@@ -73,6 +73,7 @@ class KGraph(Graph):
             (obj_node_in_kgraph, obj_node) = self.object_in_kgraph(obj)
 
             if not obj_node_in_kgraph:
+                print(f"adding the sweeeet coconut oil {obj.name}")
                 assert obj.type == MOVABLE
                 self.add_object(obj)
 
@@ -138,6 +139,7 @@ class KGraph(Graph):
 
     def ready_for_edge_review(self, edge: ActionEdge) -> bool:
         """ check if edge has all componentes to create a success factor. """
+        print(f"the pred error has lengt {len(edge.controller.pred_error)} and status is {edge.status}")
         return len(edge.controller.pred_error) > 0 and edge.status in [EDGE_COMPLETED, EDGE_FAILED]
 
     def calculate_successfactor(self, edge: ActionEdge) -> float:

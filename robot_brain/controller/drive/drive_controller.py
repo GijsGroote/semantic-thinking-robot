@@ -38,11 +38,10 @@ class DriveController(Controller):
 
         self._update_prediction_error_sequence(current_state, system_input)
 
-        if CREATE_SERVER_DASHBOARD or PLOT_CONTROLLER or LOG_METRICS:
-            # plot the controller every x seconds
-            if self.dt_counter % (1/DT) == 0 and PLOT_CONTROLLER:
-                self.update_db()
-            self.dt_counter += 1
+        # plot the controller every x seconds
+        if self.dt_counter % (1/DT) == 0 and PLOT_CONTROLLER and CREATE_SERVER_DASHBOARD:
+            self.update_db()
+        self.dt_counter += 1
 
         return system_input
 

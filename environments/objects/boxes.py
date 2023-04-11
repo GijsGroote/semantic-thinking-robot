@@ -6,7 +6,7 @@ box_dict = {
     "mass": 3,
     "type": "box",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [0.2, -3.2, 0.5],
+    "position": [0.2, -3.2, 0.15],
     "geometry": {"length": 1.4, "width": 1.4, "height": 0.3},
 }
 
@@ -18,7 +18,7 @@ box_dict = {
     "mass": 3,
     "type": "box",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [-3.0, 2.0, 0.5],
+    "position": [-3.0, 2.0, 0.15],
     "geometry": {"length": 6, "width": 0.8, "height": 0.3},
 }
 
@@ -30,7 +30,7 @@ box_dict = {
     "mass": 3,
     "type": "box",
     "color": [0/255, 25/255, 0/255, 1],
-    "position": [3.0, 2.0, 0.5],
+    "position": [3.0, 2.0, 0.15],
     "geometry": {"length": 4, "width": .4, "height": 0.3},
 }
 

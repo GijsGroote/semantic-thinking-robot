@@ -96,7 +96,7 @@ class HGraph(Graph):
         """ return start node from subtask with target_node_iden. """
         assert isinstance(target_node, ObjectNode)
         for temp_node in self.start_nodes.values():
-            if temp_node.subtask_name == target_node.subtask_name:
+            if temp_node.subtask_name == target_node.subtask_name and temp_node.obj.properties == target_node.obj.properties:
                 return temp_node
         raise ValueError(f"corresponding start node not found from target node with iden: {target_node.iden}")
 
@@ -109,6 +109,15 @@ class HGraph(Graph):
             if temp_target_node.obj.properties == self.start_nodes[iden].obj.properties:
                 return temp_target_node
         raise ValueError("target node could not be found from starting node iden")
+
+    def get_robot_start_node_in_subtask(self, subtask_name: str) -> ObjectNode:
+        """ return the robot start node that is in subtask with subtask_name. """
+        assert isinstance(subtask_name, str)
+        for temp_start_node in self.start_nodes.values():
+            if temp_start_node.obj.properties == self.robot_obj.properties and temp_start_node.subtask_name == subtask_name:
+                return temp_start_node
+        raise ValueError("robot start node could not be found")
+
 
     def get_connected_source_node(self, target_node: ObjectNode, subtask_name: str) -> ObjectNode:
         """ find the node that points to the target_node over non-failing nodes and edges all in the same subtask. """
