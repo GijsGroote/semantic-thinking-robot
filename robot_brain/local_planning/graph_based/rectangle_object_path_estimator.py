@@ -251,12 +251,12 @@ class RectangleObjectPathEstimator(PathEstimator):
                     [0.0, 0.5], [0.0, -0.5],
                     [0.5, 0.5], [-0.5, 0.5],
                     [0.5, -0.5], [-0.5, -0.5]]:
-                closeby_pose_2d_start = pose_2d_start
-                closeby_pose_2d_start[0] += small_dist[0]
-                closeby_pose_2d_start[1] += small_dist[1]
 
-                if self.occupancy(closeby_pose_2d_start) == FREE:
-                    pose_2d_start = closeby_pose_2d_start
+                closeby_start_x = pose_2d_start[0] + small_dist[0]
+                closeby_start_y = pose_2d_start[1] + small_dist[1]
+
+                if self.occupancy([closeby_start_x, closeby_start_y, 0.0]) == FREE:
+                    pose_2d_start = np.array([closeby_start_x, closeby_start_y, 0.0])
                     break
             warnings.warn("the start position is in movable or unkown space")
 

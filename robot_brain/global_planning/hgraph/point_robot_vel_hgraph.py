@@ -1,6 +1,7 @@
 import math
 import sys
 import copy
+import warnings
 import random
 
 from typing import Tuple
@@ -14,7 +15,7 @@ from motion_planning_env.cylinder_obstacle import CylinderObstacle
 
 from robot_brain.object import Object, UNMOVABLE, FREE
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS, in_grid
+from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS
 from robot_brain.state import State
 from robot_brain.controller.controller import Controller
 from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
@@ -35,14 +36,17 @@ from robot_brain.controller.drive.drive_controller import DriveController
 
 from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsException, NoTargetPositionFoundException
 
+from helper_functions.extract_object_info import get_min_max_dimension_from_object
 from helper_functions.geometrics import (
         which_side_point_to_line,
         box_in_cylinder_object,
         box_in_box_object,
         circle_in_box_object,
         circle_in_cylinder_object,
-        to_interval_zero_to_two_pi
+        to_interval_zero_to_two_pi,
+        in_grid,
         )
+
 
 DRIVE_MPC_MODEL= "drive_mpc_model"
 DRIVE_MPPI_MODEL= "drive_mppi_model"
@@ -121,7 +125,7 @@ class PointRobotVelHGraph(HGraph):
                 grid_y_length=GRID_Y_SIZE,
                 obj=self.robot_obj,
                 step_size=0.2,
-                search_size=0.25,
+                search_size=0.35,
                 path_estimator=path_estimator)
 
     def create_push_motion_planner(self, objects: dict, push_obj: Object, path_estimator: PathEstimator) -> PushMotionPlanner:
@@ -175,7 +179,7 @@ class PointRobotVelHGraph(HGraph):
                 min_dist = sys.maxsize
                 closest_obj_key = None
 
-                for temp_obj in self.objects.values():
+                for temp_obj in objects.values():
 
                     # exclude the obj
                     if temp_obj.name == obj.name:
@@ -189,6 +193,10 @@ class PointRobotVelHGraph(HGraph):
 
                 if closest_obj_key is not None:
                     blocking_obj_keys.append(closest_obj_key)
+
+        if len(blocking_obj_keys) == 0:
+            warnings.warn("could not find object")
+            return
 
         return [*set(blocking_obj_keys)]
 
@@ -262,8 +270,9 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(path, list), f"path should be an list and is {type(path)}"
         for temp_list in path:
             assert isinstance(temp_list, list), f"path should contain only tuple and contains a: {type(temp_list)}"
-            for temp in temp_list:
-                assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
+            # TODO: fix this commented stuff
+            # for temp in temp_list:
+            #     assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
 
         obj_xy_position = path[0][0:2]
 
@@ -275,7 +284,7 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"path is shorter than 2 samples, its: {len(path)}")
 
         # retrieve min and max dimension of the object
-        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
+        (min_obj_dimension, max_obj_dimension) = get_min_max_dimension_from_object(blocking_obj)
 
         # orientation where the robot should stand to push
         if (clost_obj_xy_position[1]-obj_xy_position[1]) == 0:
@@ -313,10 +322,16 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(objects, dict)
         assert isinstance(blocking_obj, Object), f"blocking_obj should be Object and is {type(blocking_obj)}"
         assert isinstance(path, list), f"path should be an list and is {type(path)}"
-        for temp_tuple in path:
-            assert isinstance(temp_tuple, tuple), f"path should contain only tuple and contains a: {type(temp_tuple)}"
-            for temp in temp_tuple:
-                assert isinstance(temp, float), f"temp_type should contain only float an contains a: {type(temp)}"
+        for temp_pose_2d in path:
+            assert isinstance(temp_pose_2d, list),\
+                    f"path should contain lists and contains a: {type(temp_pose_2d)}"
+            # TODO: check the lists
+            # for temp_tuple in temp_pose_2d:
+            #     assert isinstance(temp_tuple, (float, int)),\
+            #             "temp_pose_2d should contain only floats and integers"\
+            #             f"and contains a: {type(temp_tuple)} {path}"
+
+        # return State(pos=np.array([0, 4, 0]))
 
         # TODO: works for circlular objects I think, but there are not orientations taken into account now
 
@@ -329,7 +344,7 @@ class PointRobotVelHGraph(HGraph):
 
         # find reachable position around the object
         reachable_xy_positions = []
-        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
+        (min_obj_dimension, max_obj_dimension) = get_min_max_dimension_from_object(blocking_obj)
         obj_xy_position = blocking_obj.state.get_xy_position()
         blocking_obj_orien = to_interval_zero_to_two_pi(blocking_obj.state.get_2d_pose()[2])
 
@@ -416,19 +431,6 @@ class PointRobotVelHGraph(HGraph):
 
         raise NoTargetPositionFoundException
 
-    def get_min_max_dimension_from_object(self, obj: Object) -> Tuple[float, float]:
-        """ return the minimal and maximal dimensions for a box or cylinder object. """
-
-        # retrieve min and max dimension of the object
-        if isinstance(obj.properties, BoxObstacle):
-            min_obj_dimension = min(obj.properties.width(), obj.properties.length())
-            max_obj_dimension = max(obj.properties.width(), obj.properties.length())
-        elif isinstance(obj.properties, CylinderObstacle):
-            min_obj_dimension = max_obj_dimension = obj.properties.radius()
-        else:
-            raise ValueError(f"object not recognised, type: {type(obj)}")
-
-        return (min_obj_dimension, max_obj_dimension)
 
     def _find_first_xy_position_in_free_space(self, obj_xy_position: np.ndarray, dist_from_obj_min: float, dist_from_obj_max: float,
                                     orien: float,  path_estimator: PathEstimator) -> np.ndarray:
@@ -452,6 +454,7 @@ class PointRobotVelHGraph(HGraph):
 
     def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
+        # return [self.create_mpc_drive_controller()]
 
         return [self.create_mppi_drive_controller(),
                 self.create_mpc_drive_controller()]
@@ -484,6 +487,43 @@ class PointRobotVelHGraph(HGraph):
             controllers_and_models.append((controller, models))
 
         return controllers_and_models
+    def get_drive_controller_not_in_kgraph(self, target_iden: int, kgraph_suggestions: list) -> Tuple[Controller, str]:
+        """ find controller and system model name that is not in kgraph_suggestions. """
+        assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
+        assert isinstance(kgraph_suggestions, (list, type(None)))
+
+        controllers = self.get_drive_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
+
+        # filter the blacklisted edges
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                DriveActionEdge,
+                controllers_and_model_names,
+                target_iden)
+
+        controller = None
+        model_name = None
+
+        if kgraph_suggestions is None:
+            return self.create_drive_controller(target_iden)
+
+        else:
+            # check if a controller is not yet in kgraph_suggestions
+            for (temp_controller, temp_model_names) in controllers_and_model_names_filtered:
+                # TODO: check not only the controller, but also the system model
+                in_kgraph = False
+                for kgraph_controller in kgraph_suggestions:
+                    if isinstance(temp_controller, type(kgraph_controller)):
+                        in_kgraph = True
+                    else:
+                        not_in_kgraph_controller = temp_controller
+                        not_in_kgraph_model_names = temp_model_names
+                if not in_kgraph:
+                    (controller, model_names) = (not_in_kgraph_controller, not_in_kgraph_model_names)
+                    model_name = random.choice(model_names)
+                    break
+
+        return (controller, model_name)
 
     def create_drive_controller(self, target_iden: int) -> Tuple[Controller, str]:
         """ randomly select a driving controller that is not on the blacklist. """

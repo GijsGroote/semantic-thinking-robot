@@ -138,7 +138,6 @@ class KGraph(Graph):
 
     def ready_for_edge_review(self, edge: ActionEdge) -> bool:
         """ check if edge has all componentes to create a success factor. """
-        print(f"the pred error has lengt {len(edge.controller.pred_error)} and status is {edge.status}")
         return len(edge.controller.pred_error) > 0 and edge.status in [EDGE_COMPLETED, EDGE_FAILED]
 
     def calculate_successfactor(self, edge: ActionEdge) -> float:
@@ -165,6 +164,20 @@ class KGraph(Graph):
             return None
         else:
             return hightest_edge.controller
+
+    def all_action_suggestions(self, obj: Object) -> Controller:
+        """ query KGraph for action suggestion. """
+        assert isinstance(obj, Object)
+
+        (obj_node_in_kgraph, obj_node) = self.object_in_kgraph(obj)
+        if not obj_node_in_kgraph:
+            return None
+
+        all_action_suggestions = []
+        for temp_edge in self.get_outgoing_edges(obj_node.iden):
+            all_action_suggestions.append(temp_edge.controller)
+
+        return all_action_suggestions
 
     def is_valid_check(self) -> bool:
         """

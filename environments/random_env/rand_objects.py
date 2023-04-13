@@ -1,3 +1,11 @@
+"""
+RandomObject class will create random objects
+between the specified upper and lower bounds.
+The objects can be reshuffled to give them a
+new position in the robot environment, for
+generated/reshuffled tasks, configuration space
+is used to make sure that the task is feasible.
+"""
 import random
 import math
 import numpy as np
@@ -27,11 +35,14 @@ class RandomObject():
         self.grid_x_length = grid_x_length
         self.grid_y_length = grid_y_length
 
+        # hold obstacle information, but do not yet create the Obstacles
         self.box_counter = 0
         self.cylinder_counter = 0
         self.movable_obst_dicts = {}    # movable obstacle data (content_dict, thus not a FreeCollisionObstacle)
         self.unmovable_obst_dicts = {}  # unmovable obstacle data
+        self.n_movable_objects = None
 
+        # created obstacles a position
         self.init_objects = {}
         self.target_objects =  {}
         self.movable_added = False
@@ -47,12 +58,10 @@ class RandomObject():
 
     def create_random_objects(self,
             n_unmovable_objects: int,
-            n_movable_objects: int,
-            n_subtasks: int):
+            n_movable_objects: int):
         """ create movable and unmovable objects randomly. """
 
-        assert n_subtasks <= n_movable_objects, "number of subtasks cannot exceed the number of movable obstacles"
-        self.n_subtasks = n_subtasks
+        self.n_movable_objects = n_movable_objects
 
         # create unmovable obstacle info dict
         for _ in range(n_unmovable_objects):
@@ -134,11 +143,13 @@ class RandomObject():
             obst_name = "must_be_in_RandomObject_class",
             obst_radius = POINT_ROBOT_RADIUS)
 
+
         pos = self._get_random_xy_position()
 
         for _ in range(n_subtasks):
             # search position in free space
             # NOTE: potentially in the while loop forever
+            pos = self._get_random_xy_position()
             while occupancy_graph.occupancy(pos) != FREE:
                 pos = self._get_random_xy_position()
 
@@ -146,8 +157,11 @@ class RandomObject():
 
         return task
 
-    def create_task(self) -> list:
+    def create_push_task(self, n_subtasks) -> list:
         """ creates a task for the objects in the environment. """
+
+        assert n_subtasks <= self.n_movable_objects, "number of subtasks cannot exceed the number of movable obstacles"
+        self.n_subtasks = n_subtasks
 
         task = []
         movable_obst_list = list(self.movable_obst_dicts.copy().items())

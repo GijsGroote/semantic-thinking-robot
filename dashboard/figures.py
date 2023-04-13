@@ -5,6 +5,7 @@ import numpy as np
 from numpy import dstack
 from robot_brain.global_variables import FIG_BG_COLOR
 
+
 pd.options.plotting.backend = "plotly"
 
 no_data_found_dict = {

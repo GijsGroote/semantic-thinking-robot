@@ -28,7 +28,7 @@ blockade_obstacles = {
             "type": "box",
             "orientation": [0, 0, math.pi/2],
             "color": [245, 181, 27, 1],
-            "position": [4.2, 0, 0.2],
+            "position": [4.1, 0, 0.2],
             "geometry": {"length": 2.7, "width": 0.3, "height": 0.4},
             }),
         "wall2": BoxObstacle(name="wall2", content_dict={
@@ -53,14 +53,14 @@ blockade_obstacles = {
 # swap
 box_dict = {
     "color": [44, 95, 45],
-    "position": [2, 1, 1],
+    "position": [2, 1, 0.3],
     "type": "box",
     "geometry": {"length": 0.6, "width": 0.5, "height": 0.6},
 }
 
 cylinder_dict = {
     "color": [155, 188, 98],
-    "position": [2, -1, 1],
+    "position": [2, -1, 0.15],
     "type": "cylinder",
     "geometry": {"radius": 0.4, "height": 0.3},
 }

@@ -6,12 +6,13 @@ import numpy as np
 from pygments import highlight, lexers, formatters
 
 from robot_brain.global_planning.edge import Edge
-from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS
+from robot_brain.global_variables import PROJECT_PATH, SAVE_LOG_METRICS, DATA_PATH
 from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 class HLogger:
     """ Logger class which collects and outputs/saves data of the hypothesis graph. """
 
     def __init__(self):
+        self.save_path = PROJECT_PATH+"logger/logs"
         self.data = {
             "completed": False,
             "subtasks": {},
@@ -20,9 +21,13 @@ class HLogger:
             "search_time": None}
 
 
-    def setup(self, task: dict):
+    def setup(self, task: dict, save_path=None):
         """ create dictionary with placeholder for every subtask in the task. """
         assert isinstance(task, dict), f"task should be a dictionary and is a {type(task)}"
+        assert isinstance(save_path, (str, type(None)))
+
+        if save_path is not None:
+            self.save_path = save_path
 
         for (subtask_name, (obj, target_state)) in task.items():
             self.data["subtasks"][subtask_name] = {
@@ -173,8 +178,7 @@ class HLogger:
 
         if SAVE_LOG_METRICS:
 
-            dir_path = PROJECT_PATH+"logger/logs"
-            unique_id_num = len([entry for entry in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, entry))])+1
+            unique_id_num = len([entry for entry in os.listdir(self.save_path) if os.path.isfile(os.path.join(self.save_path, entry))])
             if 0 <= unique_id_num <= 9:
                 unique_id_str = "00"+str(unique_id_num)
             elif 10 <= unique_id_num <= 99:
@@ -182,12 +186,11 @@ class HLogger:
             else:
                 unique_id_str = str(unique_id_num)
 
-            unique_dir_path = dir_path+"/task_log_"+unique_id_str+".json"
+            unique_dir_path = self.save_path+"/task_log_"+unique_id_str+".json"
 
             # if file exist, add _v2 to the name
             if Path(unique_dir_path).is_file():
                 unique_dir_path = unique_dir_path[0:-5] + "_v2.json"
-
 
             with open(unique_dir_path, "x") as outfile:
                 json.dump(self.data, outfile)

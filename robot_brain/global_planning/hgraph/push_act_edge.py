@@ -1,11 +1,13 @@
-import numpy as np
 import copy
-
+import numpy as np
 from robot_brain.object import Object
 
 from robot_brain.controller.controller import Controller
 from robot_brain.global_planning.hgraph.action_edge import ActionEdge
 from robot_brain.exceptions import FaultDetectedException, PushAnUnmovableObjectException, PushAnMovableObjectException
+from helper_functions.extract_object_info import get_max_dimension_from_object
+
+from robot_brain.global_variables import POINT_ROBOT_RADIUS
 
 class PushActionEdge(ActionEdge):
     """ Push action edge controls all pushing actions. """
@@ -47,10 +49,13 @@ class PushActionEdge(ActionEdge):
 
             self.start_counter += 1
 
-        # fault detection
-        if self.push_obj.state.position_euclidean(self.get_current_view()) > 3.0:
+        # detect fault: push object deviates to far from path
+        if self.push_obj.state.position_euclidean(self.get_current_view()) > 2.0:
             raise FaultDetectedException("pushing object {self.push_obj.name} deviated to far from path")
-        if self.push_obj.state.position_euclidean(self.robot_obj.state) > 4.0:
+
+        # detect fault: robot deviates to far from push object
+        if self.push_obj.state.position_euclidean(self.robot_obj.state) >\
+                2*(POINT_ROBOT_RADIUS+get_max_dimension_from_object(self.push_obj)):
             raise FaultDetectedException(f"{self.robot_obj.name} deviated to far from pushable object {self.push_obj.name}")
 
         if self.view_completed():

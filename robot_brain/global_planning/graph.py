@@ -66,6 +66,8 @@ class Graph(ABC):
 
     def get_outgoing_edges(self, node_iden: int) -> List[Edge]:
         """ returns all non-failing edges pointing out of node with node_iden. """
+        assert isinstance(node_iden, int),\
+                f"node_iden should be of type int and is: {type(node_iden)}"
 
         outgoing_edges = []
 
@@ -77,6 +79,8 @@ class Graph(ABC):
 
     def get_incoming_edges(self, node_iden: int) -> List[Edge]:
         """ returns the non-failing edge pointing toward this node. """
+        assert isinstance(node_iden, int),\
+                f"node_iden should be of type int and is: {type(node_iden)}"
 
         incoming_edges = []
 

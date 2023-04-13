@@ -1,16 +1,29 @@
+import os
 import random
 import glob
 import json
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+from robot_brain.global_variables import PROJECT_PATH, LOG_METRICS, SAVE_LOG_METRICS
+
+
+def create_new_directory(dir_path: str) -> str:
+    """ create a new directory to save generated files. """
+    save_path = None
+    if LOG_METRICS and SAVE_LOG_METRICS:
+        n_directories = len(next(os.walk(os.path.join(PROJECT_PATH, dir_path)))[1])
+        save_path = os.path.join(PROJECT_PATH, dir_path + "/run_" + str(n_directories))
+        os.mkdir(save_path)
+    return save_path
+
 def get_random_color():
     """ return a random color. """
     return [random.random(), random.random(), random.random(), 1]
 
-
 def create_time_plot(data_path: str, save_path=False):
 
+    data_path = data_path+"/*"
     total_time = []
     execute_time = []
     search_time = []
@@ -66,6 +79,8 @@ def create_time_plot(data_path: str, save_path=False):
 
 def create_prediction_error_plot(data_path: str, save_path=False):
 
+    data_path = data_path+"/*"
+
     pred_error = []
     subtask_number = []
 
@@ -81,6 +96,10 @@ def create_prediction_error_plot(data_path: str, save_path=False):
             pred_error.append(data["total_avg_prediction_error"])
 
     print(f"Creating prediction error plot out of {max(subtask_number)} JSON Files")
+
+    # throw away the first data point
+    pred_error = pred_error[1:]
+    subtask_number = subtask_number[1:]
 
     fig = make_subplots(rows=1, cols=1)
     fig.append_trace(go.Scatter(

@@ -104,10 +104,7 @@ class HypothesisAlgorithm():
         if LOG_METRICS or SAVE_LOG_METRICS:
             self.logger = HLogger()
 
-        # give seed to make solutions to tasks repeatable
-        random.seed(10)
-
-    def setup(self, kgraph: KGraph, task: list, objects: dict):
+    def setup(self, kgraph: KGraph, task: list, objects: dict, save_path=None):
         """
         mainly, create start and target nodes:
             driving subtask receives 2 nodes (start, target for robot)
@@ -166,7 +163,7 @@ class HypothesisAlgorithm():
                 ))
 
         if LOG_METRICS:
-            self.logger.setup(task)
+            self.logger.setup(task, save_path)
 
         self.update_subtask() # update subtask to correctly time
 
@@ -221,6 +218,7 @@ class HypothesisAlgorithm():
 
             # find nodes in new subtask or current unfinished subtask
             (start_node, target_node) = self.update_subtask()
+            print(f"try to connect {start_node.iden} to {target_node.iden}")
 
             # connect the unconnected start to target node
             self.connect_nodes_with_action_edge(start_node, target_node)
@@ -427,8 +425,8 @@ class HypothesisAlgorithm():
                 f"target node status must be {NODE_INITIALISED} and is {target_node.status} for node {target_node.iden}"
         start_node = self.hgraph.get_connected_target_node(self.current_subtask["start_node"], self.current_subtask["name"])
 
-        assert start_node.status == NODE_INITIALISED,\
-                f"start node status must be {NODE_INITIALISED} and is {start_node.status} for node {target_node.iden}"
+        assert start_node.status in [NODE_INITIALISED, NODE_COMPLETED],\
+                f"start node status must be {NODE_INITIALISED} or {NODE_COMPLETED} and is {start_node.status} for node {target_node.iden}"
         assert start_node.iden != target_node.iden, f"start node is target node, which are: {start_node.iden}"
 
         return (start_node, target_node)
@@ -439,12 +437,12 @@ class HypothesisAlgorithm():
     ##########################################
     def create_ident_edge(self, edge: ActionEdge):
         """ creates an identification edge. """
+        assert isinstance(edge, ActionEdge)
+
         if isinstance(edge, DriveActionEdge):
             self.create_drive_ident_edge(edge)
         elif isinstance(edge, PushActionEdge):
             self.create_push_ident_edge(edge)
-        else:
-            raise ValueError
 
     def create_drive_ident_edge(self, edge: DriveActionEdge):
         """ create a system identification edge. """
@@ -475,20 +473,12 @@ class HypothesisAlgorithm():
     def create_drive_edge(self, source_node_iden: int, target_node_iden: int):
         """ create drive edge and adds created model node to hgraph. """
 
-        suggested_controller = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
-
-        # if the kgraph suggestion is on the blocklist, neglect it
-        if suggested_controller is not None and self.hgraph.in_blocklist(
-                target_node_iden,
-                self.hgraph.get_node(target_node_iden).obj.name,
-                str(type(suggested_controller)),
-                suggested_controller.system_model.name):
-            suggested_controller = None
+        all_kgraph_controllers = self.kgraph.all_action_suggestions(self.hgraph.get_node(source_node_iden).obj)
 
         exception_triggered = False
-
         try:
-            (controller, model_name) = self.hgraph.create_drive_controller(target_node_iden)
+            (new_controller, new_model_name) = self.hgraph.get_drive_controller_not_in_kgraph(target_node_iden, all_kgraph_controllers)
+
 
         except RunnoutOfControlMethodsException as exc:
             exception_triggered = True
@@ -497,26 +487,30 @@ class HypothesisAlgorithm():
         if exception_triggered:
             return self.search_hypothesis()
 
-        # take kgraph suggetion with some luck
-        if suggested_controller is not None and random.random() > EXPLORE_FACTOR:
+        # search for controllers that are not yet in the kgraph
 
+        # find best stuggestion from kgraph
+        suggested_controller = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
+        # if the kgraph suggestion is on the blocklist, neglect it
+        if suggested_controller is not None and self.hgraph.in_blocklist(
+                target_node_iden,
+                self.hgraph.get_node(target_node_iden).obj.name,
+                str(type(suggested_controller)),
+                suggested_controller.system_model.name):
+            suggested_controller = None
+
+        if new_controller is not None:
+            controller = new_controller
+            model_name = new_model_name
+        elif suggested_controller is not None:
+            controller = suggested_controller
             # reset controller
-            self.hgraph.setup_drive_controller(suggested_controller, suggested_controller.system_model)
+            self.hgraph.setup_drive_controller(controller, controller.system_model)
+            model_name = suggested_controller.system_model.name
+        else:
+            raise ValueError
 
-            edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
-                    source=source_node_iden,
-                    to=target_node_iden,
-                    robot_obj=self.robot_obj,
-                    verb="driving",
-                    controller=suggested_controller,
-                    model_name=suggested_controller.system_model.name,
-                    subtask_name=self.hgraph.get_node(target_node_iden).subtask_name)
-
-            self.hgraph.add_edge(edge)
-            self.add_edge_to_hypothesis(edge)
-            return
-
-        # take a randomly selected (controller, sytem_model)
+        # create drive action edge
         edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
                 source=source_node_iden,
                 to=target_node_iden,
@@ -535,6 +529,7 @@ class HypothesisAlgorithm():
         assert self.current_node is not None and self.current_edge is not None,\
                 f"current_node: {self.current_node} and/or current_edge: {self.current_edge} cannot be None"
 
+        print(f"driiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiive")
         # create and add best push pose against object node
         try:
             best_push_pose_against_object_state = self.hgraph.find_best_push_state_againts_object(
@@ -549,7 +544,7 @@ class HypothesisAlgorithm():
         # create copy object node
         object_copy_node = ObjectNode(
                 iden=self.hgraph.unique_node_iden(),
-                name=self.hgraph.get_node(edge.to).obj.name+"_copy",
+                name=self.hgraph.get_node(edge.to).name+"_copy",
                 obj=self.objects[self.hgraph.get_node(edge.to).obj.name],
                 subtask_name=self.hgraph.get_node(edge.source).subtask_name)
         self.hgraph.add_node(object_copy_node)
@@ -574,12 +569,32 @@ class HypothesisAlgorithm():
         # add robot node
         robot_start_node = self.hgraph.get_robot_start_node_in_subtask(edge.subtask_name)
 
+        # check if robot has an outgoing edge and connecting could create a loop
+        print(f"check what outgoing edges threre are")
+        for temp_edge in self.hgraph.get_outgoing_edges(robot_start_node.iden):
+            if temp_edge.subtask_name == edge.subtask_name and edge.status != EDGE_FAILED:
+                print(f"edge {temp_edge.iden} is already in this hypothesis thingy")
+                # then create a new copy of that node
+                robot_start_node = ObjectNode(
+                    iden=self.hgraph.unique_node_iden(),
+                    name=robot_start_node.obj.name+"_copy",
+                    obj=robot_start_node.obj,
+                    subtask_name=robot_start_node.subtask_name)
+                self.hgraph.add_node(robot_start_node)
+
         # add emptyEdge
-        self.hgraph.add_edge(EmptyEdge(
+        temp = EmptyEdge(
             iden=self.hgraph.unique_edge_iden(),
             source=edge.source,
             to=robot_start_node.iden,
-            subtask_name=edge.subtask_name))
+            subtask_name=edge.subtask_name)
+
+        print(f"adding empty edge {temp.iden}")
+
+        self.hgraph.add_edge(temp)
+
+        print("crete drive edge")
+
 
         # create driving edge
         self.create_drive_edge(robot_start_node.iden, best_push_pose_against_object_node.iden)
@@ -657,8 +672,6 @@ class HypothesisAlgorithm():
         # take kgraph suggetion with some luck
         if suggested_controller is not None and random.random() > EXPLORE_FACTOR:
 
-
-
             edge = PushActionEdge(
                     iden=self.hgraph.unique_edge_iden(),
                     source=source_node_iden,
@@ -696,71 +709,82 @@ class HypothesisAlgorithm():
 
     def create_remove_object_edge(self, add_node_list: list, edge: ActionEdge):
         """ add edges/nodes to remove a obj. """
-        # TODO: Sunday
+        assert isinstance(add_node_list, list)
+        assert isinstance(edge, ActionEdge)
+
         # find which object is blocking
-        obst_keys = self.hgraph.in_object(
+        obj_keys = self.hgraph.in_object(
                 add_node_list,
                 self.hgraph.get_node(edge.to).obj,
                 self.objects)
 
-        print(f'creating edge to remove object {obst_keys}')
+        print(f'creating edge to remove object {obj_keys}')
 
-        if len(obst_keys) == 0:
-            edge.motion_planner.visualise(save=False)
-            warnings.warn(f"could not find object at {add_node_list[0]}, do not create edges to remove obj")
-            return
 
         # only look at the first blocking obj, ignore others
-        if len(obst_keys) > 1:
-            warnings.warn(f"multiple objects are blocking, but only {obst_keys[0]} is moved")
+        if len(obj_keys) > 1:
+            warnings.warn(f"multiple objects are blocking, but only {obj_keys[0]} is moved")
 
+        blocking_obj = self.objects[obj_keys[0]]
 
-        blocking_obst = self.objects[obst_keys[0]]
+        blocking_obj_start_node = None
+        for temp_node in self.hgraph.nodes.values():
+            if temp_node.name == blocking_obj.name:
+                blocking_obj_start_node = temp_node
 
-        # add object start node if not yet present
-        blocking_obst_start_node = None
-        for temp_node in self.hgraph.nodes:
-            if temp_node.name == blocking_obst.name:
-                blocking_obst_start_node = temp_node
-
-        if blocking_obst_start_node is None:
-            blocking_obst_start_node = ObjectNode(
+        # add object start node if not yet present, create it
+        if blocking_obj_start_node is None:
+            blocking_obj_start_node = ObjectNode(
                 self.hgraph.unique_node_iden(),
-                blocking_obst.name,
-                blocking_obst,
+                blocking_obj.name,
+                blocking_obj,
                 self.hgraph.get_node(edge.to).subtask_name
                 )
-            self.hgraph.add_node(blocking_obst_start_node)
+            self.hgraph.add_node(blocking_obj_start_node)
 
         # rewire current node toward blocking object start node
-        temp = EmptyEdge(
+        self.hgraph.add_edge(EmptyEdge(
             self.hgraph.unique_edge_iden(),
             self.hgraph.get_node(edge.source).iden,
-            blocking_obst_start_node.iden,
-            subtask_name=edge.subtask_name
-            )
+            blocking_obj_start_node.iden,
+            subtask_name=edge.subtask_name))
 
-        self.hgraph.add_edge(temp)
+        # rewire current edge to copy of current node
+        copy_current_node = ObjectNode(
+                iden=self.hgraph.unique_node_iden(),
+                name=self.hgraph.get_node(edge.source).name+"_copy",
+                obj=self.hgraph.get_node(edge.source).obj,
+                subtask_name=self.hgraph.get_node(edge.source).subtask_name)
+        self.hgraph.add_node(copy_current_node)
+        edge.source = copy_current_node.iden
 
         # find state that is not overlapping with planned path
         # TODO: the find_free_state_for_blocking_object could raise an assertionerror, fix that
-        target_state = self.hgraph.find_free_state_for_blocking_object(
+        blocking_obj_target_state = self.hgraph.find_free_state_for_blocking_object(
                 objects=self.objects,
-                blocking_obj=blocking_obst,
+                blocking_obj=blocking_obj,
                 path=edge.motion_planner.shortest_path)
 
-        blocking_obst_target_node = ObjectNode(
+        print(f"move object: {blocking_obj.name} to {blocking_obj_target_state.get_xy_position()}")
+
+        # add blocking target to be the connected source node from target
+        blocking_obj_target_node = ObjectNode(
                 self.hgraph.unique_node_iden(),
-                obst_keys[0]+"_target",
-                Object(obst_keys[0],
-                    target_state,
-                    blocking_obst.properties),
+                obj_keys[0]+"_target",
+                Object(obj_keys[0],
+                    blocking_obj_target_state,
+                    blocking_obj.properties),
                 self.hgraph.get_node(edge.to).subtask_name)
+        self.hgraph.add_node(blocking_obj_target_node)
 
-        self.hgraph.add_node(blocking_obst_target_node)
-        edge.source = blocking_obst_target_node.iden
+        self.hgraph.add_edge(EmptyEdge(
+            iden=self.hgraph.unique_edge_iden(),
+            source=blocking_obj_target_node.iden,
+            to=copy_current_node.iden,
+            subtask_name=edge.subtask_name))
 
-        print(f'push that thing to state: {target_state.get_2d_pose()}')
+        print(f'push that thing to state: {blocking_obj_target_state.get_2d_pose()}')
+        self.search_hypothesis()
 
 
     ##########################################
@@ -784,6 +808,7 @@ class HypothesisAlgorithm():
             edge.set_path_exist_status()
 
         except NoPathExistsException as exc:
+            print(f"NoPathExistsException detected {exc}")
             self.handle_no_path_exists_exception(exc, edge)
 
         if CREATE_SERVER_DASHBOARD:
@@ -879,7 +904,12 @@ class HypothesisAlgorithm():
 
         self.hgraph.fail_edge(edge)
 
-        self.log_exception(exc, edge)
+        if LOG_METRICS:
+            self.logger.add_failed_hypothesis(self.hypothesis, self.current_subtask, str(exc))
+
+        if CREATE_SERVER_DASHBOARD:
+            self.visualise()
+            edge.path_estimator.visualise()
 
 
     def handle_planning_time_elapsed_exception(self, exc: PlanningTimeElapsedException, edge: ActionEdge):
@@ -909,7 +939,22 @@ class HypothesisAlgorithm():
     def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):
         """ handle a PushAnUnmovableObjectException. """
         self.update_object_type(edge.push_obj.name, UNMOVABLE)
-        self.hgraph.fail_edge(edge)
+        for temp_edge in self.hypothesis:
+            print(f"temp_edge {temp_edge.iden} will fail")
+
+
+        # fail every edge in hypothesis
+        for temp_edge in self.hypothesis:
+            self.hgraph.fail_edge(temp_edge)
+        # except the target node
+        self.current_subtask["target_node"].status = NODE_INITIALISED
+        # clear hypothesis
+        self.hypothesis = []
+        self.edge_pointer = 0
+
+        print(f"tha target node is node {self.current_subtask['target_node'].iden} with status {self.current_subtask['target_node'].status}")
+        # self.visualise(save=False)
+
         self.log_exception(exc, edge)
 
 

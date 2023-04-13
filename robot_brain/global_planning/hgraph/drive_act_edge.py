@@ -37,9 +37,13 @@ class DriveActionEdge(ActionEdge):
         if self.view_completed():
             self.increment_current_view()
 
-        # fault detection
+        # fault detection, deviated from path
         if self.robot_obj.state.position_euclidean(self.get_current_view()) > 2.0:
             raise FaultDetectedException("{self.robot_obj.name} deviated to far from path")
-        # TODO: experiment with the prediction error as well please
+
+        # fault detection, prediction error
+        if len(self.controller.pred_error)>30:
+            if np.average(self.controller.pred_error[-25:-1]) > 0.05:
+                raise FaultDetectedException(f"prediction error is high for to long for controller {self.controller.name}")
 
         return self.controller.respond(self.robot_obj.state)

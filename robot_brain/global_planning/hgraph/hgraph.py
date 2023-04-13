@@ -146,7 +146,7 @@ class HGraph(Graph):
         outgoing_edge_list = [edge for edge in self.edges.values() if\
                 edge.source == source_node.iden and\
                 edge.status != EDGE_FAILED and\
-                self.get_node(edge.to).status == NODE_INITIALISED and\
+                self.get_node(edge.to).status in [NODE_INITIALISED, NODE_COMPLETED] and\
                 edge.subtask_name == subtask_name]
 
         # no valid edges pointing out of this node -> return
@@ -155,7 +155,7 @@ class HGraph(Graph):
             return source_node
 
         else:
-            return self.get_connected_source_node(self.get_node(outgoing_edge_list[0].to), subtask_name)
+            return self.get_connected_target_node(self.get_node(outgoing_edge_list[0].to), subtask_name)
 
     def fail_edge(self, edge: Edge):
         """
@@ -350,11 +350,14 @@ class HGraph(Graph):
                 if len(edge_points_to_temp_node_list) == 0:
                     break
                 if len(edge_points_to_temp_node_list) > 1:
+                    self.visualise(save=False)
                     raise TwoEdgesPointToSameNodeException()
 
                 node_points_to_temp_node = self.get_node(edge_points_to_temp_node_list[0].source)
 
                 if node_points_to_temp_node.iden == temp_node.iden:
+
+                    self.visualise(save=False)
                     raise LoopDetectedException
 
         return True

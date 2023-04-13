@@ -152,6 +152,7 @@ class CircleObjectPathEstimator(PathEstimator):
 
         if self.occupancy(cart_2d_start) != FREE:
 
+            found_close_start_in_free_space = False
             # convert start position to closeby position
             for small_dist in [[0.2, 0.0], [-0.2, 0.0],
                     [0.0, 0.2], [0.0, -0.2],
@@ -162,15 +163,15 @@ class CircleObjectPathEstimator(PathEstimator):
                     [0.5, 0.5], [-0.5, 0.5],
                     [0.5, -0.5], [-0.5, -0.5]]:
 
-                closeby_cart_2d_start = cart_2d_start
-                closeby_cart_2d_start[0] += small_dist[0]
-                closeby_cart_2d_start[1] += small_dist[1]
+                closeby_start_x = cart_2d_start[0] + small_dist[0]
+                closeby_start_y = cart_2d_start[1] + small_dist[1]
 
-                if self.occupancy(closeby_cart_2d_start) == FREE:
-                    cart_2d_start = closeby_cart_2d_start
-                    print(f"update the cart_2d_start now")
+                if self.occupancy([closeby_start_x, closeby_start_y, 0.0]) == FREE:
+                    cart_2d_start = np.array([closeby_start_x, closeby_start_y, 0.0])
+                    found_close_start_in_free_space = True
                     break
-            warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
+            if not found_close_start_in_free_space:
+                warnings.warn(f"the start position {cart_2d_start} is in movable or unknown space")
 
         if self.occupancy(cart_2d_target) != FREE:
             warnings.warn(f"the target position {cart_2d_target} is in movable or unknown space")

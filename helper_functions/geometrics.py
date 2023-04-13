@@ -1,8 +1,18 @@
 import math
 import numpy as np
 import torch
-# from robot_brain.object import Object
-from robot_brain.global_variables import TORCH_DEVICE
+
+
+from robot_brain.global_variables import TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE
+
+
+# TODO: give proper description to this entire file + functions
+
+def in_grid(x:float, y:float) -> bool:
+    """ return True if the (x,y) position in
+    inside the grid boundaries, otherwise False. """
+    return abs(x)<=GRID_X_SIZE/2 and abs(y)<=GRID_Y_SIZE
+
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
     """ returns the minimal distance from a point to a line.

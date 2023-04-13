@@ -8,12 +8,15 @@ from robot_brain.state import State
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.rand_objects import RandomObject
+from helper_functions.figures import create_new_directory
 
 def main():
     """
     Randomly generated environment with a randomly assigned task
     for the pointrobot to solve.
     """
+
+    robot_type = "pointRobot-vel-v7"
 
     rand_obj_generator = RandomObject(
             grid_x_length=GRID_X_SIZE,
@@ -24,8 +27,9 @@ def main():
 
     kgraph = KGraph()
 
+    save_path = create_new_directory(dir_path="environments/random_env/data")
 
-    robot_type = "pointRobot-vel-v7"
+
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
 
@@ -62,11 +66,11 @@ def main():
             "kgraph": kgraph,
             "objects": objects,
             "env": env,
-            "n_env": n_env
+            "n_env": n_env,
+            "save_path": save_path,
         }, ob)
 
         brain.update(ob)
-
 
         try:
             for _ in range(10000):

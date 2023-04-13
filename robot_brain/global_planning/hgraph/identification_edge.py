@@ -67,7 +67,6 @@ class IdentificationEdge(Edge):
             f"before setting status to {EDGE_EXECUTING} the status must"\
             f"be {EDGE_INITIALISED} or {EDGE_EXECUTING} and it's {self.status}"
 
-        print(f'edge {self.iden} status is executing')
         self.status = EDGE_EXECUTING
 
     def set_completed_status(self):

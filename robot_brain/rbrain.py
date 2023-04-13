@@ -9,7 +9,13 @@ from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
 from robot_brain.object import Object
 from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
-from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
+from robot_brain.global_variables import (
+        PROJECT_PATH,
+        CREATE_SERVER_DASHBOARD,
+        POINT_ROBOT_RADIUS,
+        BOXER_ROBOT_LENGTH,
+        BOXER_ROBOT_WIDTH,
+        )
 
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.hgraph.halgorithm import HypothesisAlgorithm
@@ -175,10 +181,14 @@ class RBrain:
         else:
             kgraph = KGraph()
 
+        if "save_path" not in stat_world_info:
+            stat_world_info["save_path"] = PROJECT_PATH+"logger/logs"
+
         self.halgorithm.setup(
                 kgraph=kgraph,
                 task=task,
-                objects=self.objects)
+                objects=self.objects,
+                save_path=stat_world_info["save_path"])
 
     def update(self, ob):
         """

@@ -90,9 +90,10 @@ class ActionEdge(Edge):
 
         # TODO: this should be done differnetly, due to fist predition error begin 0 mostly
         if len(pred_error) > 1:
-            log["avg_pred_error"] = np.round(np.average(pred_error), decimals=5)
-            log["max_pred_error"] = np.round(max(pred_error), decimals=5)
-            log["min_pred_error"] = np.round(min(pred_error[0:-1]), decimals=5)
+            log["avg_pred_error"] = np.round(np.average(pred_error), decimals=10)
+            log["max_pred_error"] = np.round(max(pred_error), decimals=10)
+            log["min_pred_error"] = np.round(min(pred_error[0:-1]), decimals=10)
+            log["pred_error"] = pred_error
 
         return log
 
@@ -112,7 +113,7 @@ class ActionEdge(Edge):
 
     def to_string(self):
         return f"Edge type: {type(self).__name__}<br>Edge identifier: {self.iden}<br>Status: {self.status}<br>"\
-                f"Controller: {self.controller.name}<br>System model: {self.system_model.name}"
+                f"Controller: {self.controller.name}<br>System model: {type(self.system_model)}"
 
     def set_path_exist_status(self):
         assert isinstance(self.path_estimator, PathEstimator),\

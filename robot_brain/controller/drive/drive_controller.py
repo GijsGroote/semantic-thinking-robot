@@ -23,7 +23,6 @@ class DriveController(Controller):
         because dynamic models could not yet exist. """
         self.system_model = system_model
         self.target_state = target_state
-        print(f"set this as target state {target_state.get_xy_position()}")
         self._setup(current_state)
 
     @abstractmethod
