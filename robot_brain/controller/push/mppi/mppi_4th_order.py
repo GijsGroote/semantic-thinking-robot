@@ -10,6 +10,7 @@ class PushMppi4thOrder(PushMppi):
 
     def __init__(self):
         PushMppi.__init__(self, order=4)
+        self.name = "MPPI_4th_order"
 
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         """ penalty function for input when the system is in a state, the running
@@ -24,6 +25,7 @@ class PushMppi4thOrder(PushMppi):
 
         # Calculate vector from b to a
         ba = x[:,0:2] - x[:,2:4]
+
         # Calculate unit vector in the direction of c
         norm_c = torch.norm(target_points, dim=1, keepdim=True)
         unit_c = target_points / norm_c
@@ -38,8 +40,8 @@ class PushMppi4thOrder(PushMppi):
         # Calculate distance between a and closest point
         robot_behind_obj_cost = torch.norm(x[:,0:2] - closest, dim=1)
 
-        # return robot_behind_obj_cost + obj_to_target_cost
-        return obj_to_target_cost
+        return robot_behind_obj_cost**2 + obj_to_target_cost
+        # return robot_behind_obj_cost
 
     def _find_input(self, robot_state: State, obstacle_state: State) -> np.ndarray:
 

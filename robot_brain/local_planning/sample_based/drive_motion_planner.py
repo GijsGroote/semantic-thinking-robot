@@ -83,7 +83,10 @@ class DriveMotionPlanner(MotionPlanner):
             add_node = True
 
         # add new sample
-        return self._add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
+        try:
+            return self._add_sample(sample, closest_sample_key, closest_sample_total_cost, add_node)
+        except ValueError:
+            return
 
     def _rewire_close_samples(self, sample_key, close_samples_keys: list):
         """ rewire closeby samples if that lowers the cost for that sample. """

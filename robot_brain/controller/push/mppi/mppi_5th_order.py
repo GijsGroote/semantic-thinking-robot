@@ -10,6 +10,7 @@ class PushMppi5thOrder(PushMppi):
 
     def __init__(self):
         PushMppi.__init__(self, order=5)
+        self.name = "MPPI_5th_order"
 
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         """ penalty function for input when the system is in a state, the running

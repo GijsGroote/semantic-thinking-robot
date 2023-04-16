@@ -50,7 +50,7 @@ from helper_functions.geometrics import (
 
 DRIVE_MPC_MODEL= "drive_mpc_model"
 DRIVE_MPPI_MODEL= "drive_mppi_model"
-PUSH_MPPI_MODEL = "push_mppi_model"
+PUSH_MPPI_MODEL = "push_mppi_model1"
 PUSH_MPPI_MODEL2 = "push_mppi_model2"
 PUSH_MPPI_MODEL_4TH_ORDER = "push_mppi_model_4th_order"
 
@@ -311,7 +311,7 @@ class PointRobotVelHGraph(HGraph):
             xy_position_in_free_space = self._find_first_xy_position_in_free_space(obj_xy_position,
                     min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator)
 
-            if xy_position_in_free_space is not None:
+            if xy_position_in_free_space is not None and in_grid(xy_position_in_free_space[0], xy_position_in_free_space[1]):
 
                 return State(pos=np.array([*xy_position_in_free_space, 0]))
 
@@ -449,7 +449,7 @@ class PointRobotVelHGraph(HGraph):
             temp_xy_position = [obj_xy_position[0] - np.sin(orien)*xy_pos_temp,
                     obj_xy_position[1] + np.cos(orien) * xy_pos_temp]
 
-            if path_estimator.occupancy(temp_xy_position) == FREE:
+            if in_grid(temp_xy_position[0], temp_xy_position[1]) and path_estimator.occupancy(temp_xy_position) == FREE:
                 return temp_xy_position
 
     def get_drive_controllers(self) -> list:

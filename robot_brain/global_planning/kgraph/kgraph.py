@@ -143,7 +143,7 @@ class KGraph(Graph):
     def calculate_successfactor(self, edge: ActionEdge) -> float:
         """ calculate a successfactor. """
 
-        return float(max(0.5-np.abs(np.average(edge.controller.pred_error)), 0.1))
+        return float(0.1**np.abs(np.average(edge.controller.pred_error)))
 
     def action_suggestion(self, obj: Object) -> Controller:
         """ query KGraph for action suggestion. """

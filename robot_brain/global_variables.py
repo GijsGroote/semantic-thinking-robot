@@ -3,19 +3,19 @@ DT = 0.05
 CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = False
 LOG_METRICS = True
-DASHBOARD_PORT_PID = 8040
+DASHBOARD_PORT_PID = 8000
 
 SAVE_LOG_METRICS = True
 
-MIN_INPUT = -2.3
-MAX_INPUT = 2.3
+MIN_INPUT = -0.9
+MAX_INPUT = 0.9
 
 UNKNOWN_OBSTACLE_COST = 8
 KNOWN_OBSTACLE_COST = 5
-GRID_X_SIZE =12# up to down length
-GRID_Y_SIZE =12# left to right length
+GRID_X_SIZE =13# up to down length
+GRID_Y_SIZE =13# left to right length
 
-POINT_ROBOT_RADIUS = 0.25
+POINT_ROBOT_RADIUS = 0.35
 BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
 
@@ -32,7 +32,7 @@ COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 
 import random
 # make tasks repeatable
-random.seed(10)
+random.seed(1002)
 
 
 PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"

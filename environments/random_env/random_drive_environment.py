@@ -9,7 +9,11 @@ from robot_brain.state import State
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.rand_objects import RandomObject
-from helper_functions.figures import create_new_directory, create_time_plot, create_prediction_error_plot
+from helper_functions.figures import (
+        create_new_directory,
+        create_time_plot,
+        create_prediction_error_plot,
+        create_full_prediction_error_plot)
 
 def main():
     """
@@ -29,6 +33,7 @@ def main():
 
     kgraph = KGraph()
 
+    random.seed(14)
     save_path = create_new_directory(dir_path="environments/random_env/data")
 
     env = gym.make(robot_type, dt=DT, render=True)
@@ -36,7 +41,7 @@ def main():
 
     rand_obj_generator.create_random_objects(
             n_unmovable_objects = 3,
-            n_movable_objects = 10)
+            n_movable_objects = 5)
 
     for n_env in range(10):
         print(f"create environment number: {n_env}")
@@ -87,6 +92,7 @@ def main():
 
     create_time_plot(data_path=save_path)
     create_prediction_error_plot(data_path=save_path)
+    create_full_prediction_error_plot(data_path=save_path)
 
 
 if __name__ == "__main__":

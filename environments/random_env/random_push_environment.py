@@ -10,6 +10,12 @@ from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.rand_objects import RandomObject
 from helper_functions.figures import create_new_directory
 
+from helper_functions.figures import (
+        create_new_directory,
+        create_time_plot,
+        create_prediction_error_plot,
+        create_full_prediction_error_plot)
+
 def main():
     """
     Randomly generated environment with a randomly assigned task
@@ -36,15 +42,14 @@ def main():
     # TODO: Do not yet give the objects a locaaation
     rand_obj_generator.create_random_objects(
             n_unmovable_objects = 3,
-            n_movable_objects = 10,
-            n_subtasks = 0)
+            n_movable_objects = 10)
 
     for n_env in range(4):
         print(f"create environment number: {n_env}")
 
         objects = rand_obj_generator.reshuffle_env()
         # task = rand_obj_generator.create_task()
-        task = rand_obj_generator.create_drive_task(n_subtasks=3)
+        task = rand_obj_generator.create_push_task(n_subtasks=1)
         env.reset()
 
         # add objects to environment
@@ -85,6 +90,10 @@ def main():
             continue
 
         print('times is up, try again')
+
+    create_time_plot(data_path=save_path)
+    create_prediction_error_plot(data_path=save_path)
+    create_full_prediction_error_plot(data_path=save_path)
 
 
 if __name__ == "__main__":

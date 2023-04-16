@@ -283,6 +283,9 @@ class MotionPlanner(ABC):
             sample = [sample[0], sample[1], 0]
 
         key = self._create_unique_id()
+        if prev_key is None:
+            raise ValueError
+
         self.samples[prev_key]["next_sample_keys"].append(key)
 
         self.samples[key] = {

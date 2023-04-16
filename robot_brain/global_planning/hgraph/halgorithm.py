@@ -113,17 +113,20 @@ class HypothesisAlgorithm():
         marginally, create logger, objects list, among other.
         """
 
+
         self.kgraph = kgraph
-        self.kgraph.print_kgraph_info()
+        if kgraph is not None:
+            self.kgraph.print_kgraph_info()
         self.task = task
         self.objects = objects
 
         # let KGraph help to update objects type
-        for obj in self.objects.values():
-            obj_type = kgraph.get_object_type(obj)
+        if kgraph is not None:
+            for obj in self.objects.values():
+                obj_type = kgraph.get_object_type(obj)
 
-            if obj_type is not None:
-                obj.type = obj_type
+                if obj_type is not None:
+                    obj.type = obj_type
 
         # create start and target nodes for every subtask
         for (subtask_name, (temp_obj, target)) in task.items():
@@ -473,12 +476,14 @@ class HypothesisAlgorithm():
     def create_drive_edge(self, source_node_iden: int, target_node_iden: int):
         """ create drive edge and adds created model node to hgraph. """
 
-        all_kgraph_controllers = self.kgraph.all_action_suggestions(self.hgraph.get_node(source_node_iden).obj)
+        all_kgraph_controllers = None
+
+        if self.kgraph is not None:
+            all_kgraph_controllers = self.kgraph.all_action_suggestions(self.hgraph.get_node(source_node_iden).obj)
 
         exception_triggered = False
         try:
             (new_controller, new_model_name) = self.hgraph.get_drive_controller_not_in_kgraph(target_node_iden, all_kgraph_controllers)
-
 
         except RunnoutOfControlMethodsException as exc:
             exception_triggered = True
@@ -490,7 +495,10 @@ class HypothesisAlgorithm():
         # search for controllers that are not yet in the kgraph
 
         # find best stuggestion from kgraph
-        suggested_controller = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
+        suggested_controller = None
+        if self.kgraph is not None:
+            suggested_controller = self.kgraph.action_suggestion(self.hgraph.get_node(source_node_iden).obj)
+
         # if the kgraph suggestion is on the blocklist, neglect it
         if suggested_controller is not None and self.hgraph.in_blocklist(
                 target_node_iden,
@@ -508,7 +516,16 @@ class HypothesisAlgorithm():
             self.hgraph.setup_drive_controller(controller, controller.system_model)
             model_name = suggested_controller.system_model.name
         else:
-            raise ValueError
+            exception_triggered = False
+            try:
+                (controller, model_name) = self.hgraph.create_drive_controller(target_node_iden)
+
+            except RunnoutOfControlMethodsException as exc:
+                exception_triggered = True
+                self.handle_running_out_of_control_methods_exception(exc, target_node_iden)
+
+            if exception_triggered:
+                return self.search_hypothesis()
 
         # create drive action edge
         edge = DriveActionEdge(iden=self.hgraph.unique_edge_iden(),
@@ -646,8 +663,11 @@ class HypothesisAlgorithm():
 
 
         push_obj = self.objects[self.hgraph.get_node(target_node_iden).obj.name]
-        suggested_controller = self.kgraph.action_suggestion(push_obj)
-        (check_obj_movable, _) = self.kgraph.object_in_kgraph(push_obj)
+        check_obj_movable = False
+        suggested_controller = None
+        if self.kgraph is not None:
+            suggested_controller = self.kgraph.action_suggestion(push_obj)
+            (check_obj_movable, _) = self.kgraph.object_in_kgraph(push_obj)
 
         # if the kgraph suggestion is on the blocklist, neglect it
         if suggested_controller is not None and self.hgraph.in_blocklist(
@@ -660,6 +680,7 @@ class HypothesisAlgorithm():
         exception_triggered = False
 
         try:
+            # TODO: make this a varianty that includes the kgraph (first try all then take best kgraph suggestiosn)
             (controller, model_name) = self.hgraph.create_push_controller(target_node_iden)
 
         except RunnoutOfControlMethodsException as exc:
@@ -935,6 +956,7 @@ class HypothesisAlgorithm():
         """ handle a FaultDetectedException. """
         print(f"hey and fault was detect!")
         self.hgraph.fail_edge(edge)
+        self.hgraph.add_to_blocklist(edge)
 
     def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):
         """ handle a PushAnUnmovableObjectException. """
@@ -1007,7 +1029,8 @@ class HypothesisAlgorithm():
                 temp_obj.type = object_type
 
         # update kgraph
-        self.kgraph.add_object(obj)
+        if self.kgraph is not None:
+            self.kgraph.add_object(obj)
 
 
     ##########################################
@@ -1096,7 +1119,7 @@ class HypothesisAlgorithm():
             self.hgraph.update_system_model(self.current_edge)
 
         # update KGraph
-        elif isinstance(self.current_edge, ActionEdge):
+        elif isinstance(self.current_edge, ActionEdge) and self.kgraph is not None:
             self.kgraph.add_edge_review(self.hgraph.get_node(self.current_edge.to).obj, self.current_edge)
 
         if self.hypothesis_completed():

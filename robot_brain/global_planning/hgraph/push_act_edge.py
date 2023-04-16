@@ -27,7 +27,7 @@ class PushActionEdge(ActionEdge):
 
         if check_obj_movable:
             self.start_counter = 0
-            self.obj_start_2d_pose = copy.deepcopy(push_obj.state.get_2d_pose())
+        self.push_obj_start_state = copy.deepcopy(push_obj.state)
 
         ActionEdge.__init__(self, iden, source, to, robot_obj, verb, controller, subtask_name, model_name)
         self.push_obj = push_obj
@@ -35,16 +35,17 @@ class PushActionEdge(ActionEdge):
     def view_completed(self) -> bool:
         """ check if the view (smallest target, the controller tries to reach) in reached. """
 
-        return self.push_obj.state.position_euclidean(self.get_current_view()) < 1.0
+        return self.push_obj.state.position_euclidean(self.get_current_view()) < 1.0 and\
+                self.push_obj_start_state.position_euclidean(self.push_obj.state) != 0
 
     def respond(self) -> np.ndarray:
         """ respond to the robot and obstacle state. """
         # detect if an object is movable or unmovable
         if self.check_obj_movable:
-            if not all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
+            if not all(self.push_obj_start_state.get_2d_pose() == self.push_obj.state.get_2d_pose()):
                 raise PushAnMovableObjectException
 
-            if self.start_counter == 50 and all(self.obj_start_2d_pose == self.push_obj.state.get_2d_pose()):
+            if self.start_counter == 50 and all(self.push_obj_start_state.get_2d_pose() == self.push_obj.state.get_2d_pose()):
                 raise PushAnUnmovableObjectException
 
             self.start_counter += 1

@@ -137,6 +137,7 @@ class DriveMpc2thOrder(Mpc):
     """
     def __init__(self):
         Mpc.__init__(self, order=2)
+        self.name = "MPC_2th_order"
 
     def _set_target_state(self):
         tvp_template = self.mpc.get_tvp_template()

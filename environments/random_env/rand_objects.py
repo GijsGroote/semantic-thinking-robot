@@ -169,7 +169,7 @@ class RandomObject():
 
             (obst_key, obst_dict) = random.choice(movable_obst_list)
 
-            obst = self._create_movable_target_state(obst_key, obst_dict)
+            obst = self._create_movable_target_object(obst_key, obst_dict)
 
             target_state = State(pos=np.array(obst_dict["position"]),
                         ang_p=np.array(obst_dict["orientation"]))
@@ -226,7 +226,7 @@ class RandomObject():
         else:
             raise ValueError(f"unknown type: {obst_dict['type']}")
 
-    def _create_movable_target_state(self, obst_key: str, obst_dict: dict) -> FreeCollisionObstacle:
+    def _create_movable_target_object(self, obst_key: str, obst_dict: dict) -> FreeCollisionObstacle:
         """ create movable obstacle in free space (thus also not in movable space). """
         if obst_dict["type"] == "box":
             return self._create_box_obstacle_free(obst_key, obst_dict, self.target_objects)
@@ -236,6 +236,36 @@ class RandomObject():
 
         else:
             raise ValueError(f"unknown type: {obst_dict['type']}")
+
+#     def _find_close_free_state_box(self, obst_key, obst_dict, target_objects) -> State:
+#         """ find close free target state. """
+#
+# TODO
+#         rand_orientation = random.random()*2*math.pi
+#
+#         occupancy_graph = RectangleObjectPathEstimator(
+#             cell_size = 0.25,
+#             grid_x_length = self.grid_x_length,
+#             grid_y_length = self.grid_y_length,
+#             objects = {**self.unmovable_objects, **objects_dict},
+#             obst_cart_2d = np.array([0,0]),
+#             obst_name = "must_be_in_RandomObject_class",
+#             obst_x_length = obst_dict["geometry"]["length"],
+#             obst_y_length = obst_dict["geometry"]["width"],
+#             n_orientations = 1,
+#             single_orientation = True,
+#             orientation = rand_orientation)
+#
+#         p2d = self._get_random_2d_pose()
+#
+#         # NOTE: potentially in the while loop forever
+#         while occupancy_graph.occupancy(p2d) != 0:
+#             p2d = self._get_random_2d_pose()
+#
+#         return State(pos=np.array([p2d[0], p2d[1], 0.5*obst_dict["geometry"]["height"]]), 
+#                 ang_p=np.array([0, 0, p2d[2]]))
+#
+
 
     def _create_box_obstacle_free(self, obst_key: str, obst_dict: dict, objects_dict: dict) -> BoxObstacle:
         """ create an occupancy graph with the unmovable and movable objects. """
@@ -255,11 +285,10 @@ class RandomObject():
             single_orientation = True,
             orientation = rand_orientation)
 
-        xy_pos = self._get_random_xy_position()
-        p2d = [xy_pos[0], xy_pos[1], rand_orientation]
+        p2d = self._get_random_2d_pose()
 
         # NOTE: potentially in the while loop forever
-        while occupancy_graph.occupancy(p2d) != 0:
+        while occupancy_graph.occupancy(p2d) != 0 :
             p2d = self._get_random_2d_pose()
 
         obst_dict["position"] = [p2d[0], p2d[1], 0.5*obst_dict["geometry"]["height"]]
