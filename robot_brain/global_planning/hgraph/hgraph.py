@@ -280,7 +280,7 @@ class HGraph(Graph):
         if isinstance(for_edge.controller, DriveController):
             self.setup_drive_controller(for_edge.controller, system_model)
         elif isinstance(for_edge.controller, PushController):
-            self.setup_push_controller(for_edge.controller, system_model, for_edge)
+            self.setup_push_controller(for_edge.controller, system_model, self.get_node(for_edge.source).obj)
         else:
             raise ValueError(f"unknown controller of type {type(for_edge.controller)}")
 

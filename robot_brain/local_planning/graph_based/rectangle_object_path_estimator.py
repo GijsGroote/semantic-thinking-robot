@@ -359,7 +359,10 @@ class RectangleObjectPathEstimator(PathEstimator):
     def _pose_2d_to_p_idx(self, pose_2d: np.ndarray) -> Tuple[int, int, int]:
         """ returns the index of the cell a 2D pose (x_position, y_position, orientation). """
         if pose_2d.shape != (3,):
-            raise IndexError(f"the shape of pose_2d is {pose_2d.shape} and should be (3,)")
+            if pose_2d.shape == (2,):
+                pose_2d = np.array([pose_2d[0], pose_2d[1], 0])
+            else:
+                raise IndexError(f"the shape of pose_2d is {pose_2d.shape} and should be (3,)")
         if pose_2d[2] >= 2*math.pi or pose_2d[2] < 0:
             raise ValueError(f"orientation: {pose_2d[2]} is not in the interval [0, 2*pi)")
 

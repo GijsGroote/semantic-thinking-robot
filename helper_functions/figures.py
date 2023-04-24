@@ -16,6 +16,10 @@ def create_new_directory(dir_path: str) -> str:
     if LOG_METRICS and SAVE_LOG_METRICS:
         n_directories = len(next(os.walk(os.path.join(PROJECT_PATH, dir_path)))[1])
         save_path = os.path.join(PROJECT_PATH, dir_path + "/run_" + str(n_directories))
+        while os.path.exists(save_path):
+            n_directories +=1
+            save_path = os.path.join(PROJECT_PATH, dir_path + "/run_" + str(n_directories))
+
         os.mkdir(save_path)
     return save_path
 
@@ -30,7 +34,6 @@ def create_time_plot(data_path: str, save_path=False):
     execute_time = []
     search_time = []
     subtask_number = []
-
 
     # collect date from json files
     json_file_paths = glob.glob(data_path)
@@ -67,12 +70,10 @@ def create_time_plot(data_path: str, save_path=False):
         line=dict(color='forest green', width=1, dash='dash')
         ), row=1, col=1)
 
-    fig.update_xaxes(title_text="Task number", row=1, col=1)
+    fig.update_xaxes(title_text="Number of Tasks experience", row=1, col=1)
     fig.update_yaxes(title_text="Time [sec]", row=1, col=1)
 
-    fig.update_layout({"title": {"text": "Search and Execution times"}})
-
-    # fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
+    fig.update_layout(paper_bgcolor='white', plot_bgcolor='white')
 
     if save_path is False:
         fig.show()
@@ -169,8 +170,6 @@ def create_time_plot_two_runs(data_path_with_kgraph: str, data_path_no_kgraph: s
     fig.update_xaxes(title_text="Task number", row=1, col=1)
     fig.update_yaxes(title_text="Time [sec]", row=1, col=1)
 
-    fig.update_layout({"title": {"text": "Search and Execution times"}})
-
     # fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
     if save_path is False:
@@ -261,94 +260,139 @@ def create_full_prediction_error_plot(data_path: str, save_path=False):
             error_y=dict(type='data', array=pred_error_std), showlegend=False))
 
     # customize the layout
-    fig.update_layout(title='Average Prediction Error for a Repeated Task',
+    fig.update_layout(
                       xaxis_title='Number of Tasks experience',
-                      yaxis_title='Average Prediction Error and standard deviation')
-
-    # fig.add_trace(
-    #     go.Scatter(x=subtask_number, y=np.add(
-    #         pred_error_avg, pred_error_std),
-    #         fill='tonexty', fillcolor='rgba(0,100,80,0.2)',
-    #         line_color='rgba(255,255,255,0)', showlegend=False)
-    # )
-    # fig.add_trace(
-    #     go.Scatter(x=subtask_number, y=np.subtract(pred_error_avg, pred_error_std),
-    #         fill='tonexty', fillcolor='rgba(0,176,246,0.2)',
-    #         line_color='rgba(255,255,255,0)', showlegend=False)
-    # )
-    #
+                      yaxis_title='Average Prediction Error and standard deviation',
+                      paper_bgcolor='white',
+                      plot_bgcolor='white',
+                      )
 
     if save_path is False:
         fig.show()
     else:
         fig.write_image(save_path)
 
-def create_execution_time_two_runs(data_path_r1: str, data_path_r2: str, save_path=False):
+def create_execution_time_two_runs(data_path_r0: str, data_path_r1: str, save_path=False):
 
+    data_path_r0 = data_path_r0+"/*"
     data_path_r1 = data_path_r1+"/*"
-    data_path_r2 = data_path_r2+"/*"
 
     subtask_number = []
-    execution_time_r1 = []
-    mpc_r1 = []
-    mppi_r1 = []
-
-    execution_time_r2 = []
-    mpc_r2 = []
-    mppi_r2 = []
-
     # collect date from json files
+    json_file_r0_paths = glob.glob(data_path_r0)
+    json_file_r0_paths.sort()
+
+    execution_time_r0 = np.zeros(len(json_file_r0_paths))
+    mpc_r0 = np.zeros(len(json_file_r0_paths))
+    mppi_r0 = np.zeros(len(json_file_r0_paths))
+
     json_file_r1_paths = glob.glob(data_path_r1)
     json_file_r1_paths.sort()
 
-    json_file_r2_paths = glob.glob(data_path_r2)
-    json_file_r2_paths.sort()
+    execution_time_r1 = np.zeros(len(json_file_r1_paths))
+    mpc_r1 = np.zeros(len(json_file_r1_paths))
+    mppi_r1 = np.zeros(len(json_file_r1_paths))
 
-    print(f"data r1 {json_file_r1_paths}")
+
+
+    for (i, json_file_r0_path) in enumerate(json_file_r0_paths):
+        subtask_number.append(i)
+
+        with open(json_file_r0_path) as json_file:
+            data = json.load(json_file)
+            temp_pred_error = []
+            for temp_subtask in data["subtasks"].values():
+                for temp_hypothesis in temp_subtask["hypotheses"].values():
+
+                    execution_time_r0[i] += temp_hypothesis['execute_time']
+                    for temp_edge in temp_hypothesis["edges"].values():
+                        if 'controller_type' in temp_edge:
+                            if temp_edge['controller_type'] == "MPC_1th_order":
+                                mpc_r0[i] += 1
+                            elif temp_edge['controller_type'] == "MPPI":
+                                mppi_r0[i] += 1
+
 
     for (i, json_file_r1_path) in enumerate(json_file_r1_paths):
         subtask_number.append(i)
 
         with open(json_file_r1_path) as json_file:
             data = json.load(json_file)
-
-
             temp_pred_error = []
             for temp_subtask in data["subtasks"].values():
                 for temp_hypothesis in temp_subtask["hypotheses"].values():
 
+                    execution_time_r1[i] += temp_hypothesis['execute_time']
                     for temp_edge in temp_hypothesis["edges"].values():
-
-                        print(temp_edge.keys())
-
-
-                        print(f'temp_hypothesis {temp_edge["status"]}')
-                        # todo this should have more ifs
-                        if 'execute_time' in temp_edge:# and isinstance(temp_edge, DriveActionEdge):
-
-                            execution_time_r1[i] += temp_edge['execution_time']
-
-                            if temp_edge['controller_type'] == "MPC":
-                                print(f"mpc detected now at {mppi_r1}")
-                                mpc_r1[i] += 1
+                        if 'controller_type' in temp_edge:
+                            if temp_edge['controller_type'] == "MPC_1th_order":
+                                mpc_r1[i] += 0
                             elif temp_edge['controller_type'] == "MPPI":
-
-                                mppi_r1[i] += 1
-                                print(f"mppi detected now at {mppi_r1}")
-
+                                mppi_r1[i] += 0
 
     fig = go.Figure()
 
-    # add the error bars for the standard deviation
+    print(f"for Run 0, mpc: {mpc_r0}, mppi: {mppi_r0}")
+    print(f"For run 1, mpc: {mpc_r1}, mppi: {mppi_r1}")
+
     fig.add_trace(go.Scatter(
-        x=subtask_number, y=execution_time_r1, mode='markers', showlegend=False))
+        x=subtask_number, y=execution_time_r0, mode='lines', name="with KGraph", showlegend=True))
+
+    fig.add_trace(go.Scatter(
+        x=subtask_number, y=execution_time_r1, mode='lines', name="without KGraph", showlegend=True))
 
     # customize the layout
-    fig.update_layout(title='Execution times for a Repeated Task',
+    fig.update_layout(
                       xaxis_title='Number of Tasks experience',
-                      yaxis_title='Execution Time [sec]')
+                      yaxis_title='Execution Time [sec]',
+                      paper_bgcolor='white',
+                      plot_bgcolor='white'
+                      )
+    if save_path is False:
+        fig.show()
+    else:
+        fig.write_image(save_path)
 
 
+def create_hyp_vs_subtask_plot(data_path: str, save_path=False):
+
+    data_path = data_path+"/*"
+
+    subtask_number = []
+    # collect date from json files
+    json_file_paths = glob.glob(data_path)
+    json_file_paths.sort()
+
+    hyp_and_subtask = np.zeros(len(json_file_paths))
+
+    for (i, json_file_path) in enumerate(json_file_paths):
+        subtask_number.append(i)
+
+        with open(json_file_path) as json_file:
+            data = json.load(json_file)
+
+            temp_subtask_counter = 0
+            temp_hypothesis_counter = 0
+
+            for temp_subtask in data["subtasks"].values():
+                temp_subtask_counter += 1
+                for temp_hypothesis in temp_subtask["hypotheses"].values():
+                    temp_hypothesis_counter += 1
+
+            hyp_and_subtask[i] = temp_hypothesis_counter/temp_subtask_counter
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=subtask_number, y=hyp_and_subtask, mode='lines', name="TODOKGraph", showlegend=True))
+
+    # customize the layout
+    fig.update_layout(
+                      xaxis_title='Number of Tasks experience',
+                      yaxis_title='Execution Time [sec]',
+                      paper_bgcolor='white',
+                      plot_bgcolor='white'
+                      )
     if save_path is False:
         fig.show()
     else:

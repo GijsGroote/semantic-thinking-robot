@@ -487,6 +487,7 @@ class PointRobotVelHGraph(HGraph):
             controllers_and_models.append((controller, models))
 
         return controllers_and_models
+
     def get_drive_controller_not_in_kgraph(self, target_iden: int, kgraph_suggestions: list) -> Tuple[Controller, str]:
         """ find controller and system model name that is not in kgraph_suggestions. """
         assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
@@ -543,6 +544,46 @@ class PointRobotVelHGraph(HGraph):
 
         return (controller, model_name)
 
+    def get_push_controller_not_in_kgraph(self, target_iden: int, kgraph_suggestions: list) -> Tuple[Controller, str]:
+        """ find controller and system model name that is not in kgraph_suggestions. """
+        assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
+        assert isinstance(kgraph_suggestions, (list, type(None)))
+
+        controllers = self.get_push_controllers()
+        controllers_and_model_names = self.find_compatible_models(controllers)
+
+        # filter the blacklisted edges
+        controllers_and_model_names_filtered = self.filter_control_and_model_names(
+                PushActionEdge,
+                controllers_and_model_names,
+                target_iden)
+
+        controller = None
+        model_name = None
+
+        if kgraph_suggestions is None:
+            return self.create_push_controller(target_iden)
+
+        else:
+            # check if a controller is not yet in kgraph_suggestions
+            for (temp_controller, temp_model_names) in controllers_and_model_names_filtered:
+                # TODO: check not only the controller, but also the system model
+                in_kgraph = False
+                for kgraph_controller in kgraph_suggestions:
+                    if isinstance(temp_controller, type(kgraph_controller)):
+                        in_kgraph = True
+                    else:
+                        not_in_kgraph_controller = temp_controller
+                        not_in_kgraph_model_names = temp_model_names
+                if not in_kgraph:
+                    (controller, model_names) = (not_in_kgraph_controller, not_in_kgraph_model_names)
+                    model_name = random.choice(model_names)
+                    break
+
+        return (controller, model_name)
+
+
+
     def create_push_controller(self, target_iden: int) -> Tuple[Controller, str]:
         """ create push controller. """
         assert isinstance(target_iden, int), f"target_iden should be int and is {type(target_iden)}"
@@ -573,6 +614,7 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError(f"controller name unknown: {model_name}")
 
     def get_push_controllers(self) -> list:
+        # return [self.create_mppi_push_controller_4th_order()]
 
         return [self.create_mppi_push_controller_4th_order(),
                 self.create_mppi_push_controller_5th_order()]
@@ -597,14 +639,13 @@ class PointRobotVelHGraph(HGraph):
 
         controller.setup(system_model, self.robot_obj.state, self.robot_obj.state)
 
-    def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_edge: PushActionEdge):
+    def setup_push_controller(self, controller: PushController, system_model: SystemModel, push_obj):
         """ setup push controller """
 
         assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
         assert isinstance(system_model, SystemModel), f"system_model should be an SystemModel and is {type(controller)}"
-        assert isinstance(push_edge, PushActionEdge), f"the push_edge should be an PushActionEdge and is {type(push_edge)}"
 
-        source_state = self.get_node(push_edge.source).obj.state
+        source_state = push_obj.state
         controller.setup(system_model, self.robot_obj.state, source_state, source_state)
 
 

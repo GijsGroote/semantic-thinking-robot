@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
@@ -35,6 +36,7 @@ def main():
 
     save_path = create_new_directory(dir_path="environments/random_env/data")
 
+    random.seed(26)
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
@@ -42,9 +44,9 @@ def main():
     # TODO: Do not yet give the objects a locaaation
     rand_obj_generator.create_random_objects(
             n_unmovable_objects = 3,
-            n_movable_objects = 10)
+            n_movable_objects = 5)
 
-    for n_env in range(4):
+    for n_env in range(5):
         print(f"create environment number: {n_env}")
 
         objects = rand_obj_generator.reshuffle_env()

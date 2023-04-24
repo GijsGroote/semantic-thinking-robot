@@ -16,15 +16,36 @@ class PushMppi5thOrder(PushMppi):
         """ penalty function for input when the system is in a state, the running
         cost drives the system to it's desired state. """
 
+        target_points = torch.cat((self.target_state.pos[0]*torch.ones((x.size(dim=0), 1), device=TORCH_DEVICE),
+                self.target_state.pos[1]*torch.ones((x.size(dim=0), 1), device=TORCH_DEVICE)), 1)
+
+        # point a: object target
+        # point b: the object
+        # point c: The robot
+
+        # penalty for object not on the target position
+        # obj_to_target_cost = torch.norm((target_points - x[:,2:4]), p=2, dim=1)
+
+        # Calculate vector from a to b
+        ab = target_points - x[:,0:2]
+        ac = target_points - x[:,2:4]
+        norm_c = torch.norm(target_points, dim=1, keepdim=True)
+        unit_c = target_points / norm_c
+        dot = torch.sum((ab-ac) * unit_c, dim=1, keepdim=True)
+        closest = x[:,2:4] + torch.clamp(dot, max=0) * unit_c
+        robot_behind_obj_cost = torch.norm(x[:,0:2] - closest, dim=1)
+        # return robot_behind_obj_cost
+
+
         H = 0.5
         W = 0.5
-        xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
-        ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
+        # xa = x[:,2]+torch.sin(x[:,4])*0.45*(H+W)
+        # ya = x[:,3]-torch.cos(x[:,4])*0.45*(H+W)
 
-        bools = ((x[:, 0] - xa)**2 + (x[:,1] - ya)**2 > 0.5*W**2*torch.ones(x.size(dim=0), device=TORCH_DEVICE)).type(torch.uint8)
+        # bools = ((x[:, 0] - xa)**2 + (x[:,1] - ya)**2 > 0.5*W**2*torch.ones(x.size(dim=0), device=TORCH_DEVICE)).type(torch.uint8)
         # penalise:
          # - going away from push position against the obstacle
-        robot_pose_cost = 100*bools*((x[:, 0] - xa)**2 + (x[:,1] - ya)**2)
+        # robot_pose_cost = 100*bools*((x[:, 0] - xa)**2 + (x[:,1] - ya)**2)
 
         # - the obstacle not being on the target position
         obst_to_target_cost = torch.sqrt((x[:,2] - self.target_state.pos[0])**2 + (x[:,3] - self.target_state.pos[1])**2)
@@ -32,7 +53,7 @@ class PushMppi5thOrder(PushMppi):
         # - obstacle orientation to target position
         obst_rotation_cost = 1.0*torch.abs(x[:,4] - self.target_state.ang_p[2])
 
-        cost = robot_pose_cost + obst_to_target_cost + obst_rotation_cost
+        cost = robot_behind_obj_cost + obst_to_target_cost + obst_rotation_cost
 
         return cost
 

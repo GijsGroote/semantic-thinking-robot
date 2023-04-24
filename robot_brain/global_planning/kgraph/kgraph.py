@@ -73,7 +73,9 @@ class KGraph(Graph):
             (obj_node_in_kgraph, obj_node) = self.object_in_kgraph(obj)
 
             if not obj_node_in_kgraph:
-                assert obj.type == MOVABLE
+                obj.type = 1
+                assert obj.type == MOVABLE, f"obj assumed to be movable but is {obj.type}"
+
                 self.add_object(obj)
 
             # find source node that contains obj in kgraph
@@ -103,13 +105,17 @@ class KGraph(Graph):
 
         if edge.status == EDGE_COMPLETED:
             feedback_edge.n_success += 1
+            a = 0.1*(1 - feedback_edge.success_factor)
         elif edge.status == EDGE_FAILED:
             feedback_edge.n_failed += 1
+            a = -0.1*feedback_edge.success_factor
         else:
             raise ValueError(f"incorrect edge_status encountered: {edge.status}")
 
         b =1-(feedback_edge.n_success/(feedback_edge.n_success + feedback_edge.n_failed))
-        feedback_edge.success_factor = self.calculate_successfactor(edge)**max(0.01, b)
+
+        feedback_edge.success_factor += a
+        # self.calculate_successfactor(edge)**max(0.01, b)
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()

@@ -23,7 +23,7 @@ class PushMppi(PushController):
         PushController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 50
+        self.n_horizon = 80
         self.plot_data = {}
 
     def _setup(self, robot_state: State, obstacle_state: State):

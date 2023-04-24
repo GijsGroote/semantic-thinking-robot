@@ -20,7 +20,7 @@ BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
 
 # explore factor between 0 (not learning) and 1 (maximal learning)
-EXPLORE_FACTOR = 0.3
+EXPLORE_FACTOR = 0.0
 
 # the number of time steps to plot for any controller
 PLOT_N_TIMESTEPS = 200
