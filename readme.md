@@ -4,8 +4,8 @@
 
 ## Requirements
 - python3.10.x
-- poetry 
-- gym
+- [poetry](https://python-poetry.org/docs/)
+- [gym](https://github.com/openai/gym)
 
 ## Installation
 ```bash
