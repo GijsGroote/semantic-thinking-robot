@@ -1,17 +1,16 @@
 import pytest
+
+from motion_planning_env.box_obstacle import BoxObstacle
+
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.obstacle_node import ObstacleNode
 from robot_brain.global_planning.change_of_state_node import ChangeOfStateNode
 from robot_brain.global_planning.graph import Graph
 from robot_brain.global_planning.kgraph.kgraph import KGraph
-
 from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-
 from robot_brain.state import State
 from robot_brain.obstacle import Obstacle
-from motion_planning_env.box_obstacle import BoxObstacle
-
 
 @pytest.fixture
 def hgraph():
@@ -20,7 +19,7 @@ def hgraph():
             State(),
             "empty",
         )
-    return PointRobotVelHGraph(robot)
+    return PointRobotVelHGraph(robot, "env")
 
 box_dict = {
                 "movable": False,
@@ -29,13 +28,10 @@ box_dict = {
                 "position": [0, 0, 0],
                 "geometry": {"length": 1, "width": 1, "height": 1},
             }
-prop = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
-
+prop = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict)
 
 
 def test_is_instance(hgraph):
-    print('hey!')
-    print(type(prop))
 
     obst = Obstacle(name="obst",
             state=State(),
@@ -46,14 +42,14 @@ def test_is_instance(hgraph):
             obstacle=obst)
 
     change_of_state_node = ChangeOfStateNode(2, "P", [])
-    kgraph = KGraph()
+    k_graph = KGraph()
 
     assert isinstance(obst_node, Node)
     assert isinstance(change_of_state_node, Node)
     assert isinstance(hgraph, HGraph)
     assert isinstance(hgraph, Graph)
-    assert isinstance(kgraph, KGraph)
-    assert isinstance(kgraph, Graph)
+    assert isinstance(k_graph, KGraph)
+    assert isinstance(k_graph, Graph)
 
 def test_adding_nodes(hgraph):
     node1 = ObstacleNode(1, "P", Obstacle("node1", State(), prop))

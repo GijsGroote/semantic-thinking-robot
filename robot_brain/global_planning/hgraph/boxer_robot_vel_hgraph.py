@@ -1,13 +1,13 @@
 import numpy as np
 from robot_brain.global_planning.hgraph.hgraph import HGraph
-from robot_brain.global_variables import FIG_BG_COLOR, DT
+from robot_brain.global_variables import FIG_BG_COLOR, DT, TORCH_DEVICE
 
 from casadi import vertcat
-from robot_brain.controller.mpc.mpc_3th_order import Mpc3thOrder
-from robot_brain.controller.mppi.mppi_3th_order import Mppi3thOrder
+from robot_brain.controller.drive.mpc.mpc_3th_order import DriveMpc3thOrder
+from robot_brain.controller.drive.mppi.mppi_3th_order import DriveMppi3thOrder
 import torch
-from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangular_robot_configuration_grid_map import (
-    RectangularRobotConfigurationGridMap,
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import (
+    RectangleObstaclePathEstimator,
 )
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_planning.obstacle_node import ObstacleNode
@@ -28,7 +28,7 @@ class BoxerRobotVelHGraph(HGraph):
     
     def estimate_robot_path_existance(self, target_state, obstacles):
 
-        occ_graph = RectangularRobotConfigurationGridMap(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 1.2, 0.6)
+        occ_graph = RectangleObstaclePathEstimator(0.5, 15, 15, obstacles, self.robot.state.get_xy_position(), 4, 1.2, 0.6)
         
         # temp fix for negative angles
         start = self.robot.state.get_2d_pose()
@@ -53,11 +53,11 @@ class BoxerRobotVelHGraph(HGraph):
     def _create_mppi_driving_controller(self):
         """ create MPPI controller for driving an boxerc robot velocity. """
 
-        controller = Mppi3thOrder()
+        controller = DriveMppi3thOrder()
 
         def dyn_model(x, u):
             
-            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
 
             x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
             x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
@@ -72,7 +72,7 @@ class BoxerRobotVelHGraph(HGraph):
         return controller
     def _create_mpc_driving_controller(self):
 
-        controller = Mpc3thOrder()
+        controller = DriveMpc3thOrder()
         # dyn_model = Dynamics()
         # dyn_model.set_boxer_model()
         def dyn_model(x, u):

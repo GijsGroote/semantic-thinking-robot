@@ -1,72 +1,104 @@
 from multiprocessing import Process, Pipe
 import numpy as np
 import gym
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 import urdfenvs.boxer_robot
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
-from robot_brain.global_variables import DT
+from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
+from dashboard.app import stop_dash_server
+from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 
-from environments.benchmark.benchmark_obstacles.obstacles import surrounded
+import pybullet as p
+from motion_planning_env.box_obstacle import BoxObstacle
+from robot_brain.global_planning.kgraph.kgraph import KGraph
 
-USER_INPUT_MODE = False
+from environments.benchmark.surrounded.objects import surrounded
+
+USER_INPUT_MODE = True
 
 def main(conn=None):
-    env = gym.make("boxerRobot-vel-v7", dt=DT, render=True)
 
-    action = np.zeros(env.n())
+    robot_type = "pointRobot-vel-v7"
 
-    ob = env.reset()
+    env = gym.make(robot_type, dt=DT, render=True)
 
-    env.add_obstacle(surrounded["simpleBox1"])
-    env.add_obstacle(surrounded["simpleBox2"])
-    env.add_obstacle(surrounded["simpleBox3"])
-    env.add_obstacle(surrounded["simpleBox4"])
-    env.add_obstacle(surrounded["simpleBox5"])
-    env.add_obstacle(surrounded["simpleBox6"])
+    kgraph = KGraph()
 
+    for box_string in ["simpleBox2", "simpleBox4", "simpleBox5", "simpleBox6"]:
+        kgraph.add_object(Obstacle(name=box_string,
+                                state=State,
+                                properties=surrounded[box_string],
+                                obj_type=UNMOVABLE))
 
-    brain = None
-    if not USER_INPUT_MODE:
+    # try the same task multiple times
+    for i in range(8):
+        print(f'starting environment: {i}')
 
-        sensor = ObstacleSensor()
-        sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
-        env.add_sensor(sensor)
+        action = np.zeros(env.n())
 
-        ob, reward, done, info = env.step(np.zeros(env.n()))
+        ob = env.reset()
 
-        brain = RBrain()
-        brain.setup({
-            "dt": DT,
-            "robot_type": "boxer_robot",
-            "target_state": State(),
-            "obstacles_in_env": True,
-            "obstacles": surrounded,
-            "default_action": action,
-        }, ob)
+        env.add_obstacle(surrounded["simpleBox1"])
+        env.add_obstacle(surrounded["simpleBox2"])
+        env.add_obstacle(surrounded["simpleBox3"])
+        env.add_obstacle(surrounded["simpleBox4"])
+        env.add_obstacle(surrounded["simpleBox5"])
+        env.add_obstacle(surrounded["simpleBox6"])
 
-    for i in range(1000):
+        brain = None
 
-        if i == 300:
-            brain.controller.set_target_state(State(pos=np.array([2,3,0])))
-        if i == 500:
-            brain.controller.set_target_state(State(pos=np.array([-8,1,0])))
+        if not USER_INPUT_MODE:
 
+            sensor = ObstacleSensor()
+            sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
+            env.add_sensor(sensor)
 
-        if USER_INPUT_MODE:
-            conn.send({"request_action": True, "kill_child": False, "ob": ob})
-            keyboard_data = conn.recv()
-            action[0:2] = keyboard_data["action"]
-            ob, _, _, _ = env.step(action)
+            ob, reward, done, info = env.step(np.zeros(env.n()))
 
-        else:
-            action = brain.respond()
+            brain = RBrain()
 
-            ob, _, _, _ = env.step(action)
-            brain.update(ob)
+            brain.setup({
+                "dt": DT,
+                "robot_type": robot_type,
+                "obstacles_in_env": True,
+                "default_action": np.zeros(2),
+                "task": [("robot", State(pos=np.array([0, 4, 0])))],
+                "obstacles": surrounded,
+                "env": env,
+                "n_env": i,
+                "kgraph": kgraph,
+                }, ob)
 
+        try:
+            for _ in range(10000):
+
+                ob, _, _, _ = env.step(action)
+
+                if USER_INPUT_MODE:
+                    conn.send({"request_action": True, "kill_child": False, "ob": ob})
+                    keyboard_data = conn.recv()
+                    action[0:2] = keyboard_data["action"]
+                    ob, _, _, _ = env.step(action)
+
+                else:
+                    action[0:2] = brain.respond()
+                    ob, _, _, _ = env.step(action)
+                    print(f'action {action}')
+                    brain.update(ob)
+
+        except StopIteration as exc:
+
+            print(f"Tear down this environment, we're done here because {exc}")
+            continue
+
+        print('times is up, try again')
+
+        if CREATE_SERVER_DASHBOARD:
+            stop_dash_server(brain.dash_app)
 
     if USER_INPUT_MODE:
         conn.send({"request_action": False, "kill_child": True})

@@ -1,12 +1,16 @@
 from motion_planning_env.free_collision_obstacle import FreeCollisionObstacle
 from motion_planning_env.box_obstacle import BoxObstacle
 
+FREE = 0
+MOVABLE = 1
+UNKNOWN = 2
+UNMOVABLE= 3
 
 class Obstacle:
     """
     Obstacle class.
     """
-    def __init__(self, name, state, properties):
+    def __init__(self, name, state, properties, obj_type=None):
         self.name = name
         self.state = state
         # create empty nonetype properties
@@ -18,10 +22,15 @@ class Obstacle:
                 "position": [0, 0, 0],
                 "geometry": {"length": 1, "width": 1, "height": 1},
             }
-            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict) 
+            properties = BoxObstacle(name="None-Type-Obstacle", content_dict=box_dict)
 
         self.properties = properties
-        self.type = "unknown"
+
+        if obj_type is not None:
+            assert any(obj_type == typ for typ in [FREE, MOVABLE, UNKNOWN, UNMOVABLE]), f"obj_type should be 0, 1, 2 or 3 and is {obj_type}"
+            self.type = obj_type
+        else:
+            self.type = UNKNOWN
 
     # name getter
     @property
@@ -52,8 +61,9 @@ class Obstacle:
     # type setter
     @type.setter
     def type(self, val):
-        if val in {"unmovable", "movable", "unknown"}:
+        if val in [UNKNOWN, MOVABLE, UNMOVABLE]:
             self._type = val
+
         else:
             raise ValueError(f"the type {val} is not allowed")
 
@@ -64,6 +74,6 @@ class Obstacle:
 
     # state setter
     @state.setter
-    def state(self, stat):
+    def state(self, state):
         # TODO: input sanitization
-        self._state = stat
+        self._state = state

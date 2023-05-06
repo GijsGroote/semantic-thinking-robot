@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 from numpy import dstack
 from robot_brain.global_variables import FIG_BG_COLOR
-import plotly.express as px
 
 
 pd.options.plotting.backend = "plotly"

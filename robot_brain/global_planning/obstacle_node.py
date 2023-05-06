@@ -1,22 +1,21 @@
 from robot_brain.global_planning.node import Node
 from robot_brain.obstacle import Obstacle
 
+
 class ObstacleNode(Node):
     """
     Object node.
     """
 
-    def __init__(self, iden, name, obstacle):
+    def __init__(self, iden, name, obstacle, subtask_name=None):
         Node.__init__(self, iden)
         self.name = name
-
-        # TODO: find a better name/method to keep track of 
-        # uncompleted/completed target nodes, Gijs, 15 okt 2022
-        self.completed = False
         self.obstacle = obstacle
+        self.subtask_name = subtask_name
 
     def to_string(self):
-        return f"ObstacleNode: {self.iden}, with obstacle {self.obstacle.name}, {self.obstacle.properties.name}"
+        return f"Node identifier: {self.iden}<br>Status: {self.status}<br>In subtask: {self.subtask_name}"\
+                f"<br>With Obstacle: {self.obstacle.name}<br>2d pos = {self.obstacle.state.get_2d_pose()}<br>type = {self.obstacle.type}"
 
     @property
     def obstacle(self):

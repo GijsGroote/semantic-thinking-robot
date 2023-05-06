@@ -1,12 +1,12 @@
-from multiprocessing import Process, Pipe
 import numpy as np
 import gym
+import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-import urdfenvs.boxer_robot
 from robot_brain.rbrain import RBrain
-from robot_brain.global_planning.state import State
-
-from robot_brain.global_variables import DT
+from robot_brain.state import State
+from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
+from dashboard.app import stop_dash_server
+from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.benchmark.benchmark_obstacles.obstacles import blockade_obstacles
 
@@ -14,73 +14,61 @@ def main():
     """
     Point robot which can drive around in its environment using a mpc controller.
     """
-    env = gym.make("boxer-robot-vel-v0", dt=DT, render=True)
-    ob = env.reset()
+    robot_type = "pointRobot-vel-v7"
+    env = gym.make(robot_type, dt=DT, render=True)
+    kgraph = KGraph()
 
-    env.add_obstacle(blockade_obstacles["urdf_duck"])
-    env.add_obstacle(blockade_obstacles["simpleBox"])
-    env.add_obstacle(blockade_obstacles["wall1"])
-    env.add_obstacle(blockade_obstacles["wall2"])
-    env.add_obstacle(blockade_obstacles["wall3"])
+    # try to solve the blockade task multiple times
+    for i in range(8):
+        print(f'starting blockade environment: {i}')
 
-    sensor = ObstacleSensor()
-    sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
-    env.add_sensor(sensor)
+        action = np.zeros(env.n())
+        ob = env.reset()
+        env.add_obstacle(blockade_obstacles["simpleCylinder"])
+        env.add_obstacle(blockade_obstacles["simpleBox"])
+        env.add_obstacle(blockade_obstacles["wall1"])
+        env.add_obstacle(blockade_obstacles["wall2"])
+        env.add_obstacle(blockade_obstacles["wall3"])
 
-    ob, reward, done, info = env.step(np.zeros(env.n()))
+        sensor = ObstacleSensor()
+        sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
+        env.add_sensor(sensor)
 
-    brain = RBrain()
-    brain.setup({
-        "dt": DT,
-        "robot_type": "boxer_robot",
-        "obstacles_in_env": True,
-        "obstacles": blockade_obstacles,
-        "target_state": State(pos=np.array([3,0,0])),
+        ob, reward, done, info = env.step(np.zeros(env.n()))
+        brain = RBrain()
 
-    }, ob)
+        brain.setup({
+            "dt": DT,
+            "robot_type": robot_type,
+            "obstacles_in_env": True,
+            "default_action": np.zeros(2),
+            "task": [
+                (blockade_obstacles["simpleBox"].name(), State(pos=np.array([3, 0, 0]))),
+                ],
+            "obstacles": blockade_obstacles,
+            "env": env,
+            "n_env": i,
+            "kgraph": kgraph,
+            }, ob)
 
-    for i in range(10000):
+        try:
+            for _ in range(10000):
 
-        if i % 50 == 0:
+                ob, _, _, _ = env.step(action)
 
-            brain.plot_occupancy_graph()
-        
-        if i==200:
-            brain.controller.set_target_state(State(pos=np.array([1,3,0])))
+                action[0:2] = brain.respond()
+                ob, _, _, _ = env.step(action)
+                brain.update(ob)
 
+        except StopIteration as exc:
 
+            print(f"Tear down this environment, we're done here because {exc}")
+            continue
 
-        action = brain.respond()
-        ob, _, _, _ = env.step(action)
-        brain.update(ob)
+        print('times is up, try again')
+
+        if CREATE_SERVER_DASHBOARD:
+            stop_dash_server(brain.dash_app)
 
 if __name__ == "__main__":
-
     main()
-
-#     else:
-#         # setup multi threading with a pipe connection
-#         parent_conn, child_conn = Pipe()
-#
-#         # create parent process
-#         p = Process(target=main, args=(parent_conn,))
-#         # start parent process
-#         p.start()
-#
-#         # create Responder object
-#         responder = Responder(child_conn)
-#
-#         # logical key bindings
-#         custom_on_press = {Key.down: np.array([-3.0, 0.0]),
-#                            Key.up: np.array([3.0, 0.0]),
-#                            Key.left: np.array([0.0, 3.0]),
-#                            Key.right: np.array([0.0, -3.0])}
-#
-#         # responder.setup(defaultAction=np.array([0.0, 0.0]))
-#         responder.setup(custom_on_press=custom_on_press)
-#
-#         # start child process which keeps responding/looping
-#         responder.start(p)
-#
-#         # kill parent process
-#         p.kill()

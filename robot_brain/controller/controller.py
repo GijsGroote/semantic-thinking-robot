@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-import numpy as np
-from robot_brain.global_variables import PLOT_CONTROLLER, CREATE_SERVER_DASHBOARD, DT
+
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel
+
 
 class Controller(ABC):
     """
@@ -13,44 +14,9 @@ class Controller(ABC):
         self.order = order
         self.dt_counter = 0
 
-        def emptyfunction():
-            pass
-        self.dyn_model = emptyfunction
+        self._system_model = SystemModel(None)
         self.target_state = State()
         self.pred_error = []
-    
-    def setup(self, dyn_model, current_state: State, target_state: State):
-        """ setup the controller, this is seperated from __init__
-        because dynamic models could not yet exist. """
-        self.dyn_model = dyn_model
-        self.target_state = target_state
-        self._setup(dyn_model, current_state)
-
-    @abstractmethod
-    def _setup(self, model, current_state: State):
-        """ use abstraction for different setup methods. """
-        pass
-
-    def respond(self, current_state: State) -> np.ndarray:
-        """ respond with input for the robot and update dashboard every second. """
-
-        system_input = self._find_input(current_state)
-
-        if CREATE_SERVER_DASHBOARD and PLOT_CONTROLLER:
-            
-            self._update_prediction_error_sequence(current_state, system_input)
-
-            # plot the controller every x seconds
-            if self.dt_counter % (1/DT) == 0:# and self.dt_counter != 0:
-                self._update_db()
-            self.dt_counter += 1
-
-        return system_input 
-
-    @abstractmethod
-    def _update_prediction_error_sequence(self, current_state: State, system_input: State):
-        """ updates the sequence with the one-step-ahead prediction error. """
-        pass
 
     def set_target_state(self, target_state: State):
         """ update controller to steer toward a new target state. """
@@ -59,18 +25,14 @@ class Controller(ABC):
 
     @abstractmethod
     def _set_target_state(self):
-        pass
+        """ sets the target state. """
 
-    @abstractmethod
-    def _find_input(self, current_state: State):
-        pass
-
-    def _update_db(self):
+    def update_db(self):
         self.visualise(save=True)
-    
+
     @abstractmethod
-    def visualise(self, save=True):
-        pass
+    def visualise(self, save: bool):
+        """ visualise the controller behaviour. """
 
     ##### Setters and Getters below this point #######
     @property
@@ -94,14 +56,17 @@ class Controller(ABC):
         self._dt_counter = val
 
     @property
-    def dyn_model(self):
-        return self._dyn_model
+    def system_model(self):
+        return self._system_model
 
-    @dyn_model.setter
-    # TODO: if a dyn model get some shape, update assertions for the dyn_model setter
-    def dyn_model(self, val):
-        assert (callable(val)), f"dyn_model must be a callable function and is {type(val)}"
-        self._dyn_model = val
+    @system_model.setter
+    def system_model(self, val):
+
+        assert val.name is not None,\
+                "system models name should not me None"
+        assert isinstance(val, SystemModel),\
+                f"system model should be of type SystemModel and is {type(val)}"
+        self._system_model = val
 
     @property
     def target_state(self) -> State:
@@ -109,6 +74,5 @@ class Controller(ABC):
 
     @target_state.setter
     def target_state(self, target_state: State):
-        assert isinstance(target_state, State), f" target_state should be a State and is {type(target_state)}" 
+        assert isinstance(target_state, State), f" target_state should be a State and is {type(target_state)}"
         self._target_state = target_state
-  

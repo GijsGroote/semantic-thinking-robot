@@ -3,12 +3,16 @@ import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+from helper_functions.geometrics import to_interval_zero_to_two_pi, to_interval_min_pi_to_pi
 class State:
     """
     State describing the linear and angular position and velocity in the environment.
     """
     def __init__(self, pos=np.array([0, 0, 0]), vel=np.array([0, 0, 0]),
                  ang_p=np.array([0, 0, 0]), ang_v=np.array([0, 0, 0])):
+
+        if isinstance(pos, list):
+            pos = np.array(pos)
 
         self.pos = pos
         self.vel = vel
@@ -24,9 +28,19 @@ class State:
 
     def pose_euclidean(self, state) -> float:
         """
+        Calculate the euclidean distance between the poses of two states.
+        """
+        orien_dist = np.abs(to_interval_min_pi_to_pi(
+            to_interval_zero_to_two_pi(self.ang_p[2])-to_interval_zero_to_two_pi(state.ang_p[2])))
+
+        return np.linalg.norm(self.get_xy_position() - state.get_xy_position()) + orien_dist
+
+    def position_euclidean(self, state) -> float:
+        """
         Calculate the euclidean distance between the position of two states.
         """
-        return np.linalg.norm(self.get_2d_pose() - state.get_2d_pose()).item()
+        return np.linalg.norm(self.get_xy_position() - state.get_xy_position())
+
 
     def to_string(self, decimals=2):
         return "pos:("+np.array2string(self.pos, precision=decimals)+"), vel:("\

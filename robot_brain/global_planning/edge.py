@@ -1,65 +1,73 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from robot_brain.state import State
+from robot_brain.system_model import SystemModel
+
+
+EDGE_INITIALISED = "edge:initialised"
+EDGE_COMPLETED = "edge:completed"
+EDGE_EXECUTING = "edge:executing"
+EDGE_FAILED = "edge:failed"
 
 class Edge(ABC):
     """
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-    def __init__(self, iden, source, to, verb, controller, path=False):
+    def __init__(self, iden: int, source: int, to: int, verb: str, controller):
         self.iden = iden
         self.source = source
         self.to = to
         self.verb = verb
         self.controller = controller
-        self.dyn_model = "use a al dynamical model please"
-        self.path = path
+        self.system_model = SystemModel(None)
+
+        self._path_estimation = None
+        self._path = None
+
         self.path_pointer = 0
         self.alpha = None
 
     @abstractmethod
-    def to_string(self):
-        """ Creates readable format of an Edge. """
-        pass
-        return f"iden: {self.iden}, controller: {self.controller.name}"
+    def ready_for_execution(self) -> bool:
+        """ checks if all parameters are set to execute this transition. """
 
+    @abstractmethod
+    def view_completed(self, current_state: State) -> bool:
+        """ check if the view (smallest target, the controller tries to reach) in reached. """
+
+    @abstractmethod
     def completed(self) -> bool:
-        """ returns true if the path is completed, otherwise false. """
-        return self.path_pointer >= len(self.path)-1
+        """ returns true if the edge is completed, otherwise false. """
 
-    def increment_current_target(self):
+    @abstractmethod
+    def increment_current_view(self):
         """ updates toward the next current target from path. """
 
-        if self.path_pointer < len(self.path)-1:
-            self.path_pointer += 1
-
-        if  len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
-        else:
-            orien = 0
-
-        next_target = State(
-                pos=np.array([self.path[self.path_pointer][0], self.path[self.path_pointer][1], 0]),
-                ang_p=np.array([0, 0, orien])
-                )
-
-        self.controller.set_target_state(next_target)
-
-        print(f"target reached, now setting {self.path[self.path_pointer]} as goal")
-
-    def get_current_target(self) -> State:
+    @abstractmethod
+    def get_current_view(self) -> State:
         """ returns the current target the controller tries to steer toward. """
-        if len(self.path[self.path_pointer]) == 3:
-            orien = self.path[self.path_pointer][2]
-        else:
-            orien = 0
-        return State(pos=np.append(self.path[self.path_pointer][0:2], [[0]]),
-                ang_p=np.array([0, 0, orien]))
 
-    def respond(self, state) -> np.ndarray:
+    @abstractmethod
+    def respond(self) -> np.ndarray:
         """ respond to the current state. """
-        return self.controller.respond(state)
+
+    def create_log(self) -> dict:
+        """ return a dictionary with metrics. """
+
+    @abstractmethod
+    def set_executing_status(self):
+        """ Sets executing status. """
+
+    @abstractmethod
+    def set_completed_status(self):
+        """ Sets completed status. """
+
+
+
+    @abstractmethod
+    def to_string(self):
+        """ Creates readable format of an Edge. """
 
     @property
     def iden(self):
@@ -67,6 +75,7 @@ class Edge(ABC):
 
     @iden.setter
     def iden(self, val):
+        assert isinstance(val, int), f"iden should be of type int and is of type {type(val)}"
         self._iden = val
 
     @property
@@ -104,12 +113,22 @@ class Edge(ABC):
         self._controller = contr
 
     @property
-    def dyn_model(self):
-        return self._dyn_model
+    def system_model(self):
+        return self._system_model
 
-    @dyn_model.setter
-    def dyn_model(self, dyn_model):
-        self._dyn_model = dyn_model
+    @system_model.setter
+    def system_model(self, val):
+        assert isinstance(val, SystemModel), f"system_model must be of type SystemModel and is {type(val)}"
+        self._system_model = val
+
+    @property
+    def path_estimation(self):
+        return self._path_estimation
+
+    @path_estimation.setter
+    def path_estimation(self, path_estimation):
+        # TODO: check plan is a plan
+        self._path_estimation = path_estimation
 
     @property
     def path(self):

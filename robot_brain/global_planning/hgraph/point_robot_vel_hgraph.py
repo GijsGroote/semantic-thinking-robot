@@ -1,93 +1,636 @@
+import math
+import sys
+import copy
+
+from typing import Tuple
 import torch
-from robot_brain.global_planning.hgraph.hgraph import HGraph
-
+import numpy as np
 from casadi import vertcat
-from robot_brain.controller.controller import Controller
-from robot_brain.controller.mpc.mpc_2th_order import Mpc2thOrder
-from robot_brain.controller.mppi.mppi_2th_order import Mppi2thOrder
-from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_robot_configuration_grid_map import (
-    CircleRobotConfigurationGridMap,
-)
 
-from robot_brain.global_variables import DT
+from motion_planning_env.box_obstacle import BoxObstacle
+from motion_planning_env.sphere_obstacle import SphereObstacle
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
+
+from robot_brain.obstacle import Obstacle, UNMOVABLE, FREE
+from robot_brain.global_planning.hgraph.hgraph import HGraph
+from robot_brain.global_variables import DT, TORCH_DEVICE, GRID_X_SIZE, GRID_Y_SIZE, POINT_ROBOT_RADIUS, in_grid
+from robot_brain.state import State
+from robot_brain.controller.controller import Controller
+from robot_brain.controller.drive.mpc.mpc_2th_order import DriveMpc2thOrder
+from robot_brain.controller.drive.mppi.mppi_2th_order import DriveMppi2thOrder
+from robot_brain.global_planning.hgraph.local_planning.graph_based.circle_obstacle_path_estimator import CircleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.rectangle_obstacle_path_estimator import RectangleObstaclePathEstimator
+from robot_brain.global_planning.hgraph.local_planning.graph_based.path_estimator import PathEstimator
+from robot_brain.controller.push.mppi.mppi_5th_order import PushMppi5thOrder
+from robot_brain.controller.push.mppi.mppi_4th_order import PushMppi4thOrder
+from robot_brain.system_model import SystemModel
+from robot_brain.global_planning.hgraph.local_planning.sample_based.motion_planner import MotionPlanner
+from robot_brain.global_planning.hgraph.local_planning.sample_based.drive_motion_planner import DriveMotionPlanner
+from robot_brain.global_planning.hgraph.local_planning.sample_based.push_motion_planner import PushMotionPlanner
+from robot_brain.controller.push.push_controller import PushController
+from robot_brain.controller.drive.drive_controller import DriveController
+
+from robot_brain.exceptions import NoBestPushPositionException, NoPathExistsException, NoTargetPositionFoundException
+
+from helper_functions.geometrics import (
+        which_side_point_to_line,
+        box_in_cylinder_obstacle,
+        box_in_box_obstacle,
+        circle_in_box_obstacle,
+        circle_in_cylinder_obstacle,
+        to_interval_zero_to_two_pi
+        )
+
+DRIVE_MPC_MODEL= "drive_mpc_model"
+DRIVE_MPPI_MODEL= "drive_mppi_model"
+PUSH_MPPI_MODEL = "push_mppi_model"
+PUSH_MPPI_MODEL2 = "push_mppi_model2"
+PUSH_MPPI_MODEL_4TH_ORDER = "push_mppi_model_4th_order"
+
 
 
 class PointRobotVelHGraph(HGraph):
     """
     Hypothesis graph for a Point Robot accepting velocity input.
     """
-    def __init__(self, robot):
-        HGraph.__init__(self)
-        self.robot = robot
-        self.robot_order = 2 
-    
-    def estimate_robot_path_existance(self, target_state, obstacles):
+    def __init__(self, robot, env):
+        HGraph.__init__(self, robot, env)
+        self.robot_order = 2
 
-        occ_graph = CircleRobotConfigurationGridMap(cell_size=0.5,
-                grid_x_length= 10,
-                grid_y_length= 12,
+    def create_drive_path_estimator(self, obstacles) -> PathEstimator:
+        occ_graph = CircleObstaclePathEstimator(
+                cell_size=0.1,
+                grid_x_length = GRID_X_SIZE,
+                grid_y_length = GRID_Y_SIZE,
                 obstacles= obstacles,
-                robot_cart_2d= self.robot.state.get_xy_position(),
-                robot_radius= 0.4)
+                obst_cart_2d= self.robot.state.get_xy_position(),
+                obst_name = self.robot.name,
+                obst_radius= POINT_ROBOT_RADIUS)
 
         occ_graph.setup()
-        occ_graph.visualise()
-        return occ_graph.shortest_path(self.robot.state.get_xy_position(), target_state.get_xy_position())
 
-    def estimate_obstacle_path_existance(self, target_state, obstacles):
-        raise NotImplementedError()
+        return occ_graph
 
-    def get_driving_controllers(self) -> list:
+    def create_push_path_estimator(self, push_obstacle, obstacles):
+
+        if isinstance(push_obstacle.properties, BoxObstacle):
+
+            occ_graph = RectangleObstaclePathEstimator(
+                    cell_size = 0.1,
+                    grid_x_length = GRID_X_SIZE,
+                    grid_y_length = GRID_Y_SIZE,
+                    obstacles= obstacles,
+                    obst_cart_2d = push_obstacle.state.get_xy_position(),
+                    obst_name = push_obstacle.name,
+                    n_orientations = 3,
+                    single_orientation = False,
+                    obst_x_length = push_obstacle.properties.length(),
+                    obst_y_length = push_obstacle.properties.width())
+
+
+        elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
+            occ_graph = CircleObstaclePathEstimator(cell_size=0.1,
+                    grid_x_length= GRID_X_SIZE,
+                    grid_y_length= GRID_Y_SIZE,
+                    obstacles= obstacles,
+                    obst_cart_2d= self.robot.state.get_xy_position(),
+                    obst_name = push_obstacle.name,
+                    obst_radius= push_obstacle.properties.radius())
+        else:
+            raise ValueError("Unknown obstacle encountered during estimating a path")
+
+        occ_graph.setup()
+
+        return occ_graph
+
+    def create_drive_motion_planner(self, obstacles, path_estimator=None) -> DriveMotionPlanner:
+        return DriveMotionPlanner(
+                grid_x_length=GRID_X_SIZE,
+                grid_y_length=GRID_Y_SIZE,
+                obstacle=self.robot,
+                step_size=0.2,
+                search_size=0.25,
+                path_estimator=path_estimator)
+
+    def create_push_motion_planner(self, obstacles, push_obstacle, path_estimator=None) -> PushMotionPlanner:
+        if isinstance(push_obstacle.properties, BoxObstacle):
+            include_orien = True
+        elif isinstance(push_obstacle.properties, (CylinderObstacle, SphereObstacle)):
+            include_orien = False
+        else:
+            raise ValueError("Unknown obstacle encountered during estimating a path")
+
+        return PushMotionPlanner(
+                grid_x_length=GRID_X_SIZE,
+                grid_y_length=GRID_Y_SIZE,
+                obstacle=push_obstacle,
+                step_size=0.2,
+                search_size=0.25,
+                path_estimator=path_estimator,
+                include_orien=include_orien)
+
+    def in_object(self, pose_2ds, obj) -> list:
+        """ return the object keys at pose_2ds that are in collision with object obj. """
+        blocking_obj_keys = []
+
+        if obj.name == self.robot.name:
+            blocking_obj_keys = self.robot_in_object(pose_2ds)
+        elif isinstance(obj.properties, BoxObstacle):
+            blocking_obj_keys = self.box_obj_in_object(pose_2ds, obj)
+        elif isinstance(obj.properties, CylinderObstacle):
+            blocking_obj_keys = self.cylinder_obj_in_object(pose_2ds, obj)
+        else:
+            raise ValueError("unknown object")
+
+        # if nothing is found, return closes object that is not obj
+        if len(blocking_obj_keys) == 0:
+
+            for pose_2d in pose_2ds:
+                min_dist = sys.maxsize
+                closest_obj_key = None
+
+                for temp_obj in self.obstacles.values():
+
+                    # exclude the obj
+                    if temp_obj.name == obj.name:
+                        continue
+
+                    temp_dist = np.linalg.norm(temp_obj.state.get_xy_position() - pose_2d[0:2])
+
+                    if temp_dist < min_dist:
+                        min_dist = temp_dist
+                        closest_obj_key = temp_obj.name
+
+                if closest_obj_key is not None:
+                    blocking_obj_keys.append(closest_obj_key)
+
+        return [*set(blocking_obj_keys)]
+
+
+    def robot_in_object(self, pose_2ds) -> list:
+        obj_keys = []
+        for pose_2d in pose_2ds:
+            xy_pos = np.array([pose_2d[0], pose_2d[1]])
+            for obj in self.obstacles.values():
+                if isinstance(obj.properties, BoxObstacle):
+                    if circle_in_box_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                        obj_keys.append(obj.name)
+
+                elif isinstance(obj.properties, CylinderObstacle):
+                    if circle_in_cylinder_obstacle(xy_pos, obj, POINT_ROBOT_RADIUS):
+                        obj_keys.append(obj.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
+
+        return obj_keys
+
+    def box_obj_in_object(self, pose_2ds, obj) -> list:
+        blocking_obj_keys = []
+        for pose_2d in pose_2ds:
+
+            for temp_obj in self.obstacles.values():
+                if temp_obj.name == obj.name:
+                    continue
+
+                if isinstance(temp_obj.properties, BoxObstacle):
+                    if box_in_box_obstacle(pose_2d, temp_obj, obj):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                elif isinstance(temp_obj.properties, CylinderObstacle):
+                    if box_in_cylinder_obstacle(pose_2d, temp_obj, obj):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
+
+        return blocking_obj_keys
+
+
+    def cylinder_obj_in_object(self, pose_2ds, obj) -> list:
+        blocking_obj_keys = []
+        for pose_2d in pose_2ds:
+            xy_pos = np.array([pose_2d[0], pose_2d[1]])
+
+            for temp_obj in self.obstacles.values():
+                if temp_obj.name == obj.name:
+                    continue
+
+                if isinstance(temp_obj.properties, BoxObstacle):
+                    if circle_in_box_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                elif isinstance(temp_obj.properties, CylinderObstacle):
+                    if circle_in_cylinder_obstacle(xy_pos, temp_obj, obj.properties.radius()):
+                        blocking_obj_keys.append(temp_obj.name)
+
+                else:
+                    raise ValueError(f"obstacle unknown: {type(obj)}")
+
+        return blocking_obj_keys
+
+    def find_push_pose_againts_obstacle_state(self, blocking_obst, path) -> State:
+        """ return a starting state to start pushing the obstacle. """
+
+        obst_xy_position = path[0][0:2]
+
+        if len(path)>4:
+            clost_obst_xy_position = path[3][0:2]
+        elif len(path)>=2:
+            clost_obst_xy_position = path[1][0:2]
+        else:
+            raise ValueError(f"path is shorter than 2 samples, its: {len(path)}")
+
+        # retrieve min and max dimension of the obstacle
+        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obst)
+
+        # orientation where the robot should stand to push
+        if (clost_obst_xy_position[1]-obst_xy_position[1]) == 0:
+            if clost_obst_xy_position[0] < obst_xy_position[0]:
+                best_robot_pose_orien = math.pi/2
+            else:
+                best_robot_pose_orien = -math.pi/2
+        else:
+            best_robot_pose_orien = math.atan2(-(clost_obst_xy_position[0]-obst_xy_position[0]),\
+                    clost_obst_xy_position[1]-obst_xy_position[1]) + math.pi
+
+        path_estimator = self.create_drive_path_estimator(self.obstacles)
+
+        bo = best_robot_pose_orien
+        pi = math.pi
+        try_these_orien = [bo, bo-pi/100, bo+pi/100,
+                bo-pi/80, bo+pi/80, bo-pi/60, bo+pi/60,
+                bo-pi/40, bo+pi/40, bo-pi/20, bo+pi/20,
+                bo-pi/10, bo+pi/10, bo-pi/5, bo+pi/5]
+
+        for temp_orien in try_these_orien:
+            temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obst_xy_position,
+                    min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator)
+
+            if xy_position_in_free_space is not None:
+
+                return State(pos=np.array([*xy_position_in_free_space, 0]))
+
+        raise NoBestPushPositionException(f"could not find a push position against object {blocking_obst.name}")
+
+    def find_free_state_for_blocking_obstacle(self, blocking_obj: Obstacle, path: list) -> State:
+        """ return a state where the obstacle can be pushed toward so it is not blocking the path. """
+        # TODO: works for circlular objects I think, but there are not orientations taken into account now
+
+        # pretend that the object is unmovable
+        blocking_obj_type = blocking_obj.type
+        blocking_obj.type = UNMOVABLE
+
+        # configuration space for the robot
+        path_estimator_robot = self.create_drive_path_estimator(self.obstacles)
+
+        # find reachable position around the object
+        reachable_xy_positions = []
+        (min_obj_dimension, max_obj_dimension) = self.get_min_max_dimension_from_object(blocking_obj)
+        obj_xy_position = blocking_obj.state.get_xy_position()
+        blocking_obj_orien = to_interval_zero_to_two_pi(blocking_obj.state.get_2d_pose()[2])
+
+        # find reachable positions around blocking object
+        for temp_orien in np.linspace(0, 2*math.pi, 8):
+            temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+            xy_position_in_free_space = self._find_first_xy_position_in_free_space(obj_xy_position,
+                    min_obj_dimension, 2*max_obj_dimension, temp_orien, path_estimator_robot)
+
+            if xy_position_in_free_space is not None:
+                try:
+                    path = path_estimator_robot.search_path(self.robot.state.get_xy_position(), xy_position_in_free_space)
+                    reachable_xy_positions.append((len(path), xy_position_in_free_space))
+
+                except NoPathExistsException:
+                    pass
+
+        blocking_obj.type = blocking_obj_type
+
+
+        if len(reachable_xy_positions) == 0:
+            raise NoTargetPositionFoundException(f"no positions where reachable around object {blocking_obj.name}")
+        reachable_xy_positions.sort()
+        reachable_xy_positions = reachable_xy_positions[1, :]
+
+        # configuration space for the object
+        objects_and_path = copy.deepcopy(self.obstacles)
+
+        # This operation takes quite some time.
+        for (i, robot_xy_position_in_path) in enumerate(path):
+            objects_and_path['path_position_'+str(i)] = Obstacle('path_position_'+str(i),
+                    State(pos=np.array([robot_xy_position_in_path[0], robot_xy_position_in_path[1], 0])),
+                    self.robot.properties, obj_type=UNMOVABLE)
+
+        path_estimator_obj = self.create_push_path_estimator(blocking_obj, objects_and_path)
+
+        # create the orientations
+        obj_target_oriens = []
+        for robot_xy_pos in reachable_xy_positions:
+
+            obj_target_oriens.append(math.atan2(robot_xy_pos[0]-obj_xy_position[0],\
+                    robot_xy_pos[1]-obj_xy_position[1]))
+
+
+        # check pushing in a straight line
+        for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):
+            for temp_orien in obj_target_oriens:
+                temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+                temp_x = float(obj_xy_position[0] - np.sin(temp_orien)*blocking_obj_to_target_dist)
+                temp_y = float(obj_xy_position[1] + np.cos(temp_orien)*blocking_obj_to_target_dist)
+                temp_2d_pose = np.array([temp_x, temp_y, blocking_obj_orien])
+
+
+                if in_grid(temp_2d_pose[0], temp_2d_pose[1]) and path_estimator_obj.occupancy(temp_2d_pose) == FREE:
+
+                    return State(pos=np.array([temp_2d_pose[0], temp_2d_pose[1], 0]),
+                            ang_p=np.array([0, 0, temp_2d_pose[2]]))
+
+        ot = obj_target_oriens
+        pi = math.pi
+        obj_target_semi_orien = []
+
+        for temp_orien in obj_target_oriens:
+            for orien_addition in [pi/100, pi/80, pi/60, pi/40, pi/20, pi/10, pi/5]:
+                obj_target_oriens.append(temp_orien + orien_addition)
+                obj_target_oriens.append(temp_orien - orien_addition)
+
+        # check pushing in a tilted line
+        for blocking_obj_to_target_dist in np.linspace(max_obj_dimension, 5, 50):
+            for temp_orien in obj_target_semi_orien:
+                temp_orien = to_interval_zero_to_two_pi(temp_orien)
+
+                temp_x = float(obj_xy_position[0] - np.sin(temp_orien)*blocking_obj_to_target_dist)
+                temp_y = float(obj_xy_position[1] + np.cos(temp_orien)*blocking_obj_to_target_dist)
+                temp_2d_pose = np.array([temp_x, temp_y, blocking_obj_orien])
+
+                if in_grid(temp_2d_pose[0], temp_2d_pose[1]) and path_estimator_obj.occupancy(temp_2d_pose) == FREE:
+
+                    return State(pos=np.array([temp_2d_pose[0], temp_2d_pose[1], 0]),
+                            ang_p=np.array([0, 0, temp_2d_pose[2]]))
+
+        raise NoTargetPositionFoundException
+
+    def get_min_max_dimension_from_object(self, obj: Obstacle) -> Tuple[float, float]:
+        """ return the minimal and maximal dimensions for a box or cylinder object. """
+
+        # retrieve min and max dimension of the object
+        if isinstance(obj.properties, BoxObstacle):
+            min_obj_dimension = min(obj.properties.width(), obj.properties.length())
+            max_obj_dimension = max(obj.properties.width(), obj.properties.length())
+        elif isinstance(obj.properties, CylinderObstacle):
+            min_obj_dimension = max_obj_dimension = obj.properties.radius()
+        else:
+            raise ValueError(f"object not recognised, type: {type(obj)}")
+
+        return (min_obj_dimension, max_obj_dimension)
+
+    def _find_first_xy_position_in_free_space(self, obst_xy_position: np.ndarray, dist_from_obj_min: float, dist_from_obj_max: float,
+                                    orien: float,  path_estimator: PathEstimator) -> np.ndarray:
+        """ return the first pose that is in free space if no
+            pose_2d is in free space, nothing is returned.
+
+            obst_xy_position:    objects position is xy coordinates
+            dist_from_obj_min:  min distance from object
+            dist_from_obj_max:  maximal distance from object
+            orien:              orientation between line where points to check lie, and positive y axis.
+            path_estimator:     configuration space of the robot
+
+        """
+        for xy_pos_temp in np.linspace(dist_from_obj_min, dist_from_obj_max, 50):
+
+            temp_xy_position = [obst_xy_position[0] - np.sin(orien)*xy_pos_temp,
+                    obst_xy_position[1] + np.cos(orien) * xy_pos_temp]
+
+            if path_estimator.occupancy(temp_xy_position) == FREE:
+                return temp_xy_position
+
+    def get_drive_controllers(self) -> list:
         """ returns list with all possible driving controllers. """
 
-        return [self._create_mppi_driving_controller,
-                self._create_mpc_driving_controller]
+        return [self.create_mppi_drive_controller(),
+                self.create_mpc_drive_controller()]
 
-    def create_driving_model(self, controller_name: str):
-        match controller_name:
-            case "MPC":
-                return self._create_mpc_driving_model()
-            case "MPPI":
-                return self._create_mppi_driving_model()
-            case _:
-                raise ValueError(f"controller name unknown: {controller_name}")
+    def find_compatible_models(self, controllers: list) -> list:
+        """ find every compatible model for every drive controller. """
 
-    def get_pushing_controllers(self) -> list:
-        raise NotImplementedError()
+        controllers_and_models = []
 
-    def create_pushing_model(self, controller_name: str):
-        raise NotImplementedError()
-    
-    def _create_mppi_driving_controller(self):
+        # find every compatible model
+        for controller in controllers:
+            models = []
+
+            if isinstance(controller, DriveMpc2thOrder):
+                models.append(DRIVE_MPC_MODEL)
+
+            if isinstance(controller, DriveMppi2thOrder):
+                models.append(DRIVE_MPPI_MODEL)
+
+            if isinstance(controller, PushMppi5thOrder):
+                models.append(PUSH_MPPI_MODEL)
+                models.append(PUSH_MPPI_MODEL2)
+
+            if isinstance(controller, PushMppi4thOrder):
+                models.append(PUSH_MPPI_MODEL_4TH_ORDER)
+
+            controllers_and_models.append((controller, models))
+
+        return controllers_and_models
+
+    def create_drive_model(self, model_name: str) -> SystemModel:
+        """ return the corresponding drive model. """
+
+        if model_name == DRIVE_MPC_MODEL:
+            return self.create_mpc_drive_model()
+        elif model_name == DRIVE_MPPI_MODEL:
+            return self.create_mppi_drive_model()
+        else:
+            raise ValueError(f"controller name unknown: {model_name}")
+
+    def get_push_controllers(self) -> list:
+
+        return [self.create_mppi_push_controller_4th_order(),
+                self.create_mppi_push_controller_5th_order()]
+
+    def create_push_model(self, model_name: str):
+        if model_name == PUSH_MPPI_MODEL:
+            return self.create_mppi_push_model()
+        elif model_name == PUSH_MPPI_MODEL2:
+            return self.create_mppi_push_model2()
+        elif model_name == PUSH_MPPI_MODEL_4TH_ORDER:
+            return self.create_mppi_push_model_4th_order()
+        else:
+            raise ValueError(f"model name unknown: {model_name}")
+
+
+    def setup_drive_controller(self, controller, system_model):
+
+        assert isinstance(controller, DriveController), f"the controller should be an DriveController and is {type(controller)}"
+        controller.setup(system_model, self.robot.state, self.robot.state)
+
+    def setup_push_controller(self, controller, system_model, push_edge):
+
+        assert isinstance(controller, PushController), f"the controller should be an PushController and is {type(controller)}"
+
+        source_state = self.get_node(push_edge.source).obstacle.state
+        controller.setup(system_model, self.robot.state, source_state, source_state)
+
+
+    ##### DRIVE MPPI #####
+    def create_mppi_drive_controller(self):
         """ create MPPI controller for driving an point robot velocity. """
-        return Mppi2thOrder()
+        return DriveMppi2thOrder()
 
-    def _create_mppi_driving_model(self):
-        def dyn_model(x, u):
-            x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
-            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
-            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
-            return x_next
-        return dyn_model
 
-    def _create_mpc_driving_controller(self):
-        return Mpc2thOrder()
+    ##### DRIVE MPC #####
+    def create_mpc_drive_controller(self):
+        return DriveMpc2thOrder()
 
-    def _create_mpc_driving_model(self):
-        def dyn_model(x, u):
+    def create_mpc_drive_model(self):
+
+        def model(x, u):
             dx_next = vertcat(
                 x[0] + 0.05 *  u[0],
                 x[1] + 0.05 *  u[1]
             )
             return dx_next
-        return dyn_model
 
-    def _setup_driving_controller(self, controller, dyn_model):
-        # TODO: should the target state not also be passed insead of the robot state?
+        return SystemModel(model, name=DRIVE_MPC_MODEL)
 
-        print("setup the drivnig controller")
-        assert isinstance(controller, Controller), f"the controller should be an Controller and is {type(controller)}"
-        assert callable(dyn_model), "the dyn_model should be callable function"
+    def create_mppi_drive_model(self):
 
-        controller.setup(dyn_model, self.robot.state, self.robot.state)
+        def model(x, u):
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
+
+            return x_next
+
+        return SystemModel(model, name=DRIVE_MPPI_MODEL)
+
+    ##### PUSH MPPI #####
+    def create_mppi_push_controller_5th_order(self):
+        """ create MPPI push controller. """
+        return PushMppi5thOrder()
+
+    def create_mppi_push_controller_4th_order(self):
+        """ create MPPI push controller. """
+        return PushMppi4thOrder()
+
+
+    def create_mppi_push_model(self):
+        """ create push model for MPPI pointrobot. """
+        def model(x, u):
+
+            # width square obstacle
+            H = 2
+
+            # point a in the center of the pushed against edge
+            xa = x[:,2]+torch.sin(x[:,4])*H/2
+            ya = x[:,3]-torch.cos(x[:,4])*H/2
+
+            # line parallel to the obstacle edge being pushed against
+            a_abc = torch.tan(math.pi/2-x[:,4])
+            b_abc = x[:,2]+H/2*torch.sin(x[:,4])-torch.tan(math.pi/2-x[:,4])*(x[:,3]-H/2*torch.cos(x[:,4]))
+
+
+            # line from center robot to center obstacle
+            a_ro = (x[:,0]-x[:,2])/(x[:,1]-x[:,3])
+            b_ro = x[:,2]-(x[:,0]-x[:,2])/(x[:,1]-x[:,3])*x[:,3]
+
+            yb = (b_ro-b_abc)/(a_abc-a_ro)
+            xb = a_abc*yb+b_abc
+
+            # st is the distance from pushing point to the centerline of the obstacle perpendicular to the edge which is pushed against
+            st=1.2*torch.sqrt((xa-xb)**2+(ya-yb)**2)
+
+            # obstacle rotating clockwise (positive) or anti-clockwise (negative)
+            st = which_side_point_to_line(
+                    x[:,2:4],
+                    torch.stack((xa, ya), dim=-1),
+                    torch.stack((xb, yb), dim=-1))*st
+
+            # velocity of robot perpendicular to box at point p
+            vp = u[:,0]*torch.sin(x[:,4]) + u[:,1]*torch.cos(x[:,4])
+
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+            x_next[:,2] = torch.add(x[:,2], torch.sin(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,3] = torch.add(x[:,3], torch.cos(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,4] = torch.add(x[:,4], 2*vp/H*st, alpha=DT)
+
+            return x_next
+
+        return SystemModel(model, PUSH_MPPI_MODEL)
+
+    def create_mppi_push_model2(self):
+        """ create push model for MPPI pointrobot. """
+        def model(x, u):
+
+            # width square obstacle
+            H = 2
+
+            # point a in the center of the pushed against edge
+            xa = x[:,2]+torch.sin(x[:,4])*H/2
+            ya = x[:,3]-torch.cos(x[:,4])*H/2
+
+            # line parallel to the obstacle edge being pushed against
+            a_abc = torch.tan(math.pi/2-x[:,4])
+            b_abc = x[:,2]+H/2*torch.sin(x[:,4])-torch.tan(math.pi/2-x[:,4])*(x[:,3]-H/2*torch.cos(x[:,4]))
+
+
+            # line from center robot to center obstacle
+            a_ro = (x[:,0]-x[:,2])/(x[:,1]-x[:,3])
+            b_ro = x[:,2]-(x[:,0]-x[:,2])/(x[:,1]-x[:,3])*x[:,3]
+
+            yb = (b_ro-b_abc)/(a_abc-a_ro)
+            xb = a_abc*yb+b_abc
+
+            # st is the distance from pushing point to the centerline of the obstacle perpendicular to the edge which is pushed against
+            st=1.2*torch.sqrt((xa-xb)**2+(ya-yb)**2)
+
+            # obstacle rotating clockwise (positive) or anti-clockwise (negative)
+            st = which_side_point_to_line(
+                    x[:,2:4],
+                    torch.stack((xa, ya), dim=-1),
+                    torch.stack((xb, yb), dim=-1))*st
+
+            # velocity of robot perpendicular to box at point p
+            vp = u[:,0]*torch.sin(x[:,4]) + u[:,1]*torch.cos(x[:,4])
+
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+            x_next[:,2] = torch.add(x[:,2], torch.sin(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,3] = torch.add(x[:,3], torch.cos(x[:,4])*(1-torch.abs(2*st/H))*vp, alpha=DT)
+            x_next[:,4] = torch.add(x[:,4], 2*vp/H*st, alpha=DT)
+
+            return x_next
+
+        return SystemModel(model, PUSH_MPPI_MODEL2)
+
+    def create_mppi_push_model_4th_order(self):
+        """ create push model for MPPI point robot. """
+
+        def model(x, u):
+            # this model describes the robot and objects as a solid block. they move as if stuck together
+
+            x_next = torch.zeros(x.shape, dtype=torch.float64, device=TORCH_DEVICE)
+
+            x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT)
+            x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT)
+            x_next[:,2] = torch.add(x[:,2], u[:,0], alpha=0.5*DT)
+            x_next[:,3] = torch.add(x[:,3], u[:,1], alpha=0.5*DT)
+
+            return x_next
+
+        return SystemModel(model, PUSH_MPPI_MODEL_4TH_ORDER)
+
 

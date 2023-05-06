@@ -19,8 +19,8 @@ def main():
     """ MPPI test for the gym environment. """
 
     # robot_type = "pointRobot-vel-v7"
-    # robot_type = "pointRobot-acc-v7"
-    robot_type = "boxerRobot-vel-v7"
+    robot_type = "pointRobot-acc-v7"
+    # robot_type = "boxerRobot-vel-v7"
     # robot_type = "boxerRobot-acc-v7"
     env = gym.make(robot_type, dt=DT, render=True)
 
@@ -43,28 +43,28 @@ def main():
     #
     #     return x_next
 
-    mppi_controller = Mppi3thOrder()
-    def dynamics(x, u):
-            
-        x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
-
-        x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
-        x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
-        x_next[:,2] = x[:,2] + DT*u[:,1]
-
-        return x_next
-
-    # mppi_controller = Mppi4thOrder()
+    # mppi_controller = Mppi3thOrder()
     # def dynamics(x, u):
     #         
     #     x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
     #
-    #     x_next[:,0] = x[:,0] + 1*DT*x[:,2] #+ 0.05*DT*u[:,0]*u[:,0] # x_pos_next = x_pos + DT * x_vel
-    #     x_next[:,1] = x[:,1] + 1*DT*x[:,3] #+ 0.05*DT*u[:,0]*u[:,1] # y_pos_next = y_pos + DT * y_vel
-    #     x_next[:,2] = x[:,2] + 1*DT*u[:,0] # x_vel_next = x_vel + DT * acc_x
-    #     x_next[:,3] = x[:,3] + 1*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
+    #     x_next[:,0] = x[:,0] + DT*torch.cos(x[:,2])*u[:,0] 
+    #     x_next[:,1] = x[:,1] + DT*torch.sin(x[:,2])*u[:,0] 
+    #     x_next[:,2] = x[:,2] + DT*u[:,1]
     #
     #     return x_next
+
+    mppi_controller = Mppi4thOrder()
+    def dynamics(x, u):
+            
+        x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+
+        x_next[:,0] = x[:,0] + 1*DT*x[:,2] #+ 0.05*DT*u[:,0]*u[:,0] # x_pos_next = x_pos + DT * x_vel
+        x_next[:,1] = x[:,1] + 1*DT*x[:,3] #+ 0.05*DT*u[:,0]*u[:,1] # y_pos_next = y_pos + DT * y_vel
+        x_next[:,2] = x[:,2] + 1*DT*u[:,0] # x_vel_next = x_vel + DT * acc_x
+        x_next[:,3] = x[:,3] + 1*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
+
+        return x_next
     
     # mppi_controller = Mppi6thOrder()
     # def dynamics(x, u):
@@ -78,7 +78,15 @@ def main():
     #     x_next[:,4] = x[:,4] + 1*DT*torch.sin(u[:,0]) # x_vel_next = x_vel + DT * acc_x
     #     x_next[:,5] = x[:,5] + 1*DT*u[:,1] # y_vel_next = y_vel + DT * acc_y
     #
-    #     return x_next
+    # #     return x_next
+    # mppi_controller = Mppi2thOrder()
+    # def dynamics(x, u):
+    #         x_next = torch.zeros(x.shape, dtype=torch.float64, device=torch.device("cpu"))
+    #         x_next[:,0] = torch.add(x[:,0], u[:,0], alpha=DT) # x_next[0] = x[0] + DT*u[0]
+    #         x_next[:,1] = torch.add(x[:,1], u[:,1], alpha=DT) # x_next[1] = x[1] + DT*u[1]
+    #         return x_next
+
+
 
 
     mppi_controller.setup(dyn_model=dynamics,
@@ -94,8 +102,6 @@ def main():
     # assuming you have a gym-like env
     for i in range(n_steps):
 
-        if i == 50:
-            mppi_controller.visualise(save=False)
 
         current_state = State(pos=ob["joint_state"]["position"])
         action[0:2] = mppi_controller.respond(current_state=current_state)

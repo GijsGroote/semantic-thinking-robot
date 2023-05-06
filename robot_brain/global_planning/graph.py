@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from pyvis.network import Network
 from robot_brain.global_planning.node import Node
 from robot_brain.global_planning.edge import Edge
+from robot_brain.global_planning.action_edge import EDGE_FAILED
 
 
 class Graph(ABC):
@@ -13,8 +13,10 @@ class Graph(ABC):
         self._nodes = []
         self._edges = []
 
+        self.err_counter = 0
+
     @abstractmethod
-    def visualise(self):
+    def visualise(self, save=True):
         pass
 
     @property
@@ -57,8 +59,17 @@ class Graph(ABC):
         else:
             return node_list[0]
 
-    def unique_iden(self) -> int:
-        """ return a unique identifyer. """
+    def get_edge(self, iden) -> Edge:
+        """ return  edge by id, raises error if the identifyer does not exist. """
+        edge_list = [edge for edge in self.edges if edge.iden == iden]
+        if len(edge_list) == 0:
+            raise IndexError(f"a edge with identifyer {iden} does not exist.")
+        else:
+            return edge_list[0]
+
+
+    def unique_node_iden(self) -> int:
+        """ return a unique identifyer for a node. """
         iden = 0
         existing_idens = []
 
@@ -70,27 +81,51 @@ class Graph(ABC):
 
         return iden
 
+    def unique_edge_iden(self) -> int:
+        """ return a unique identifyer for an edge. """
+        iden = 0
+        existing_idens = []
+
+        for edge in self.edges:
+            existing_idens.append(edge.iden)
+
+        while iden in existing_idens:
+            iden += 1
+
+        return iden
+
     def point_toward_nodes(self, node_iden) -> list:
-        """ returns a list with node identifiers where an edge
-        points from node_id to these nodes. """
-        assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist" 
+        """ returns a list with node identifiers where an
+        non-failed edge points from node_iden to these nodes. """
+        # delete this
+        self.err_counter += 1
+        if self.err_counter > 5000:
+            self.visualise(save=False)
+            raise ValueError
+        # untill here
+
+        assert any(temp_node.iden == node_iden for temp_node in self.nodes), f"a node node identifier {node_iden} does not exist"
         point_toward_list = []
         for edge in self.edges:
-            if node_iden == edge.source:
+            if edge.status != EDGE_FAILED and node_iden == edge.source:
                 point_toward_list.append(edge.to)
 
         return point_toward_list
-        
-    def find_source_node(self, node_iden) -> Node:
-        """ find the source node which points to this node via 0 or more edges.
-        if a T junction is found (2 edges pointing to a node) an error is raised."""
 
-        edge_to_list = [edge for edge in self.edges if edge.to == node_iden]
+    def get_outgoing_edges(self, node_iden) -> list:
+        """ returns all non-failing edges pointing toward this node. """
 
-        if len(edge_to_list) == 0:
-            return self.get_node(node_iden)
-        else:
-            assert not len(edge_to_list) > 1, f"multiple edges pointing toward with identifier {node_iden}."
-            return self.find_source_node(edge_to_list[0].source)
+        outgoing_edges = []
 
-     
+        for temp_edge in self.edges:
+            if temp_edge.status != EDGE_FAILED and temp_edge.source == node_iden:
+                outgoing_edges.append(temp_edge)
+
+        return outgoing_edges
+
+    def get_incoming_edge(self, node_iden) -> Edge:
+        """ returns the non-failing edge pointing toward this node. """
+
+        for temp_edge in self.edges:
+            if temp_edge.status != EDGE_FAILED and temp_edge.to == node_iden:
+                return temp_edge

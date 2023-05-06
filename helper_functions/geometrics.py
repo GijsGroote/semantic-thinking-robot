@@ -1,5 +1,8 @@
 import numpy as np
+import torch
 import math
+from typing import List
+from robot_brain.global_variables import TORCH_DEVICE
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
     """ returns the minimal distance from a point to a line.
@@ -27,6 +30,8 @@ def point_in_rectangle(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray, lp3:np.n
     """ returns true if the point p is inside the rectangle
     which has edges lp1 to lp2 and lp2 to lp3.
     """
+    if isinstance(p, tuple):
+        p = np.array(p)
     assert p.shape == (2,), "points has an incorrect shape"
     assert (lp1.shape == (2,) and
     lp2.shape == (2,) and lp3.shape == (2,)), "line points have incorrect shape"
@@ -114,4 +119,186 @@ def to_interval_zero_to_two_pi(val: float) -> float:
     while val < 0:
         val += 2*math.pi
     return val
+
+def to_interval_min_pi_to_pi(val: float) -> float:
+    """ returns the angle in interval [-pi, pi). """
+    while val > math.pi:
+        val -= 2*math.pi
+    while val <= -math.pi:
+        val += 2*math.pi
+    return val
+
+def which_side_point_to_line(a: torch.Tensor, b: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
+    """ find if point p is on right (True) or left (False) side of line from a to b. """
+
+    right_or_left_bool = ((b[:,0]-a[:,0])*(p[:,1]-a[:,1])-(b[:,1]-a[:,1])*(p[:,0]-a[:,0]) < 0)
+    right_or_left = torch.ones(a.size(dim=0), device=TORCH_DEVICE)
+    right_or_left[right_or_left_bool] = -1
+
+    return right_or_left
+
+def check_floats_divisible(x: float, y: float, scaling_factor: float = 1e4):
+    """ check if x / y == 0. """
+
+    scaled_x = int(x * scaling_factor)
+    scaled_y = int(y * scaling_factor)
+
+    return (scaled_x % scaled_y) == 0
+
+def circle_in_box_obstacle(xy_pos: np.ndarray, obst, radius: float) -> bool:
+    """ Return True if the circle overlaps with the box obstacle. """
+    cos_ol = math.cos(obst.state.ang_p[2])*obst.properties.width()/2
+    sin_ol = math.sin(obst.state.ang_p[2])*obst.properties.width()/2
+    cos_ow = math.cos(obst.state.ang_p[2])*obst.properties.length()/2
+    sin_ow = math.sin(obst.state.ang_p[2])*obst.properties.length()/2
+
+    obst_a = np.array([obst.state.pos[0]-sin_ol+cos_ow, obst.state.pos[1]+cos_ol+sin_ow])
+    obst_b = np.array([obst.state.pos[0]-sin_ol-cos_ow, obst.state.pos[1]+cos_ol-sin_ow])
+    obst_c = np.array([obst.state.pos[0]+sin_ol-cos_ow, obst.state.pos[1]-cos_ol-sin_ow])
+    obst_d = np.array([obst.state.pos[0]+sin_ol+cos_ow, obst.state.pos[1]-cos_ol+sin_ow])
+
+
+    if point_in_rectangle(xy_pos, obst_a, obst_b, obst_c):
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_a, obst_b) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_b, obst_c) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_c, obst_d) <= radius:
+        return True
+
+    elif minimal_distance_point_to_line(xy_pos, obst_d, obst_a) <= radius:
+        return True
+
+    else:
+        return False
+
+def circle_in_cylinder_obstacle(xy_pos, obst, radius) -> bool:
+    """ Return True if the circle overlaps with the cylinder obstacle. """
+    return np.linalg.norm(xy_pos-obst.state.get_xy_position()) <= obst.properties.radius() + radius
+
+def box_in_cylinder_obstacle(pose_2d: np.ndarray, cylinder_obj, box_obj):
+    box_obj_orien = box_obj.state.get_2d_pose()[2]
+
+    cos_rl = math.cos(box_obj_orien)*box_obj.properties.width()/2
+    sin_rl = math.sin(box_obj_orien)*box_obj.properties.width()/2
+    cos_rw = math.cos(box_obj_orien)*box_obj.properties.length()/2
+    sin_rw = math.sin(box_obj_orien)*box_obj.properties.length()/2
+
+    box_obj_xy = box_obj.state.get_xy_position()
+    cylinder_obj_xy = cylinder_obj.state.get_xy_position()
+
+    if (np.linalg.norm(cylinder_obj.state.get_xy_position()-box_obj_xy) <= \
+        cylinder_obj.properties.radius() + min(box_obj.properties.length(), box_obj.properties.width()) / 2):
+        return True
+
+    # corner points of the obstacle
+    a = box_obj_xy + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
+
+    b = box_obj_xy + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
+
+    c = box_obj_xy + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
+
+    d = box_obj_xy + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
+
+
+    # check if the edges of the obst overlap with the cylinder
+    if minimal_distance_point_to_line(cylinder_obj_xy, a, b) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, b, c) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, c, d) <= cylinder_obj.properties.radius():
+        return True
+
+    elif minimal_distance_point_to_line(cylinder_obj_xy, d, a) <= cylinder_obj.properties.radius():
+        return True
+
+    return False
+
+def box_in_box_obstacle(pose_2d, in_this_box_obj, box_obj):
+
+    box_obj_orien = box_obj.state.get_2d_pose()[2]
+
+    cos_rl = math.cos(box_obj_orien)*box_obj.properties.width()/2
+    sin_rl = math.sin(box_obj_orien)*box_obj.properties.width()/2
+    cos_rw = math.cos(box_obj_orien)*box_obj.properties.length()/2 # x
+    sin_rw = math.sin(box_obj_orien)*box_obj.properties.length()/2
+
+    cos_ol = math.cos(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.width()/2
+    sin_ol = math.sin(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.width()/2
+    cos_ow = math.cos(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.length()/2
+    sin_ow = math.sin(in_this_box_obj.state.ang_p[2])*in_this_box_obj.properties.length()/2
+    # corner points of the in_this_box_objacle
+    obst_a= np.array([in_this_box_obj.state.pos[0]-sin_ol+cos_ow, in_this_box_obj.state.pos[1]+cos_ol+sin_ow])
+    obst_b = np.array([in_this_box_obj.state.pos[0]-sin_ol-cos_ow, in_this_box_obj.state.pos[1]+cos_ol-sin_ow])
+    obst_c = np.array([in_this_box_obj.state.pos[0]+sin_ol-cos_ow, in_this_box_obj.state.pos[1]-cos_ol-sin_ow])
+    obst_d = np.array([in_this_box_obj.state.pos[0]+sin_ol+cos_ow, in_this_box_obj.state.pos[1]-cos_ol+sin_ow])
+
+    box_obj_xy = box_obj.state.get_xy_position()
+
+    if point_in_rectangle(box_obj.state.get_xy_position(), obst_a, obst_b, obst_c):
+        return True
+
+   # corner points of the obstacle
+    a = box_obj_xy + np.array([-sin_rl+cos_rw, cos_rl+sin_rw])
+
+    b = box_obj_xy + np.array([-sin_rl-cos_rw, cos_rl-sin_rw])
+
+    c = box_obj_xy + np.array([+sin_rl-cos_rw, -cos_rl-sin_rw])
+
+    d = box_obj_xy + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
+
+    if (do_intersect(a, b, obst_a, obst_b) or
+        do_intersect(a, b, obst_b, obst_c) or
+        do_intersect(a, b, obst_c, obst_d) or
+        do_intersect(a, b, obst_d, obst_a) or
+
+        do_intersect(b, c, obst_a, obst_b) or
+        do_intersect(b, c, obst_b, obst_c) or
+        do_intersect(b, c, obst_c, obst_d) or
+        do_intersect(b, c, obst_d, obst_a) or
+
+        do_intersect(c, d, obst_a, obst_b) or
+        do_intersect(c, d, obst_b, obst_c) or
+        do_intersect(c, d, obst_c, obst_d) or
+        do_intersect(c, d, obst_d, obst_a) or
+
+        do_intersect(d, a, obst_a, obst_b) or
+        do_intersect(d, a, obst_b, obst_c) or
+        do_intersect(d, a, obst_c, obst_d) or
+        do_intersect(d, a, obst_d, obst_a)):
+
+        return True
+
+    return False
+
+
+
+
+def rotate_obst_around_origin(pos: list, orien: list, theta: float):
+    """ rotate position and orientation counterclockwise by theta radians. """
+
+    if theta != 0:
+
+        # Calculate the sine and cosine of the angle theta
+        cos_theta = math.cos(theta)
+        sin_theta = math.sin(theta)
+
+        # Rotate the point counterclockwise around the origin
+        new_x = pos[0] * cos_theta - pos[1] * sin_theta
+        new_y = pos[0] * sin_theta + pos[1] * cos_theta
+
+        # Return the new coordinates
+        pos = [new_x, new_y, pos[2]]
+        orien[2] = to_interval_zero_to_two_pi(orien[2] + theta)
+
+        return (pos, orien)
+    else:
+        return (pos, orien)
+
 
