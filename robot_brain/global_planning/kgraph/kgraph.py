@@ -142,6 +142,13 @@ class KGraph(Graph):
                 return (True, temp_node)
         return (False, None)
 
+    def object_movable(self, obj: Object) -> bool:
+        """ return true if the object is movable. """
+        for temp_node in self.nodes.values():
+            if isinstance(temp_node, ObjectNode) and temp_node.obj.name == obj.name:
+                return temp_node.obj.obj_type == MOVABLE
+        return False
+
     def ready_for_edge_review(self, edge: ActionEdge) -> bool:
         """ check if edge has all componentes to create a success factor. """
         return len(edge.controller.pred_error) > 0 and edge.status in [EDGE_COMPLETED, EDGE_FAILED]

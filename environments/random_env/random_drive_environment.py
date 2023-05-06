@@ -1,8 +1,7 @@
-import math
+import random
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
-import random
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
@@ -21,7 +20,6 @@ def main():
     for the pointrobot to solve.
     """
 
-
     robot_type = "pointRobot-vel-v7"
 
     rand_obj_generator = RandomObject(
@@ -33,8 +31,9 @@ def main():
 
     kgraph = KGraph()
 
-    random.seed(14)
-    save_path = create_new_directory(dir_path="environments/random_env/data")
+    # started at 14 last one 26, (skipped 21, 22, 26)
+    random.seed(27)
+    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_kgraph")
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())

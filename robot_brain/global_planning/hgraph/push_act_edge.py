@@ -41,7 +41,9 @@ class PushActionEdge(ActionEdge):
     def respond(self) -> np.ndarray:
         """ respond to the robot and obstacle state. """
         # detect if an object is movable or unmovable
+
         if self.check_obj_movable:
+
             if not all(self.push_obj_start_state.get_2d_pose() == self.push_obj.state.get_2d_pose()):
                 raise PushAnMovableObjectException
 

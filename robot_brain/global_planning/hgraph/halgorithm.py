@@ -40,8 +40,7 @@ from robot_brain.global_variables import (
         PROJECT_PATH,
         LOG_METRICS,
         CREATE_SERVER_DASHBOARD,
-        SAVE_LOG_METRICS,
-        EXPLORE_FACTOR)
+        SAVE_LOG_METRICS)
 
 from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
 from robot_brain.state import State
@@ -276,7 +275,6 @@ class HypothesisAlgorithm():
         if self.hgraph.get_node(self.current_edge.to).status == NODE_UNFEASIBLE:
             return self.search_hypothesis()
 
-
         # remove this below
         if self.make_ready_counter == 900:
             print('fuckfuckfuckfuckfuc')
@@ -290,37 +288,31 @@ class HypothesisAlgorithm():
 
             # make the action edge ready
             if isinstance(self.current_edge, ActionEdge):
-                print("1")
                 if self.current_edge.status == EDGE_INITIALISED:
+
                     self.estimate_path(self.current_edge)
 
                 elif self.current_edge.status == EDGE_PATH_EXISTS:
-                    print("2")
                     # create no ident edge if controller already has a model
                     if self.current_edge.controller.system_model.name is not None:
                         self.current_edge.set_has_system_model_status()
 
                     # create identification edge if there is not model
                     else:
-                        print("3")
                         self.create_ident_edge(self.current_edge)
 
                 elif self.current_edge.status == EDGE_HAS_SYSTEM_MODEL:
-                    print("4")
                     self.search_path(self.current_edge)
 
                 elif self.current_edge.status == EDGE_EXECUTING:
-                    print("5")
                     return
 
                 elif self.current_edge.status in [EDGE_PATH_IS_PLANNED, EDGE_COMPLETED, EDGE_FAILED]:
-                    ValueError("path is {self.current_edge.iden}, and that in this section should be impossible.")
+                    raise ValueError("path is {self.current_edge.iden}, and that in this section should be impossible.")
 
                 else:
-                    ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
+                    raise ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
 
-
-                print("6")
                 return self.make_ready_for_execution()
 
             # make the identification edge ready
@@ -331,20 +323,15 @@ class HypothesisAlgorithm():
                 # as a start when system identification is added to the project. Gijs Groote 8-4-2023.
 
                 if self.current_edge.status == EDGE_INITIALISED:
-                    print(f"the current edge apperreantly is initialised")
                     return
 
                 elif self.current_edge.status == EDGE_EXECUTING:
                     print(f"current identification edge {self.current_edge.iden} is already execution")
                     return
 
-                elif self.current_edge.status == EDGE_FAILED:
-                    print(f'current ident edge status = {self.current_edge.status}')
-
                 else:
-                    ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
+                    raise ValueError(f"unknown status for edge {self.current_edge.iden} and status {self.current_edge.status}")
 
-                print("7")
                 return self.make_ready_for_execution()
 
 
@@ -582,7 +569,6 @@ class HypothesisAlgorithm():
         assert self.current_node is not None and self.current_edge is not None,\
                 f"current_node: {self.current_node} and/or current_edge: {self.current_edge} cannot be None"
 
-        print(f"driiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiive")
         # create and add best push pose against object node
         try:
             best_push_pose_against_object_state = self.hgraph.find_best_push_state_againts_object(
@@ -642,12 +628,7 @@ class HypothesisAlgorithm():
             to=robot_start_node.iden,
             subtask_name=edge.subtask_name)
 
-        print(f"adding empty edge {temp.iden}")
-
         self.hgraph.add_edge(temp)
-
-        print("crete drive edge")
-
 
         # create driving edge
         self.create_drive_edge(robot_start_node.iden, best_push_pose_against_object_node.iden)
@@ -708,7 +689,10 @@ class HypothesisAlgorithm():
         suggested_controller = None
 
         if self.kgraph is not None:
-            (check_obj_movable, _) = self.kgraph.object_in_kgraph(push_obj)
+
+            not_check_obj_movable = self.kgraph.object_movable(push_obj)
+            check_obj_movable = not not_check_obj_movable
+
             suggested_controller = self.kgraph.action_suggestion(push_obj)
 
             all_kgraph_controllers = self.kgraph.all_action_suggestions(push_obj)
@@ -744,6 +728,7 @@ class HypothesisAlgorithm():
             if exception_triggered:
                 return self.search_hypothesis()
 
+        print(f"are we checking the movable thing? {check_obj_movable}")
         edge = PushActionEdge(
                 iden=self.hgraph.unique_edge_iden(),
                 source=source_node_iden,
@@ -988,6 +973,7 @@ class HypothesisAlgorithm():
         """ handle a FaultDetectedException. """
         print(f"hey and fault was detect!")
         self.hgraph.fail_edge(edge)
+        self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
         self.hgraph.add_to_blocklist(edge)
 
     def handle_push_an_unmovable_object_exception(self, exc: PushAnUnmovableObjectException, edge: PushActionEdge):

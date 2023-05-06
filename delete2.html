@@ -1,0 +1,113 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        body {
+            margin: 0px;
+        }
+        #mynetwork {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 450px;
+            background-color: rgb(255, 255, 255);
+            border: none;
+            /*margin-top: -22px;*/
+            /*float: left;*/
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network;
+    var container;
+    var options, data;
+
+
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#97C2FC", "border": "#2B7CE9", "highlight": {"background": "#D2E5FF", "border": "#2B7CE9"}}, "group": "nodes", "id": 0, "label": "pointRobot-vel-v7", "shape": "dot", "title": "Node: pointRobot-vel-v7\u003cbr\u003eNode identifier: 0\u003cbr\u003eStatus: node:initialised\u003cbr\u003eIn subtask: no_subtask_name\u003cbr\u003eWith Object: pointRobot-vel-v7\u003cbr\u003e2d pos = [ 0.95454398 -1.88261713  0.        ]\u003cbr\u003etype = 1\u003cbr\u003e", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#97C2FC", "border": "#2B7CE9", "highlight": {"background": "#D2E5FF", "border": "#2B7CE9"}}, "group": "nodes", "id": 1, "label": " ", "shape": "dot", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#97C2FC", "border": "#2B7CE9", "highlight": {"background": "#D2E5FF", "border": "#2B7CE9"}}, "group": "nodes", "id": 2, "label": " ", "shape": "dot", "x": 10.0, "y": 10.0}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": 0, "label": "driving", "title": "Edge type: FeedbackEdge\u003cbr\u003eEdge identifier: 0\u003cbr\u003eObject: pointRobot-vel-v7,\u003cbr\u003eSuccess Factor: 0.9999999999963045\u003cbr\u003eController: MPPI\u003cbr\u003e Controller Class: \u003cclass \u0027robot_brain.controller.drive.mppi.mppi_2th_order.DriveMppi2thOrder\u0027\u003e\u003cbr\u003eSystem model: drive_mppi_model\u003cbr\u003en_success: 1\u003cbr\u003en_failed: 0\u003cbr\u003e", "to": 1, "width": 1.5}, {"arrows": "to", "from": 0, "label": "driving", "title": "Edge type: FeedbackEdge\u003cbr\u003eEdge identifier: 1\u003cbr\u003eObject: pointRobot-vel-v7,\u003cbr\u003eSuccess Factor: 0.9999999999999224\u003cbr\u003eController: MPC_2th_order\u003cbr\u003e Controller Class: \u003cclass \u0027robot_brain.controller.drive.mpc.mpc_2th_order.DriveMpc2thOrder\u0027\u003e\u003cbr\u003eSystem model: drive_mpc_model\u003cbr\u003en_success: 6\u003cbr\u003en_failed: 0\u003cbr\u003e", "to": 2, "width": 1.5}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>
