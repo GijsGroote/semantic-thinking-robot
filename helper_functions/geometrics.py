@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import math
+from typing import List
 from robot_brain.global_variables import TORCH_DEVICE
 
 def minimal_distance_point_to_line(p: np.ndarray, lp1: np.ndarray, lp2: np.ndarray) -> float:
@@ -204,7 +205,7 @@ def box_in_cylinder_obstacle(pose_2d: np.ndarray, cylinder_obj, box_obj):
     d = box_obj_xy + np.array([sin_rl+cos_rw, -cos_rl+sin_rw])
 
 
-    # check if the edges of the obst overlap with the cylinder 
+    # check if the edges of the obst overlap with the cylinder
     if minimal_distance_point_to_line(cylinder_obj_xy, a, b) <= cylinder_obj.properties.radius():
         return True
 
@@ -275,3 +276,29 @@ def box_in_box_obstacle(pose_2d, in_this_box_obj, box_obj):
         return True
 
     return False
+
+
+
+
+def rotate_obst_around_origin(pos: list, orien: list, theta: float):
+    """ rotate position and orientation counterclockwise by theta radians. """
+
+    if theta != 0:
+
+        # Calculate the sine and cosine of the angle theta
+        cos_theta = math.cos(theta)
+        sin_theta = math.sin(theta)
+
+        # Rotate the point counterclockwise around the origin
+        new_x = pos[0] * cos_theta - pos[1] * sin_theta
+        new_y = pos[0] * sin_theta + pos[1] * cos_theta
+
+        # Return the new coordinates
+        pos = [new_x, new_y, pos[2]]
+        orien[2] = to_interval_zero_to_two_pi(orien[2] + theta)
+
+        return (pos, orien)
+    else:
+        return (pos, orien)
+
+

@@ -5,11 +5,11 @@ from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
+from robot_brain.global_planning.kgraph.kgraph import KGraph
+import math
 
-from environments.two_pushes_to_freedom.objects import (
-        blocking_object1, blocking_object2, center_wall,
-        wall1, wall2, wall3, wall4, wall5, wall6,
-        wall7, wall8, wall9, wall10, wall11)
+from environments.two_pushes_to_freedom.objects import create_two_pushes_to_freedom_objects
+
 
 def main():
 
@@ -19,39 +19,15 @@ def main():
     action = np.zeros(env.n())
     env.reset()
 
-    n_steps = 10000
+
+    kgraph = KGraph()
 
     # add obstacles
-    obstacles = {blocking_object1.name(): blocking_object1,
-            blocking_object2.name(): blocking_object2,
-            center_wall.name(): center_wall,
-            wall1.name(): wall1,
-            wall2.name(): wall2,
-            wall3.name(): wall3,
-            wall4.name(): wall4,
-            wall5.name(): wall5,
-            wall6.name(): wall6,
-            wall7.name(): wall7,
-            wall8.name(): wall8,
-            wall9.name(): wall9,
-            wall10.name(): wall10,
-            wall11.name(): wall11}
-    # add walls
-    env.add_obstacle(wall1)
-    env.add_obstacle(wall2)
-    env.add_obstacle(wall3)
-    env.add_obstacle(wall4)
-    env.add_obstacle(wall5)
-    env.add_obstacle(wall6)
-    env.add_obstacle(wall7)
-    env.add_obstacle(wall8)
-    env.add_obstacle(wall9)
-    env.add_obstacle(wall10)
-    env.add_obstacle(wall11)
-    # add objects
-    env.add_obstacle(blocking_object1)
-    env.add_obstacle(blocking_object2)
-    env.add_obstacle(center_wall)
+    obstacles = create_two_pushes_to_freedom_objects(rotate_by_theta=-0.3+math.pi/4)
+
+    # add objects to environment
+    for obst in obstacles.values():
+        env.add_obstacle(obst)
 
     # add sensors
     sensor = ObstacleSensor()
@@ -68,12 +44,15 @@ def main():
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([-5, 3.5, 0])))],
         "obstacles": obstacles,
+        "env": env,
+        "n_env": 1,
+        "kgraph": kgraph,
         "env": env
     }, ob)
 
     brain.update(ob)
 
-    for _ in range(n_steps):
+    for _ in range(10000):
 
         action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)

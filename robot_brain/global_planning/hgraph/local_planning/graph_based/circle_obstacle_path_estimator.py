@@ -352,14 +352,20 @@ class CircleObstaclePathEstimator(PathEstimator):
             else:
                 raise TypeError(f"Could not recognise obstacle type: {obst.properties.type()}")
 
+
         fig.update_layout(
-                height=900,
+                # height=900,
+                yaxis_range=[-6, 4],
+                xaxis_range=[-7,3],
                 showlegend= False,
                 paper_bgcolor=FIG_BG_COLOR,
                 plot_bgcolor=FIG_BG_COLOR,
+
+                yaxis=dict(
+                    autorange='reversed',  # Reverse the y-axis
+                ),
             )
 
-        fig.update_yaxes(autorange="reversed")
         if save:
             with open(PROJECT_PATH+"dashboard/data/cgrid.pickle", "wb") as file:
                 pickle.dump(fig, file)

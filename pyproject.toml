@@ -8,12 +8,12 @@ authors = ["Gijs Groote <gijsgroote@hotmail.com>"]
 python = ">=3.10, <3.12"
 # use urdfpy unpinned version, see https://github.com/mmatl/urdfpy/pull/26
 urdfpy = {git="https://github.com/GijsGroote/urdfpy.git", rev="master"}
-# motion-planning-scenes = {git="https://github.com/GijsGroote/motion_planning_scenes.git", rev="develop"}
-motion-planning-scenes = {path="../motion_planning_scenes"}
-# urdfenvs = {git="https://github.com/GijsGroote/gym_envs_urdf.git", rev="develop"}
-urdfenvs = {path="../gym_envs_urdf"}
+motion-planning-scenes = {git="https://github.com/GijsGroote/motion_planning_scenes.git", rev="develop"}
+# motion-planning-scenes = {path="../motion_planning_scenes"}
+urdfenvs = {git="https://github.com/GijsGroote/gym_envs_urdf.git", rev="develop"}
+# urdfenvs = {path="../gym_envs_urdf"}
 pybullet = "^3.2.1"
-gym = "^0.21.0"
+gym = "^0.26.0"
 numpy = ">=1.10.0, <1.24.0"
 multiprocess = "^0.70.12"
 do-mpc = "^4.3.2"

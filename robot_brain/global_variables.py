@@ -1,20 +1,19 @@
 DT = 0.05
 # dashboard global variables
-CREATE_SERVER_DASHBOARD = False
+CREATE_SERVER_DASHBOARD = True
 PLOT_CONTROLLER = False
-LOG_METRICS = True
+LOG_METRICS = False
 DASHBOARD_PORT_PID = 8040
 
-# plot_controller should be True for SAVE_LOG_METRICS
-SAVE_LOG_METRICS = True
+SAVE_LOG_METRICS = False
 
 MIN_INPUT = -0.7
 MAX_INPUT = 0.7
 
 UNKNOWN_OBSTACLE_COST = 3.5
 KNOWN_OBSTACLE_COST = 3.5
-GRID_X_SIZE =12# up to down length
-GRID_Y_SIZE =12# left to right length
+GRID_X_SIZE =16# up to down length
+GRID_Y_SIZE =16# left to right length
 
 def in_grid(x:float, y:float) -> bool:
     """ return True if the (x,y) position in
