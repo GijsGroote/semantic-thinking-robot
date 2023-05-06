@@ -14,7 +14,7 @@ class Edge(ABC):
     Edge or transition, describes the way/method of transitioning from
     one Node to another Node.
     """
-    def __init__(self, iden: int, source: int, to: int, verb: str, controller):
+    def __init__(self, iden: int, source: int, to: int, verb: str, controller, subtask_name: str):
         self.iden = iden
         self.source = source
         self.to = to
@@ -26,7 +26,7 @@ class Edge(ABC):
         self._path = None
 
         self.path_pointer = 0
-        self.alpha = None
+        self.subtask_name = subtask_name
 
     @abstractmethod
     def ready_for_execution(self) -> bool:
@@ -62,8 +62,6 @@ class Edge(ABC):
     @abstractmethod
     def set_completed_status(self):
         """ Sets completed status. """
-
-
 
     @abstractmethod
     def to_string(self):
@@ -138,3 +136,12 @@ class Edge(ABC):
     def path(self, path):
         # TODO: check plan is a plan
         self._path = path
+
+    @property
+    def subtask_name(self):
+        return self._subtask_name
+
+    @subtask_name.setter
+    def subtask_name(self, val):
+        assert isinstance(val, str), f"subtask_name should be a str and is {type(val)}"
+        self._subtask_name = val

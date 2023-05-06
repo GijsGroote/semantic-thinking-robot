@@ -16,6 +16,17 @@ class NoBestPushPositionException(Exception):
 class NoTargetPositionFoundException(Exception):
     """ No target position can be found to push object toward. """
 
+class MovableObjectDetectedException(Exception):
+    """ A movable object was detected pushed. """
+
 class PushAnUnmovableObjectException(Exception):
     """ A unmovable object was insuccesfully pushed. """
 
+class PushAnMovableObjectException(Exception):
+    """ A movable object was succesfully pushed. """
+
+class LoopDetectedException(Exception):
+    """ A loop was detected in the HGraph."""
+
+class TwoEdgesPointToSameNodeException(Exception):
+    """ Two non-failed edges point to the same node in HGraph. """

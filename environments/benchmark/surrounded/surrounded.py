@@ -1,24 +1,30 @@
+import os
 from multiprocessing import Process, Pipe
 import numpy as np
 import gym
+from dashboard.app import stop_dash_server
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 import urdfenvs.boxer_robot
 from pynput.keyboard import Key
 from urdfenvs.keyboard_input.keyboard_input_responder import Responder
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
-from robot_brain.state import State
-from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, DT
-from dashboard.app import stop_dash_server
-from robot_brain.obstacle import Obstacle, FREE, MOVABLE, UNKNOWN, UNMOVABLE
-
-import pybullet as p
-from motion_planning_env.box_obstacle import BoxObstacle
 from robot_brain.global_planning.kgraph.kgraph import KGraph
+from robot_brain.state import State
+from robot_brain.global_variables import (
+        CREATE_SERVER_DASHBOARD,
+        DT,
+        POINT_ROBOT_RADIUS,
+        LOG_METRICS,
+        SAVE_LOG_METRICS,
+        PROJECT_PATH)
 
+from robot_brain.object import Object, FREE, MOVABLE, UNKNOWN, UNMOVABLE
+
+from helper_functions.figures import create_time_plot, create_prediction_error_plot, create_new_directory
 from environments.benchmark.surrounded.objects import surrounded
 
-USER_INPUT_MODE = True
+USER_INPUT_MODE = False
 
 def main(conn=None):
 
@@ -28,14 +34,16 @@ def main(conn=None):
 
     kgraph = KGraph()
 
-    for box_string in ["simpleBox2", "simpleBox4", "simpleBox5", "simpleBox6"]:
-        kgraph.add_object(Obstacle(name=box_string,
-                                state=State,
-                                properties=surrounded[box_string],
-                                obj_type=UNMOVABLE))
+
+    # create new directory for data
+    save_path = create_new_directory(dir_path= "environments/benchmark/surrounded/data/")
+
+
+        # assert POINT_ROBOT_RADIUS < 0.31,\
+    #     f"POINT_ROBOT_RADIUS must be smaller than TODO, otherwise it will end up in obstacle space"
 
     # try the same task multiple times
-    for i in range(8):
+    for i in range(3):
         print(f'starting environment: {i}')
 
         action = np.zeros(env.n())
@@ -64,13 +72,17 @@ def main(conn=None):
             brain.setup({
                 "dt": DT,
                 "robot_type": robot_type,
-                "obstacles_in_env": True,
+                "objects_in_env": True,
                 "default_action": np.zeros(2),
-                "task": [("robot", State(pos=np.array([0, 4, 0])))],
-                "obstacles": surrounded,
+                "task": [
+                    (surrounded["simpleBox3"].name(), State(pos=np.array([-1, 3.5, 0]))),
+                    # ("robot", State(pos=np.array([0, 4, 0])))
+                    ],
+                "objects": surrounded,
                 "env": env,
                 "n_env": i,
                 "kgraph": kgraph,
+                "save_path": save_path,
                 }, ob)
 
         try:
@@ -87,7 +99,6 @@ def main(conn=None):
                 else:
                     action[0:2] = brain.respond()
                     ob, _, _, _ = env.step(action)
-                    print(f'action {action}')
                     brain.update(ob)
 
         except StopIteration as exc:

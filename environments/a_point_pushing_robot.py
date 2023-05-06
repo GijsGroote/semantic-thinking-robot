@@ -1,90 +1,89 @@
-from multiprocessing import Process, Pipe
 import math
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
-import urdfenvs.boxer_robot # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
-from urdfenvs.keyboard_input.keyboard_input_responder import Responder
-from pynput.keyboard import Key
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
 from robot_brain.global_variables import DT
+from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.objects.boxes import box, box2
-from environments.objects.spheres import sphere
 from environments.objects.cylinders import cylinder
 
 
-user_input_mode = False
-
-def main(conn=None):
+def main():
     """
-    Point robot and obstacles which can interact with each other in the environment.
+    Point robot and objects which can interact with each other in the environment.
 
     Semantic brain goal: find out how interachtin with the objects goes
 
     """
     robot_type = "pointRobot-vel-v7"
-    # robot_type = "pointRobot-acc-v7"
-    # robot_type = "boxerRobot-vel-v7"
-    # robot_type = "boxerRobot-acc-v7"
     env = gym.make(robot_type, dt=DT, render=True)
+    kgraph = KGraph()
 
-    action = np.zeros(env.n())
+    for i in range(10):
+        print(f'starting blockade environment: {i}')
 
-    pos0 = np.array([1.0, 0.1])
-    vel0 = np.array([0.0, 0.0])
-    env.reset(pos=pos0, vel=vel0)
+        action = np.zeros(env.n())
+        env.reset()
 
-    n_steps = 10000
+        objects = {box.name(): box,
+                box2.name(): box2,
+                cylinder.name(): cylinder}
 
-    obstacles = {box.name(): box,
-            box2.name(): box2,
-            # sphere.name(): sphere,
-            cylinder.name(): cylinder}
+        # add objects
+        env.add_obstacle(box)
+        env.add_obstacle(box2)
+        env.add_obstacle(cylinder)
 
-    # add obstacles
-    env.add_obstacle(box)
-    env.add_obstacle(box2)
-    # env.add_obstacle(sphere)
-    env.add_obstacle(cylinder)
+        # add sensors
+        sensor = ObstacleSensor()
+        sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
+        env.add_sensor(sensor)
 
-    # add sensors
-    sensor = ObstacleSensor()
-    sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
-    env.add_sensor(sensor)
-
-    ob, reward, done, info = env.step(action)
-
-    brain = RBrain()
-    brain.setup({
-        "dt": DT,
-        "robot_type": robot_type,
-        "obstacles_in_env": True,
-        "default_action": np.array(np.zeros(2)),
-        "task": [
-            (box.name(), State(pos=np.array([2, -3.31, 0.1]))),
-            # (box2.name(), State(pos=np.array([-3, 1.31, 0.1]))),
-            # (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
-            ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
-            ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
-            # ("robot", State(pos=np.array([-3.3212, 1, 0]))),
-            # ("robot", State(pos=np.array([3.3212, 2.20, 0]))),
-            # ("robot", State(pos=np.array([4,-2,0]))),
-            # ("robot", State(pos=np.array([-4, -4, 0]))),
-            ],
-        "obstacles": obstacles,
-        "env": env
-    }, ob)
-
-    brain.update(ob)
-
-    for i in range(n_steps):
-
-        action[0:2] = brain.respond()
         ob, reward, done, info = env.step(action)
+
+        brain = RBrain()
+        brain.setup({
+            "dt": DT,
+            "robot_type": robot_type,
+            "objects_in_env": True,
+            "default_action": np.array(np.zeros(2)),
+            "task": [
+                # (box.name(), State(pos=np.array([2, -3.31, 0.1]))),
+                # (box2.name(), State(pos=np.array([-3, 1.31, 0.1]))),
+                # (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
+                # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
+                ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
+                ("robot", State(pos=np.array([-0.3212, .1, 0]))),
+                ("robot", State(pos=np.array([3.3212, 2.20, 0]))),
+                # ("robot", State(pos=np.array([4,-2,0]))),
+                # ("robot", State(pos=np.array([-4, -4, 0]))),
+                ],
+            "objects": objects,
+            "env": env,
+            "n_env": i,
+            "kgraph": kgraph,
+        }, ob)
+
         brain.update(ob)
+
+        try:
+            for _ in range(10000):
+
+                action[0:2] = brain.respond()
+                ob, _, _, _ = env.step(action)
+                brain.update(ob)
+
+        except StopIteration as exc:
+
+            print(f"Tear down this environment, we're done here because {exc}")
+            continue
+
+        print('times is up, try again')
+
 
 if __name__ == "__main__":
     main()

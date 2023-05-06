@@ -23,7 +23,7 @@ class PushMppi(PushController):
         PushController.__init__(self, order)
         self.name = "MPPI"
         self.mppi = None
-        self.n_horizon = 50
+        self.n_horizon = 80
         self.plot_data = {}
 
     def _setup(self, robot_state: State, obstacle_state: State):
@@ -51,22 +51,22 @@ class PushMppi(PushController):
 
     @abstractmethod
     def _calculate_prediction_error(self, obst_state: State) -> float:
-        pass
+        """ calculate prediction error. """
 
     @abstractmethod
     def _simulate(self, robot_state: State, obstacle_state: State, system_input: State) -> State:
         pass
 
     def _set_target_state(self):
-        self.controller.running_cost = self._running_cost 
+        self.controller.running_cost = self._running_cost
 
-    @abstractmethod 
+    @abstractmethod
     def _running_cost(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         pass
-    
+
     def visualise(self, save=True):
         """ create plot for the mppi controller. """
-        
+
         dt_counter = len(self.pred_error)-1
 
         # plot only last PLOT_N_TIMESTEPS data points
@@ -77,7 +77,7 @@ class PushMppi(PushController):
         else:
             time = np.arange(0, dt_counter+1, 1)
             pred_error = self.pred_error
-        
+
         # prediction error plot
         fig = px.line(
             x=time,

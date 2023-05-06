@@ -137,6 +137,7 @@ class DriveMpc2thOrder(Mpc):
     """
     def __init__(self):
         Mpc.__init__(self, order=2)
+        self.name = "MPC_2th_order"
 
     def _set_target_state(self):
         tvp_template = self.mpc.get_tvp_template()
@@ -274,11 +275,11 @@ class DriveMpc2thOrder(Mpc):
         # mpc.bounds['upper', '_x', 'ang_p'] = 2 * np.pi
 
         # Lower bounds on inputs:
-        mpc.bounds['lower', '_u', 'u1'] = MIN_INPUT
-        mpc.bounds['lower', '_u', 'u2'] = MIN_INPUT
+        mpc.bounds['lower', '_u', 'u1'] = 1.2*MIN_INPUT
+        mpc.bounds['lower', '_u', 'u2'] = 1.2*MIN_INPUT
         # upper bounds on inputs:
-        mpc.bounds['upper', '_u', 'u1'] = MAX_INPUT
-        mpc.bounds['upper', '_u', 'u2'] = MAX_INPUT
+        mpc.bounds['upper', '_u', 'u1'] = 1.2*MAX_INPUT
+        mpc.bounds['upper', '_u', 'u2'] = 1.2*MAX_INPUT
 
         mpc.setup()
 

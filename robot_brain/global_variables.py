@@ -7,22 +7,21 @@ DASHBOARD_PORT_PID = 8040
 
 SAVE_LOG_METRICS = False
 
-MIN_INPUT = -0.7
-MAX_INPUT = 0.7
+
+MIN_INPUT = -0.9
+MAX_INPUT = 0.9
 
 UNKNOWN_OBSTACLE_COST = 3.5
 KNOWN_OBSTACLE_COST = 3.5
 GRID_X_SIZE =16# up to down length
 GRID_Y_SIZE =16# left to right length
 
-def in_grid(x:float, y:float) -> bool:
-    """ return True if the (x,y) position in
-    inside the grid boundaries, otherwise False. """
-    return abs(x)<=GRID_X_SIZE/2 and abs(y)<=GRID_Y_SIZE
-
-POINT_ROBOT_RADIUS = 0.15
+POINT_ROBOT_RADIUS = 0.35
 BOXER_ROBOT_LENGTH = 0.85
 BOXER_ROBOT_WIDTH = 0.6
+
+# explore factor between 0 (not learning) and 1 (maximal learning)
+EXPLORE_FACTOR = 0.0
 
 # the number of time steps to plot for any controller
 PLOT_N_TIMESTEPS = 200
@@ -32,16 +31,13 @@ FIG_BG_COLOR = "rgb(255, 255, 255)"  # white
 
 COLORS = ["#09ffff", "#19d3f3", "#e763fa" , "#ab63fa"]
 
-# "rgb(178, 178, 255)" # #b2b2ff myDarkColor
-# "rgb(204, 204, 255)" # #ccccff myLightColor
-# "rgb(230, 230, 255)" # #e6e6ff myEvenLighterColor
+import random
+# make tasks repeatable
+random.seed(1002)
 
 
-# TODO: set this path automatically
 PROJECT_PATH = "/home/gijs/Documents/semantic-thinking-robot/"
-
-
-# MPC_CONTROLLER = "mpc controller"
+DATA_PATH = None
 
 import torch
 # TODO: mppi can be a mess when it's want to calculate efficient on the gpu

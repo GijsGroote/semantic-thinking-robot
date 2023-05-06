@@ -10,7 +10,7 @@ from environments.blocking_object.objects import wall1, wall2, wall3, blocking_o
 
 def main():
     """
-    Point robot and obstacles which can interact with each other in the environment.
+    Point robot and objects which can interact with each other in the environment.
 
     Semantic brain goal: find out how interachtin with the objects goes
 
@@ -26,8 +26,8 @@ def main():
 
     n_steps = 10000
 
-    # add obstacles
-    obstacles = {blocking_object.name(): blocking_object, wall1.name(): wall1, wall2.name(): wall2, wall3.name(): wall3}
+    # add objects
+    objects = {blocking_object.name(): blocking_object, wall1.name(): wall1, wall2.name(): wall2, wall3.name(): wall3}
     env.add_obstacle(blocking_object)
     env.add_obstacle(wall1)
     env.add_obstacle(wall2)
@@ -44,10 +44,10 @@ def main():
     brain.setup({
         "dt": DT,
         "robot_type": robot_type,
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([-4.3212, -4, 0])))],
-        "obstacles": obstacles,
+        "objects": objects,
         "env": env
     }, ob)
 

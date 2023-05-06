@@ -9,6 +9,7 @@ from dashboard.app import stop_dash_server
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.benchmark.benchmark_obstacles.obstacles import blockade_obstacles
+from helper_functions.figures import create_time_plot, create_prediction_error_plot, create_new_directory
 
 def main():
     """
@@ -18,8 +19,12 @@ def main():
     env = gym.make(robot_type, dt=DT, render=True)
     kgraph = KGraph()
 
+    # create new directory for data
+    save_path = create_new_directory(dir_path="environments/benchmark/blockade/data/")
+
     # try to solve the blockade task multiple times
     for i in range(8):
+
         print(f'starting blockade environment: {i}')
 
         action = np.zeros(env.n())
@@ -40,15 +45,16 @@ def main():
         brain.setup({
             "dt": DT,
             "robot_type": robot_type,
-            "obstacles_in_env": True,
+            "objects_in_env": True,
             "default_action": np.zeros(2),
             "task": [
                 (blockade_obstacles["simpleBox"].name(), State(pos=np.array([3, 0, 0]))),
                 ],
-            "obstacles": blockade_obstacles,
+            "objects": blockade_obstacles,
             "env": env,
             "n_env": i,
             "kgraph": kgraph,
+            "save_path": save_path,
             }, ob)
 
         try:

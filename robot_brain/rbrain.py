@@ -2,17 +2,24 @@ import warnings
 import time
 import numpy as np
 import pandas as pd
-from dashboard.app import start_dash_server, stop_dash_server
 from motion_planning_env.box_obstacle import BoxObstacle
 from motion_planning_env.cylinder_obstacle import CylinderObstacle
 pd.options.plotting.backend = "plotly"
+from dashboard.app import start_dash_server, stop_dash_server
 from robot_brain.state import State
-from robot_brain.obstacle import Obstacle, MOVABLE, UNMOVABLE, UNKNOWN
-from robot_brain.global_variables import CREATE_SERVER_DASHBOARD, POINT_ROBOT_RADIUS, BOXER_ROBOT_LENGTH, BOXER_ROBOT_WIDTH
-from robot_brain.global_planning.hgraph.point_robot_vel_hgraph import PointRobotVelHGraph
-from robot_brain.global_planning.hgraph.boxer_robot_vel_hgraph import BoxerRobotVelHGraph
+from robot_brain.object import Object
+from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
+from robot_brain.global_variables import (
+        PROJECT_PATH,
+        CREATE_SERVER_DASHBOARD,
+        POINT_ROBOT_RADIUS,
+        BOXER_ROBOT_LENGTH,
+        BOXER_ROBOT_WIDTH,
+        )
 
-# is_doing states
+from robot_brain.global_planning.kgraph.kgraph import KGraph
+from robot_brain.global_planning.hgraph.halgorithm import HypothesisAlgorithm
+
 IS_DOING_NOTHING = "nothing"
 IS_EXECUTING = "executing"
 
@@ -26,14 +33,13 @@ class RBrain:
 
     def __init__(self):
         # TODO: these should be private, en make some getters
-        self.obstacles = {} # obstacle information dictionary
-        self.robot = None  # Player information
+        self.objects = {} # object information dictionary
+        self.robot_obj = None  # Player information
         self.is_doing = IS_DOING_NOTHING  # State indicating what the brain is doing
         self.default_action = None
         self.dt = None
-        self.hgraph = None
-        self.kgraph = None
-        self.obstacles_in_env = None
+        self.halgorithm = None
+        self.objects_in_env = None
         self.dash_app = None
 
 
@@ -64,13 +70,14 @@ class RBrain:
             else:
                 raise ValueError("unknown robot_type: {stat_world_info['robot_type']}")
 
-            self.robot = Obstacle(
+            self.robot_obj = Object(
                 name=stat_world_info["robot_type"],
                 state=State(
                     pos=ob["joint_state"]["position"],
                     vel=ob["joint_state"]["velocity"],
                 ),
                 properties=robot_properties,
+                obj_type=MOVABLE
             )
         else:
             warnings.warn("robot type is not set")
@@ -84,29 +91,29 @@ class RBrain:
             self.default_action = stat_world_info["default_action"]
 
 
-        if "obstacles_in_env" in stat_world_info:
-            self.obstacles_in_env = stat_world_info["obstacles_in_env"]
-            if self.obstacles_in_env:
-                self.setup_obstacles(stat_world_info, ob)
+        if "objects_in_env" in stat_world_info:
+            self.objects_in_env = stat_world_info["objects_in_env"]
+            if self.objects_in_env:
+                self.setup_objects(stat_world_info, ob)
         else:
             raise AttributeError(
-                "there was no indication if this environment has obstacles"
+                "there was no indication if this environment has objects"
             )
 
         if "task" in stat_world_info:
-            self.setup_hgraph(stat_world_info)
+            self.setup_halgorithm(stat_world_info)
         else:
             warnings.warn("no task was set")
 
-    def setup_obstacles(self, stat_world_info, ob):
-        """ save obstacles and their dimensions. """
+    def setup_objects(self, stat_world_info, ob):
+        """ save objects and their dimensions. """
 
         assert (
             "obstacleSensor" in ob.keys()
         ), "no obstacle sensor found in initial observation"
         assert (
-            "obstacles" in stat_world_info
-        ), "no obstacle dict found in static world info"
+            "objects" in stat_world_info
+        ), "no object dict found in static world info"
 
         for key, val in ob["obstacleSensor"].items():
 
@@ -118,22 +125,22 @@ class RBrain:
             )
 
             try:
-                self.obstacles[key] = Obstacle(name=key,
+                self.objects[key] = Object(name=key,
                             state=s_temp,
-                            properties=stat_world_info["obstacles"][key])
+                            properties=stat_world_info["objects"][key])
 
             except KeyError as exc:
                 raise KeyError(
-                    f"the obstacle {key} was returned from the\
-                     obstacle sensor but not from the given obstacles"
+                    f"the object {key} was returned from the\
+                     object sensor but not from the given objects"
                 ) from exc
 
             # objects are classified as unknown
-            self.obstacles[key].type = UNKNOWN
+            self.objects[key].type = UNKNOWN
 
-    def setup_hgraph(self, stat_world_info):
+    def setup_halgorithm(self, stat_world_info):
         """
-        Setup Hypothesis graph initialised with the task.
+        Setup hypothesis algorithm initialised with the task.
 
         2 types pointRobot-vel-v7
                 boxerRobot-vel-v7
@@ -141,16 +148,7 @@ class RBrain:
         of robots are allowed.
         """
 
-        if stat_world_info["robot_type"] == "pointRobot-vel-v7":
-            self.hgraph = PointRobotVelHGraph(self.robot, stat_world_info["env"])
-
-        elif stat_world_info["robot_type"] == "boxerRobot-vel-v7":
-            self.hgraph = BoxerRobotVelHGraph(self.robot, stat_world_info["env"])
-
-        else:
-            raise ValueError(f"unknown robot_type: {stat_world_info['robot_type']}")
-
-
+        self.halgorithm = HypothesisAlgorithm(self.robot_obj, stat_world_info["env"])
         self.is_doing = IS_EXECUTING
 
         # halt if there are no subtask
@@ -161,78 +159,84 @@ class RBrain:
                 self.hgraph.visualise()
                 stop_dash_server(self.dash_app)
 
+        # create a task
         task = {}
-        for (task_nmr, (obstacle_key, target)) in enumerate(stat_world_info["task"]):
+        for (task_nmr, (object_key, target)) in enumerate(stat_world_info["task"]):
 
-            if obstacle_key == "robot":
-                obstacle = self.robot
+            if object_key == "robot":
+                obj = self.robot_obj
             else:
-                obstacle = self.obstacles[obstacle_key]
+                obj = self.objects[object_key]
 
             assert isinstance(target, State), \
             f"the target should be a State object and is: {type(target)}"
 
-            assert isinstance(obstacle, Obstacle), \
-                    f"the obstacle should be of type Ostacle and in {type(obstacle)}"
+            assert isinstance(obj, Object), \
+                    f"the obj should be of type Object and is {type(obj)}"
 
-            task["subtask_"+str(task_nmr)] = (obstacle, target)
+            task["subtask_"+str(task_nmr)] = (obj, target)
 
-        self.hgraph.setup(
+        if "kgraph" in stat_world_info:
+            kgraph = stat_world_info["kgraph"]
+        else:
+            kgraph = KGraph()
+
+        if "save_path" not in stat_world_info:
+            stat_world_info["save_path"] = PROJECT_PATH+"logger/logs"
+
+        self.halgorithm.setup(
+                kgraph=kgraph,
                 task=task,
-                obstacles=self.obstacles,
-                kgraph=stat_world_info["kgraph"])
-
+                objects=self.objects,
+                save_path=stat_world_info["save_path"])
 
     def update(self, ob):
         """
-        Update all obstacle states.
+        Update all objects states.
         :param ob:
         :return:
         """
         # update robot
-        # TODO: make this to better thingy if that is there
         pos = ob["joint_state"]["position"][0:2]
         vel = ob["joint_state"]["velocity"][0:2]
 
-        self.robot.state.pos = np.array([pos[0], pos[1], 0])
-        self.robot.state.vel = np.array([vel[0], vel[1], 0])
+        self.robot_obj.state.pos = np.array([pos[0], pos[1], 0])
+        self.robot_obj.state.vel = np.array([vel[0], vel[1], 0])
 
-        self.robot.state.ang_p = ob["joint_state"]["position"][2]
-        self.robot.state.ang_v = ob["joint_state"]["velocity"][2]
+        self.robot_obj.state.ang_p = ob["joint_state"]["position"][2]
+        self.robot_obj.state.ang_v = ob["joint_state"]["velocity"][2]
 
-        # update obstacles
+        # update objects
         if "obstacleSensor" in ob.keys():
             for key, val in ob["obstacleSensor"].items():
-                if key in self.obstacles:
-                    # if key in self.obstacle.keys():
-                    self.obstacles[key].state.pos = val["pose"]["position"]
-                    self.obstacles[key].state.vel = val["twist"]["linear"]
-                    self.obstacles[key].state.ang_p = val["pose"]["orientation"]
-                    self.obstacles[key].state.ang_v = val["twist"]["angular"]
+                if key in self.objects:
+                    # if key in self.object.keys():
+                    self.objects[key].state.pos = val["pose"]["position"]
+                    self.objects[key].state.vel = val["twist"]["linear"]
+                    self.objects[key].state.ang_p = val["pose"]["orientation"]
+                    self.objects[key].state.ang_v = val["twist"]["angular"]
 
     def respond(self):
         """
         Respond to request with the latest action.
         """
         if self.is_doing is IS_EXECUTING:
-            if self.hgraph is not None:
+            if self.halgorithm is not None:
                 try:
-                    return self.hgraph.respond()
+                    return self.halgorithm.respond()
                 except StopIteration as exc:
                     self.is_doing = IS_DOING_NOTHING
 
                     print(f"Halt because: {exc}")
 
-
-                    self.hgraph.visualise(save=False) # make this save=True
+                    self.halgorithm.visualise()
 
                     if CREATE_SERVER_DASHBOARD:
-                        self.hgraph.visualise()
-                        time.sleep(2) # give the dashboard some time to process visualising the hgraph
+                        self.halgorithm.visualise()
+                        time.sleep(1) # give the dashboard some time to process visualising the hgraph
                         stop_dash_server(self.dash_app)
 
                     raise exc
-                    # return self.default_action
             else:
                 return self.default_action
         elif self.is_doing is IS_DOING_NOTHING:
@@ -242,12 +246,12 @@ class RBrain:
             raise Exception("Unable to respond")
 
     @property
-    def obstacles(self):
-        return self._obstacles
+    def objects(self):
+        return self._objects
 
 
-    @obstacles.setter
-    def obstacles(self, obstacles):
-        assert isinstance(obstacles, dict), \
-                f"obstacles should be a dictionary and is {type(obstacles)}"
-        self._obstacles = obstacles
+    @objects.setter
+    def objects(self, objects):
+        assert isinstance(objects, dict), \
+                f"objects should be a dictionary and is {type(objects)}"
+        self._objects = objects

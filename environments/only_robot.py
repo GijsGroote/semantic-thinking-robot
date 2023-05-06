@@ -19,7 +19,7 @@ user_input_mode = False
 
 def main(conn=None):
     """
-    Point robot and obstacles which can interact with each other in the environment.
+    Point robot and objects which can interact with each other in the environment.
 
     Semantic brain goal: find out how interachtin with the objects goes
 
@@ -38,12 +38,12 @@ def main(conn=None):
 
     n_steps = 10000
 
-    obstacles = {box.name(): box,
+    objects = {box.name(): box,
             box2.name(): box2,
             # sphere.name(): sphere
             cylinder.name(): cylinder}
 
-    # add obstacles
+    # add objects
     env.add_obstacle(box)
     env.add_obstacle(box2)
     # env.add_obstacle(sphere)

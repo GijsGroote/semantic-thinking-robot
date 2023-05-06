@@ -29,9 +29,6 @@ class Mpc(DriveController):
         self.n_horizon = 15
 
     def _setup(self, current_state: State):
-
-        self.y_predicted = current_state
-
         # fully define model
         self.mpc_model = self.template_model(self.system_model.model)
 
@@ -44,20 +41,20 @@ class Mpc(DriveController):
         self.mpc.x0 = initial_state
         self.mpc.set_initial_guess()
 
+        self.simulator = do_mpc.simulator.Simulator(self.mpc_model)
+        self.simulator.set_tvp_fun(self.create_tvp_sim())
+
+        # Set parameter(s):
+        self.simulator.set_param(t_step=DT)
+        self.simulator.setup()
+
+        self.simulator.x0 = initial_state
+
+        self.y_predicted = current_state
+
         if PLOT_CONTROLLER or CREATE_SERVER_DASHBOARD or LOG_METRICS:
-
-            self.simulator = do_mpc.simulator.Simulator(self.mpc_model)
-            self.simulator.set_tvp_fun(self.create_tvp_sim())
-
-            # Set parameter(s):
-            self.simulator.set_param(t_step=DT)
-            self.simulator.setup()
-
-            self.simulator.x0 = initial_state
-
             self.plotter = self.create_plotter()
-            
-            self.y_predicted = current_state
+
 
         self.mpc.reset_history()
 

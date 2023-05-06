@@ -143,14 +143,15 @@ class Plotter():
                 pickle.dump(fig, file)
         else:
             fig.show()
- 
+
 class DriveMpc3thOrder(Mpc):
     """
-    Model Predictive Control controller for a 3th order system model. 
+    Model Predictive Control controller for a 3th order system model.
     Such as the boxer robot with velocity input.
     """
     def __init__(self):
         Mpc.__init__(self, order=3)
+        self.name = "MPC_3th_order"
 
     def _set_target_state(self):
         tvp_template = self.mpc.get_tvp_template()
@@ -189,7 +190,7 @@ class DriveMpc3thOrder(Mpc):
         """ solves minimisation problem. """
         initial_state = current_state.get_2d_pose()
         self.mpc.x0 = initial_state
-        system_input = self.mpc.make_step(initial_state) 
+        system_input = self.mpc.make_step(initial_state)
 
         return np.reshape(system_input, (len(system_input),))
 

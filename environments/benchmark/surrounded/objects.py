@@ -23,7 +23,9 @@ surrounded = {
             "geometry": {"length": 1.5, "width": 1.5, "height": 1},
             }),
         "simpleBox3": BoxObstacle(name="simpleBox3", content_dict={
-            "movable": False,
+            # "movable": False,
+            "movable": True,
+            "mass": 3,
             "type": "box",
             "orientation": [0, 0, 0],
             "mass": 3,

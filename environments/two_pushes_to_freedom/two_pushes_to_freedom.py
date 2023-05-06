@@ -19,7 +19,6 @@ def main():
     action = np.zeros(env.n())
     env.reset()
 
-
     kgraph = KGraph()
 
     # add obstacles
@@ -40,13 +39,17 @@ def main():
     brain.setup({
         "dt": DT,
         "robot_type": robot_type,
-        "obstacles_in_env": True,
+        "objects_in_env": True,
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([-5, 3.5, 0])))],
+<<<<<<< HEAD
         "obstacles": obstacles,
         "env": env,
         "n_env": 1,
         "kgraph": kgraph,
+=======
+        "objects": objects,
+>>>>>>> split_hgraph_and_halgorithm
         "env": env
     }, ob)
 
