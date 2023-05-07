@@ -973,6 +973,7 @@ class HypothesisAlgorithm():
         """ handle a FaultDetectedException. """
         print(f"hey and fault was detect!")
         self.hgraph.fail_edge(edge)
+        self.edge_pointer = 0
         self.hypothesis = self.hypothesis[self.hypothesis.index(edge)+1:]
         self.hgraph.add_to_blocklist(edge)
 
@@ -1047,11 +1048,11 @@ class HypothesisAlgorithm():
                 temp_obj.type = object_type
 
         # update kgraph
-
-        (in_kgraph, _) = self.kgraph.object_in_kgraph(obj)
-        if self.kgraph is not None and not in_kgraph:
-            print(f"adding obj that is movable")
-            self.kgraph.add_object(obj)
+        if self.kgraph is not None:
+            (in_kgraph, _) = self.kgraph.object_in_kgraph(obj)
+            if not in_kgraph:
+                print(f"adding obj that is movable")
+                self.kgraph.add_object(obj)
 
 
     ##########################################

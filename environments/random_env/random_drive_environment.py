@@ -20,6 +20,10 @@ def main():
     for the pointrobot to solve.
     """
 
+
+    # started at 14 last one 27, (skipped 21, 22, 26)
+    random.seed(27)
+
     robot_type = "pointRobot-vel-v7"
 
     rand_obj_generator = RandomObject(
@@ -29,11 +33,9 @@ def main():
             max_dimension=2.0,
             max_weight=1000)
 
-    kgraph = KGraph()
+    # kgraph = KGraph()
 
-    # started at 14 last one 26, (skipped 21, 22, 26)
-    random.seed(27)
-    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_kgraph")
+    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_no_kgraph")
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
@@ -66,7 +68,8 @@ def main():
             "objects_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": task,
-            "kgraph": kgraph,
+            # "kgraph": kgraph,
+            "kgraph": None,
             "objects": objects,
             "env": env,
             "n_env": n_env,

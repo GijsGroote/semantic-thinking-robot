@@ -343,25 +343,28 @@ class RandomObject():
     def _create_movable_random_box(self):
         """ return movable box with random propeties. """
         self.movable_added = True
-        self._create_random_box(True, random.random()*self.max_weight)
+        self._create_random_box(True, self._create_rand_weight())
 
     def _create_unmovable_random_box(self):
         """ return movable box with random propeties. """
         assert not self.movable_added, "first create unmovable obstacle, then create unmovable objects."
-        self._create_random_box(False, random.random()*self.max_weight)
+        self._create_random_box(False, self._create_rand_weight())
+        # self._create_random_box(False, 0) # delete line above
 
     def _create_movable_random_cylinder(self):
         """ return movable cylinder with random propeties. """
         self.movable_added = True
-        self._create_random_cylinder(True, random.random()*self.max_weight)
+        self._create_random_cylinder(True, self._create_rand_weight())
 
     def _create_unmovable_random_cylinder(self):
         """ return movable cylinder with random propeties. """
         assert not self.movable_added, "first create unmovable obstacle, then create unmovable objects."
-        self._create_random_cylinder(False, random.random()*self.max_weight)
+        self._create_random_cylinder(False, self._create_rand_weight())
+        # self._create_random_cylinder(False, 0) # delete line above
 
-
-
+    def _create_rand_weight(self) -> float:
+        """ return a random weight. """
+        return max(1, random.random()*self.max_weight)
 
     def _create_random_box(self, movable: bool, mass: float):
         """ returns a box with random dimensions, location, color and weight. """
