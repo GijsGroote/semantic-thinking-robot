@@ -1,5 +1,6 @@
 import os
 import random
+import math
 import glob
 import numpy as np
 import json
@@ -397,3 +398,70 @@ def create_hyp_vs_subtask_plot(data_path: str, save_path=False):
         fig.show()
     else:
         fig.write_image(save_path)
+
+
+def create_multiple_run_prediction_error_plot(data_path):
+
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
+    prediction_errors = []
+    for n_task in glob.glob(run_paths[0]+"/*"):
+        prediction_errors.append([])
+
+    # loop over every run
+    for run_path in run_paths:
+        # collect date from json files
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+
+        for (i, json_file_path) in enumerate(json_file_paths):
+            # Opening JSON file
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+
+                temp_pred_error = []
+                for temp_subtask in data["subtasks"].values():
+                    for temp_hypothesis in temp_subtask["hypotheses"].values():
+                        for temp_edge in temp_hypothesis["edges"].values():
+                            if 'pred_error' in temp_edge:# and isinstance(temp_edge, DriveActionEdge):
+                                temp_pred_error = temp_pred_error+temp_edge["pred_error"]
+
+
+                if not math.isnan(np.mean(temp_pred_error)):
+                    prediction_errors[i].append(np.mean(temp_pred_error))
+                else:
+                    print(f"found a nan!")
+
+    pred_error_avg = []
+    pred_error_std = []
+    subtask_number = []
+
+    for (i, avg) in enumerate(prediction_errors):
+        pred_error_avg.append(np.mean(avg))
+        pred_error_std.append(np.std(avg))
+        subtask_number.append(i)
+
+    print(f"subtasks number list {subtask_number}")
+
+    fig = go.Figure()
+
+    # add the error bars for the standard deviation
+    fig.add_trace(go.Scatter(
+        x=subtask_number, y=pred_error_avg, mode='markers', marker=dict(
+            size=12, opacity=1.0, line=dict(color='black', width=2)),
+            error_y=dict(type='data', array=pred_error_std), showlegend=False))
+
+    # customize the layout
+    fig.update_layout(
+                      xaxis_title='Number of Tasks experience',
+                      yaxis_title='Average Prediction Error and standard deviation',
+                      paper_bgcolor='white',
+                      plot_bgcolor='white',
+                      )
+
+    fig.show()
+
+

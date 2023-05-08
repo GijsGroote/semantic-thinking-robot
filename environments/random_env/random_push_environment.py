@@ -36,9 +36,8 @@ def main():
 
     save_path = create_new_directory(dir_path="environments/random_env/data/push_data_kgraph")
 
-    # seed 14, 20, 23, 24,  (exluding 15, 16, 17, 18, 19, 21, 22)
-
-    random.seed(25)
+    # seed 14, 20, 23, 24, 25, 26, 27, 29, 32 (exluding 15, 16, 17, 18, 19, 21, 22, 28, 30, 31)
+    random.seed(33)
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())

@@ -6,6 +6,7 @@ from helper_functions.figures import (
         create_execution_time_two_runs,
         create_time_plot_two_runs,
         create_hyp_vs_subtask_plot,
+        create_multiple_run_prediction_error_plot,
         )
 
 
@@ -20,7 +21,8 @@ def main():
     #         data_path_r1=PROJECT_PATH+"environments/random_env/data/run_15/"
     #        r  )
 
-    create_hyp_vs_subtask_plot(PROJECT_PATH+"environments/random_env/data/run_6/")
+    # create_hyp_vs_subtask_plot(PROJECT_PATH+"environments/random_env/data/run_6/")
+    create_multiple_run_prediction_error_plot(data_path=PROJECT_PATH+"environments/random_env/data/push_data_no_kgraph")
 
 if __name__ == '__main__':
     main()
