@@ -69,8 +69,8 @@ class PointRobotVelHGraph(HGraph):
         """ create drive path estimator. """
         occ_graph = CircleObjectPathEstimator(
                 cell_size=0.1,
-                grid_x_length = GRID_X_SIZE,
-                grid_y_length = GRID_Y_SIZE,
+                grid_x_length = GRID_X_SIZE + 2,
+                grid_y_length = GRID_Y_SIZE + 2,
                 objects= objects,
                 obst_cart_2d= self.robot_obj.state.get_xy_position(),
                 obst_name = self.robot_obj.name,
@@ -89,8 +89,8 @@ class PointRobotVelHGraph(HGraph):
 
             occ_graph = RectangleObjectPathEstimator(
                     cell_size = 0.1,
-                    grid_x_length = GRID_X_SIZE,
-                    grid_y_length = GRID_Y_SIZE,
+                    grid_x_length = GRID_X_SIZE + 2,
+                    grid_y_length = GRID_Y_SIZE + 2,
                     objects= objects,
                     obst_cart_2d = push_obj.state.get_xy_position(),
                     obst_name = push_obj.name,
@@ -102,8 +102,8 @@ class PointRobotVelHGraph(HGraph):
 
         elif isinstance(push_obj.properties, (CylinderObstacle, SphereObstacle)):
             occ_graph = CircleObjectPathEstimator(cell_size=0.1,
-                    grid_x_length= GRID_X_SIZE,
-                    grid_y_length= GRID_Y_SIZE,
+                    grid_x_length= GRID_X_SIZE + 2,
+                    grid_y_length= GRID_Y_SIZE + 2,
                     objects= objects,
                     obst_cart_2d= self.robot_obj.state.get_xy_position(),
                     obst_name = push_obj.name,
@@ -121,8 +121,8 @@ class PointRobotVelHGraph(HGraph):
         assert isinstance(path_estimator, PathEstimator), f"path_estimator should be PathEstimator and is {type(path_estimator)}"
 
         return DriveMotionPlanner(
-                grid_x_length=GRID_X_SIZE,
-                grid_y_length=GRID_Y_SIZE,
+                grid_x_length=GRID_X_SIZE + 2,
+                grid_y_length=GRID_Y_SIZE + 2,
                 obj=self.robot_obj,
                 step_size=0.2,
                 search_size=0.35,
@@ -142,8 +142,8 @@ class PointRobotVelHGraph(HGraph):
             raise ValueError("Unknown object encountered during creation of PushMotionPlanner")
 
         return PushMotionPlanner(
-                grid_x_length=GRID_X_SIZE,
-                grid_y_length=GRID_Y_SIZE,
+                grid_x_length=GRID_X_SIZE + 2,
+                grid_y_length=GRID_Y_SIZE + 2,
                 obj=push_obj,
                 step_size=0.2,
                 search_size=0.25,
@@ -513,13 +513,14 @@ class PointRobotVelHGraph(HGraph):
             for (temp_controller, temp_model_names) in controllers_and_model_names_filtered:
                 # TODO: check not only the controller, but also the system model
                 in_kgraph = False
+                not_in_kgraph_controller = None
                 for kgraph_controller in kgraph_suggestions:
                     if isinstance(temp_controller, type(kgraph_controller)):
                         in_kgraph = True
                     else:
                         not_in_kgraph_controller = temp_controller
                         not_in_kgraph_model_names = temp_model_names
-                if not in_kgraph:
+                if not in_kgraph and not_in_kgraph_controller is not None:
                     (controller, model_names) = (not_in_kgraph_controller, not_in_kgraph_model_names)
                     model_name = random.choice(model_names)
                     break
@@ -569,13 +570,15 @@ class PointRobotVelHGraph(HGraph):
             for (temp_controller, temp_model_names) in controllers_and_model_names_filtered:
                 # TODO: check not only the controller, but also the system model
                 in_kgraph = False
+                not_in_kgraph_controller = None
+
                 for kgraph_controller in kgraph_suggestions:
                     if isinstance(temp_controller, type(kgraph_controller)):
                         in_kgraph = True
                     else:
                         not_in_kgraph_controller = temp_controller
                         not_in_kgraph_model_names = temp_model_names
-                if not in_kgraph:
+                if not in_kgraph and not_in_kgraph_controller is not None:
                     (controller, model_names) = (not_in_kgraph_controller, not_in_kgraph_model_names)
                     model_name = random.choice(model_names)
                     break

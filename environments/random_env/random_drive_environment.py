@@ -35,7 +35,7 @@ def main():
 
     # kgraph = KGraph()
 
-    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_no_kgraph")
+    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_kgraph")
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
@@ -68,8 +68,7 @@ def main():
             "objects_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": task,
-            # "kgraph": kgraph,
-            "kgraph": None,
+            "kgraph": kgraph,
             "objects": objects,
             "env": env,
             "n_env": n_env,

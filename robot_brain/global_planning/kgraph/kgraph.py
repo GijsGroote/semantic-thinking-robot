@@ -146,7 +146,7 @@ class KGraph(Graph):
         """ return true if the object is movable. """
         for temp_node in self.nodes.values():
             if isinstance(temp_node, ObjectNode) and temp_node.obj.name == obj.name:
-                return temp_node.obj.obj_type == MOVABLE
+                return temp_node.obj.type == MOVABLE
         return False
 
     def ready_for_edge_review(self, edge: ActionEdge) -> bool:

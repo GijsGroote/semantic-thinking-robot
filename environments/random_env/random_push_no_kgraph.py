@@ -6,7 +6,6 @@ import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from robot_brain.rbrain import RBrain
 from robot_brain.state import State
-from robot_brain.global_planning.kgraph.kgraph import KGraph
 from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.rand_objects import RandomObject
 from helper_functions.figures import create_new_directory
@@ -32,11 +31,10 @@ def main():
             max_dimension=2.0,
             max_weight=1000)
 
-    kgraph = KGraph()
+    save_path = create_new_directory(dir_path="environments/random_env/data/push_data_no_kgraph")
 
-    save_path = create_new_directory(dir_path="environments/random_env/data/push_data_kgraph")
-
-    # seed 14, 20, 23, 24,  (exluding 15, 16, 17, 18, 19, 21, 22)
+    # with 23 turn blacklist off
+    # seed 14, 20, 23, 24, 25l (exluding 15, 16, 17, 18, 19, 21, 22)
 
     random.seed(25)
 
@@ -71,7 +69,7 @@ def main():
             "objects_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": task,
-            "kgraph": kgraph,
+            "kgraph": None,
             "objects": objects,
             "env": env,
             "n_env": n_env,
