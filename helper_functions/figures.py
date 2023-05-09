@@ -473,3 +473,91 @@ def create_hyp_vs_subtask_plot(data_path: str):
                       plot_bgcolor='white'
                       )
     fig.show()
+
+##### TABLES #####
+def display_drive_action_para(data_path):
+    """ Display a table with the parameterisations of drive actions. """
+
+    para_dict = find_all_existing_para(data_path)
+
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
+    for run_path in run_paths:
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+
+        for (i, json_file_path) in enumerate(json_file_paths):
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+                for temp_subtask in data["subtasks"].values():
+                    for temp_hypothesis in temp_subtask["hypotheses"].values():
+                        for temp_edge in temp_hypothesis["edges"].values():
+                            if 'controller_type' in temp_edge:
+                                para_dict[temp_edge['controller_type']][i] += 1
+
+    mpc = para_dict['MPC_2th_order']
+    mppi = para_dict['MPPI']
+    para_dict.clear()
+    para_dict['mpc'] = mpc
+    para_dict['mppi'] = mppi
+
+    print(f"edge para's {para_dict}")
+
+
+    for i in range(len(next(iter(para_dict.values())))):
+        added = mpc[i] + mppi[i]
+        para_dict['mpc'][i] = round(para_dict['mpc'][i]/added, 2)
+        para_dict['mppi'][i] = round(para_dict['mppi'][i]/added, 2)
+
+
+    print(f"edge para's {para_dict}")
+
+
+
+def display_push_action_para(data_path: str):
+    pass
+def display_action_para(data_path: str):
+    pass
+def find_all_existing_para(data_path: str) -> dict:
+    """ collect all existing parameterisations from JSON files.
+    return dictionary with keys the parameterizations, and value a list with n empty lists inside
+    n corresponding to the number of tasks in a run.
+    """
+
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
+    # find all drive edge param
+    edge_param = set()
+
+
+    n = None
+
+    for run_path in run_paths:
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+
+        for (i, json_file_path) in enumerate(json_file_paths):
+
+            if n is None:
+                n = len(json_file_paths)
+
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+                for temp_subtask in data["subtasks"].values():
+                    for temp_hypothesis in temp_subtask["hypotheses"].values():
+                        for temp_edge in temp_hypothesis["edges"].values():
+                            if 'controller_type' in temp_edge:
+                                edge_param.add(temp_edge['controller_type'])
+
+    edge_param_dict = {}
+    for param in edge_param:
+        edge_param_dict[param] = [0] * n
+
+    return edge_param_dict
+
