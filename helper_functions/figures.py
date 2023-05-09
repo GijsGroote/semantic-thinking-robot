@@ -4,6 +4,7 @@ import math
 import glob
 import numpy as np
 import json
+import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
@@ -28,180 +29,264 @@ def get_random_color():
     """ return a random color. """
     return [random.random(), random.random(), random.random(), 1]
 
-def create_time_plot(data_path: str, save_path=False):
+##### TIME PLOTS #####
+def collect_all_time_data(data_path):
+    " Collect data and call create time plot function. """
 
-    data_path = data_path+"/*"
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
     total_time = []
     execute_time = []
     search_time = []
-    subtask_number = []
+    for n_task in glob.glob(run_paths[0]+"/*"):
+        total_time.append([])
+        execute_time.append([])
+        search_time.append([])
 
-    # collect date from json files
-    json_file_paths = glob.glob(data_path)
-    json_file_paths.sort()
 
-    for (i, json_file_path) in enumerate(json_file_paths):
-        subtask_number.append(i)
-        # Opening JSON file
-        with open(json_file_path) as json_file:
-            data = json.load(json_file)
-            total_time.append(data["total_time"])
-            execute_time.append(data["execute_time"])
-            search_time.append(data["search_time"])
+    for run_path in run_paths:
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+        for (i, json_file_path) in enumerate(json_file_paths):
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+                total_time[i].append(data["total_time"])
+                execute_time[i].append(data["execute_time"])
+                search_time[i].append(data["search_time"])
+
+    total_time_avg = []
+    total_time_std = []
+    execute_time_avg = []
+    execute_time_std = []
+    search_time_avg = []
+    search_time_std = []
+
+    # calulate mean and standart deviation
+    for (i, _) in enumerate(total_time):
+        total_time_avg.append(np.mean(total_time[i]))
+        execute_time_avg.append(np.mean(execute_time[i]))
+        search_time_avg.append(np.mean(search_time[i]))
+
+        total_time_std.append(np.std(total_time[i]))
+        execute_time_std.append(np.std(execute_time[i]))
+        search_time_std.append(np.std(search_time[i]))
+
+    return (total_time_avg,
+            execute_time_avg,
+            search_time_avg,
+            total_time_std,
+            execute_time_std,
+            search_time_std)
+
+def create_time_plot(data_path):
+
+    (total_time_avg,
+     execute_time_avg,
+     search_time_avg,
+     total_time_std,
+     execute_time_std,
+     search_time_std) = collect_all_time_data(data_path)
+
+    subtask_number = [i for i in range(len(total_time_avg)+1)]
 
     print(f"Creating Time plot out of {max(subtask_number)} JSON Files")
 
-    fig = make_subplots(rows=1, cols=1)
+    fig = px.scatter()
+
     fig.append_trace(go.Scatter(
-        x=subtask_number,
-        y=total_time,
-        name="Total time",
-        line=dict(color='medium purple', width=1, dash='dash')
+        x=[x - 0.03 for x in subtask_number],
+        y=total_time_avg,
+        mode='markers',
+        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        error_y=dict(type='data', array=total_time_std),
+        name='Total Time',
         ), row=1, col=1)
+
     fig.append_trace(go.Scatter(
         x=subtask_number,
-        y=execute_time,
-        name="Execute time",
-        line=dict(color='forest green', width=1, dash='dash')
+        y=search_time_avg,
+        mode='markers',
+        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        error_y=dict(type='data', array=search_time_std),
+        name='Search Time',
         ), row=1, col=1)
+
     fig.append_trace(go.Scatter(
-        x=subtask_number,
-        y=search_time,
-        name="Search Time",
-        line=dict(color='forest green', width=1, dash='dash')
+        x=[x + 0.03 for x in subtask_number],
+        y=execute_time_avg,
+        mode='markers',
+        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        error_y=dict(type='data', array=execute_time_std),
+        name='Execution Time',
         ), row=1, col=1)
 
     fig.update_xaxes(title_text="Number of Tasks experience", row=1, col=1)
     fig.update_yaxes(title_text="Time [sec]", row=1, col=1)
+    fig.update_layout(
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            xaxis=dict(
+                zeroline=False,
+                zerolinecolor='black',
+                zerolinewidth=1
+                ),
+            yaxis=dict(
+                # range=[0, 50],
+                zeroline=True,
+                gridcolor='black',
+                zerolinecolor='black',
+                zerolinewidth=1
+                )
+            )
 
-    fig.update_layout(paper_bgcolor='white', plot_bgcolor='white')
+    fig.show()
 
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
+def create_time_plot_two_runs(data_path_with_kgraph: str, data_path_no_kgraph: str):
 
-def create_time_plot_two_runs(data_path_with_kgraph: str, data_path_no_kgraph: str, save_path=False):
+    (total_time_avg_kgraph,_,_,total_time_std_kgraph,_,_) = collect_all_time_data(data_path_with_kgraph)
+    (total_time_avg_no_kgraph,_,_,total_time_std_no_kgraph,_,_) = collect_all_time_data(data_path_no_kgraph)
 
+    subtask_number = [i for i in range(len(total_time_avg_kgraph)+1)]
 
-    data_path_with_kgraph = data_path_with_kgraph+"/*"
-    total_time_with_kgraph = []
-    execute_time_with_kgraph = []
-    search_time_with_kgraph = []
-    subtask_number_with_kgraph = []
+    fig = px.scatter()
 
-
-    data_path_no_kgraph = data_path_no_kgraph+"/*"
-    total_time_no_kgraph = []
-    execute_time_no_kgraph = []
-    search_time_no_kgraph = []
-    subtask_number_no_kgraph = []
-
-
-    # collect date from json files
-    json_file_with_kgraph_paths = glob.glob(data_path_with_kgraph)
-    json_file_with_kgraph_paths.sort()
-
-    for (i, json_file_path) in enumerate(json_file_with_kgraph_paths):
-        subtask_number_with_kgraph.append(i)
-        # Opening JSON file
-        with open(json_file_path) as json_file:
-            data_with_kgraph= json.load(json_file)
-            total_time_with_kgraph.append(data_with_kgraph["total_time"])
-            execute_time_with_kgraph.append(data_with_kgraph["execute_time"])
-            search_time_with_kgraph.append(data_with_kgraph["search_time"])
-
-    # collect date from json files
-    json_file_no_kgraph_paths = glob.glob(data_path_with_kgraph)
-    json_file_no_kgraph_paths.sort()
-
-    for (i, json_file_path) in enumerate(json_file_no_kgraph_paths):
-        subtask_number_no_kgraph.append(i)
-        # Opening JSON file
-        with open(json_file_path) as json_file:
-            data_no_kgraph = json.load(json_file)
-            total_time_no_kgraph.append(data_no_kgraph["total_time"])
-            execute_time_no_kgraph.append(data_no_kgraph["execute_time"])
-            search_time_no_kgraph.append(data_no_kgraph["search_time"])
-
-    assert len(subtask_number_with_kgraph) == len(subtask_number_no_kgraph)
-    print(f"one: {len(subtask_number_no_kgraph)} runs, {len(total_time_with_kgraph)} and two {len(total_time_no_kgraph)} ")
-
-
-    fig = make_subplots(rows=1, cols=1)
-    # fig.append_trace(go.Scatter(
-    #     x=subtask_number_with_kgraph,
-    #     y=total_time_with_kgraph,
-    #     name="Total time",
-    #     line=dict(color='medium purple', width=1, dash='dash')
-    #     ), row=1, col=1)
-    # fig.append_trace(go.Scatter(
-    #     x=subtask_number_with_kgraph,
-    #     y=execute_time_with_kgraph,
-    #     name="Execute time",
-    #     line=dict(color='forest green', width=1, dash='dash')
-    #     ), row=1, col=1)
     fig.append_trace(go.Scatter(
-        x=subtask_number_with_kgraph,
-        y=execute_time_with_kgraph,
-        name="Without Knowledge Graph",
-        line=dict(color='forest green', width=1, dash='dash')
+        x=[x + 0.03 for x in subtask_number],
+        y=total_time_avg_no_kgraph,
+        mode='markers',
+        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        error_y=dict(type='data', array=total_time_std_no_kgraph),
+        name='No KGraph',
         ), row=1, col=1)
 
-    # add number 2 to list
-    # fig.append_trace(go.Scatter(
-    #     x=subtask_number_no_kgraph,
-    #     y=total_time_no_kgraph,
-    #     name="Total time",
-    #     line=dict(color='medium purple', width=1, dash='dash')
-    #     ), row=1, col=1)
     fig.append_trace(go.Scatter(
-        x=subtask_number_no_kgraph,
-        y=execute_time_no_kgraph,
-        name="With Knowledge Graph",
-        line=dict(color='forest green', width=1, dash='dash')
+        x=[x - 0.03 for x in subtask_number],
+        y=total_time_avg_kgraph,
+        mode='markers',
+        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        error_y=dict(type='data', array=total_time_std_kgraph),
+        name='With KGraph',
         ), row=1, col=1)
-    # fig.append_trace(go.Scatter(
-    #     x=subtask_number_no_kgraph,
-    #     y=search_time_no_kgraph,
-    #     name="Search Time",
-    #     line=dict(color='forest green', width=1, dash='dash')
-    #     ), row=1, col=1)
 
     fig.update_xaxes(title_text="Task number", row=1, col=1)
     fig.update_yaxes(title_text="Time [sec]", row=1, col=1)
 
-    # fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
+    fig.update_layout(
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            xaxis=dict(
+                zeroline=False,
+                zerolinecolor='black',
+                zerolinewidth=1
+                ),
+            yaxis=dict(
+                # range=[0, 50],
+                zeroline=True,
+                gridcolor='black',
+                zerolinecolor='black',
+                zerolinewidth=1
+                )
+            )  # Set the color of the x-axis gridlines
+    fig.show()
 
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
+
+##### PREDICTION ERROR #####
+def create_multiple_run_prediction_error_plot(data_path):
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
+    prediction_errors = []
+    for n_task in glob.glob(run_paths[0]+"/*"):
+        prediction_errors.append([])
+
+    # loop over every run
+    for run_path in run_paths:
+        # collect date from json files
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+
+        for (i, json_file_path) in enumerate(json_file_paths):
+            # Opening JSON file
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+
+                temp_pred_error = []
+                for temp_subtask in data["subtasks"].values():
+                    for temp_hypothesis in temp_subtask["hypotheses"].values():
+                        for temp_edge in temp_hypothesis["edges"].values():
+                            if 'pred_error' in temp_edge:# and isinstance(temp_edge, DriveActionEdge):
+                                temp_pred_error = temp_pred_error+temp_edge["pred_error"]
 
 
-def create_prediction_error_plot(data_path: str, save_path=False):
+                if not math.isnan(np.mean(temp_pred_error)):
+                    prediction_errors[i].append(np.mean(temp_pred_error))
+                else:
+                    print(f"found a nan!")
+
+    pred_error_avg = []
+    pred_error_std = []
+    subtask_number = []
+
+    for (i, avg) in enumerate(prediction_errors):
+        pred_error_avg.append(np.mean(avg))
+        pred_error_std.append(np.std(avg))
+        subtask_number.append(i)
+
+    print(f"subtasks number list {subtask_number}")
+
+    fig = go.Figure()
+
+    # add the error bars for the standard deviation
+    fig.add_trace(go.Scatter(
+        x=subtask_number, y=pred_error_avg, mode='markers', marker=dict(
+            size=12, opacity=1.0, line=dict(color='black', width=2)),
+            error_y=dict(type='data', array=pred_error_std), showlegend=False))
+
+    # customize the layout
+    fig.update_layout(
+                      xaxis_title='Number of Tasks experience',
+                      yaxis_title='Average Prediction Error and standard deviation',
+                      paper_bgcolor='white',
+                      plot_bgcolor='white',
+                      )
+
+    fig.show()
+
+def create_prediction_error_plot(data_path: str):
 
     data_path = data_path+"/*"
 
     pred_error = []
-    subtask_number = []
 
     # collect date from json files
     json_file_paths = glob.glob(data_path)
     json_file_paths.sort()
 
     for (i, json_file_path) in enumerate(json_file_paths):
-        subtask_number.append(i)
+
         # Opening JSON file
         with open(json_file_path) as json_file:
             data = json.load(json_file)
             pred_error.append(data["total_avg_prediction_error"])
 
-    print(f"Creating prediction error plot out of {max(subtask_number)} JSON Files")
 
     # throw away the first data point
     # pred_error = pred_error[1:]
     # subtask_number = subtask_number[1:]
+
+
+def pe_plot(pred_error):
+    """ pred_error is a list that contains (at most 10) average prediction errors. """
+    assert len(pred_error) <= 10, f"I said at most 10, you've got {len(pred_error)}"
+
+    subtask_number = range(len(pred_error))
+
+    print(f"Creating prediction error plot out of {max(subtask_number)} JSON Files")
 
     fig = make_subplots(rows=1, cols=1)
     fig.append_trace(go.Scatter(
@@ -218,12 +303,11 @@ def create_prediction_error_plot(data_path: str, save_path=False):
 
     # fig.update_layout(paper_bgcolor=FIG_BG_COLOR, plot_bgcolor=FIG_BG_COLOR)
 
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
+    fig.show()
 
-def create_full_prediction_error_plot(data_path: str, save_path=False):
+
+def create_full_prediction_error_plot(data_path: str):
+    # TOOD: merge full pred errorr with the pe plot above
 
     data_path = data_path+"/*"
 
@@ -268,12 +352,9 @@ def create_full_prediction_error_plot(data_path: str, save_path=False):
                       plot_bgcolor='white',
                       )
 
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
+    fig.show()
 
-def create_execution_time_two_runs(data_path_r0: str, data_path_r1: str, save_path=False):
+def create_execution_time_two_runs(data_path_r0: str, data_path_r1: str):
 
     data_path_r0 = data_path_r0+"/*"
     data_path_r1 = data_path_r1+"/*"
@@ -349,13 +430,10 @@ def create_execution_time_two_runs(data_path_r0: str, data_path_r1: str, save_pa
                       paper_bgcolor='white',
                       plot_bgcolor='white'
                       )
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
+    fig.show()
 
 
-def create_hyp_vs_subtask_plot(data_path: str, save_path=False):
+def create_hyp_vs_subtask_plot(data_path: str):
 
     data_path = data_path+"/*"
 
@@ -394,74 +472,4 @@ def create_hyp_vs_subtask_plot(data_path: str, save_path=False):
                       paper_bgcolor='white',
                       plot_bgcolor='white'
                       )
-    if save_path is False:
-        fig.show()
-    else:
-        fig.write_image(save_path)
-
-
-def create_multiple_run_prediction_error_plot(data_path):
-
-    run_paths = []
-    for entry in os.scandir(data_path):
-        if entry.is_dir():
-            run_paths.append(entry.path)
-
-    prediction_errors = []
-    for n_task in glob.glob(run_paths[0]+"/*"):
-        prediction_errors.append([])
-
-    # loop over every run
-    for run_path in run_paths:
-        # collect date from json files
-        json_file_paths = glob.glob(run_path+"/*")
-        json_file_paths.sort()
-
-        for (i, json_file_path) in enumerate(json_file_paths):
-            # Opening JSON file
-            with open(json_file_path) as json_file:
-                data = json.load(json_file)
-
-                temp_pred_error = []
-                for temp_subtask in data["subtasks"].values():
-                    for temp_hypothesis in temp_subtask["hypotheses"].values():
-                        for temp_edge in temp_hypothesis["edges"].values():
-                            if 'pred_error' in temp_edge:# and isinstance(temp_edge, DriveActionEdge):
-                                temp_pred_error = temp_pred_error+temp_edge["pred_error"]
-
-
-                if not math.isnan(np.mean(temp_pred_error)):
-                    prediction_errors[i].append(np.mean(temp_pred_error))
-                else:
-                    print(f"found a nan!")
-
-    pred_error_avg = []
-    pred_error_std = []
-    subtask_number = []
-
-    for (i, avg) in enumerate(prediction_errors):
-        pred_error_avg.append(np.mean(avg))
-        pred_error_std.append(np.std(avg))
-        subtask_number.append(i)
-
-    print(f"subtasks number list {subtask_number}")
-
-    fig = go.Figure()
-
-    # add the error bars for the standard deviation
-    fig.add_trace(go.Scatter(
-        x=subtask_number, y=pred_error_avg, mode='markers', marker=dict(
-            size=12, opacity=1.0, line=dict(color='black', width=2)),
-            error_y=dict(type='data', array=pred_error_std), showlegend=False))
-
-    # customize the layout
-    fig.update_layout(
-                      xaxis_title='Number of Tasks experience',
-                      yaxis_title='Average Prediction Error and standard deviation',
-                      paper_bgcolor='white',
-                      plot_bgcolor='white',
-                      )
-
     fig.show()
-
-
