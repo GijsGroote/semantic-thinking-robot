@@ -156,7 +156,7 @@ def create_time_plot(data_path):
 
     # customize the layout
     fig.update_layout(
-            yaxis_range=[0, 100],
+            # yaxis_range=[0, 100],
             xaxis_title='Number of Tasks experience',
             yaxis_title='Time [sec]',
             # yaxis_type='log',
@@ -168,6 +168,8 @@ def create_time_plot(data_path):
                 zerolinewidth=1
                 ),
             yaxis=dict(
+                # range=[0, 60],
+
                 zeroline=True,
                 gridcolor='black',
                 zerolinecolor='black',
@@ -275,7 +277,6 @@ def create_drive_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no
 
     # customize the layout
     fig.update_layout(
-            # yaxis_range=[0, 100],
             xaxis_title='Number of Tasks experience',
             yaxis_title='Prediction Error [m]',
             # yaxis_type='log',
@@ -473,22 +474,30 @@ def display_drive_action_para(data_path):
                             if 'controller_type' in temp_edge:
                                 para_dict[temp_edge['controller_type']][i] += 1
 
-    mpc = para_dict['MPC_2th_order']
-    mppi = para_dict['MPPI']
-    para_dict.clear()
-    para_dict['mpc'] = mpc
-    para_dict['mppi'] = mppi
 
-    print(f"edge para's {para_dict}")
+    drive_para_dict = {}
+    if 'MPC_2th_order' in para_dict:
+        drive_para_dict['mpc'] = para_dict['MPC_2th_order']
+    if 'MPPI' in para_dict:
+        drive_para_dict['mppi'] = para_dict['MPPI']
 
-
-    for i in range(len(next(iter(para_dict.values())))):
-        added = mpc[i] + mppi[i]
-        para_dict['mpc'][i] = round(para_dict['mpc'][i]/added, 2)
-        para_dict['mppi'][i] = round(para_dict['mppi'][i]/added, 2)
+    print(f"drive edge para's {drive_para_dict}")
 
 
-    print(f"edge para's {para_dict}")
+    for i in range(len(next(iter(drive_para_dict.values())))):
+        added = 0
+
+        if 'mpc' in drive_para_dict:
+            added += drive_para_dict['mpc'][i]
+        if 'mppi' in drive_para_dict:
+            added += drive_para_dict['mppi'][i]
+
+        if 'mpc' in drive_para_dict:
+            drive_para_dict['mpc'][i] = round(drive_para_dict['mpc'][i]/added, 2)
+        if 'mppi' in drive_para_dict:
+            drive_para_dict['mppi'][i] = round(drive_para_dict['mppi'][i]/added, 2)
+
+    print(f"drive edge para's [normalized] {drive_para_dict}")
 
 
 
@@ -516,22 +525,28 @@ def display_push_action_para(data_path: str):
                                 para_dict[temp_edge['controller_type']][i] += 1
 
 
-    print(f"edge para's {para_dict}\n")
-    mppi_4th = para_dict['MPPI_4th_order']
-    mppi_5th = para_dict['MPPI_5th_order']
-    para_dict.clear()
-    para_dict['mppi_4'] = mppi_4th
-    para_dict['mppi_5'] = mppi_5th
 
-    print(f"edge para's {para_dict}")
+    push_para_dict = {}
+    if 'MPPI_4th_order' in para_dict:
+        push_para_dict['mppi_4'] = para_dict['MPPI_4th_order']
+    if 'MPPI_5th_order' in para_dict:
+        push_para_dict['mppi_5'] = para_dict['MPPI_5th_order']
 
+    print(f"push edge para's {push_para_dict}")
 
+    for i in range(len(next(iter(push_para_dict.values())))):
+        added = 0
+        if 'mppi_4' in para_dict:
+            added += push_para_dict['mppi_4'][i]
+        if 'mppi_5' in para_dict:
+            added += push_para_dict['mppi_5'][i]
 
-    for i in range(len(next(iter(para_dict.values())))):
-        added = mppi_4th[i] + mppi_5th[i]
-        para_dict['mppi_4'][i] = round(para_dict['mppi_4'][i]/added, 2)
-        para_dict['mppi_5'][i] = round(para_dict['mppi_5'][i]/added, 2)
-    print(f"edge para's {para_dict}")
+        if 'mppi_4' in para_dict:
+            push_para_dict['mppi_4'][i] = round(push_para_dict['mppi_4'][i]/added, 2)
+        if 'mppi_5' in para_dict:
+            push_para_dict['mppi_5'][i] = round(push_para_dict['mppi_5'][i]/added, 2)
+
+    print(f"push edge para's [normalized] {push_para_dict}")
 
 
 def find_all_existing_para(data_path: str) -> dict:

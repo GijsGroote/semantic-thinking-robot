@@ -1,4 +1,5 @@
 import math
+import time
 import numpy as np
 import random
 import gym
@@ -12,9 +13,7 @@ from helper_functions.figures import create_new_directory
 
 from helper_functions.figures import (
         create_new_directory,
-        create_time_plot,
-        create_prediction_error_plot,
-        create_full_prediction_error_plot)
+        create_time_plot)
 
 def main():
     """
@@ -56,9 +55,12 @@ def main():
         for obj in objects.values():
             env.add_obstacle(obj)
 
+        time.sleep(100000)
         sensor = ObstacleSensor()
         sensor.set_bullet_id_to_obst(env.get_bullet_id_to_obst())
         env.add_sensor(sensor)
+
+
         ob, reward, done, info = env.step(action)
 
         brain = RBrain()
@@ -91,9 +93,6 @@ def main():
 
         print('times is up, try again')
 
-    create_time_plot(data_path=save_path)
-    create_prediction_error_plot(data_path=save_path)
-    create_full_prediction_error_plot(data_path=save_path)
 
 
 if __name__ == "__main__":

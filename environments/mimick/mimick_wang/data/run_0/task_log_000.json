@@ -1,0 +1,107 @@
+{
+  "completed": true,
+  "subtasks": {
+    "subtask_0": {
+      "obj_name": "pointRobot-vel-v7",
+      "target_state_pos_2d": [
+        -0.7,
+        -0.7,
+        0
+      ],
+      "completed": true,
+      "num_hypotheses": 1,
+      "hypotheses": {
+        "hypothesis_1": {
+          "edges": {
+            "edge_0": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_1": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_2": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_3": {
+              "status": "edge:completed",
+              "verb": "driving",
+              "controller_type": "MPC_2th_order",
+              "final_pose_error": null
+            },
+            "edge_4": {
+              "status": "edge:completed",
+              "verb": "pushing",
+              "controller_type": "MPPI_5th_order",
+              "final_pose_error": null,
+              "avg_pred_error": 1.3485954515,
+              "max_pred_error": 3.1496780687,
+              "min_pred_error": 0,
+              "pred_error": [
+                0,
+                1.375859383702085,
+                1.2819873015924723,
+                1.341981237034836,
+                1.24377889242465,
+                1.2146658875776768,
+                1.2341699111131406,
+                1.2675620771832874,
+                1.1995872709987443,
+                1.2038555782836506,
+                1.3456270513098938,
+                1.1705448992740624,
+                1.4549619386287982,
+                1.3270670237737043,
+                1.2140629827204141,
+                1.162258584912211,
+                1.2947238120369764,
+                1.2177489693082169,
+                1.0881768993819625,
+                1.3159015503184175,
+                1.7512283030560547,
+                2.162267761223914,
+                3.1496780687237056
+              ]
+            },
+            "edge_5": {
+              "status": "edge:completed",
+              "verb": "driving",
+              "controller_type": "MPPI",
+              "final_pose_error": null,
+              "avg_pred_error": 0.0532701071,
+              "max_pred_error": 0.0707106781,
+              "min_pred_error": 0,
+              "pred_error": [
+                0,
+                0.05160599612519507,
+                0.051871763306511734,
+                0.07071067811581377,
+                0.06772615065281104,
+                0.06389656992406834,
+                0.07070785316878134,
+                0.049242536506341444,
+                0.05366941588644144
+              ]
+            }
+          },
+          "num_edges": 6,
+          "completed": true,
+          "search_time": 22.191321849822998,
+          "execute_time": 6.284793138504028,
+          "total_time": 28.476114988327026,
+          "avg_pred_error": 0.46728851999999993
+        }
+      },
+      "search_time": 22.191321849822998,
+      "execute_time": 6.284793138504028,
+      "total_time": 28.476114988327026
+    }
+  },
+  "total_time": 28.476114988327026,
+  "execute_time": 6.284793138504028,
+  "search_time": 22.191321849822998,
+  "hypothesis_success_ratio": 1,
+  "total_avg_prediction_error": 0.46728851999999993
+}
