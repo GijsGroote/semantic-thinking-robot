@@ -81,6 +81,13 @@ class HypothesisAlgorithm():
 
     def __init__(self, robot_obj: Object, env):
 
+
+        if robot_obj.name == "pointRobot-vel-v7":
+            self.hgraph = PointRobotVelHGraph(robot_obj)
+        # elif robot_obj.name == "boxerRobot-vel-v7":
+        #     self.hgraph = BoxerRobotVelHGraph(robot_obj)
+        else:
+            raise ValueError(f"robot name {robot_obj.name} not recognised")
         self.env = env                  # urdf environment
         self.in_loop = SEARCHING_LOOP   # halgorithm in the search or execution loop
         self.robot_obj = robot_obj      # robot object
@@ -93,12 +100,6 @@ class HypothesisAlgorithm():
         self.current_subtask = None     # current subtask that the halgorithm tries to complete
         self.kgraph = None              # knowledge graph
 
-        if robot_obj.name == "pointRobot-vel-v7":
-            self.hgraph = PointRobotVelHGraph(robot_obj)
-        # elif robot_obj.name == "boxerRobot-vel-v7":
-        #     self.hgraph = BoxerRobotVelHGraph(robot_obj)
-        else:
-            raise ValueError(f"robot name {robot_obj.name} not recognised")
 
         if LOG_METRICS or SAVE_LOG_METRICS:
             self.logger = HLogger()
@@ -362,6 +363,13 @@ class HypothesisAlgorithm():
             # check if all tasks are completed
             # if all subtask are completed, conclude the task is completed, otherwise search new hypothesis
             if all(target_node.status != NODE_INITIALISED for target_node in self.hgraph.target_nodes.values()):
+                self.reset_current_pointers()
+                self.current_node = None
+                self.current_edge = None
+                if CREATE_SERVER_DASHBOARD:
+                    self.hgraph.visualise()
+                    if self.kgraph is not None:
+                        self.kgraph.visualise()
                 self.finish_task()
 
             # reset pointers
@@ -421,6 +429,7 @@ class HypothesisAlgorithm():
         n_completed_subtasks = 0
         n_failed_subtasks = 0
         n_unfeasible_subtasks = 0
+
 
         for target_node in self.hgraph.target_nodes.values():
             if target_node.status == NODE_COMPLETED:
@@ -1249,7 +1258,7 @@ class HypothesisAlgorithm():
     @current_edge.setter
     def current_edge(self, edge: Edge):
         assert isinstance(edge, (Edge, type(None))), f"edge should be an Edge or None and is {type(edge)}"
-        if isinstance(edge, Edge):
+        if isinstance(edge, (Edge, type(None))):
             self.hgraph.c_edge = edge
         self._current_edge = edge
 
@@ -1260,6 +1269,9 @@ class HypothesisAlgorithm():
     @current_node.setter
     def current_node(self, node) -> ObjectNode:
         assert isinstance(node, (Node, type(None))), f"node should be a Node or None and is {type(node)}"
+        if isinstance(node, type(None)):
+            self.hgraph.c_node = node
+
         if isinstance(node, Node):
             assert node.iden in self.hgraph.nodes, "node should be in self.nodes"
             self.hgraph.c_node = node

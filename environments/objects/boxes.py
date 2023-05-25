@@ -6,11 +6,12 @@ box_dict = {
     "mass": 3,
     "type": "box",
     "color": [0/255, 255/255, 0/255, 1],
-    "position": [0.2, -3.2, 0.15],
+    # "position": [0.2, -3.2, 0.15],
+    "position": [2, 0, 0.15],
     "geometry": {"length": 1.4, "width": 1.4, "height": 0.3},
 }
 
-box = BoxObstacle(name="simple_box", content_dict=box_dict)
+box = BoxObstacle(name="box", content_dict=box_dict)
 
 box_dict = {
     "movable": True,

@@ -1,4 +1,5 @@
 import math
+import time
 import numpy as np
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
@@ -29,14 +30,15 @@ def main():
         action = np.zeros(env.n())
         env.reset()
 
-        objects = {box.name(): box,
-                box2.name(): box2,
-                cylinder.name(): cylinder}
+        objects = {
+                box.name(): box}
+                # box2.name(): box2,
+                # cylinder.name(): cylinder}
 
         # add objects
         env.add_obstacle(box)
-        env.add_obstacle(box2)
-        env.add_obstacle(cylinder)
+        # env.add_obstacle(box2)
+        # env.add_obstacle(cylinder)
 
         # add sensors
         sensor = ObstacleSensor()
@@ -45,6 +47,7 @@ def main():
 
         ob, reward, done, info = env.step(action)
 
+
         brain = RBrain()
         brain.setup({
             "dt": DT,
@@ -52,14 +55,14 @@ def main():
             "objects_in_env": True,
             "default_action": np.array(np.zeros(2)),
             "task": [
-                # (box.name(), State(pos=np.array([2, -3.31, 0.1]))),
+                (box.name(), State(pos=np.array([3, 0, 0]))),
                 # (box2.name(), State(pos=np.array([-3, 1.31, 0.1]))),
                 # (cylinder.name(), State(pos=np.array([-4, -2.31, 0.1]))),
-                # ("robot", State(pos=np.array([-4.3212, -2.9, 0]))),
-                ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
-                ("robot", State(pos=np.array([-0.3212, .1, 0]))),
-                ("robot", State(pos=np.array([3.3212, 2.20, 0]))),
-                # ("robot", State(pos=np.array([4,-2,0]))),
+                # ("robot", State(pos=np.array([-0.3212, -1.1, 0]))),
+                # ("robot", State(pos=np.array([3.3212, -2, -math.pi/2]))),
+                # ("robot", State(pos=np.array([-1.1212, .1, 0]))),
+                # ("robot", State(pos=np.array([0.3212, 1.10, 0]))),
+                # ("robot", State(pos=np.array([0,-1.1,0]))),
                 # ("robot", State(pos=np.array([-4, -4, 0]))),
                 ],
             "objects": objects,
@@ -80,6 +83,7 @@ def main():
         except StopIteration as exc:
 
             print(f"Tear down this environment, we're done here because {exc}")
+            time.sleep(100000)
             continue
 
         print('times is up, try again')
