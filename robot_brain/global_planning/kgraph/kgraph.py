@@ -26,13 +26,17 @@ class KGraph(Graph):
     """
     def __init__(self):
         Graph.__init__(self)
+        self.center_nodes_ids = []
+        self.side_nodes_ids = []
 
     def print_kgraph_info(self):
         """ print info of the kgraph. """
-        print(f"info on kgraph nodes, n_nodes= {len(self.nodes)}")
+        print(f"info on kgraph nodes, center nodes = {len(self.center_nodes_ids)}"\
+              f", side nodes = {len(self.side_nodes_ids)}")
         for temp_node in self.nodes.values():
             if isinstance(temp_node, ObjectNode):
-                print(f'node name: {temp_node.obj.name}, iden: {temp_node.iden}, type: {temp_node.obj.type}')
+                print(f'node name: {temp_node.obj.name}, iden: {temp_node.iden},'\
+                      f'type: {temp_node.obj.type}')
         print(" ")
 
     def add_object(self, obj: Object):
@@ -106,16 +110,14 @@ class KGraph(Graph):
         if edge.status == EDGE_COMPLETED:
             feedback_edge.n_success += 1
             a = 0.1*(1 - feedback_edge.success_factor)
+
         elif edge.status == EDGE_FAILED:
             feedback_edge.n_failed += 1
             a = -0.1*feedback_edge.success_factor
         else:
             raise ValueError(f"incorrect edge_status encountered: {edge.status}")
 
-        b =1-(feedback_edge.n_success/(feedback_edge.n_success + feedback_edge.n_failed))
-
         feedback_edge.success_factor += a
-        # self.calculate_successfactor(edge)**max(0.01, b)
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -201,10 +203,16 @@ class KGraph(Graph):
         #TODO: this methods
         return True
 
-    def add_node(self, node: ObjectNode):
+    def add_node(self, node: [ObjectNode, EmptyNode]):
         """ add node to the dictionary of nodes. """
         assert not node.iden in self.nodes, f"node.name: {node.name} already exist in self.nodes"
         self.nodes[node.iden] = node
+        if isinstance(node, ObjectNode):
+            self.center_nodes_ids.append(node.iden)
+        elif isinstance(node, EmptyNode):
+            self.center_nodes_ids.append(node.iden)
+        else:
+            raise ValueError(f'node should be an ObjectNode or EmptyNode and is {type(node)}')
 
         if CREATE_SERVER_DASHBOARD:
             self.visualise()
@@ -233,11 +241,11 @@ class KGraph(Graph):
                         borderWidth= 1,
                         borderWidthSelected= 2,
                         color= {
-                            'border': '#2B7CE9', # blue
-                            'background': '#97C2FC',
+                            'border': '#2eb82e',
+                            'background': '#b3ffb3',
                             'highlight': {
-                                'border': '#2B7CE9',
-                                'background': '#D2E5FF'
+                                'border': '#2eb82e',
+                                'background': '#42f5b0'
                                 }
                             },
                         group = "nodes")
@@ -245,17 +253,18 @@ class KGraph(Graph):
             elif isinstance(node, EmptyNode):
 
                 net.add_node(node.iden,
+                        title = f"Node: {node.name}<br>{node.to_string()}<br>",
                         x=10.0,
                         y=10.0,
                         label=" ",
                         borderWidth= 1,
                         borderWidthSelected= 2,
                         color= {
-                            'border': '#2B7CE9', # blue
-                            'background': '#97C2FC',
+                            'border': '#4400cc',
+                            'background': '#ddccff',
                             'highlight': {
-                                'border': '#2B7CE9',
-                                'background': '#D2E5FF'
+                                'border': '#4400cc',
+                                'background': '#ddccff'
                                 }
                             },
                         group = "nodes")
@@ -272,6 +281,7 @@ class KGraph(Graph):
                     width=value,
                     # color=color,
                     label=edge.verb,
+                    # label='edge',
                     title=f"{edge.to_string()}<br>",
                     )
 

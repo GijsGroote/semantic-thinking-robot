@@ -45,7 +45,8 @@ def main():
         "default_action": np.array(np.zeros(2)),
         "task": [("robot", State(pos=np.array([0, 3, 0])))],
         "objects": objects,
-        "env": env
+        "env": env,
+        "n_env": 1,
     }, ob)
 
     brain.update(ob)
@@ -53,6 +54,7 @@ def main():
     for _ in range(n_steps):
 
         action[0:2] = brain.respond()
+        action = np.zeros([0,0,0])
         ob, reward, done, info = env.step(action)
         brain.update(ob)
 

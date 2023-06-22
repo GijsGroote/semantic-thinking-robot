@@ -7,7 +7,7 @@ blocking_object = BoxObstacle(name="blocking_object", content_dict={
             "type": "box",
             "orientation": [0,0,0],
             "color": [145, 151, 127, 1],
-            "position":[0, 1.1, 0.5],
+            "position":[0, 1.1, 0.3],
             "geometry": {"length": 1, "width": 1, "height": 0.6},
         })
 

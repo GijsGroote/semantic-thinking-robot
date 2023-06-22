@@ -1,0 +1,113 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        body {
+            margin: 0px;
+        }
+        #mynetwork {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 450px;
+            background-color: rgb(255, 255, 255);
+            border: none;
+            /*margin-top: -22px;*/
+            /*float: left;*/
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network;
+    var container;
+    var options, data;
+
+
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#b3ffb3", "border": "#2eb82e", "highlight": {"background": "#42f5b0", "border": "#2eb82e"}}, "group": "nodes", "id": 0, "label": "robot", "shape": "dot", "title": "Node: robot\u003cbr\u003eNode identifier: 0\u003cbr\u003eStatus: node:initialised\u003cbr\u003eIn subtask: name\u003cbr\u003eWith Object: robot\u003cbr\u003e2d pos = [0 0 0]\u003cbr\u003etype = 1\u003cbr\u003e", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#b3ffb3", "border": "#2eb82e", "highlight": {"background": "#42f5b0", "border": "#2eb82e"}}, "group": "nodes", "id": 1, "label": "box", "shape": "dot", "title": "Node: box\u003cbr\u003eNode identifier: 1\u003cbr\u003eStatus: node:initialised\u003cbr\u003eIn subtask: name\u003cbr\u003eWith Object: robot\u003cbr\u003e2d pos = [0 0 0]\u003cbr\u003etype = 1\u003cbr\u003e", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#ddccff", "border": "#4400cc", "highlight": {"background": "#ddccff", "border": "#4400cc"}}, "group": "nodes", "id": 2, "label": " ", "shape": "dot", "title": "Node: side node_emtpy_node\u003cbr\u003eEmptyNode identifier: 2, and name: side node_emtpy_node\u003cbr\u003e", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#ddccff", "border": "#4400cc", "highlight": {"background": "#ddccff", "border": "#4400cc"}}, "group": "nodes", "id": 3, "label": " ", "shape": "dot", "title": "Node: side node_emtpy_node\u003cbr\u003eEmptyNode identifier: 3, and name: side node_emtpy_node\u003cbr\u003e", "x": 10.0, "y": 10.0}, {"borderWidth": 1, "borderWidthSelected": 2, "color": {"background": "#ddccff", "border": "#4400cc", "highlight": {"background": "#ddccff", "border": "#4400cc"}}, "group": "nodes", "id": 4, "label": " ", "shape": "dot", "title": "Node: side node_emtpy_node\u003cbr\u003eEmptyNode identifier: 4, and name: side node_emtpy_node\u003cbr\u003e", "x": 10.0, "y": 10.0}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": 0, "label": "MPC, lti-drive-model", "title": "Edge type: FeedbackEdge\u003cbr\u003eEdge identifier: 0\u003cbr\u003eObject: robot,\u003cbr\u003eSuccess Factor: 1.0\u003cbr\u003eController: saus\u003cbr\u003e Controller Class: \u003cclass \u0027__main__.main.\u003clocals\u003e.Contr\u0027\u003e\u003cbr\u003eSystem model: one\u003cbr\u003en_success: 1\u003cbr\u003en_failed: 0\u003cbr\u003e", "to": 2, "width": 1.5}, {"arrows": "to", "from": 0, "label": "MPPI, lti-drive-model", "title": "Edge type: FeedbackEdge\u003cbr\u003eEdge identifier: 1\u003cbr\u003eObject: robot,\u003cbr\u003eSuccess Factor: 1.0\u003cbr\u003eController: saus\u003cbr\u003e Controller Class: \u003cclass \u0027__main__.main.\u003clocals\u003e.Contr\u0027\u003e\u003cbr\u003eSystem model: one\u003cbr\u003en_success: 1\u003cbr\u003en_failed: 0\u003cbr\u003e", "to": 3, "width": 1.5}, {"arrows": "to", "from": 1, "label": "MPPI, nonlinear-push-model-1", "title": "Edge type: FeedbackEdge\u003cbr\u003eEdge identifier: 2\u003cbr\u003eObject: robot,\u003cbr\u003eSuccess Factor: 1.0\u003cbr\u003eController: saus\u003cbr\u003e Controller Class: \u003cclass \u0027__main__.main.\u003clocals\u003e.Contr\u0027\u003e\u003cbr\u003eSystem model: one\u003cbr\u003en_success: 1\u003cbr\u003en_failed: 0\u003cbr\u003e", "to": 4, "width": 1.5}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

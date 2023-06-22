@@ -12,6 +12,12 @@ from robot_brain.global_planning.kgraph.kgraph import KGraph
 from environments.objects.boxes import box, box2
 from environments.objects.cylinders import cylinder
 
+from robot_brain.object import Object, MOVABLE, UNMOVABLE, UNKNOWN
+from robot_brain.global_planning.object_node import ObjectNode
+from robot_brain.state import State
+from motion_planning_env.cylinder_obstacle import CylinderObstacle
+
+from robot_brain.global_planning.kgraph.empty_node import EmptyNode
 
 def main():
     """
@@ -23,6 +29,28 @@ def main():
     robot_type = "pointRobot-vel-v7"
     env = gym.make(robot_type, dt=DT, render=True)
     kgraph = KGraph()
+
+    # robot_obj = Object(
+    #         name='center node',
+    #         state=State(),
+    #         properties=CylinderObstacle(
+    #             name="pointRobot-vel-v7-obst",
+    #             content_dict={
+    #                 "type": "box",
+    #                 "geometry": {"radius": 0.22, "height": 0.25}}),
+    #         obj_type=MOVABLE
+    #         )
+
+    # kgraph.add_node(ObjectNode(
+    #         iden=kgraph.unique_node_iden(),
+    #         name="center node",
+    #         obj=robot_obj,
+    #         subtask_name='name'))
+    # kgraph.add_node(EmptyNode(kgraph.unique_node_iden(), "side node"))
+    # kgraph.add_edge(0, 1)
+    # raise ValueError
+
+    # kgraph.visualise(save=False)
 
     for i in range(10):
         print(f'starting blockade environment: {i}')
