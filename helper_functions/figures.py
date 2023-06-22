@@ -78,6 +78,7 @@ def collect_data(data_path):
     print(f"number of subtasks in a task: {n_subtasks}")
 
     data = {
+            "total_time_median": [np.median(total_time[i]) for i in range(n_subtasks)],
             "total_time_mean": [np.mean(total_time[i]) for i in range(n_subtasks)],
             "search_time_mean": [np.mean(search_time[i]) for i in range(n_subtasks)],
             "execute_time_mean": [np.mean(execute_time[i]) for i in range(n_subtasks)],
@@ -109,7 +110,7 @@ def create_time_plot(data_path):
         fig.add_trace(go.Box(
             y=df['total_time'][i],
             x=[i-0.1]*len(df['total_time'][i]),
-            fillcolor='red',
+            fillcolor='#51BBE2',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
@@ -124,7 +125,7 @@ def create_time_plot(data_path):
             y=df['execute_time'][i],
             x=[i+0.1]*len(df['execute_time'][i]),
             legendgroup='2',
-            fillcolor='blue',
+            fillcolor='#8AC15A',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
@@ -138,7 +139,7 @@ def create_time_plot(data_path):
         fig.add_trace(go.Box(
             y=df['search_time'][i],
             x=[i]*len(df['search_time'][i]),
-            fillcolor='orange',
+            fillcolor='#FFD55E',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
@@ -152,7 +153,7 @@ def create_time_plot(data_path):
 
         showlegend=False
 
-    fig.update_traces(width=0.07)
+    fig.update_traces(width=0.10)
 
     # customize the layout
     fig.update_layout(
@@ -168,7 +169,7 @@ def create_time_plot(data_path):
                 zerolinewidth=1
                 ),
             yaxis=dict(
-                # range=[0, 60],
+                range=[0, 46],
 
                 zeroline=True,
                 gridcolor='black',
@@ -192,8 +193,9 @@ def create_time_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_kgr
     fig = px.scatter()
 
     fig.append_trace(go.Scatter(
-        x=[x + 0.03 for x in subtask_number],
-        y=no_kgraph_df["total_time_mean"],
+        x=[x for x in subtask_number],
+        # y=no_kgraph_df["total_time_mean"],
+        y=no_kgraph_df["total_time_median"],
         mode='markers',
         marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
         # error_y=dict(type='data', array=total_time_std_no_kgraph),
@@ -201,8 +203,9 @@ def create_time_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_kgr
         ), row=1, col=1)
 
     fig.append_trace(go.Scatter(
-        x=[x - 0.03 for x in subtask_number],
-        y=kgraph_df["total_time_mean"],
+        x=[x for x in subtask_number],
+        # y=kgraph_df["total_time_mean"],
+        y=kgraph_df["total_time_median"],
         mode='markers',
         marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
         # error_y=dict(type='data', array=total_time_std_kgraph),
@@ -246,7 +249,7 @@ def create_drive_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no
         fig.add_trace(go.Box(
             y=kgraph_df['drive_pe'][i],
             x=[i-0.1]*len(kgraph_df['drive_pe'][i]),
-            fillcolor='red',
+            fillcolor='#b2b2ff',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
@@ -261,7 +264,7 @@ def create_drive_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no
             y=no_kgraph_df['drive_pe'][i],
             x=[i+0.1]*len(no_kgraph_df['drive_pe'][i]),
             legendgroup='2',
-            fillcolor='blue',
+            fillcolor='#FFD55E',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
@@ -313,10 +316,10 @@ def create_push_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_
         fig.add_trace(go.Box(
             y=kgraph_df['push_pe'][i],
             x=[i-0.1]*len(kgraph_df['push_pe'][i]),
-            fillcolor='red',
+            fillcolor='#b2b2ff',
             marker=dict(
                 size=2,
-                color='rgb(0, 0, 0)'
+                color='rgb(0, 0, 0)',
             ),
             showlegend=showlegend,
             name="with kgraph",
@@ -328,7 +331,7 @@ def create_push_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_
             y=no_kgraph_df['push_pe'][i],
             x=[i+0.1]*len(no_kgraph_df['push_pe'][i]),
             legendgroup='2',
-            fillcolor='blue',
+            fillcolor='#FFD55E',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
