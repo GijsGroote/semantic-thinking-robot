@@ -153,7 +153,7 @@ def create_time_plot(data_path):
 
         showlegend=False
 
-    fig.update_traces(width=0.10)
+    fig.update_traces(width=0.07)
 
     # customize the layout
     fig.update_layout(
@@ -169,7 +169,7 @@ def create_time_plot(data_path):
                 zerolinewidth=1
                 ),
             yaxis=dict(
-                range=[0, 46],
+                range=[0, 60],
 
                 zeroline=True,
                 gridcolor='black',
@@ -197,7 +197,9 @@ def create_time_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_kgr
         # y=no_kgraph_df["total_time_mean"],
         y=no_kgraph_df["total_time_median"],
         mode='markers',
-        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        marker=dict(size=12,
+                    color='#f2493d',
+                    opacity=1.0, line=dict(color='black', width=2)),
         # error_y=dict(type='data', array=total_time_std_no_kgraph),
         name='No KGraph',
         ), row=1, col=1)
@@ -207,7 +209,9 @@ def create_time_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_kgr
         # y=kgraph_df["total_time_mean"],
         y=kgraph_df["total_time_median"],
         mode='markers',
-        marker=dict(size=12, opacity=1.0, line=dict(color='black', width=2)),
+        marker=dict(size=12,
+                    color='#3df25e',
+                    opacity=1.0, line=dict(color='black', width=2)),
         # error_y=dict(type='data', array=total_time_std_kgraph),
         name='With KGraph',
         ), row=1, col=1)
@@ -316,7 +320,7 @@ def create_push_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_
         fig.add_trace(go.Box(
             y=kgraph_df['push_pe'][i],
             x=[i-0.1]*len(kgraph_df['push_pe'][i]),
-            fillcolor='#b2b2ff',
+            fillcolor='#3df25e',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)',
@@ -331,7 +335,7 @@ def create_push_pe_with_without_kgraph_plot(data_path_kgraph: str, data_path_no_
             y=no_kgraph_df['push_pe'][i],
             x=[i+0.1]*len(no_kgraph_df['push_pe'][i]),
             legendgroup='2',
-            fillcolor='#FFD55E',
+            fillcolor='#f2493d',
             marker=dict(
                 size=2,
                 color='rgb(0, 0, 0)'
