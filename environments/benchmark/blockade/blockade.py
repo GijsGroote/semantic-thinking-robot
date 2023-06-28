@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import gym
 import urdfenvs.point_robot_urdf # pylint: disable=unused-import
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
@@ -9,7 +10,7 @@ from dashboard.app import stop_dash_server
 from robot_brain.global_planning.kgraph.kgraph import KGraph
 
 from environments.benchmark.benchmark_obstacles.obstacles import blockade_obstacles
-from helper_functions.figures import create_time_plot, create_prediction_error_plot, create_new_directory
+from helper_functions.figures import create_new_directory
 
 def main():
     """
@@ -42,29 +43,34 @@ def main():
         ob, reward, done, info = env.step(np.zeros(env.n()))
         brain = RBrain()
 
-        brain.setup({
-            "dt": DT,
-            "robot_type": robot_type,
-            "objects_in_env": True,
-            "default_action": np.zeros(2),
-            "task": [
-                (blockade_obstacles["simpleBox"].name(), State(pos=np.array([3, 0, 0]))),
-                ],
-            "objects": blockade_obstacles,
-            "env": env,
-            "n_env": i,
-            "kgraph": kgraph,
-            "save_path": save_path,
-            }, ob)
+        # brain.setup({
+        #     "dt": DT,
+        #     "robot_type": robot_type,
+        #     "objects_in_env": True,
+        #     "default_action": np.zeros(2),
+        #     "task": [
+        #         (blockade_obstacles["simpleBox"].name(), State(pos=np.array([3, 0, 0]))),
+        #         ],
+        #     "objects": blockade_obstacles,
+        #     "env": env,
+        #     "n_env": i,
+        #     "kgraph": kgraph,
+        #     # "save_path": save_path,
+        #     "save_path": None,
+        #     }, ob)
 
         try:
-            for _ in range(10000):
+            for i in range(10000):
+                if i == 5:
+                    env.add_target_ghost(blockade_obstacles["simpleBox"].name(), np.array([3, 0, 0]))
+
+                time.sleep(2)
 
                 ob, _, _, _ = env.step(action)
 
-                action[0:2] = brain.respond()
-                ob, _, _, _ = env.step(action)
-                brain.update(ob)
+                # action[0:2] = brain.respond()
+                # ob, _, _, _ = env.step(action)
+                # brain.update(ob)
 
         except StopIteration as exc:
 

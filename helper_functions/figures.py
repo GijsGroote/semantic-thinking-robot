@@ -153,7 +153,8 @@ def create_time_plot(data_path):
 
         showlegend=False
 
-    fig.update_traces(width=0.07)
+    # fig.update_traces(width=0.07)
+    fig.update_traces(width=0.10)
 
     # customize the layout
     fig.update_layout(
@@ -169,7 +170,7 @@ def create_time_plot(data_path):
                 zerolinewidth=1
                 ),
             yaxis=dict(
-                range=[0, 60],
+                range=[0, 40],
 
                 zeroline=True,
                 gridcolor='black',
@@ -570,7 +571,6 @@ def find_all_existing_para(data_path: str) -> dict:
     # find all drive edge param
     edge_param = set()
 
-
     n = None
 
     for run_path in run_paths:
@@ -596,3 +596,50 @@ def find_all_existing_para(data_path: str) -> dict:
 
     return edge_param_dict
 
+def display_success_rate(data_path):
+    """ Display the success rate of a run. """
+
+
+    run_paths = []
+    for entry in os.scandir(data_path):
+        if entry.is_dir():
+            run_paths.append(entry.path)
+
+    success_dict = {}
+    for i in range(len(glob.glob(run_paths[0]+"/*"))):
+        print(f'fiel path numero {i}')
+        success_dict[i] = {'task_success': 0,
+                     'task_failed': 0,
+                     'subtask_success': 0,
+                     'subtask_failed': 0,
+                     'hyp_success': 0,
+                     'hyp_failed': 0}
+
+    for run_path in run_paths:
+        json_file_paths = glob.glob(run_path+"/*")
+        json_file_paths.sort()
+
+
+        for (i, json_file_path) in enumerate(json_file_paths):
+            with open(json_file_path) as json_file:
+                data = json.load(json_file)
+
+                if data['completed']:
+                    success_dict[i]['task_success'] += 1
+                else:
+                    success_dict[i]['task_failed'] += 1
+
+                for temp_subtask in data["subtasks"].values():
+                    if temp_subtask['completed']:
+                        success_dict[i]['subtask_success'] += 1
+                    else:
+                        success_dict[i]['subtask_failed'] += 1
+
+                    for temp_hypothesis in temp_subtask["hypotheses"].values():
+                        if temp_hypothesis['completed']:
+                            success_dict[i]['hyp_success'] += 1
+                        else:
+                            success_dict[i]['hyp_failed'] += 1
+
+
+    print(f"drive edge para's [normalized] {success_dict}")

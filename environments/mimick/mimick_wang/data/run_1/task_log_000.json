@@ -1,1 +1,55 @@
-{"completed": true, "subtasks": {"subtask_0": {"obj_name": "pointRobot-vel-v7", "target_state_pos_2d": [-0.7, -0.7, 0.0], "completed": true, "num_hypotheses": 2, "hypotheses": {"hypothesis_1": {"edges": {}, "num_edges": 0, "completed": false, "fail_reason": "prediction error is high for to long for controller MPPI", "search_time": 3.7755300998687744, "execute_time": 3.337860107421875e-06, "total_time": 3.775533437728882, "avg_pred_error": NaN}, "hypothesis_2": {"edges": {"edge_0": {"status": "edge:completed", "verb": "identify"}, "edge_1": {"status": "edge:completed", "verb": "driving", "controller_type": "MPC_2th_order", "final_pose_error": null}}, "num_edges": 2, "completed": true, "search_time": 9.15085220336914, "execute_time": 4.30196738243103, "total_time": 13.452819585800171, "avg_pred_error": 0.0}}, "search_time": 12.926382303237915, "execute_time": 4.301970720291138, "total_time": 17.228353023529053}}, "total_time": 17.228353023529053, "execute_time": 4.301970720291138, "search_time": 12.926382303237915, "hypothesis_success_ratio": 1.0, "total_avg_prediction_error": NaN}
+{
+  "completed": true,
+  "subtasks": {
+    "subtask_0": {
+      "obj_name": "pointRobot-vel-v7",
+      "target_state_pos_2d": [
+        -0.7,
+        -0.7,
+        0
+      ],
+      "completed": true,
+      "num_hypotheses": 2,
+      "hypotheses": {
+        "hypothesis_1": {
+          "edges": {},
+          "num_edges": 0,
+          "completed": false,
+          "fail_reason": "prediction error is high for to long for controller MPPI",
+          "search_time": 3.7755300998687744,
+          "execute_time": 3.337860107421875e-06,
+          "total_time": 3.775533437728882,
+          "avg_pred_error": null
+        },
+        "hypothesis_2": {
+          "edges": {
+            "edge_0": {
+              "status": "edge:completed",
+              "verb": "identify"
+            },
+            "edge_1": {
+              "status": "edge:completed",
+              "verb": "driving",
+              "controller_type": "MPC_2th_order",
+              "final_pose_error": null
+            }
+          },
+          "num_edges": 2,
+          "completed": true,
+          "search_time": 9.15085220336914,
+          "execute_time": 4.30196738243103,
+          "total_time": 13.452819585800171,
+          "avg_pred_error": 0
+        }
+      },
+      "search_time": 12.926382303237915,
+      "execute_time": 4.301970720291138,
+      "total_time": 17.228353023529053
+    }
+  },
+  "total_time": 17.228353023529053,
+  "execute_time": 4.301970720291138,
+  "search_time": 12.926382303237915,
+  "hypothesis_success_ratio": 1,
+  "total_avg_prediction_error": null
+}
