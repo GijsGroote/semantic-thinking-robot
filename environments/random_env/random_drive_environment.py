@@ -10,9 +10,9 @@ from robot_brain.global_variables import DT, GRID_X_SIZE, GRID_Y_SIZE
 from environments.random_env.rand_objects import RandomObject
 from helper_functions.figures import (
         create_new_directory,
-        create_time_plot,
-        create_prediction_error_plot,
-        create_full_prediction_error_plot)
+        create_time_plot)
+        # create_prediction_error_plot,
+        # create_full_prediction_error_plot)
 
 def main():
     """
@@ -33,9 +33,9 @@ def main():
             max_dimension=2.0,
             max_weight=1000)
 
-    # kgraph = KGraph()
+    kgraph = KGraph()
 
-    save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_kgraph")
+    # save_path = create_new_directory(dir_path="environments/random_env/data/drive_data_kgraph")
 
     env = gym.make(robot_type, dt=DT, render=True)
     action = np.zeros(env.n())
@@ -72,7 +72,8 @@ def main():
             "objects": objects,
             "env": env,
             "n_env": n_env,
-            "save_path": save_path,
+            "save_path": None,
+            # save_path,
         }, ob)
 
         brain.update(ob)
